@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
 <title>Demir Taht</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -1573,7 +1574,7 @@ function renderProfile(t){
       </div>
       <div style="background:#1a0808;border:1px solid #4a1a1a;border-radius:10px;padding:11px;margin-top:4px;">
         <div style="font-family:'Cinzel',serif;font-size:9px;color:#f87171;letter-spacing:1px;margin-bottom:8px;">⚠ TEHLİKELİ BÖLGE</div>
-        <div class="setting-row"><span style="font-size:12px;color:#f87171;">Çıkış Yap</span><button class="btn btn-xs btn-danger" onclick="logout()">Çıkış</button></div>
+        <div class="setting-row"><span style="font-size:12px;color:#f87171;">Çıkış Yap</span><button class="btn btn-xs btn-danger" onclick="sbLogout()">Çıkış</button></div>
       </div>
       <div style="text-align:center;padding:10px 0;font-size:10px;color:var(--ink3);">Demir Taht v0.1.0</div>`;
   }
@@ -1590,10 +1591,311 @@ function closeGModal(e){if(!e||e.target===document.getElementById('g-modal')) do
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.style.opacity='1';clearTimeout(window._nt);window._nt=setTimeout(()=>el.style.opacity='0',2800);}
 
 /* ══════════════════════════════════════
+   SUPABASE ENTEGRASYONU
+══════════════════════════════════════ */
+const SUPA_URL = 'https://gdbyzeafaitknugcmhkj.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkYnl6ZWFmYWl0a251Z2NtaGtqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMzg4MjAsImV4cCI6MjA5MDgxNDgyMH0.qVCBfVk0bNFOoHLVCcXCkMpfwl_ruPZcvr3Pt4MPm-I';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+let currentUser = null;
+
+/* ── AUTH ── */
+async function sbRegister(email, password, username) {
+  const { data, error } = await supa.auth.signUp({ email, password });
+  if (error) { toast('Kayıt hatası: ' + error.message); return false; }
+  currentUser = data.user;
+  await sbCreateProfile(username);
+  return true;
+}
+
+async function sbLogin(email, password) {
+  const { data, error } = await supa.auth.signInWithPassword({ email, password });
+  if (error) { toast('Giriş hatası: ' + error.message); return false; }
+  currentUser = data.user;
+  return true;
+}
+
+async function sbLogout() {
+  await supa.auth.signOut();
+  currentUser = null;
+  toast('Çıkış yapıldı.');
+  location.reload();
+}
+
+/* ── PROFİL OLUŞTUR ── */
+async function sbCreateProfile(username) {
+  if (!currentUser) return;
+  const cls = CLASSES.find(c => c.id === G.classId) || CLASSES[0];
+  const { error } = await supa.from('profiles').insert({
+    id: currentUser.id,
+    username,
+    hero_name: G.heroName,
+    class_id: G.classId,
+    avatar_idx: G.avatarIdx,
+    armor_color: G.armorColor,
+    cloak_color: G.cloakColor,
+    gold: 500,
+    level: 1,
+    xp: 0,
+    skill_points: 3,
+    stat_str: cls.base.str,
+    stat_def: cls.base.def,
+    stat_agi: cls.base.agi,
+    stat_wis: cls.base.wis,
+    stat_cha: cls.base.cha,
+    hp: cls.base.hp,
+    max_hp: cls.base.maxhp,
+  });
+  if (error) { console.error('Profil oluşturma hatası:', error); return; }
+
+  // Kale
+  await supa.from('castles').insert({ profile_id: currentUser.id });
+  // Ordu
+  await supa.from('armies').insert([
+    { profile_id: currentUser.id, unit_type: 'infantry', count: 20 },
+    { profile_id: currentUser.id, unit_type: 'archer',   count: 8  },
+    { profile_id: currentUser.id, unit_type: 'cavalry',  count: 2  },
+  ]);
+  // Halk
+  await supa.from('folk').insert({ profile_id: currentUser.id });
+  // Başlangıç keşfedilen hücreler
+  const cells = [14,15,20,21,22,27,28].map(i => ({ profile_id: currentUser.id, cell_index: i }));
+  await supa.from('explored_cells').insert(cells);
+}
+
+/* ── VERİ YÜKLE ── */
+async function sbLoadProfile() {
+  if (!currentUser) return false;
+  const { data: p, error } = await supa.from('profiles').select('*').eq('id', currentUser.id).single();
+  if (error || !p) return false;
+
+  G.username  = p.username;
+  G.heroName  = p.hero_name;
+  G.classId   = p.class_id;
+  G.avatarIdx = p.avatar_idx;
+  G.armorColor= p.armor_color;
+  G.cloakColor= p.cloak_color;
+  G.level     = p.level;
+  G.xp        = p.xp;
+  G.skillPoints = p.skill_points;
+  G.gold      = p.gold;
+  G.food      = p.food || 80;
+  G.wood      = p.wood || 40;
+  G.army      = p.army || 30;
+  G.morale    = p.morale || 72;
+  G.turn      = p.turn || 1;
+  G.season    = p.season || 0;
+  G.arenaScore= p.arena_score;
+  G.arenaWins = p.arena_wins;
+  G.arenaLosses = p.arena_losses;
+  G.stats = { str:p.stat_str, def:p.stat_def, agi:p.stat_agi, wis:p.stat_wis, cha:p.stat_cha, hp:p.hp, maxhp:p.max_hp };
+
+  // Kale
+  const { data: c } = await supa.from('castles').select('*').eq('profile_id', currentUser.id).single();
+  if (c) G.castle = { hp:c.hp, maxhp:c.max_hp, def:c.defense, atk:c.attack, morale:G.morale, walls:c.walls, towers:c.towers, barracks:c.barracks, farm:c.farm, market:c.market };
+
+  // Ordu
+  const { data: armies } = await supa.from('armies').select('*').eq('profile_id', currentUser.id);
+  if (armies?.length) {
+    G.units.forEach(u => {
+      const row = armies.find(a => a.unit_type === u.id);
+      if (row) u.count = row.count;
+    });
+  }
+
+  // Halk
+  const { data: folk } = await supa.from('folk').select('*').eq('profile_id', currentUser.id).single();
+  if (folk) G.folk = { population: folk.population, happiness: folk.happiness, tax: folk.tax };
+
+  // Keşfedilen hücreler
+  const { data: cells } = await supa.from('explored_cells').select('cell_index').eq('profile_id', currentUser.id);
+  if (cells?.length) G.explored = new Set(cells.map(c => c.cell_index));
+
+  return true;
+}
+
+/* ── VERİ KAYDET ── */
+async function sbSave() {
+  if (!currentUser) return;
+  await supa.from('profiles').update({
+    hero_name:    G.heroName,
+    level:        G.level,
+    xp:           G.xp,
+    skill_points: G.skillPoints,
+    gold:         Math.floor(G.gold),
+    food:         Math.floor(G.food),
+    wood:         Math.floor(G.wood),
+    army:         G.units.reduce((a,u)=>a+u.count,0),
+    morale:       Math.floor(G.morale),
+    turn:         G.turn,
+    season:       G.season,
+    arena_score:  G.arenaScore,
+    arena_wins:   G.arenaWins,
+    arena_losses: G.arenaLosses,
+    stat_str:     G.stats.str,
+    stat_def:     G.stats.def,
+    stat_agi:     G.stats.agi,
+    stat_wis:     G.stats.wis,
+    stat_cha:     G.stats.cha,
+    hp:           G.stats.hp,
+    max_hp:       G.stats.maxhp,
+    updated_at:   new Date().toISOString(),
+  }).eq('id', currentUser.id);
+
+  await supa.from('castles').update({
+    hp:       G.castle.hp,
+    defense:  G.castle.def,
+    attack:   G.castle.atk,
+    walls:    G.castle.walls,
+    towers:   G.castle.towers,
+    barracks: G.castle.barracks,
+    farm:     G.castle.farm,
+    market:   G.castle.market,
+  }).eq('profile_id', currentUser.id);
+
+  for (const u of G.units) {
+    await supa.from('armies').update({ count: u.count }).eq('profile_id', currentUser.id).eq('unit_type', u.id);
+  }
+
+  await supa.from('folk').update({
+    population: G.folk.population,
+    happiness:  G.folk.happiness,
+    tax:        G.folk.tax,
+  }).eq('profile_id', currentUser.id);
+
+  // Yeni keşfedilen hücreler
+  const existing = await supa.from('explored_cells').select('cell_index').eq('profile_id', currentUser.id);
+  const existingSet = new Set((existing.data||[]).map(c=>c.cell_index));
+  const newCells = [...G.explored].filter(i=>!existingSet.has(i)).map(i=>({ profile_id: currentUser.id, cell_index: i }));
+  if (newCells.length) await supa.from('explored_cells').insert(newCells);
+}
+
+/* ── OTOMATİK KAYIT (her tur bitiminde) ── */
+const _origEndTurn = endTurn;
+endTurn = async function() {
+  _origEndTurn();
+  if (currentUser) { await sbSave(); toast('İlerleme kaydedildi ☁'); }
+};
+
+/* ── ONBOARDING'E LOGIN EKLE ── */
+function showLoginScreen() {
+  document.getElementById('obs-0').innerHTML = `
+    <div class="ob-title" style="margin-bottom:4px;">Giriş Yap</div>
+    <div class="ob-desc">Hesabınla giriş yap, kaldığın yerden devam et.</div>
+    <div style="margin-bottom:10px;">
+      <div class="color-lbl">E-POSTA</div>
+      <input class="input-field" id="login-email" type="email" placeholder="e-posta adresin..."/>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div class="color-lbl">ŞİFRE</div>
+      <input class="input-field" id="login-pass" type="password" placeholder="şifren..."/>
+    </div>
+    <button class="btn" style="width:100%;margin-bottom:8px;" onclick="doLogin()">Giriş Yap →</button>
+    <div style="text-align:center;font-size:11px;color:var(--ink3);">Hesabın yok mu? <span style="color:var(--gold);cursor:pointer;" onclick="showRegisterScreen()">Kayıt Ol</span></div>
+    <div style="text-align:center;font-size:11px;color:var(--ink3);margin-top:6px;"><span style="cursor:pointer;color:var(--ink3);" onclick="obGuest()">Misafir olarak devam et</span></div>`;
+}
+
+function showRegisterScreen() {
+  document.getElementById('obs-0').innerHTML = `
+    <div class="ob-title" style="margin-bottom:4px;">Hesap Oluştur</div>
+    <div class="ob-desc">Oyun ilerlemenin kalıcı olması için kayıt ol.</div>
+    <div style="margin-bottom:10px;">
+      <div class="color-lbl">KULLANICI ADI</div>
+      <input class="input-field" id="reg-username" placeholder="Kullanıcı adın..." maxlength="16"/>
+    </div>
+    <div style="margin-bottom:10px;">
+      <div class="color-lbl">E-POSTA</div>
+      <input class="input-field" id="reg-email" type="email" placeholder="e-posta adresin..."/>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div class="color-lbl">ŞİFRE</div>
+      <input class="input-field" id="reg-pass" type="password" placeholder="en az 6 karakter..."/>
+    </div>
+    <button class="btn" style="width:100%;margin-bottom:8px;" onclick="obNext(0)">Devam Et →</button>
+    <div style="text-align:center;font-size:11px;color:var(--ink3);">Zaten hesabın var mı? <span style="color:var(--gold);cursor:pointer;" onclick="showLoginScreen()">Giriş Yap</span></div>
+    <div style="text-align:center;font-size:11px;color:var(--ink3);margin-top:6px;"><span style="cursor:pointer;color:var(--ink3);" onclick="obGuest()">Misafir olarak devam et</span></div>`;
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email')?.value.trim();
+  const pass  = document.getElementById('login-pass')?.value;
+  if (!email || !pass) { toast('E-posta ve şifre gir!'); return; }
+  toast('Giriş yapılıyor...');
+  const ok = await sbLogin(email, pass);
+  if (!ok) return;
+  toast('Giriş başarılı! Veriler yükleniyor...');
+  const loaded = await sbLoadProfile();
+  if (loaded) {
+    obClass = G.classId;
+    startGame();
+    toast(`Hoş geldin, ${G.heroName}! ☁`);
+  } else {
+    toast('Profil bulunamadı, yeni karakter oluştur.');
+    showRegisterScreen();
+  }
+}
+
+/* ── KAYIT SIRASINDA EMAIL+PASS AL ── */
+const _origObNext = obNext;
+obNext = async function(step) {
+  if (step === 0) {
+    const u = document.getElementById('reg-username')?.value.trim();
+    const e = document.getElementById('reg-email')?.value.trim();
+    const p = document.getElementById('reg-pass')?.value;
+    if (!u) { toast('Kullanıcı adı gir!'); return; }
+    if (!e || !p) { toast('E-posta ve şifre gir!'); return; }
+    if (p.length < 6) { toast('Şifre en az 6 karakter olmalı!'); return; }
+    G.username  = u;
+    G._regEmail = e;
+    G._regPass  = p;
+  }
+  _origObNext(step);
+};
+
+/* ── OYUN BAŞLARKEN KAYIT YAP ── */
+const _origStartGame = startGame;
+startGame = async function() {
+  _origStartGame();
+  if (G._regEmail && G._regPass && G.username !== 'Misafir') {
+    toast('Hesap oluşturuluyor...');
+    const ok = await sbRegister(G._regEmail, G._regPass, G.username);
+    if (ok) toast('Hesap oluşturuldu! İlerlemen kaydedilecek ☁');
+  }
+};
+
+/* ── LOGOUT FONKSİYONU ── */
+async function logout() {
+  await sbLogout();
+}
+
+/* ══════════════════════════════════════
    INIT
 ══════════════════════════════════════ */
 // Notif dot başlangıç
 const nd=document.getElementById('notif-dot');if(nd) nd.style.display='block';
+
+// Oturum kontrolü — daha önce giriş yaptıysa direkt oyuna al
+(async () => {
+  const { data: { session } } = await supa.auth.getSession();
+  if (session?.user) {
+    currentUser = session.user;
+    toast('Oturum bulundu, yükleniyor...');
+    const loaded = await sbLoadProfile();
+    if (loaded) {
+      obClass = G.classId;
+      document.getElementById('p-onboard').classList.remove('active');
+      document.getElementById('p-game').classList.add('active');
+      document.getElementById('bottom-nav').style.display='flex';
+      updateHUD();
+      renderGame('karakter');renderGame('kale');renderGame('ordu');renderGame('halk');renderGame('harita');renderGame('arena');
+      renderQuest(G.questTab);renderMarket();renderGuild(G.guildTab);renderProd(G.prodTab);renderProfile(G.profileTab);
+      updateInvStrip();
+      toast(`Hoş geldin, ${G.heroName}! ☁`);
+      return;
+    }
+  }
+  // Oturum yoksa login/register ekranını göster
+  showLoginScreen();
+})();
 </script>
 </body>
 </html>
