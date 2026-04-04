@@ -26,7 +26,96 @@
 html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;justify-content:center;padding:12px 8px;font-family:'Crimson Text',serif;}
 
 /* ── PHONE SHELL ── */
-.phone{width:390px;min-height:700px;background:var(--panel3);border:1.5px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column;position:relative;box-shadow:0 8px 48px #00000088;}
+.phone{
+  width:390px;min-height:700px;
+  background:var(--panel3);border:1.5px solid var(--border);
+  border-radius:36px;overflow:hidden;
+  display:flex;flex-direction:column;position:relative;
+  box-shadow:0 8px 48px #00000088;
+}
+
+/* ── DESKTOP: geniş ekranda yan panel + içerik düzeni ── */
+@media (min-width:900px){
+  html,body{align-items:flex-start;padding:0;}
+  .phone{
+    width:100vw;min-height:100vh;
+    border-radius:0;border:none;
+    flex-direction:row;
+  }
+  /* Sol nav dikey çubuk */
+  .bottom-nav{
+    flex-direction:column !important;
+    width:90px;min-width:90px;
+    height:100vh;
+    border-top:none !important;
+    border-right:1px solid var(--border);
+    padding:16px 0;
+    gap:4px;
+    position:sticky;top:0;
+    order:-1;
+  }
+  .bnav-btn{
+    padding:12px 4px !important;
+    border-top:none !important;
+    border-left:3px solid transparent;
+    transition:border-color .15s,background .15s;
+  }
+  .bnav-btn.active{
+    border-left-color:var(--gold) !important;
+    border-top:none !important;
+    background:#ffffff0a;
+  }
+  .bnav-icon{font-size:22px !important;}
+  .bnav-lbl{font-size:8px !important;}
+
+  /* Sayfa içeriği */
+  .page{flex:1;height:100vh;}
+
+  /* Resource bar daha büyük */
+  .res-bar{padding:8px 20px;}
+  .res-val{font-size:13px !important;}
+
+  /* İçerik max genişlik */
+  .scroll{max-width:900px;margin:0 auto;width:100%;}
+
+  /* Header */
+  .hdr{padding:14px 20px 12px;}
+  .hdr-title{font-size:16px !important;}
+
+  /* Tabs */
+  .tab{font-size:10px !important;padding:10px 4px;}
+  .tab-icon{font-size:16px !important;}
+
+  /* Pad */
+  .pad{padding:16px 20px !important;}
+
+  /* Kart ve içerikler */
+  .card{padding:14px !important;}
+
+  /* Avatar ve portreleri büyüt */
+  .portrait-lg{width:100px !important;height:100px !important;font-size:48px !important;}
+
+  /* Harita grid daha büyük */
+  .map-grid{grid-template-columns:repeat(6,1fr) !important;}
+  .map-cell{font-size:22px !important;}
+  .map-cell .mlbl{font-size:8px !important;}
+
+  /* Onboarding desktop */
+  #p-onboard .scroll{max-width:480px !important;}
+
+  /* Stat grid 4 kolon */
+  .stat-grid2{grid-template-columns:1fr 1fr 1fr 1fr !important;}
+
+  /* Market listing daha geniş */
+  .listing-card{padding:12px !important;}
+}
+
+@media (min-width:1400px){
+  .bottom-nav{width:110px;min-width:110px;}
+  .scroll{max-width:1100px;}
+  .bnav-icon{font-size:24px !important;}
+  .bnav-lbl{font-size:9px !important;}
+}
 
 /* ── PAGES ── */
 .page{display:none;flex-direction:column;flex:1;overflow:hidden;}
