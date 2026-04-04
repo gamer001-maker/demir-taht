@@ -116,8 +116,24 @@ html,body{height:100%;background:var(--panel3);background-image:var(--night-bg);
   .map-cell{font-size:22px !important;}
   .map-cell .mlbl{font-size:8px !important;}
 
-  /* Onboarding desktop */
-  #p-onboard .scroll{max-width:480px !important;}
+  /* Onboarding desktop — tam ekran, ortada geniş kart */
+  #p-onboard{display:flex;align-items:center;justify-content:center;min-height:100vh;}
+  #p-onboard .scroll{max-width:680px !important;width:100%;padding:20px;}
+  .ob-screen.active{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
+  #obs-0.active, #obs-3.active{display:block !important;max-width:460px;margin:0 auto;}
+  .ob-logo{padding:40px 20px 24px;}
+  .ob-logo-title{font-size:32px !important;}
+  .class-grid{grid-template-columns:1fr 1fr 1fr !important;}
+  .avatar-grid{grid-template-columns:repeat(4,1fr) !important;}
+  .ob-steps{padding:0 0 8px;}
+  /* Adım 2: sınıf solda, skill sağda */
+  #obs-1.active .class-grid{grid-column:1;}
+  #obs-1.active #ob-skill-preview{grid-column:2;}
+  #obs-1.active > button, #obs-1.active > .btn{grid-column:1 / -1;}
+  /* Adım 3: avatar solda, renkler sağda */
+  #obs-2.active .avatar-grid{grid-column:1;}
+  #obs-2.active .color-row{grid-column:2;}
+  #obs-2.active > input, #obs-2.active > button, #obs-2.active > .btn, #obs-2.active > div:first-child{grid-column:1 / -1;}
 
   /* Stat grid 4 kolon */
   .stat-grid2{grid-template-columns:1fr 1fr 1fr 1fr !important;}
