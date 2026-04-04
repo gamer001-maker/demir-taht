@@ -1619,8 +1619,10 @@ async function sbSearchGuilds(q){
   const {data}=await query.limit(20);
   if(!data){document.getElementById('g-search-list').innerHTML='';return;}
   if(!data.length){document.getElementById('g-search-list').innerHTML=`<div style="text-align:center;color:var(--ink3);font-size:12px;padding:16px;">Lonca bulunamadı.</div>`;return;}
-  document.getElementById('g-search-list').innerHTML=data.map(g=>`
-    <div class="card" style="cursor:pointer;margin-bottom:7px;" onclick="joinGuild('${g.id}','${(g.name||'').replace(/'/g,'\\'')}')">
+  document.getElementById('g-search-list').innerHTML=data.map(g=>{
+    const safeName=(g.name||'').replace(/'/g,'&#39;');
+    return `
+    <div class="card" style="cursor:pointer;margin-bottom:7px;" onclick="joinGuild('${g.id}','${safeName}')">
       <div style="display:flex;align-items:center;gap:9px;">
         <span style="font-size:28px;">${g.emblem||'🛡'}</span>
         <div style="flex:1;">
@@ -1633,7 +1635,8 @@ async function sbSearchGuilds(q){
         </div>
         <button class="btn btn-sm">Katıl</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 async function joinGuild(id,name){
   if(!currentUser){toast('Giriş yapmalısın!');return;}
