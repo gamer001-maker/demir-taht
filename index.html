@@ -1004,8 +1004,12 @@ function obRenderFinal(){
 function obNext(step){
   if(step===0){
     const u=document.getElementById('reg-username')?.value.trim();
+    const e=document.getElementById('reg-email')?.value.trim();
+    const p=document.getElementById('reg-pass')?.value;
     if(!u){toast('Kullanıcı adı gir!');return;}
-    G.username=u;
+    if(!e||!p){toast('E-posta ve şifre gir!');return;}
+    if(p.length<6){toast('Şifre en az 6 karakter olmalı!');return;}
+    G.username=u;G._regEmail=e;G._regPass=p;
   }
   if(step===1 && !obClass){toast('Sınıf seç!');return;}
   if(step===2){
@@ -1026,12 +1030,18 @@ function obBack(step){
   document.querySelectorAll('.ob-step-dot').forEach((el,i)=>{el.className='ob-step-dot'+(i<obStep?' done':i===obStep?' active':'');});
 }
 function obGuest(){G.username='Misafir';G.heroName='Misafir Kral';obClass='warrior';startGame();}
-function startGame(){
+async function startGame(){
   const cls=CLASSES.find(c=>c.id===obClass);
   G.classId=obClass;
   G.stats={...cls.base};
   G.heroName=G.heroName||(document.getElementById('hero-name')?.value.trim()||'Kahraman');
   G.gold=500;G.skillPoints=3;
+  // Supabase kayıt
+  if(G._regEmail && G._regPass && G.username !== 'Misafir'){
+    toast('Hesap oluşturuluyor...');
+    const ok = await sbRegister(G._regEmail, G._regPass, G.username);
+    if(!ok) return; // kayıt başarısız, devam etme
+  }
   document.getElementById('p-onboard').classList.remove('active');
   document.getElementById('p-game').classList.add('active');
   document.getElementById('bottom-nav').style.display='flex';
@@ -2064,34 +2074,6 @@ async function doLogin() {
     showRegisterScreen();
   }
 }
-
-/* ── KAYIT SIRASINDA EMAIL+PASS AL ── */
-const _origObNext = obNext;
-obNext = async function(step) {
-  if (step === 0) {
-    const u = document.getElementById('reg-username')?.value.trim();
-    const e = document.getElementById('reg-email')?.value.trim();
-    const p = document.getElementById('reg-pass')?.value;
-    if (!u) { toast('Kullanıcı adı gir!'); return; }
-    if (!e || !p) { toast('E-posta ve şifre gir!'); return; }
-    if (p.length < 6) { toast('Şifre en az 6 karakter olmalı!'); return; }
-    G.username  = u;
-    G._regEmail = e;
-    G._regPass  = p;
-  }
-  _origObNext(step);
-};
-
-/* ── OYUN BAŞLARKEN KAYIT YAP ── */
-const _origStartGame = startGame;
-startGame = async function() {
-  _origStartGame();
-  if (G._regEmail && G._regPass && G.username !== 'Misafir') {
-    toast('Hesap oluşturuluyor...');
-    const ok = await sbRegister(G._regEmail, G._regPass, G.username);
-    if (ok) toast('Hesap oluşturuldu! İlerlemen kaydedilecek ☁');
-  }
-};
 
 /* ── LOGOUT FONKSİYONU ── */
 async function logout() {
