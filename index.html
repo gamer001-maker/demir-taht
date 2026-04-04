@@ -6,24 +6,40 @@
 <title>Demir Taht</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
-  --perg:#f5e6c8;--perg2:#ede0c0;--perg3:#e2d0a8;
-  --ink:#2c1a08;--ink2:#4a2f10;--ink3:#7a5530;
-  --panel:#3a2510;--panel2:#2a1a08;--panel3:#1a0f04;
-  --border:#6a4520;--border2:#8a6030;
-  --gold:#c9943a;--gold2:#e8b84a;--copper:#b87333;
-  --hp:#c0392b;--def:#2980b9;--atk:#e67e22;--mor:#27ae60;
-  --g-gray:#9ca3af;--g-gray-bg:#1a1a1a;--g-gray-b:#3a3a3a;
-  --g-green:#4ade80;--g-green-bg:#0a1a0a;--g-green-b:#1a4a1a;
-  --g-blue:#60a5fa;--g-blue-bg:#0a0f1a;--g-blue-b:#1a2a4a;
-  --g-purple:#c084fc;--g-purple-bg:#120a1a;--g-purple-b:#3a1a5a;
-  --g-orange:#fb923c;--g-orange-bg:#1a0c04;--g-orange-b:#5a2a0a;
+  --font-head:'Poppins',sans-serif;
+  --font-body:'Poppins',sans-serif;
+  /* ── Metin renkleri ── */
+  --perg:#e8e4f4;--perg2:#cdc8e8;--perg3:#b0a8d4;
+  --ink:#0d0a1a;--ink2:#1e1840;--ink3:#6b6490;
+
+  /* ── Panel / arka plan ── */
+  --panel:#1a1630;--panel2:#120e24;--panel3:#0a0814;
+  --border:#2e2860;--border2:#4a3d9a;
+
+  /* ── Ana vurgular ── */
+  --gold:#a78bfa;--gold2:#c4b5fd;--copper:#818cf8;
+
+  /* ── Oyun stat renkleri ── */
+  --hp:#f43f5e;--def:#38bdf8;--atk:#fb923c;--mor:#34d399;
+
+  /* ── Item grade renkleri ── */
+  --g-gray:#94a3b8;--g-gray-bg:#141622;--g-gray-b:#2a2e44;
+  --g-green:#4ade80;--g-green-bg:#071a10;--g-green-b:#134a28;
+  --g-blue:#60a5fa;--g-blue-bg:#071020;--g-blue-b:#1a3a60;
+  --g-purple:#c084fc;--g-purple-bg:#120828;--g-purple-b:#3d1278;
+  --g-orange:#fb923c;--g-orange-bg:#1a0c04;--g-orange-b:#5a2a08;
+
+  /* ── Quest renkleri ── */
   --story2:#c084fc;--daily2:#6ee7b7;--side2:#7dd3fc;--guild2:#fbbf24;
-  --war-red:#c0392b;--treasury:#27ae60;
+  --war-red:#f43f5e;--treasury:#34d399;
+
+  /* ── Gece arka plan gradient ── */
+  --night-bg: radial-gradient(ellipse at 20% 20%, #1a0a3a 0%, #0a0814 50%, #0d0a1a 100%);
 }
-html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;justify-content:center;padding:12px 8px;font-family:'Crimson Text',serif;}
+html,body{height:100%;background:var(--panel3);background-image:var(--night-bg);display:flex;align-items:flex-start;justify-content:center;padding:12px 8px;font-family:var(--font-body);font-size:clamp(13px,1.8vw,16px);font-weight:300;}
 
 /* ── PHONE SHELL ── */
 .phone{
@@ -125,49 +141,49 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
 
 /* ── SHARED ── */
 .hdr{background:var(--panel2);border-bottom:1px solid var(--border);padding:12px 14px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-.hdr-title{font-family:'Cinzel',serif;font-size:13px;color:var(--gold2);letter-spacing:2px;}
-.hdr-sub{font-size:10px;color:var(--ink3);margin-top:1px;font-style:italic;}
+.hdr-title{font-family:var(--font-head);font-size:clamp(14px,2vw,18px);font-weight:700;color:var(--gold2);letter-spacing:1px;}
+.hdr-sub{font-size:clamp(10px,1.2vw,12px);font-weight:300;color:var(--ink3);margin-top:1px;}
 .tabs{display:flex;background:var(--panel2);border-bottom:1px solid var(--border);flex-shrink:0;}
-.tab{flex:1;padding:8px 2px;text-align:center;font-family:'Cinzel',serif;font-size:8px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;}
+.tab{flex:1;padding:8px 2px;text-align:center;font-family:var(--font-head);font-size:clamp(8px,1vw,10px);font-weight:600;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;}
 .tab.active{color:var(--gold);border-bottom-color:var(--gold);}
-.tab-icon{display:block;font-size:13px;margin-bottom:2px;}
+.tab-icon{display:block;font-size:clamp(13px,1.8vw,18px);margin-bottom:2px;}
 .scroll{flex:1;overflow-y:auto;overflow-x:hidden;}
 .pad{padding:12px;}
-.sec{font-family:'Cinzel',serif;font-size:9px;color:var(--gold);letter-spacing:1.5px;margin:10px 0 6px;display:flex;align-items:center;gap:6px;}
+.sec{font-family:var(--font-head);font-size:clamp(9px,1vw,11px);font-weight:700;color:var(--gold);letter-spacing:1px;margin:10px 0 6px;display:flex;align-items:center;gap:6px;}
 .sec::after{content:'';flex:1;height:1px;background:var(--border);}
 .sec:first-child{margin-top:0;}
 .card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:11px;margin-bottom:8px;}
 .card-sm{background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:8px 10px;margin-bottom:6px;}
 .row-between{display:flex;align-items:center;justify-content:space-between;}
-.btn{background:none;border:1px solid var(--gold);color:var(--gold);font-family:'Cinzel',serif;font-size:10px;padding:7px 14px;border-radius:5px;cursor:pointer;transition:background .15s,color .15s;}
+.btn{background:none;border:1px solid var(--gold);color:var(--gold);font-family:var(--font-head);font-size:clamp(10px,1.2vw,13px);font-weight:600;padding:7px 14px;border-radius:6px;cursor:pointer;transition:background .15s,color .15s;}
 .btn:hover,.btn:active{background:var(--gold);color:var(--panel3);}
 .btn:disabled{border-color:var(--border);color:var(--ink3);cursor:not-allowed;}
-.btn-sm{padding:4px 10px;font-size:9px;}
-.btn-xs{padding:3px 7px;font-size:8px;}
+.btn-sm{padding:4px 10px;font-size:clamp(9px,1vw,11px);}
+.btn-xs{padding:3px 7px;font-size:clamp(8px,.9vw,10px);}
 .btn-ghost{border-color:var(--border);color:var(--ink3);}
 .btn-ghost:hover{border-color:var(--gold);color:var(--gold);background:none;}
 .btn-danger{border-color:var(--hp);color:var(--hp);}
 .btn-danger:hover{background:var(--hp);color:white;}
 .xp-bar{height:6px;background:var(--panel);border-radius:3px;overflow:hidden;margin:4px 0 2px;}
-.xp-fill{height:100%;border-radius:3px;transition:width .4s;}
-.tag{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-family:'Cinzel',serif;}
-.tag-gold{background:#2a1a00;color:var(--gold);border:1px solid var(--border);}
-.tag-green{background:#082008;color:var(--g-green);border:1px solid var(--g-green-b);}
-.tag-red{background:#200808;color:#f87171;border:1px solid #5a1a1a;}
-.tag-blue{background:#08101a;color:var(--g-blue);border:1px solid var(--g-blue-b);}
-.input-field{width:100%;background:var(--panel);border:1px solid var(--border2);color:var(--perg);font-family:'Crimson Text',serif;font-size:14px;padding:9px 11px;border-radius:6px;outline:none;transition:border-color .2s;}
+.xp-fill{height:100%;border-radius:3px;transition:width .4s;background:linear-gradient(90deg,#6d28d9,#a78bfa);}
+.tag{display:inline-block;padding:2px 7px;border-radius:3px;font-size:clamp(8px,.9vw,10px);font-family:var(--font-head);font-weight:600;}
+.tag-gold{background:#1e1650;color:var(--gold);border:1px solid var(--border2);}
+.tag-green{background:#071a10;color:var(--g-green);border:1px solid var(--g-green-b);}
+.tag-red{background:#200818;color:#f87171;border:1px solid #4a1a3a;}
+.tag-blue{background:#07101a;color:var(--g-blue);border:1px solid var(--g-blue-b);}
+.input-field{width:100%;background:var(--panel);border:1px solid var(--border2);color:var(--perg);font-family:var(--font-body);font-size:clamp(13px,1.5vw,15px);font-weight:300;padding:9px 11px;border-radius:6px;outline:none;transition:border-color .2s;}
 .input-field:focus{border-color:var(--gold);}
-.input-field::placeholder{color:var(--ink3);}
+
 .modal-overlay{position:absolute;inset:0;background:#000000cc;display:flex;align-items:flex-end;z-index:50;}
 .modal-box{background:var(--panel2);border:1px solid var(--border2);border-radius:20px 20px 0 0;width:100%;padding:16px;max-height:85%;overflow-y:auto;animation:slideup .22s ease;}
 @keyframes slideup{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .modal-handle{width:32px;height:3px;background:var(--border2);border-radius:2px;margin:0 auto 12px;}
 /* Stat bars */
 .stat-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
-.stat-lbl{font-family:'Cinzel',serif;font-size:9px;color:var(--ink3);width:68px;}
+.stat-lbl{font-family:var(--font-head);font-size:9px;color:var(--ink3);width:68px;}
 .stat-bw{flex:1;height:6px;background:var(--panel);border-radius:3px;overflow:hidden;}
 .stat-bf{height:100%;border-radius:3px;}
-.stat-val{font-size:11px;color:var(--perg2);min-width:22px;text-align:right;font-family:'Cinzel',serif;}
+.stat-val{font-size:11px;color:var(--perg2);min-width:22px;text-align:right;font-family:var(--font-head);}
 .sp-btn{width:18px;height:18px;border-radius:50%;border:1px solid var(--gold);color:var(--gold);background:none;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .sp-btn:disabled{border-color:var(--border);color:var(--border);cursor:not-allowed;}
 
@@ -175,9 +191,9 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
    ONBOARDING
 ═══════════════════════════════ */
 #p-onboard{background:var(--panel3);}
-.ob-logo{text-align:center;padding:32px 20px 20px;}
-.ob-logo-icon{font-size:56px;display:block;margin-bottom:10px;filter:drop-shadow(0 0 12px #c9943a66);}
-.ob-logo-title{font-family:'Cinzel',serif;font-size:26px;color:var(--gold2);letter-spacing:3px;}
+.ob-logo{text-align:center;padding:32px 20px 20px;position:relative;}
+.ob-logo-icon{font-size:56px;display:block;margin-bottom:10px;filter:drop-shadow(0 0 18px #a78bfaaa);}
+.ob-logo-title{font-family:var(--font-head);font-size:26px;color:var(--gold2);letter-spacing:3px;text-shadow:0 0 24px #a78bfa55;}
 .ob-logo-sub{font-size:13px;color:var(--ink3);font-style:italic;margin-top:4px;}
 .ob-steps{display:flex;padding:0 20px;gap:6px;margin-bottom:4px;}
 .ob-step-dot{flex:1;height:3px;border-radius:2px;background:var(--border);}
@@ -185,26 +201,26 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
 .ob-step-dot.active{background:var(--gold2);}
 .ob-screen{display:none;padding:16px 20px 20px;}
 .ob-screen.active{display:block;}
-.ob-title{font-family:'Cinzel',serif;font-size:15px;color:var(--gold2);margin-bottom:4px;}
+.ob-title{font-family:var(--font-head);font-size:15px;color:var(--gold2);margin-bottom:4px;}
 .ob-desc{font-size:12px;color:var(--ink3);font-style:italic;margin-bottom:14px;line-height:1.5;}
 .class-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;}
 .class-card{background:var(--panel2);border:1.5px solid var(--border);border-radius:10px;padding:11px 8px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s,transform .15s;}
 .class-card:hover{border-color:var(--border2);transform:translateY(-2px);}
-.class-card.sel{border-color:var(--gold);background:#2a1808;}
+.class-card.sel{border-color:var(--gold);background:#1e1650;}
 .class-emoji{font-size:30px;display:block;margin-bottom:5px;}
-.class-name{font-family:'Cinzel',serif;font-size:11px;color:var(--perg);}
+.class-name{font-family:var(--font-head);font-size:11px;color:var(--perg);}
 .class-flavor{font-size:9px;color:var(--ink3);font-style:italic;margin-top:2px;line-height:1.3;}
 .class-tags{display:flex;justify-content:center;gap:3px;margin-top:5px;flex-wrap:wrap;}
-.ctag{font-size:8px;padding:1px 5px;border-radius:3px;background:#3a2010;color:var(--copper);border:1px solid var(--border);}
+.ctag{font-size:8px;padding:1px 5px;border-radius:3px;background:#1e1650;color:var(--copper);border:1px solid var(--border2);}
 .avatar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px;}
 .av-slot{aspect-ratio:1;border-radius:11px;border:1.5px solid var(--border);background:var(--panel2);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;transition:border-color .2s,transform .15s;}
 .av-slot:hover{border-color:var(--border2);transform:scale(1.04);}
-.av-slot.sel{border-color:var(--gold);background:#2a1808;}
+.av-slot.sel{border-color:var(--gold);background:#1e1650;}
 .av-slot.locked{opacity:.4;cursor:not-allowed;}
 .av-slot.locked::after{content:'🔒';position:absolute;bottom:2px;right:3px;font-size:8px;}
 .av-slot svg{width:72%;height:72%;}
 .color-row{margin-bottom:11px;}
-.color-lbl{font-family:'Cinzel',serif;font-size:9px;color:var(--ink3);letter-spacing:1px;margin-bottom:6px;}
+.color-lbl{font-family:var(--font-head);font-size:9px;color:var(--ink3);letter-spacing:1px;margin-bottom:6px;}
 .swatches{display:flex;gap:6px;flex-wrap:wrap;}
 .swatch{width:23px;height:23px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform .15s,border-color .15s;}
 .swatch:hover{transform:scale(1.15);}
@@ -214,15 +230,15 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
 .skill-branch{flex:1;background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:7px 5px;text-align:center;cursor:pointer;transition:border-color .2s;}
 .skill-branch.active-branch{border-color:var(--gold);}
 .branch-icon{font-size:14px;display:block;margin-bottom:2px;}
-.branch-name{font-family:'Cinzel',serif;font-size:7px;color:var(--copper);}
+.branch-name{font-family:var(--font-head);font-size:7px;color:var(--copper);}
 .snode-row{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
 .snode{width:24px;height:24px;border-radius:5px;border:1.5px solid var(--border);background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
-.snode.unlocked{border-color:var(--gold);background:#2a1808;}
+.snode.unlocked{border-color:var(--gold);background:#1e1650;}
 .snode.locked{opacity:.4;}
 .snode-info{flex:1;}
-.snode-name{font-family:'Cinzel',serif;font-size:10px;color:var(--perg2);}
+.snode-name{font-family:var(--font-head);font-size:10px;color:var(--perg2);}
 .snode-desc{font-size:9px;color:var(--ink3);}
-.snode-lv{font-family:'Cinzel',serif;font-size:8px;padding:1px 4px;border-radius:3px;background:var(--panel);border:1px solid var(--border);color:var(--ink3);}
+.snode-lv{font-family:var(--font-head);font-size:8px;padding:1px 4px;border-radius:3px;background:var(--panel);border:1px solid var(--border);color:var(--ink3);}
 .snode.unlocked .snode-lv{color:var(--gold);border-color:var(--gold);}
 
 /* ═══════════════════════════════
@@ -232,7 +248,7 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
 .bnav-btn{flex:1;padding:8px 2px 10px;text-align:center;cursor:pointer;border-top:2px solid transparent;transition:border-color .15s;}
 .bnav-btn.active{border-top-color:var(--gold);}
 .bnav-icon{font-size:18px;display:block;}
-.bnav-lbl{font-family:'Cinzel',serif;font-size:7px;color:var(--ink3);margin-top:2px;}
+.bnav-lbl{font-family:var(--font-head);font-size:7px;color:var(--ink3);margin-top:2px;}
 .bnav-btn.active .bnav-lbl{color:var(--gold);}
 .bnav-notif{position:relative;display:inline-block;}
 .bnav-dot{position:absolute;top:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:var(--hp);border:1px solid var(--panel2);}
@@ -242,17 +258,17 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
 ═══════════════════════════════ */
 .res-bar{background:var(--panel2);border-bottom:1px solid var(--border);padding:6px 12px;display:flex;justify-content:space-between;flex-shrink:0;}
 .res-item{display:flex;align-items:center;gap:3px;font-size:11px;}
-.res-val{font-family:'Cinzel',serif;color:var(--gold);font-size:11px;}
+.res-val{font-family:var(--font-head);color:var(--gold);font-size:11px;}
 
 /* ═══════════════════════════════
    HOME / KALE
 ═══════════════════════════════ */
 .castle-stat{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
 .cs-icon{font-size:13px;width:18px;text-align:center;}
-.cs-lbl{font-family:'Cinzel',serif;font-size:9px;color:var(--ink3);width:58px;}
+.cs-lbl{font-family:var(--font-head);font-size:9px;color:var(--ink3);width:58px;}
 .cs-bar-bg{flex:1;height:9px;background:var(--panel);border-radius:4px;overflow:hidden;}
 .cs-bar{height:100%;border-radius:4px;transition:width .4s;}
-.cs-val{font-size:11px;color:var(--perg2);min-width:34px;text-align:right;font-family:'Cinzel',serif;}
+.cs-val{font-size:11px;color:var(--perg2);min-width:34px;text-align:right;font-family:var(--font-head);}
 
 /* ═══════════════════════════════
    KARAKTER
@@ -268,7 +284,7 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
 .map-cell:hover{filter:brightness(1.3);transform:scale(1.05);z-index:2;}
 .map-cell.sel{border-color:var(--gold);}
 .map-cell.fog{filter:grayscale(1);opacity:.3;}
-.map-cell .mlbl{font-size:6px;font-family:'Cinzel',serif;color:#fff9;}
+.map-cell .mlbl{font-size:6px;font-family:var(--font-head);color:#fff9;}
 .t-plains{background:#2a4a1a;}.t-forest{background:#1a3a12;}.t-mountain{background:#4a3c2a;}
 .t-water{background:#1a2e3a;}.t-castle{background:#3a2a1a;}.t-village{background:#3a3010;}.t-ruins{background:#2a2218;}
 
@@ -289,11 +305,11 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
 ═══════════════════════════════ */
 .qcard{border-radius:9px;padding:11px;margin-bottom:7px;cursor:pointer;transition:filter .15s;}
 .qcard:hover{filter:brightness(1.08);}
-.qcard.story-card{background:#120a1a;border:1px solid #3a1a6a;}
-.qcard.daily-card{background:#0a1408;border:1px solid #1a4a1a;}
-.qcard.side-card{background:#080f18;border:1px solid #1a2a4a;}
-.qcard.guild-card{background:#140e04;border:1px solid #4a3a0a;}
-.qcard.done-card{background:#0a1206;border:1px solid #2a4a1a;opacity:.7;}
+.qcard.story-card{background:#130a28;border:1px solid #4a1a8a;}
+.qcard.daily-card{background:#081428;border:1px solid #1a3a5a;}
+.qcard.side-card{background:#080f28;border:1px solid #1a2a6a;}
+.qcard.guild-card{background:#100828;border:1px solid #3a1a6a;}
+.qcard.done-card{background:#0a0e20;border:1px solid #2a3a5a;opacity:.7;}
 .qcard.locked-card{background:var(--panel2);border:1px solid var(--border);opacity:.5;cursor:not-allowed;}
 .q-icon{width:34px;height:34px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
 .prog-bar-bg{height:5px;background:var(--panel);border-radius:3px;overflow:hidden;}
@@ -302,11 +318,11 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
 .daily-bar{background:linear-gradient(90deg,#1a6a2a,var(--daily2));}
 .side-bar{background:linear-gradient(90deg,#1a4a6a,var(--side2));}
 .guild-bar{background:linear-gradient(90deg,#6a3a0a,var(--guild2));}
-.done-bar{background:linear-gradient(90deg,#2a5a2a,var(--g-green));}
-.reward-chip{display:inline-flex;align-items:center;gap:2px;font-size:9px;padding:2px 6px;border-radius:3px;font-family:'Cinzel',serif;}
-.rc-gold{background:#2a1a00;color:var(--gold2);border:1px solid #4a3a00;}
-.rc-xp{background:#0a0a2a;color:#a78bfa;border:1px solid #2a1a5a;}
-.rc-item{background:#1a0808;color:#fca5a5;border:1px solid #4a1a1a;}
+.done-bar{background:linear-gradient(90deg,#134a28,var(--g-green));}
+.reward-chip{display:inline-flex;align-items:center;gap:2px;font-size:9px;padding:2px 6px;border-radius:3px;font-family:var(--font-head);}
+.rc-gold{background:#1e1650;color:var(--gold2);border:1px solid #3a2a80;}
+.rc-xp{background:#120a28;color:#c084fc;border:1px solid #3d1278;}
+.rc-item{background:#1a0820;color:#fca5a5;border:1px solid #4a1a3a;}
 
 /* ═══════════════════════════════
    MARKET
@@ -324,7 +340,7 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
 .item-icon.blue{background:var(--g-blue-bg);border:1px solid var(--g-blue-b);}
 .item-icon.purple{background:var(--g-purple-bg);border:1px solid var(--g-purple-b);}
 .item-icon.orange{background:var(--g-orange-bg);border:1px solid var(--g-orange-b);}
-.grade-pip{position:absolute;bottom:-3px;right:-3px;font-size:7px;padding:1px 3px;border-radius:2px;font-family:'Cinzel',serif;line-height:1.4;}
+.grade-pip{position:absolute;bottom:-3px;right:-3px;font-size:7px;padding:1px 3px;border-radius:2px;font-family:var(--font-head);line-height:1.4;}
 .gp-gray{background:var(--g-gray-bg);color:var(--g-gray);border:1px solid var(--g-gray-b);}
 .gp-green{background:var(--g-green-bg);color:var(--g-green);border:1px solid var(--g-green-b);}
 .gp-blue{background:var(--g-blue-bg);color:var(--g-blue);border:1px solid var(--g-blue-b);}
@@ -335,53 +351,53 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
 .item-name.blue{color:var(--g-blue);}
 .item-name.purple{color:var(--g-purple);}
 .item-name.orange{color:var(--g-orange);}
-.buy-btn-sm{background:none;border:1px solid var(--gold);color:var(--gold);font-family:'Cinzel',serif;font-size:8px;padding:3px 7px;border-radius:3px;cursor:pointer;transition:background .15s;white-space:nowrap;}
+.buy-btn-sm{background:none;border:1px solid var(--gold);color:var(--gold);font-family:var(--font-head);font-size:8px;padding:3px 7px;border-radius:3px;cursor:pointer;transition:background .15s;white-space:nowrap;}
 .buy-btn-sm:hover{background:var(--gold);color:var(--panel3);}
 .buy-btn-sm:disabled{border-color:var(--border);color:var(--ink3);cursor:not-allowed;}
 
 /* ═══════════════════════════════
    LONCA
 ═══════════════════════════════ */
-.guild-banner{background:linear-gradient(135deg,#1a0f04,#2a1808);border:1px solid var(--border2);border-radius:12px;padding:14px;margin-bottom:10px;text-align:center;}
+.guild-banner{background:linear-gradient(135deg,#1a0f04,var(--panel));border:1px solid var(--border2);border-radius:12px;padding:14px;margin-bottom:10px;text-align:center;}
 .member-card{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:9px;margin-bottom:5px;display:flex;align-items:center;gap:9px;}
 .m-av{width:36px;height:36px;border-radius:50%;background:var(--panel);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;position:relative;}
 .online-dot{position:absolute;bottom:0;right:0;width:9px;height:9px;border-radius:50%;border:1.5px solid var(--panel2);}
 .dot-on{background:var(--g-green);}
 .dot-off{background:#4a4a4a;}
-.rb{font-size:8px;padding:2px 6px;border-radius:3px;font-family:'Cinzel',serif;}
-.rb-leader{background:#2a1a00;color:var(--gold2);border:1px solid #5a4a00;}
+.rb{font-size:8px;padding:2px 6px;border-radius:3px;font-family:var(--font-head);}
+.rb-leader{background:var(--panel2);color:var(--gold2);border:1px solid #3d2a7a;}
 .rb-officer{background:#08101a;color:var(--g-blue);border:1px solid #1a2a4a;}
 .rb-member{background:var(--panel);color:var(--g-gray);border:1px solid var(--border);}
 .chat-msg{max-width:82%;display:flex;flex-direction:column;}
 .chat-msg.mine{align-self:flex-end;align-items:flex-end;}
 .chat-msg.other{align-self:flex-start;align-items:flex-start;}
 .chat-bubble{padding:7px 10px;border-radius:11px;font-size:12px;line-height:1.5;color:var(--perg2);}
-.mine .chat-bubble{background:#2a1808;border:1px solid var(--border);border-bottom-right-radius:3px;}
-.other .chat-bubble{background:#0f1a0a;border:1px solid #1a3a1a;border-bottom-left-radius:3px;}
+.mine .chat-bubble{background:#1e1650;border:1px solid var(--border2);border-bottom-right-radius:3px;}
+.other .chat-bubble{background:#0e1428;border:1px solid #1a2a50;border-bottom-left-radius:3px;}
 .chat-meta{font-size:8px;color:var(--ink3);margin-top:2px;display:flex;align-items:center;gap:3px;}
-.chat-sender{font-family:'Cinzel',serif;color:var(--copper);}
+.chat-sender{font-family:var(--font-head);color:var(--copper);}
 .chat-sender.leader{color:var(--gold2);}
 .chat-sys{text-align:center;font-size:9px;color:var(--ink3);font-style:italic;padding:3px 0;}
-.war-card{background:#1a0808;border:1px solid #5a1a1a;border-radius:10px;padding:11px;margin-bottom:8px;}
+.war-card{background:#1a0820;border:1px solid #5a1a3a;border-radius:10px;padding:11px;margin-bottom:8px;}
 
 /* ═══════════════════════════════
    ÜRETİM
 ═══════════════════════════════ */
 .recipe{background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:9px;margin-bottom:6px;}
 .mat-chip{display:inline-flex;align-items:center;gap:2px;background:var(--panel2);border:1px solid var(--border);border-radius:3px;padding:2px 5px;font-size:9px;color:var(--perg2);}
-.mat-chip.missing{border-color:#5a1a1a;color:#f87171;background:#1a0808;}
+.mat-chip.missing{border-color:#4a1a3a;color:#f87171;background:var(--panel2);}
 .mat-chip.output{border-color:var(--border2);color:var(--gold2);}
 .timer-card{background:var(--panel);border:1px solid var(--border2);border-radius:7px;padding:9px;margin-bottom:6px;position:relative;overflow:hidden;}
 .timer-card.t-done{border-color:var(--g-green);}
 .timer-prog-bg{position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--panel2);}
 .timer-prog-fill{height:100%;background:var(--gold);}
 .timer-card.t-done .timer-prog-fill{background:var(--g-green);}
-.collect-btn{width:100%;background:none;border:1px solid var(--g-green);color:var(--g-green);font-family:'Cinzel',serif;font-size:9px;padding:5px;border-radius:4px;cursor:pointer;margin-top:4px;transition:background .15s;}
+.collect-btn{width:100%;background:none;border:1px solid var(--g-green);color:var(--g-green);font-family:var(--font-head);font-size:9px;padding:5px;border-radius:4px;cursor:pointer;margin-top:4px;transition:background .15s;}
 .collect-btn:hover{background:var(--g-green);color:var(--panel3);}
 .inv-strip{background:var(--panel2);border-bottom:1px solid var(--border);padding:5px 10px;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;}
 .inv-strip::-webkit-scrollbar{display:none;}
 .inv-chip{flex-shrink:0;display:flex;align-items:center;gap:2px;background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:10px;color:var(--perg2);}
-.inv-chip .icv{font-family:'Cinzel',serif;color:var(--gold);font-size:9px;}
+.inv-chip .icv{font-family:var(--font-head);color:var(--gold);font-size:9px;}
 .bonus-flash{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a0a2a;border:2px solid var(--g-purple);border-radius:12px;padding:14px 22px;text-align:center;z-index:300;animation:bpop .3s ease;}
 @keyframes bpop{from{transform:translate(-50%,-50%) scale(.5);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
 
@@ -390,7 +406,7 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
 ═══════════════════════════════ */
 .stat-grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;}
 .stat2{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:9px;text-align:center;}
-.stat2-val{font-family:'Cinzel',serif;font-size:17px;color:var(--gold);}
+.stat2-val{font-family:var(--font-head);font-size:17px;color:var(--gold);}
 .stat2-lbl{font-size:9px;color:var(--ink3);margin-top:2px;}
 .ach-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:9px;margin-bottom:6px;display:flex;align-items:center;gap:9px;}
 .setting-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);}
@@ -410,7 +426,7 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
 /* ═══════════════════════════════
    TOAST
 ═══════════════════════════════ */
-#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--gold);color:var(--perg);font-family:'Cinzel',serif;font-size:11px;padding:8px 18px;border-radius:20px;z-index:500;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:320px;text-align:center;}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--gold);color:var(--perg);font-family:var(--font-head);font-size:11px;padding:8px 18px;border-radius:20px;z-index:500;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:320px;text-align:center;}
 </style>
 </head>
 <body>
@@ -439,15 +455,15 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
         <div class="ob-title">Hesap Oluştur</div>
         <div class="ob-desc">Oyun ilerlemen sunucuda saklanır. Kayıt olarak tüm cihazlardan devam edebilirsin.</div>
         <div style="margin-bottom:10px;">
-          <div class="color-lbl" style="font-family:'Cinzel',serif;font-size:9px;color:var(--ink3);letter-spacing:1px;margin-bottom:5px;">KULLANICI ADI</div>
+          <div class="color-lbl" style="font-family:var(--font-head);font-size:9px;color:var(--ink3);letter-spacing:1px;margin-bottom:5px;">KULLANICI ADI</div>
           <input class="input-field" id="reg-username" placeholder="Kullanıcı adın..." maxlength="16"/>
         </div>
         <div style="margin-bottom:10px;">
-          <div class="color-lbl" style="font-family:'Cinzel',serif;font-size:9px;color:var(--ink3);letter-spacing:1px;margin-bottom:5px;">E-POSTA</div>
+          <div class="color-lbl" style="font-family:var(--font-head);font-size:9px;color:var(--ink3);letter-spacing:1px;margin-bottom:5px;">E-POSTA</div>
           <input class="input-field" id="reg-email" type="email" placeholder="e-posta adresin..."/>
         </div>
         <div style="margin-bottom:14px;">
-          <div class="color-lbl" style="font-family:'Cinzel',serif;font-size:9px;color:var(--ink3);letter-spacing:1px;margin-bottom:5px;">ŞİFRE</div>
+          <div class="color-lbl" style="font-family:var(--font-head);font-size:9px;color:var(--ink3);letter-spacing:1px;margin-bottom:5px;">ŞİFRE</div>
           <input class="input-field" id="reg-pass" type="password" placeholder="şifren..."/>
         </div>
         <button class="btn" style="width:100%;margin-bottom:8px;" onclick="obNext(0)">Devam Et →</button>
@@ -489,12 +505,12 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
       <div class="ob-screen" id="obs-3">
         <div style="text-align:center;padding:10px 0 16px;">
           <div class="portrait-lg" style="width:88px;height:88px;font-size:42px;" id="ob-final-portrait"><svg></svg></div>
-          <div style="font-family:'Cinzel',serif;font-size:18px;color:var(--gold2);margin-bottom:3px;" id="ob-final-name">—</div>
+          <div style="font-family:var(--font-head);font-size:18px;color:var(--gold2);margin-bottom:3px;" id="ob-final-name">—</div>
           <div style="font-size:12px;color:var(--ink3);font-style:italic;" id="ob-final-class">—</div>
           <div style="display:flex;justify-content:center;gap:6px;margin-top:8px;" id="ob-final-tags"></div>
         </div>
         <div class="card" style="margin-bottom:10px;">
-          <div class="row-between"><span style="font-size:12px;color:var(--perg2);">🪙 Başlangıç Altını</span><span style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);">500</span></div>
+          <div class="row-between"><span style="font-size:12px;color:var(--perg2);">🪙 Başlangıç Altını</span><span style="font-family:var(--font-head);font-size:15px;color:var(--gold);">500</span></div>
           <div style="height:1px;background:var(--border);margin:8px 0;"></div>
           <div id="ob-final-stats"></div>
         </div>
@@ -513,7 +529,7 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
       <div class="res-item">🌾<span class="res-val" id="r-food">80</span></div>
       <div class="res-item">🪵<span class="res-val" id="r-wood">40</span></div>
       <div class="res-item">⚔<span class="res-val" id="r-army">30</span></div>
-      <div class="res-item" id="turn-display" style="font-family:'Cinzel',serif;font-size:10px;color:var(--ink3);">Y1 Bahar</div>
+      <div class="res-item" id="turn-display" style="font-family:var(--font-head);font-size:10px;color:var(--ink3);">Y1 Bahar</div>
     </div>
 
     <!-- SUB-NAV TABS -->
@@ -531,7 +547,7 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
       <div class="pad" id="gs-karakter">
         <div class="card" style="text-align:center;">
           <div class="portrait-lg" id="g-portrait"><svg></svg></div>
-          <div style="font-family:'Cinzel',serif;font-size:16px;color:var(--gold2);" id="g-name">—</div>
+          <div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);" id="g-name">—</div>
           <div style="font-size:12px;color:var(--ink3);font-style:italic;" id="g-class">—</div>
           <div style="display:flex;justify-content:center;gap:6px;margin-top:7px;">
             <span class="tag tag-gold" id="g-lvl">Sv.1</span>
@@ -542,13 +558,13 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
         </div>
         <div class="card">
           <div class="row-between" style="margin-bottom:9px;">
-            <span style="font-family:'Cinzel',serif;font-size:10px;color:var(--gold);letter-spacing:1px;">YETENEKLER</span>
+            <span style="font-family:var(--font-head);font-size:10px;color:var(--gold);letter-spacing:1px;">YETENEKLER</span>
             <span style="font-size:10px;color:var(--ink3);">Serbest: <span style="color:var(--gold);" id="g-sp">0</span></span>
           </div>
           <div id="g-stats"></div>
         </div>
         <div class="card">
-          <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">EKİPMAN</div>
+          <div style="font-family:var(--font-head);font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">EKİPMAN</div>
           <div class="row-between" style="margin-bottom:5px;"><span style="font-size:10px;color:var(--ink3);">Silah</span><span style="font-size:12px;color:var(--perg2);" id="eq-weapon">Eski Kılıç ⚔</span></div>
           <div class="row-between" style="margin-bottom:5px;"><span style="font-size:10px;color:var(--ink3);">Zırh</span><span style="font-size:12px;color:var(--perg2);">Deri Zırh 🛡</span></div>
           <div class="row-between"><span style="font-size:10px;color:var(--ink3);">Yüzük</span><span style="font-size:12px;color:var(--ink3);">—</span></div>
@@ -558,19 +574,19 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
       <div class="pad" id="gs-kale" style="display:none;">
         <div class="card" id="castle-hdr-card"></div>
         <div class="card">
-          <div style="font-family:'Cinzel',serif;font-size:9px;color:var(--gold);letter-spacing:1px;margin-bottom:9px;">KALE İSTATİSTİKLERİ</div>
+          <div style="font-family:var(--font-head);font-size:9px;color:var(--gold);letter-spacing:1px;margin-bottom:9px;">KALE İSTATİSTİKLERİ</div>
           <div id="castle-bars-wrap"></div>
         </div>
         <div class="card">
-          <div style="font-family:'Cinzel',serif;font-size:9px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">BİNALAR</div>
+          <div style="font-family:var(--font-head);font-size:9px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">BİNALAR</div>
           <div id="castle-buildings-wrap"></div>
         </div>
         <button class="btn" style="width:100%;" onclick="endTurn()">⏭ Tur Bitir</button>
       </div>
       <!-- ORDU -->
       <div class="pad" id="gs-ordu" style="display:none;">
-        <div class="card-sm row-between"><span style="font-size:12px;color:var(--perg2);">Toplam Asker</span><span style="font-family:'Cinzel',serif;font-size:16px;color:var(--gold);" id="total-army">30</span></div>
-        <div class="card-sm row-between"><span style="font-size:12px;color:var(--perg2);">Tur Maaşı</span><span style="font-family:'Cinzel',serif;font-size:13px;color:var(--copper);" id="army-cost">0🪙</span></div>
+        <div class="card-sm row-between"><span style="font-size:12px;color:var(--perg2);">Toplam Asker</span><span style="font-family:var(--font-head);font-size:16px;color:var(--gold);" id="total-army">30</span></div>
+        <div class="card-sm row-between"><span style="font-size:12px;color:var(--perg2);">Tur Maaşı</span><span style="font-family:var(--font-head);font-size:13px;color:var(--copper);" id="army-cost">0🪙</span></div>
         <div class="sec">Birlikler</div>
         <div id="unit-list"></div>
         <div class="sec">Asker İşe Al</div>
@@ -580,11 +596,11 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
       <div class="pad" id="gs-halk" style="display:none;">
         <div class="card" id="folk-overview-card"></div>
         <div class="card">
-          <div style="font-family:'Cinzel',serif;font-size:9px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">YÖNETİM</div>
+          <div style="font-family:var(--font-head);font-size:9px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">YÖNETİM</div>
           <div id="folk-actions-wrap"></div>
         </div>
         <div class="card">
-          <div style="font-family:'Cinzel',serif;font-size:9px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">HALK OLAYLARI</div>
+          <div style="font-family:var(--font-head);font-size:9px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">HALK OLAYLARI</div>
           <div id="folk-events-wrap"></div>
         </div>
       </div>
@@ -596,7 +612,7 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
       </div>
       <!-- ARENA -->
       <div class="pad" id="gs-arena" style="display:none;">
-        <div class="card-sm row-between" style="margin-bottom:4px;"><span style="font-size:12px;color:var(--perg2);">Arena Puanı</span><span style="font-family:'Cinzel',serif;font-size:16px;color:var(--gold);" id="arena-pts">0</span></div>
+        <div class="card-sm row-between" style="margin-bottom:4px;"><span style="font-size:12px;color:var(--perg2);">Arena Puanı</span><span style="font-family:var(--font-head);font-size:16px;color:var(--gold);" id="arena-pts">0</span></div>
         <div class="card-sm row-between" style="margin-bottom:10px;"><span style="font-size:11px;color:var(--ink3);" id="arena-record">0G / 0M</span></div>
         <div id="battle-log-wrap" style="display:none;"></div>
         <div id="opponent-list"></div>
@@ -610,7 +626,7 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
   <div class="page" id="p-quest">
     <div class="hdr">
       <div><div class="hdr-title">📜 GÖREVLER</div><div class="hdr-sub" id="quest-hdr-sub">Kral · Seviye 1</div></div>
-      <div style="text-align:right;"><div style="font-family:'Cinzel',serif;font-size:11px;color:var(--daily2);" id="daily-timer">--:--:--</div><div style="font-size:9px;color:var(--ink3);">Sıfırlanma</div></div>
+      <div style="text-align:right;"><div style="font-family:var(--font-head);font-size:11px;color:var(--daily2);" id="daily-timer">--:--:--</div><div style="font-size:9px;color:var(--ink3);">Sıfırlanma</div></div>
     </div>
     <div class="tabs">
       <div class="tab active" id="qt-story"  onclick="qgo('story')"> <span class="tab-icon">📖</span>Hikaye</div>
@@ -627,28 +643,28 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
   <div class="page" id="p-market">
     <div class="hdr">
       <div><div class="hdr-title">🏪 PAZAR</div><div style="font-size:10px;color:var(--ink3);margin-top:1px;">1.247 aktif ilan</div></div>
-      <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);">🪙 <span id="m-gold">500</span></div>
+      <div style="font-family:var(--font-head);font-size:13px;color:var(--gold);">🪙 <span id="m-gold">500</span></div>
     </div>
     <div style="background:var(--panel2);border-bottom:1px solid var(--border);padding:7px 11px;display:flex;gap:6px;flex-shrink:0;">
       <input class="input-field" style="flex:1;padding:6px 9px;font-size:12px;" id="market-search" placeholder="İtem ara..." oninput="renderMarket()"/>
       <button class="btn btn-sm" onclick="toast('Satış özelliği yakında!')">+ Sat</button>
     </div>
     <div style="display:flex;background:var(--panel2);border-bottom:1px solid var(--border);flex-shrink:0;">
-      <div class="src-btn active" id="src-all" onclick="setSrc('all')" style="flex:1;padding:7px 4px;text-align:center;font-family:'Cinzel',serif;font-size:8px;color:var(--gold);cursor:pointer;border-bottom:2px solid var(--gold);">🏪 Tümü</div>
-      <div class="src-btn" id="src-player" onclick="setSrc('player')" style="flex:1;padding:7px 4px;text-align:center;font-family:'Cinzel',serif;font-size:8px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;">👤 Oyuncu</div>
-      <div class="src-btn" id="src-npc" onclick="setSrc('npc')" style="flex:1;padding:7px 4px;text-align:center;font-family:'Cinzel',serif;font-size:8px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;">🤖 NPC</div>
+      <div class="src-btn active" id="src-all" onclick="setSrc('all')" style="flex:1;padding:7px 4px;text-align:center;font-family:var(--font-head);font-size:8px;color:var(--gold);cursor:pointer;border-bottom:2px solid var(--gold);">🏪 Tümü</div>
+      <div class="src-btn" id="src-player" onclick="setSrc('player')" style="flex:1;padding:7px 4px;text-align:center;font-family:var(--font-head);font-size:8px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;">👤 Oyuncu</div>
+      <div class="src-btn" id="src-npc" onclick="setSrc('npc')" style="flex:1;padding:7px 4px;text-align:center;font-family:var(--font-head);font-size:8px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;">🤖 NPC</div>
     </div>
     <div style="display:flex;overflow-x:auto;background:var(--panel2);border-bottom:1px solid var(--border);padding:0 4px;flex-shrink:0;scrollbar-width:none;">
-      <div class="cat-tab active" id="cat-all" onclick="setCat('all')" style="flex-shrink:0;padding:7px 9px;font-family:'Cinzel',serif;font-size:8px;color:var(--gold2);cursor:pointer;border-bottom:2px solid var(--gold2);white-space:nowrap;">⚡ Tümü</div>
-      <div class="cat-tab" id="cat-weapon" onclick="setCat('weapon')" style="flex-shrink:0;padding:7px 9px;font-family:'Cinzel',serif;font-size:8px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">⚔ Silah</div>
-      <div class="cat-tab" id="cat-armor" onclick="setCat('armor')" style="flex-shrink:0;padding:7px 9px;font-family:'Cinzel',serif;font-size:8px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">🛡 Zırh</div>
-      <div class="cat-tab" id="cat-accessory" onclick="setCat('accessory')" style="flex-shrink:0;padding:7px 9px;font-family:'Cinzel',serif;font-size:8px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">💍 Aksesuar</div>
-      <div class="cat-tab" id="cat-consumable" onclick="setCat('consumable')" style="flex-shrink:0;padding:7px 9px;font-family:'Cinzel',serif;font-size:8px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">⚗ Sarf</div>
-      <div class="cat-tab" id="cat-resource" onclick="setCat('resource')" style="flex-shrink:0;padding:7px 9px;font-family:'Cinzel',serif;font-size:8px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">🪵 Kaynak</div>
+      <div class="cat-tab active" id="cat-all" onclick="setCat('all')" style="flex-shrink:0;padding:7px 9px;font-family:var(--font-head);font-size:8px;color:var(--gold2);cursor:pointer;border-bottom:2px solid var(--gold2);white-space:nowrap;">⚡ Tümü</div>
+      <div class="cat-tab" id="cat-weapon" onclick="setCat('weapon')" style="flex-shrink:0;padding:7px 9px;font-family:var(--font-head);font-size:8px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">⚔ Silah</div>
+      <div class="cat-tab" id="cat-armor" onclick="setCat('armor')" style="flex-shrink:0;padding:7px 9px;font-family:var(--font-head);font-size:8px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">🛡 Zırh</div>
+      <div class="cat-tab" id="cat-accessory" onclick="setCat('accessory')" style="flex-shrink:0;padding:7px 9px;font-family:var(--font-head);font-size:8px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">💍 Aksesuar</div>
+      <div class="cat-tab" id="cat-consumable" onclick="setCat('consumable')" style="flex-shrink:0;padding:7px 9px;font-family:var(--font-head);font-size:8px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">⚗ Sarf</div>
+      <div class="cat-tab" id="cat-resource" onclick="setCat('resource')" style="flex-shrink:0;padding:7px 9px;font-family:var(--font-head);font-size:8px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">🪵 Kaynak</div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 11px;border-bottom:1px solid var(--border);background:var(--panel2);flex-shrink:0;">
       <span style="font-size:10px;color:var(--ink3);" id="market-count">—</span>
-      <select style="background:var(--panel);border:1px solid var(--border);color:var(--perg2);font-family:'Cinzel',serif;font-size:9px;padding:3px 6px;border-radius:3px;outline:none;" onchange="renderMarket()" id="market-sort">
+      <select style="background:var(--panel);border:1px solid var(--border);color:var(--perg2);font-family:var(--font-head);font-size:9px;padding:3px 6px;border-radius:3px;outline:none;" onchange="renderMarket()" id="market-sort">
         <option value="price_asc">Fiyat ↑</option>
         <option value="price_desc">Fiyat ↓</option>
         <option value="grade_desc">Grade ↓</option>
@@ -679,7 +695,7 @@ html,body{height:100%;background:#0c0804;display:flex;align-items:flex-start;jus
        ÜRETİM
   ════════════════════════════ -->
   <div class="page" id="p-prod">
-    <div class="hdr"><div class="hdr-title">🏭 ÜRETİM</div><div style="font-family:'Cinzel',serif;font-size:12px;color:var(--gold);">🪙 <span id="prod-gold">500</span></div></div>
+    <div class="hdr"><div class="hdr-title">🏭 ÜRETİM</div><div style="font-family:var(--font-head);font-size:12px;color:var(--gold);">🪙 <span id="prod-gold">500</span></div></div>
     <div class="inv-strip" id="inv-strip"></div>
     <div class="tabs">
       <div class="tab active" id="pt-farm"    onclick="pgo('farm')">   <span class="tab-icon">🌾</span>Tarla</div>
@@ -888,15 +904,7 @@ const ITEM_LABELS={bugday:'Buğday',saman:'Saman',arpa:'Arpa',sebze:'Sebze',un:'
 const ITEM_ICONS={bugday:'🌾',saman:'🌿',arpa:'🌱',sebze:'🥦',un:'🥛',arpa_unu:'🥛',tuy:'🪶',yumurta:'🥚',yun:'🧶',sut:'🥛',ekmek:'🍞',corba:'🥣',kek:'🎂'};
 const GRADES={gray:{name:'Ortak'},green:{name:'Nadir'},blue:{name:'Değerli'},purple:{name:'Epik'},orange:{name:'Efsanevi'}};
 const STAT_LABELS={atk:'Saldırı',def:'Savunma',mgc:'Büyü',wis:'Bilgelik',spd:'Hız',crit:'Kritik',rng:'Menzil',str:'Güç',hp:'Can',hp_restore:'Can Yenile',atk_boost:'Saldırı Artış',craft_iron:'Demir',craft_wood:'Odun',craft_legendary:'Efsanevi Crafting',luck:'Şans'};
-const NOTIFS=[
-  {id:1,type:'guild',icon:'⚔',color:'red',title:'Lonca Savaşı Başladı!',desc:'Kara Ejder Birliği\'ne karşı savaş başladı.',time:'2 dk önce',read:false},
-  {id:2,type:'market',icon:'🏪',color:'blue',title:'İlanın Satıldı!',desc:'Gümüş Kolye 200🪙\'ye satıldı.',time:'15 dk önce',read:false},
-  {id:3,type:'quest',icon:'📜',color:'gold',title:'Günlük Görevler Sıfırlandı',desc:'Yeni günlük görevlerin hazır!',time:'1 sa önce',read:false},
-  {id:4,type:'prod',icon:'🌾',color:'green',title:'Üretim Tamamlandı!',desc:'Tarla: Buğday hazır, topla!',time:'1 sa önce',read:false},
-  {id:5,type:'arena',icon:'🛡',color:'purple',title:'Arena Meydan Okuma!',desc:'DeathKing seni arenaya davet etti.',time:'2 sa önce',read:false},
-  {id:6,type:'guild',icon:'🛡',color:'red',title:'Lonca Duyurusu',desc:'Thorin: "Herkes savaşa hazır mı?"',time:'3 sa önce',read:true},
-  {id:7,type:'market',icon:'💰',color:'blue',title:'Fiyat Düşüşü',desc:'Takip ettiğin ürün %20 indirimde.',time:'5 sa önce',read:true},
-];
+const NOTIFS=[];
 const ACHIEVEMENTS=[
   {icon:'⚔',name:'İlk Galibiyet',desc:'Arena\'da ilk dövüşünü kazan.',done:true,prog:1,max:1},
   {icon:'🏆',name:'Şampiyon',desc:'10 arena galibiyeti al.',done:true,prog:10,max:10},
@@ -929,12 +937,10 @@ const G={
   selectedCell:null,
   prodTimers:[],prodTimerId:1,
   prodInv:{bugday:5,saman:3,arpa:0,sebze:0,un:2,arpa_unu:0,tuy:1,yumurta:3,yun:1,sut:4,ekmek:1,corba:0,kek:0},
-  guildName:'Demir Taht Birliği',
-  chatMsgs:[
-    {sender:'Thorin',role:'leader',icon:'⚔',text:'Herkes savaşa hazır mı?',time:'14:22',mine:false},
-    {sender:'Mirela',role:'officer',icon:'🔮',text:'Hazırım! Büyü stoklarım tam.',time:'14:23',mine:false},
-    {sender:'LyraEfsane',role:'member',icon:'🏹',text:'Ben de varım 🏹',time:'14:24',mine:false},
-  ],
+  guildName:'',
+  guildId:null,
+  guildTreasury:0,
+  chatMsgs:[],
   warScore:142,enemyScore:118,warTimer:83648,
   marketSrc:'all',marketCat:'all',
   questTab:'story',guildTab:'home',profileTab:'profile',prodTab:'farm',
@@ -966,7 +972,7 @@ function obRenderSkillPreview(cid){
   const sel=tree.branches.find(b=>b.id===G.activeBranch[cid])||tree.branches[0];
   const branchTabs=tree.branches.map(b=>`<div class="skill-branch${G.activeBranch[cid]===b.id?' active-branch':''}" onclick="obSwitchBranch('${cid}','${b.id}')"><span class="branch-icon">${b.icon}</span><span class="branch-name">${b.name}</span></div>`).join('');
   const nodes=sel.nodes.map(n=>`<div class="snode-row"><div class="snode${n.unlocked?' unlocked':' locked'}">${n.icon}</div><div class="snode-info"><div class="snode-name">${n.name}</div><div class="snode-desc">${n.desc}</div></div><div class="snode-lv${n.unlocked?' unlocked':''}">${n.req}</div></div>`).join('');
-  document.getElementById('ob-skill-preview').innerHTML=`<div class="skill-preview"><div style="font-family:'Cinzel',serif;font-size:9px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">YETENEK AĞACI</div><div class="skill-branches">${branchTabs}</div><div style="margin-top:9px;">${nodes}</div></div>`;
+  document.getElementById('ob-skill-preview').innerHTML=`<div class="skill-preview"><div style="font-family:var(--font-head);font-size:9px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">YETENEK AĞACI</div><div class="skill-branches">${branchTabs}</div><div style="margin-top:9px;">${nodes}</div></div>`;
 }
 function obSwitchBranch(cid,bid){G.activeBranch[cid]=bid;obRenderSkillPreview(cid);}
 function obRenderAvatars(){
@@ -992,7 +998,7 @@ function obRenderFinal(){
   document.getElementById('ob-final-name').textContent=name;
   document.getElementById('ob-final-class').textContent=`${cls.name} · Seviye 1`;
   document.getElementById('ob-final-tags').innerHTML=cls.tags.map(t=>`<span class="tag tag-gold">${t}</span>`).join('');
-  document.getElementById('ob-final-stats').innerHTML=Object.entries({str:'Güç',def:'Savunma',agi:'Çeviklik',wis:'Bilgelik',cha:'Karizma'}).map(([k,lbl])=>`<div class="row-between" style="margin-bottom:4px;"><span style="font-size:11px;color:var(--ink3);">${lbl}</span><span style="font-family:'Cinzel',serif;font-size:12px;color:var(--perg);">${cls.base[k]}</span></div>`).join('');
+  document.getElementById('ob-final-stats').innerHTML=Object.entries({str:'Güç',def:'Savunma',agi:'Çeviklik',wis:'Bilgelik',cha:'Karizma'}).map(([k,lbl])=>`<div class="row-between" style="margin-bottom:4px;"><span style="font-size:11px;color:var(--ink3);">${lbl}</span><span style="font-family:var(--font-head);font-size:12px;color:var(--perg);">${cls.base[k]}</span></div>`).join('');
 }
 function obNext(step){
   if(step===0){
@@ -1130,7 +1136,7 @@ function getAvatarSlotHTML(cid, idx, isSelected, isLocked, armorColor, cloakColo
   /* Placeholder */
   return `<div class="av-slot${isSelected?' sel':''}${isLocked?' locked':''}" onclick="${clickFn}" style="flex-direction:column;gap:2px;">
     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:60%;height:60%;">${makeSVG(cid,idx,armorColor,cloakColor)}</svg>
-    <span style="font-size:6px;font-family:'Cinzel',serif;color:var(--ink3);text-align:center;line-height:1.2;padding:0 2px;">${isLocked?'🔒':name}</span>
+    <span style="font-size:6px;font-family:var(--font-head);color:var(--ink3);text-align:center;line-height:1.2;padding:0 2px;">${isLocked?'🔒':name}</span>
   </div>`;
 }
 
@@ -1214,11 +1220,11 @@ function addStat(k){
 /* ── KALE ── */
 function renderKale(){
   const c=G.castle;
-  document.getElementById('castle-hdr-card').innerHTML=`<div class="row-between" style="margin-bottom:5px;"><span style="font-family:'Cinzel',serif;font-size:14px;color:var(--gold2);">🏰 ${G.heroName||'Kral'}\'ın Kalesi</span><span class="tag tag-gold">Sur Sv.${c.walls}</span></div><div style="font-size:10px;color:var(--ink3);">Kule: ${c.towers} | Kışla: ${c.barracks}</div>`;
+  document.getElementById('castle-hdr-card').innerHTML=`<div class="row-between" style="margin-bottom:5px;"><span style="font-family:var(--font-head);font-size:14px;color:var(--gold2);">🏰 ${G.heroName||'Kral'}\'ın Kalesi</span><span class="tag tag-gold">Sur Sv.${c.walls}</span></div><div style="font-size:10px;color:var(--ink3);">Kule: ${c.towers} | Kışla: ${c.barracks}</div>`;
   const bars=[{icon:'❤',lbl:'Kale Canı',val:c.hp,max:c.maxhp,pct:Math.round(c.hp/c.maxhp*100),color:'var(--hp)'},{icon:'🛡',lbl:'Savunma',val:c.def,max:100,pct:Math.min(100,c.def),color:'var(--def)'},{icon:'⚔',lbl:'Saldırı',val:c.atk,max:100,pct:Math.min(100,c.atk),color:'var(--atk)'},{icon:'😊',lbl:'Moral',val:Math.floor(G.morale),max:100,pct:Math.floor(G.morale),color:'var(--mor)'}];
   document.getElementById('castle-bars-wrap').innerHTML=bars.map(b=>`<div class="castle-stat"><span class="cs-icon">${b.icon}</span><span class="cs-lbl">${b.lbl}</span><div class="cs-bar-bg"><div class="cs-bar" style="width:${b.pct}%;background:${b.color};"></div></div><span class="cs-val">${b.val}${b.max!==100?'/'+b.max:''}</span></div>`).join('');
   const blds=[{n:'Surlar',lv:c.walls,max:5,icon:'🧱',cost:80,key:'walls'},{n:'Kuleler',lv:c.towers,max:4,icon:'🗼',cost:60,key:'towers'},{n:'Kışla',lv:c.barracks,max:5,icon:'⚔',cost:70,key:'barracks'},{n:'Çiftlik',lv:c.farm,max:5,icon:'🌾',cost:50,key:'farm'},{n:'Pazar',lv:c.market,max:4,icon:'🏪',cost:90,key:'market'}];
-  document.getElementById('castle-buildings-wrap').innerHTML=blds.map(b=>{const uc=Math.floor(b.cost*Math.pow(1.4,b.lv));const mx=b.lv>=b.max;return `<div class="row-between" style="margin-bottom:7px;"><span>${b.icon}</span><span style="font-family:'Cinzel',serif;font-size:11px;color:var(--perg2);flex:1;margin:0 7px;">${b.n} <span style="color:var(--ink3);">Sv.${b.lv}</span></span><button class="btn btn-xs" onclick="upgBld('${b.key}',${uc})" ${mx||G.gold<uc?'disabled':''}>${mx?'Max':uc+'🪙'}</button></div>`;}).join('');
+  document.getElementById('castle-buildings-wrap').innerHTML=blds.map(b=>{const uc=Math.floor(b.cost*Math.pow(1.4,b.lv));const mx=b.lv>=b.max;return `<div class="row-between" style="margin-bottom:7px;"><span>${b.icon}</span><span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);flex:1;margin:0 7px;">${b.n} <span style="color:var(--ink3);">Sv.${b.lv}</span></span><button class="btn btn-xs" onclick="upgBld('${b.key}',${uc})" ${mx||G.gold<uc?'disabled':''}>${mx?'Max':uc+'🪙'}</button></div>`;}).join('');
 }
 function upgBld(key,cost){
   if(G.gold<cost){toast('Yeterli altın yok!');return;}
@@ -1251,9 +1257,9 @@ function renderOrdu(){
   const cost=G.units.reduce((a,u)=>a+u.count*u.cost*0.3,0);
   document.getElementById('total-army').textContent=total;
   document.getElementById('army-cost').textContent=Math.floor(cost)+'🪙/tur';
-  document.getElementById('unit-list').innerHTML=G.units.map(u=>`<div class="card-sm" style="display:flex;align-items:center;gap:9px;"><span style="font-size:22px;">${u.icon}</span><div style="flex:1;"><div style="font-family:'Cinzel',serif;font-size:11px;color:var(--perg);">${u.name}</div><div style="font-size:9px;color:var(--ink3);">⚔${u.atk} 🛡${u.def}</div></div><span style="font-family:'Cinzel',serif;font-size:14px;color:var(--gold);">${u.count}</span></div>`).join('');
+  document.getElementById('unit-list').innerHTML=G.units.map(u=>`<div class="card-sm" style="display:flex;align-items:center;gap:9px;"><span style="font-size:22px;">${u.icon}</span><div style="flex:1;"><div style="font-family:var(--font-head);font-size:11px;color:var(--perg);">${u.name}</div><div style="font-size:9px;color:var(--ink3);">⚔${u.atk} 🛡${u.def}</div></div><span style="font-family:var(--font-head);font-size:14px;color:var(--gold);">${u.count}</span></div>`).join('');
   const recruits=[{name:'Piyade',icon:'🗡',count:10,uid:'infantry',cost:20},{name:'Okçu',icon:'🏹',count:5,uid:'archer',cost:35},{name:'Süvari',icon:'🐴',count:2,uid:'cavalry',cost:80}];
-  document.getElementById('recruit-list').innerHTML=recruits.map(r=>`<div class="card-sm row-between"><span>${r.icon} <span style="font-family:'Cinzel',serif;font-size:11px;color:var(--perg2);">${r.count}x ${r.name}</span></span><button class="btn btn-xs" onclick="recruit('${r.uid}',${r.count},${r.cost})" ${G.gold<r.cost?'disabled':''}>${r.cost}🪙</button></div>`).join('');
+  document.getElementById('recruit-list').innerHTML=recruits.map(r=>`<div class="card-sm row-between"><span>${r.icon} <span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${r.count}x ${r.name}</span></span><button class="btn btn-xs" onclick="recruit('${r.uid}',${r.count},${r.cost})" ${G.gold<r.cost?'disabled':''}>${r.cost}🪙</button></div>`).join('');
 }
 function recruit(uid,count,cost){
   if(G.gold<cost){toast('Yeterli altın yok!');return;}
@@ -1266,10 +1272,10 @@ function renderHalk(){
   const f=G.folk;
   const mood=f.happiness>=70?'Mutlu 😊':f.happiness>=45?'Nötr 😐':'Mutsuz 😠';
   const moodCls=f.happiness>=70?'tag-green':f.happiness>=45?'tag-gold':'tag-red';
-  document.getElementById('folk-overview-card').innerHTML=`<div class="row-between" style="margin-bottom:7px;"><span style="font-family:'Cinzel',serif;font-size:13px;color:var(--perg);">Nüfus</span><span style="font-family:'Cinzel',serif;font-size:16px;color:var(--gold);">${f.population}</span></div><div class="row-between" style="margin-bottom:7px;"><span style="font-size:12px;color:var(--ink3);">Durum</span><span class="tag ${moodCls}">${mood}</span></div><div class="castle-stat" style="margin-bottom:0;"><span class="cs-icon">😊</span><span class="cs-lbl">Mutluluk</span><div class="cs-bar-bg"><div class="cs-bar" style="width:${f.happiness}%;background:var(--mor);"></div></div><span class="cs-val">${f.happiness}%</span></div>`;
+  document.getElementById('folk-overview-card').innerHTML=`<div class="row-between" style="margin-bottom:7px;"><span style="font-family:var(--font-head);font-size:13px;color:var(--perg);">Nüfus</span><span style="font-family:var(--font-head);font-size:16px;color:var(--gold);">${f.population}</span></div><div class="row-between" style="margin-bottom:7px;"><span style="font-size:12px;color:var(--ink3);">Durum</span><span class="tag ${moodCls}">${mood}</span></div><div class="castle-stat" style="margin-bottom:0;"><span class="cs-icon">😊</span><span class="cs-lbl">Mutluluk</span><div class="cs-bar-bg"><div class="cs-bar" style="width:${f.happiness}%;background:var(--mor);"></div></div><span class="cs-val">${f.happiness}%</span></div>`;
   document.getElementById('folk-actions-wrap').innerHTML=`<div class="row-between" style="margin-bottom:7px;"><span style="font-size:12px;color:var(--perg2);">Vergi: ${f.tax}%</span><div style="display:flex;gap:5px;"><button class="btn btn-xs" onclick="changeTax(-5)">▼ İndir</button><button class="btn btn-xs" onclick="changeTax(5)">▲ Artır</button></div></div><button class="btn btn-sm" style="width:100%;margin-bottom:5px;" onclick="festival()">🎉 Şenlik (-40🪙)</button><button class="btn btn-sm" style="width:100%;" onclick="feedPeople()">🌾 Yiyecek Dağıt (-30🌾)</button>`;
   const evs=G.folkEvents.filter(e=>!e.done);
-  document.getElementById('folk-events-wrap').innerHTML=evs.length===0?`<div style="font-size:11px;color:var(--ink3);">Şu an sakin...</div>`:evs.map(e=>`<div class="card-sm"><div style="font-family:'Cinzel',serif;font-size:11px;color:var(--gold2);margin-bottom:3px;">${e.title}</div><div style="font-size:11px;color:var(--ink3);margin-bottom:5px;">${e.desc}</div><div style="display:flex;gap:5px;flex-wrap:wrap;">${e.choices.map((c,ci)=>`<button class="btn btn-xs" onclick="folkChoice('${e.id}',${ci})">${c.t}</button>`).join('')}</div></div>`).join('');
+  document.getElementById('folk-events-wrap').innerHTML=evs.length===0?`<div style="font-size:11px;color:var(--ink3);">Şu an sakin...</div>`:evs.map(e=>`<div class="card-sm"><div style="font-family:var(--font-head);font-size:11px;color:var(--gold2);margin-bottom:3px;">${e.title}</div><div style="font-size:11px;color:var(--ink3);margin-bottom:5px;">${e.desc}</div><div style="display:flex;gap:5px;flex-wrap:wrap;">${e.choices.map((c,ci)=>`<button class="btn btn-xs" onclick="folkChoice('${e.id}',${ci})">${c.t}</button>`).join('')}</div></div>`).join('');
 }
 function changeTax(d){G.folk.tax=Math.max(0,Math.min(40,G.folk.tax+d));G.folk.happiness=Math.max(0,Math.min(100,G.folk.happiness+(d>0?-8:8)));toast('Vergi: %'+G.folk.tax);renderHalk();}
 function festival(){if(G.gold<40){toast('Yeterli altın yok!');return;}G.gold-=40;G.folk.happiness=Math.min(100,G.folk.happiness+15);gainXP(15);toast('Şenlik düzenlendi! +15 mutluluk');updateHUD();renderHalk();}
@@ -1304,7 +1310,7 @@ function cellClick(idx,cell){
   G.selectedCell=G.selectedCell===idx?null:idx;
   if(G.selectedCell!==null){
     info.style.display='block';
-    info.innerHTML=`<div class="row-between"><span style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);">${cell.i} ${cell.n}</span><span class="tag tag-gold">Keşfedildi</span></div><div style="font-size:11px;color:var(--ink3);margin-top:4px;">${cell.info}</div>`;
+    info.innerHTML=`<div class="row-between"><span style="font-family:var(--font-head);font-size:13px;color:var(--gold);">${cell.i} ${cell.n}</span><span class="tag tag-gold">Keşfedildi</span></div><div style="font-size:11px;color:var(--ink3);margin-top:4px;">${cell.info}</div>`;
   }else info.style.display='none';
   renderHarita();
 }
@@ -1318,7 +1324,7 @@ function renderArena(){
     const diff=o.power-myPow;
     const dt=diff>30?'tag-red':diff<-20?'tag-green':'tag-gold';
     const dl=diff>30?'Güçlü':diff<-20?'Zayıf':'Eşit';
-    return `<div class="opp-card" onclick="fight('${o.name}')"><span style="font-size:26px;">${o.icon}</span><div style="flex:1;"><div style="font-family:'Cinzel',serif;font-size:12px;color:var(--perg);">${o.name}</div><div style="font-size:10px;color:var(--ink3);">${o.cls} · Güç: ${o.power}</div><div style="margin-top:3px;"><span class="tag ${dt}">${dl}</span></div></div><div style="text-align:right;"><div style="font-family:'Cinzel',serif;font-size:11px;color:var(--gold);">+${o.pts}pt</div><div style="font-size:10px;color:var(--ink3);">+${o.reward}🪙</div></div></div>`;
+    return `<div class="opp-card" onclick="fight('${o.name}')"><span style="font-size:26px;">${o.icon}</span><div style="flex:1;"><div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">${o.name}</div><div style="font-size:10px;color:var(--ink3);">${o.cls} · Güç: ${o.power}</div><div style="margin-top:3px;"><span class="tag ${dt}">${dl}</span></div></div><div style="text-align:right;"><div style="font-family:var(--font-head);font-size:11px;color:var(--gold);">+${o.pts}pt</div><div style="font-size:10px;color:var(--ink3);">+${o.reward}🪙</div></div></div>`;
   }).join('');
 }
 function calcPow(){const s=G.stats;return(s.str||0)*4+(s.def||0)*3+(s.agi||0)*3+(s.wis||0)*2+G.level*10+G.units.reduce((a,u)=>a+u.count,0)/2;}
@@ -1356,13 +1362,13 @@ function qgo(t){G.questTab=t;['story','daily','side','guild'].forEach(x=>{docume
 function renderQuest(t){
   document.getElementById('quest-hdr-sub').textContent=`${G.heroName||'Kral'} · Seviye ${G.level}`;
   const data=QUEST_DATA[t]||[];
-  const rr=q=>{const isDone=q.status==='done';const pct=q.objectives.reduce((a,o)=>a+(o.cur/o.max),0)/q.objectives.length*100;const cardCls=isDone?'done-card':q.status==='locked'?'locked-card':t+'-card';const oBars=q.objectives.map(o=>{const p=Math.round(o.cur/o.max*100);return `<div style="margin-bottom:5px;"><div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span style="font-size:10px;color:var(--perg2);">${o.cur>=o.max?'✓ ':''} ${o.text}</span><span style="font-family:'Cinzel',serif;font-size:9px;${isDone?'color:var(--g-green)':t==='story'?'color:var(--story2)':t==='daily'?'color:var(--daily2)':t==='side'?'color:var(--side2)':'color:var(--guild2)'}">${o.cur}/${o.max}</span></div><div class="prog-bar-bg"><div class="prog-bar ${isDone?'done-bar':t+'-bar'}" style="width:${p}%;"></div></div></div>`;}).join('');
+  const rr=q=>{const isDone=q.status==='done';const pct=q.objectives.reduce((a,o)=>a+(o.cur/o.max),0)/q.objectives.length*100;const cardCls=isDone?'done-card':q.status==='locked'?'locked-card':t+'-card';const oBars=q.objectives.map(o=>{const p=Math.round(o.cur/o.max*100);return `<div style="margin-bottom:5px;"><div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span style="font-size:10px;color:var(--perg2);">${o.cur>=o.max?'✓ ':''} ${o.text}</span><span style="font-family:var(--font-head);font-size:9px;${isDone?'color:var(--g-green)':t==='story'?'color:var(--story2)':t==='daily'?'color:var(--daily2)':t==='side'?'color:var(--side2)':'color:var(--guild2)'}">${o.cur}/${o.max}</span></div><div class="prog-bar-bg"><div class="prog-bar ${isDone?'done-bar':t+'-bar'}" style="width:${p}%;"></div></div></div>`;}).join('');
   const rws=q.rewards.map(r=>`<span class="reward-chip rc-${r.t==='gold'?'gold':r.t==='xp'?'xp':'item'}">${r.v}</span>`).join('');
   const locked=q.status==='locked';
   return `<div class="qcard ${cardCls}" onclick="${locked?`toast('${q.lockReason} gerekiyor!')`:`qDetail('${q.id}')`}">
     <div style="display:flex;align-items:flex-start;gap:9px;margin-bottom:7px;">
-      <div class="q-icon" style="background:${t==='story'?'#2a0a4a':t==='daily'?'#0a2a0a':t==='side'?'#0a1020':'#2a1a00'}">${q.icon}</div>
-      <div style="flex:1;"><div style="font-family:'Cinzel',serif;font-size:9px;color:${t==='story'?'var(--story2)':t==='daily'?'var(--daily2)':t==='side'?'var(--side2)':'var(--guild2)'};margin-bottom:1px;">${q.num||''}</div><div style="font-family:'Cinzel',serif;font-size:12px;color:var(--perg);">${q.title}</div></div>
+      <div class="q-icon" style="background:${t==='story'?'#2a0a4a':t==='daily'?'#0a1a38':t==='side'?'#0a1030':'var(--panel2)'}">${q.icon}</div>
+      <div style="flex:1;"><div style="font-family:var(--font-head);font-size:9px;color:${t==='story'?'var(--story2)':t==='daily'?'var(--daily2)':t==='side'?'var(--side2)':'var(--guild2)'};margin-bottom:1px;">${q.num||''}</div><div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">${q.title}</div></div>
     </div>
     ${locked?`<div style="font-size:10px;color:var(--ink3);font-style:italic;">🔒 ${q.lockReason}</div>`:oBars}
     ${!locked?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;">${rws}</div>`:''}
@@ -1397,8 +1403,8 @@ function renderMarket(){
     const canBuy=G.gold>=item.price;
     return `<div class="listing-card ${item.grade}" onclick="buyItem(${item.id})">
       <div class="item-icon ${item.grade}"><span>${item.icon}</span><div class="grade-pip gp-${item.grade}">${GRADES[item.grade].name}</div></div>
-      <div style="flex:1;min-width:0;"><div class="item-name ${item.grade}" style="font-family:'Cinzel',serif;font-size:11px;">${item.name}</div><div style="font-size:9px;color:var(--ink3);">${item.type}</div><div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:3px;">${statsP}</div><div style="font-size:9px;color:var(--ink3);margin-top:2px;">${item.seller==='npc'?'🤖':'👤'} ${item.sellerName}</div></div>
-      <div style="text-align:right;flex-shrink:0;"><div style="font-family:'Cinzel',serif;font-size:12px;color:var(--gold);">${item.price.toLocaleString('tr')}🪙</div><div style="font-size:8px;color:var(--ink3);">${item.qty>98?'∞':item.qty} adet</div><button class="buy-btn-sm" style="margin-top:5px;" onclick="event.stopPropagation();buyItem(${item.id})" ${!canBuy?'disabled':''}>Al</button></div>
+      <div style="flex:1;min-width:0;"><div class="item-name ${item.grade}" style="font-family:var(--font-head);font-size:11px;">${item.name}</div><div style="font-size:9px;color:var(--ink3);">${item.type}</div><div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:3px;">${statsP}</div><div style="font-size:9px;color:var(--ink3);margin-top:2px;">${item.seller==='npc'?'🤖':'👤'} ${item.sellerName}</div></div>
+      <div style="text-align:right;flex-shrink:0;"><div style="font-family:var(--font-head);font-size:12px;color:var(--gold);">${item.price.toLocaleString('tr')}🪙</div><div style="font-size:8px;color:var(--ink3);">${item.qty>98?'∞':item.qty} adet</div><button class="buy-btn-sm" style="margin-top:5px;" onclick="event.stopPropagation();buyItem(${item.id})" ${!canBuy?'disabled':''}>Al</button></div>
     </div>`;
   }).join('');
   if(!items.length) document.getElementById('market-content').innerHTML=`<div style="text-align:center;padding:30px;font-size:12px;color:var(--ink3);font-style:italic;">İlan bulunamadı.</div>`;
@@ -1425,34 +1431,86 @@ function renderGuild(t){
   else renderGuildSearch();
 }
 function renderGuildHome(){
+  if(!G.guildId){
+    document.getElementById('guild-content').innerHTML=`
+      <div style="text-align:center;padding:40px 20px;">
+        <div style="font-size:48px;margin-bottom:12px;">🛡</div>
+        <div style="font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--perg);margin-bottom:6px;">Henüz bir loncaya üye değilsin</div>
+        <div style="font-size:13px;color:var(--ink3);margin-bottom:20px;line-height:1.6;">Bir lonca kur veya mevcut bir loncaya katıl.</div>
+        <button class="btn" style="width:100%;" onclick="glgo('search')">🔍 Lonca Ara / Kur</button>
+      </div>`;
+    return;
+  }
+  const treasury=G.guildTreasury||0;
   document.getElementById('guild-content').innerHTML=`
     <div class="guild-banner" style="margin-bottom:10px;text-align:center;">
       <div style="font-size:38px;margin-bottom:6px;">🛡</div>
-      <div style="font-family:'Cinzel',serif;font-size:17px;color:var(--gold2);">${G.guildName}</div>
-      <div style="font-size:11px;color:var(--ink3);font-style:italic;margin-top:2px;">"Çelik gibi biz, demir gibi and."</div>
-      <div style="display:flex;justify-content:center;gap:7px;margin-top:9px;">
-        <span class="tag tag-gold">⭐ Seviye 7</span><span style="font-size:10px;color:var(--ink3);">4.200/5.000 XP</span>
-      </div>
-      <div class="xp-bar" style="margin-top:5px;"><div class="xp-fill" style="width:84%;background:var(--gold);"></div></div>
+      <div style="font-family:var(--font-head);font-size:17px;font-weight:700;color:var(--gold2);">${G.guildName}</div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;">
-      <div class="stat2"><div class="stat2-val">24</div><div class="stat2-lbl">Üye</div></div>
-      <div class="stat2"><div class="stat2-val">18</div><div class="stat2-lbl">Galibiyet</div></div>
-      <div class="stat2"><div class="stat2-val">#12</div><div class="stat2-lbl">Sıralama</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
+      <div class="stat2"><div class="stat2-val" id="guild-member-count">—</div><div class="stat2-lbl">Üye</div></div>
+      <div class="stat2"><div class="stat2-val">${treasury.toLocaleString('tr')}🪙</div><div class="stat2-lbl">Hazine</div></div>
     </div>
     <div class="sec">LONCA HAZİNESİ</div>
-    <div style="background:#0a1a0a;border:1px solid #1a5a1a;border-radius:10px;padding:11px;margin-bottom:8px;">
-      <div class="row-between" style="margin-bottom:7px;"><div><div style="font-family:'Cinzel',serif;font-size:20px;color:var(--g-green);">47.800 🪙</div><div style="font-size:10px;color:var(--ink3);">Ortak hazine</div></div><div style="text-align:right;font-size:10px;color:var(--ink3);">Bu hafta<br><span style="color:var(--g-green);">+3.200 🪙</span></div></div>
-      <div style="display:flex;gap:6px;"><input class="input-field" style="flex:1;padding:6px 8px;font-size:12px;" type="number" id="t-amount" placeholder="Miktar..."/><button class="btn btn-sm" onclick="treasuryAction('deposit')">Yatır</button><button class="btn btn-sm btn-ghost" onclick="treasuryAction('withdraw')">Çek</button></div>
-    </div>
-    <div class="sec">DUYURULAR</div>
-    <div class="card" style="border-left:3px solid var(--gold);"><div style="font-family:'Cinzel',serif;font-size:11px;color:var(--gold2);">⚔ Lonca Savaşı Başladı!</div><div style="font-size:12px;color:var(--perg2);margin-top:3px;line-height:1.5;">Kara Ejder Birliği'ne karşı savaş başladı.</div><div style="font-size:9px;color:var(--ink3);margin-top:3px;">Lider Thorin · 2 saat önce</div></div>
-    <div class="card" style="border-left:3px solid var(--copper);"><div style="font-family:'Cinzel',serif;font-size:11px;color:var(--gold2);">📦 Bu hafta pazar bonusu aktif</div><div style="font-size:12px;color:var(--perg2);margin-top:3px;">Pazar işlemlerinden %10 ekstra XP.</div></div>`;
+    <div style="background:#0a1028;border:1px solid #2a1a5a;border-radius:10px;padding:12px;margin-bottom:8px;">
+      <div style="font-family:var(--font-head);font-size:22px;font-weight:700;color:var(--g-green);margin-bottom:4px;" id="treasury-display">${treasury.toLocaleString('tr')} 🪙</div>
+      <div style="font-size:11px;color:var(--ink3);margin-bottom:10px;">Ortak lonca hazinesi</div>
+      <div style="display:flex;gap:6px;">
+        <input class="input-field" style="flex:1;padding:7px 9px;font-size:13px;" type="number" id="t-amount" placeholder="Miktar..." min="1"/>
+        <button class="btn btn-sm" onclick="treasuryAction('deposit')">Yatır</button>
+        <button class="btn btn-sm btn-ghost" onclick="treasuryAction('withdraw')">Çek</button>
+      </div>
+    </div>`;
+  sbGetGuildMemberCount();
 }
-function treasuryAction(t){const a=parseInt(document.getElementById('t-amount')?.value);if(!a||a<1){toast('Geçerli miktar gir!');return;}toast(a.toLocaleString('tr')+'🪙 '+(t==='deposit'?'yatırıldı':'çekildi')+'!');const el=document.getElementById('t-amount');if(el)el.value='';}
+async function sbGetGuildMemberCount(){
+  if(!G.guildId) return;
+  const {count}=await supa.from('guild_members').select('*',{count:'exact',head:true}).eq('guild_id',G.guildId);
+  const el=document.getElementById('guild-member-count');
+  if(el) el.textContent=count||1;
+}
+async function treasuryAction(type){
+  const amt=parseInt(document.getElementById('t-amount')?.value);
+  if(!amt||amt<1){toast('Geçerli bir miktar gir!');return;}
+  if(type==='deposit'){
+    if(G.gold<amt){toast('Yeterli altın yok!');return;}
+    G.gold-=amt; G.guildTreasury=(G.guildTreasury||0)+amt;
+    await supa.from('guilds').update({treasury:G.guildTreasury}).eq('id',G.guildId);
+    toast(amt.toLocaleString('tr')+'🪙 hazineye yatırıldı!');
+  } else {
+    if((G.guildTreasury||0)<amt){toast('Hazinede yeterli altın yok!');return;}
+    G.gold+=amt; G.guildTreasury=(G.guildTreasury||0)-amt;
+    await supa.from('guilds').update({treasury:G.guildTreasury}).eq('id',G.guildId);
+    toast(amt.toLocaleString('tr')+'🪙 hazineden çekildi!');
+  }
+  updateHUD();
+  const el=document.getElementById('t-amount');if(el)el.value='';
+  const td=document.getElementById('treasury-display');if(td)td.textContent=G.guildTreasury.toLocaleString('tr')+' 🪙';
+}
 function renderGuildMembers(){
-  const mc=m=>`<div class="member-card${m.name===G.heroName?' ':''}" style="${m.name===G.heroName?'border-color:var(--gold);':''}"><div class="m-av" style="${m.name===G.heroName?'border-color:var(--gold);':''}">${m.icon}<div class="online-dot ${m.online?'dot-on':'dot-off'}"></div></div><div style="flex:1;"><div style="font-family:'Cinzel',serif;font-size:11px;color:var(--perg);">${m.name}${m.name===G.heroName?' <span style="font-size:8px;color:var(--gold);">(Sen)</span>':''}</div><div style="font-size:9px;color:var(--ink3);">Sv.${m.lv} ${m.cls}</div><div style="font-size:9px;color:var(--copper);margin-top:1px;">${m.contrib.toLocaleString('tr')} katkı XP</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;"><span class="rb rb-${m.role}">${m.role==='leader'?'👑 Lider':m.role==='officer'?'🔷 Subay':'👤 Üye'}</span><span style="font-size:8px;color:${m.online?'var(--g-green)':'var(--ink3)'};">${m.online?'● Çevrimiçi':'● Çevrimdışı'}</span></div></div>`;
-  document.getElementById('guild-content').innerHTML=`<div class="sec" style="margin-top:0;">Lider</div>${GUILD_MEMBERS.filter(m=>m.role==='leader').map(mc).join('')}<div class="sec">Subaylar</div>${GUILD_MEMBERS.filter(m=>m.role==='officer').map(mc).join('')}<div class="sec">Üyeler</div>${GUILD_MEMBERS.filter(m=>m.role==='member').map(mc).join('')}`;
+  if(!G.guildId){document.getElementById('guild-content').innerHTML=`<div style="text-align:center;padding:30px;font-size:13px;color:var(--ink3);">Önce bir loncaya katıl.</div>`;return;}
+  document.getElementById('guild-content').innerHTML=`<div style="text-align:center;padding:20px;font-size:13px;color:var(--ink3);">Üyeler yükleniyor...</div>`;
+  sbLoadGuildMembers();
+}
+async function sbLoadGuildMembers(){
+  if(!G.guildId) return;
+  const {data}=await supa.from('guild_members').select('profile_id,role,profiles(username,hero_name,class_id,level)').eq('guild_id',G.guildId);
+  if(!data||!data.length){document.getElementById('guild-content').innerHTML=`<div style="text-align:center;padding:20px;color:var(--ink3);">Üye bulunamadı.</div>`;return;}
+  const mc=m=>`<div class="member-card">
+    <div class="m-av">${CLASSES.find(c=>c.id===m.profiles?.class_id)?.icon||'⚔'}</div>
+    <div style="flex:1;">
+      <div style="font-family:var(--font-head);font-size:12px;font-weight:600;color:var(--perg);">${m.profiles?.hero_name||m.profiles?.username||'?'}${m.profile_id===currentUser?.id?' <span style="font-size:9px;color:var(--gold);">(Sen)</span>':''}</div>
+      <div style="font-size:10px;color:var(--ink3);">Sv.${m.profiles?.level||1} ${CLASSES.find(c=>c.id===m.profiles?.class_id)?.name||''}</div>
+    </div>
+    <span class="rb ${m.role==='leader'?'rb-leader':m.role==='officer'?'rb-officer':'rb-member'}">${m.role==='leader'?'👑 Lider':m.role==='officer'?'🔷 Subay':'👤 Üye'}</span>
+  </div>`;
+  const leaders=data.filter(m=>m.role==='leader');
+  const officers=data.filter(m=>m.role==='officer');
+  const members=data.filter(m=>m.role==='member');
+  document.getElementById('guild-content').innerHTML=
+    (leaders.length?`<div class="sec" style="margin-top:0;">Lider</div>${leaders.map(mc).join('')}`:'')
+    +(officers.length?`<div class="sec">Subaylar</div>${officers.map(mc).join('')}`:'')
+    +(members.length?`<div class="sec">Üyeler</div>${members.map(mc).join('')}`:'');
 }
 let warSecs=83648;
 setInterval(()=>{if(warSecs>0)warSecs--;const h=Math.floor(warSecs/3600),m=Math.floor((warSecs%3600)/60),s=warSecs%60;const el=document.getElementById('war-timer');if(el) el.textContent=`Bitimine: ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;},1000);
@@ -1461,24 +1519,22 @@ function renderGuildWar(){
   document.getElementById('guild-content').innerHTML=`
     <div class="sec" style="margin-top:0;">AKTİF SAVAŞ</div>
     <div class="war-card">
-      <div style="font-family:'Cinzel',serif;font-size:11px;color:#f87171;margin-bottom:8px;">⚔ Lonca Savaşı · Aktif</div>
+      <div style="font-family:var(--font-head);font-size:11px;font-weight:700;color:#f87171;margin-bottom:8px;">⚔ Lonca Savaşı · Aktif</div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div style="text-align:center;flex:1;"><span style="font-size:26px;display:block;">🛡</span><div style="font-family:'Cinzel',serif;font-size:10px;color:var(--perg2);">Demir Taht</div><div style="font-family:'Cinzel',serif;font-size:20px;color:var(--gold);" id="w-our">${G.warScore}</div></div>
-        <div style="font-family:'Cinzel',serif;font-size:14px;color:#f87171;">VS</div>
-        <div style="text-align:center;flex:1;"><span style="font-size:26px;display:block;">🐉</span><div style="font-family:'Cinzel',serif;font-size:10px;color:var(--perg2);">Kara Ejder</div><div style="font-family:'Cinzel',serif;font-size:20px;color:var(--gold);" id="w-enemy">${G.enemyScore}</div></div>
+        <div style="text-align:center;flex:1;"><span style="font-size:26px;display:block;">🛡</span><div style="font-family:var(--font-head);font-size:10px;color:var(--perg2);">${G.guildName||'Loncam'}</div><div style="font-family:var(--font-head);font-size:20px;font-weight:700;color:var(--gold);" id="w-our">${G.warScore}</div></div>
+        <div style="font-family:var(--font-head);font-size:14px;font-weight:700;color:#f87171;">VS</div>
+        <div style="text-align:center;flex:1;"><span style="font-size:26px;display:block;">🐉</span><div style="font-family:var(--font-head);font-size:10px;color:var(--perg2);">Kara Ejder</div><div style="font-family:var(--font-head);font-size:20px;font-weight:700;color:var(--gold);" id="w-enemy">${G.enemyScore}</div></div>
       </div>
-      <div style="font-size:8px;color:var(--ink3);margin-bottom:2px;">Bizim puan</div><div style="height:7px;background:var(--panel);border-radius:3px;overflow:hidden;margin-bottom:5px;"><div style="height:100%;width:${Math.round(G.warScore/total*100)}%;background:#f87171;border-radius:3px;" id="w-our-bar"></div></div>
-      <div style="font-size:8px;color:var(--ink3);margin-bottom:2px;">Düşman puan</div><div style="height:7px;background:var(--panel);border-radius:3px;overflow:hidden;margin-bottom:5px;"><div style="height:100%;width:${Math.round(G.enemyScore/total*100)}%;background:var(--g-blue);border-radius:3px;" id="w-enemy-bar"></div></div>
-      <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--ink3);text-align:center;" id="war-timer">Yükleniyor...</div>
+      <div style="font-size:9px;color:var(--ink3);margin-bottom:2px;">Bizim puan</div><div style="height:7px;background:var(--panel);border-radius:3px;overflow:hidden;margin-bottom:5px;"><div style="height:100%;width:${Math.round(G.warScore/total*100)}%;background:#f43f5e;border-radius:3px;" id="w-our-bar"></div></div>
+      <div style="font-size:9px;color:var(--ink3);margin-bottom:2px;">Düşman puan</div><div style="height:7px;background:var(--panel);border-radius:3px;overflow:hidden;margin-bottom:5px;"><div style="height:100%;width:${Math.round(G.enemyScore/total*100)}%;background:var(--g-blue);border-radius:3px;" id="w-enemy-bar"></div></div>
+      <div style="font-family:var(--font-head);font-size:10px;color:var(--ink3);text-align:center;" id="war-timer">Yükleniyor...</div>
       <button class="btn" style="width:100%;margin-top:9px;" onclick="warAttack()">⚔ Savaşa Katıl (+10 puan)</button>
-    </div>
-    <div class="sec">SAVAŞ GEÇMİŞİ</div>
-    ${[{e:'Gümüş Ejder',em:'🥈',r:'win',us:180,es:140,d:'3 gün önce'},{e:'Ateş Kalesi',em:'🔥',r:'win',us:210,es:155,d:'1 hafta önce'},{e:'Karanlık Ordu',em:'💀',r:'lose',us:95,es:160,d:'2 hafta önce'}].map(w=>`<div class="card" style="border-left:3px solid ${w.r==='win'?'var(--g-green)':'#f87171'};margin-bottom:6px;"><div class="row-between"><div style="display:flex;align-items:center;gap:7px;"><span style="font-size:18px;">${w.em}</span><div><div style="font-family:'Cinzel',serif;font-size:11px;color:var(--perg);">${w.e}</div><div style="font-size:9px;color:var(--ink3);">${w.d}</div></div></div><div style="text-align:right;"><div style="font-family:'Cinzel',serif;font-size:12px;color:${w.r==='win'?'var(--g-green)':'#f87171'};">${w.r==='win'?'GALİP':'MAĞLUBIYET'}</div><div style="font-size:9px;color:var(--ink3);">${w.us} — ${w.es}</div></div></div></div>`).join('')}`;
+    </div>`;
 }
 function warAttack(){
   G.warScore+=10;const total=G.warScore+G.enemyScore;
-  const ow=document.getElementById('w-our');const ew=document.getElementById('w-enemy');
-  const ob=document.getElementById('w-our-bar');const eb=document.getElementById('w-enemy-bar');
+  const ow=document.getElementById('w-our');const ob=document.getElementById('w-our-bar');
+  const ew=document.getElementById('w-enemy');const eb=document.getElementById('w-enemy-bar');
   if(ow) ow.textContent=G.warScore;
   if(ob) ob.style.width=Math.round(G.warScore/total*100)+'%';
   toast('Savaşa katıldın! +10 puan ⚔');
@@ -1488,34 +1544,111 @@ function warAttack(){
     if(eb) eb.style.width=Math.round(G.enemyScore/t2*100)+'%';
   },1200);
 }
+let chatChannel=null;
 function renderGuildChat(){
-  const msgs=G.chatMsgs.map(msg=>{
-    if(msg.type==='sys') return `<div class="chat-sys">— ${msg.text} —</div>`;
-    return `<div class="chat-msg ${msg.mine?'mine':'other'}">${!msg.mine?`<div class="chat-meta"><span class="chat-sender ${msg.role==='leader'?'leader':''}">${msg.icon} ${msg.sender}</span></div>`:''}<div class="chat-bubble">${msg.text}</div><div class="chat-meta">${msg.time}</div></div>`;
-  }).join('');
-  document.getElementById('guild-content').innerHTML=`<div id="chat-msgs" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">${msgs}</div><div style="display:flex;gap:6px;"><input class="input-field" style="flex:1;" id="chat-inp" placeholder="Mesaj yaz..." onkeydown="if(event.key==='Enter') gSend()"/><button class="btn btn-sm" onclick="gSend()">➤</button></div>`;
-  const box=document.getElementById('chat-msgs');if(box) box.scrollTop=box.scrollHeight;
+  if(!G.guildId){document.getElementById('guild-content').innerHTML=`<div style="text-align:center;padding:30px;font-size:13px;color:var(--ink3);">Sohbet için önce bir loncaya katıl.</div>`;return;}
+  document.getElementById('guild-content').innerHTML=`
+    <div id="chat-msgs" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;min-height:200px;"></div>
+    <div style="display:flex;gap:6px;">
+      <input class="input-field" style="flex:1;" id="chat-inp" placeholder="Mesaj yaz..." onkeydown="if(event.key==='Enter') gSend()"/>
+      <button class="btn btn-sm" onclick="gSend()">➤</button>
+    </div>`;
+  sbLoadChatHistory();sbSubscribeChat();
 }
-function gSend(){
-  const inp=document.getElementById('chat-inp');if(!inp||!inp.value.trim()) return;
-  const now=new Date();G.chatMsgs.push({sender:G.heroName||'Sen',role:'member',icon:CLASSES.find(c=>c.id===G.classId)?.icon||'⚔',text:inp.value.trim(),time:`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,mine:true});
-  inp.value='';renderGuildChat();
+async function sbLoadChatHistory(){
+  if(!G.guildId) return;
+  const {data}=await supa.from('guild_chat').select('*').eq('guild_id',G.guildId).order('created_at',{ascending:true}).limit(50);
+  if(!data) return;
+  G.chatMsgs=data.map(m=>({sender:m.hero_name,role:'member',icon:m.class_icon||'⚔',text:m.message,time:new Date(m.created_at).toLocaleTimeString('tr',{hour:'2-digit',minute:'2-digit'}),mine:m.profile_id===currentUser?.id}));
+  renderChatMessages();
+}
+function renderChatMessages(){
+  const box=document.getElementById('chat-msgs');if(!box)return;
+  if(!G.chatMsgs.length){box.innerHTML=`<div style="text-align:center;color:var(--ink3);font-size:12px;padding:20px;">Henüz mesaj yok. İlk sen yaz!</div>`;return;}
+  box.innerHTML=G.chatMsgs.map(msg=>`<div class="chat-msg ${msg.mine?'mine':'other'}">${!msg.mine?`<div class="chat-meta"><span class="chat-sender">${msg.icon} ${msg.sender}</span></div>`:''}<div class="chat-bubble">${msg.text}</div><div class="chat-meta">${msg.time}</div></div>`).join('');
+  box.scrollTop=box.scrollHeight;
+}
+function sbSubscribeChat(){
+  if(chatChannel) supa.removeChannel(chatChannel);
+  if(!G.guildId) return;
+  chatChannel=supa.channel('guild-chat-'+G.guildId)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'guild_chat',filter:`guild_id=eq.${G.guildId}`},
+      payload=>{const m=payload.new;G.chatMsgs.push({sender:m.hero_name,role:'member',icon:m.class_icon||'⚔',text:m.message,time:new Date(m.created_at).toLocaleTimeString('tr',{hour:'2-digit',minute:'2-digit'}),mine:m.profile_id===currentUser?.id});renderChatMessages();})
+    .subscribe();
+}
+async function gSend(){
+  const inp=document.getElementById('chat-inp');
+  if(!inp||!inp.value.trim()) return;
+  if(!G.guildId){toast('Loncaya katıl!');return;}
+  const cls=CLASSES.find(c=>c.id===G.classId);
+  const msg=inp.value.trim();inp.value='';
+  await supa.from('guild_chat').insert({guild_id:G.guildId,profile_id:currentUser?.id,hero_name:G.heroName||G.username,class_icon:cls?.icon||'⚔',message:msg});
 }
 function renderGuildSearch(){
   document.getElementById('guild-content').innerHTML=`
-    <div style="margin-bottom:8px;"><input class="input-field" id="gsearch-inp" placeholder="Lonca adı ara..." oninput="filterGList()"/></div>
-    <div id="g-search-list"></div>
-    <div class="sec">YENİ LONCA KUR</div>
-    <div class="card" style="text-align:center;"><div style="font-size:22px;margin-bottom:5px;">⚔</div><div style="font-family:'Cinzel',serif;font-size:12px;color:var(--perg2);margin-bottom:3px;">Kendi loncanu kur</div><div style="font-size:11px;color:var(--ink3);margin-bottom:9px;font-style:italic;">Kuruluş: 500🪙</div><button class="btn" style="width:100%;" onclick="createGuild()">Lonca Kur</button></div>`;
-  filterGList();
+    <div style="margin-bottom:10px;"><input class="input-field" id="gsearch-inp" placeholder="Lonca adı ara..." oninput="filterGList()"/></div>
+    <div id="g-search-list"><div style="text-align:center;color:var(--ink3);font-size:12px;padding:16px;">Arama yapılıyor...</div></div>
+    <div class="sec" style="margin-top:12px;">YENİ LONCA KUR</div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:28px;margin-bottom:6px;">⚔</div>
+      <div style="font-family:var(--font-head);font-size:13px;font-weight:600;color:var(--perg2);margin-bottom:4px;">Kendi loncanu kur</div>
+      <div style="font-size:11px;color:var(--ink3);margin-bottom:4px;">Kuruluş ücreti: <span style="color:var(--gold);font-weight:600;">1.000 🪙</span></div>
+      <div style="font-size:10px;color:var(--ink3);margin-bottom:10px;">Şu anki altın: ${Math.floor(G.gold)} 🪙</div>
+      <input class="input-field" id="new-guild-name" placeholder="Lonca adı..." maxlength="30" style="margin-bottom:8px;"/>
+      <button class="btn" style="width:100%;" onclick="createGuild()" ${G.gold<1000?'disabled':''}>
+        ${G.gold>=1000?'⚔ Lonca Kur (-1.000🪙)':'Yeterli altın yok (1.000🪙 gerekli)'}
+      </button>
+    </div>`;
+  sbSearchGuilds('');
 }
-function filterGList(){
-  const q=(document.getElementById('gsearch-inp')?.value||'').toLowerCase();
-  const list=GUILD_LIST.filter(g=>!q||g.name.toLowerCase().includes(q));
-  document.getElementById('g-search-list').innerHTML=list.map(g=>`<div class="card" style="cursor:pointer;margin-bottom:7px;" onclick="joinGuild('${g.name}')"><div style="display:flex;align-items:center;gap:9px;margin-bottom:7px;"><span style="font-size:24px;">${g.emblem}</span><div style="flex:1;"><div style="font-family:'Cinzel',serif;font-size:13px;color:var(--perg);">${g.name}</div><div style="font-size:10px;color:var(--ink3);font-style:italic;margin-top:1px;">"${g.motto}"</div><div style="display:flex;gap:4px;margin-top:4px;"><span class="tag tag-gold">Sv.${g.level}</span><span class="tag ${g.type==='open'?'tag-green':'tag-red'}">${g.type==='open'?'🔓 Açık':'🔒 Davetli'}</span></div></div></div><div style="display:flex;gap:8px;font-size:10px;color:var(--ink3);"><span>👥 ${g.members}</span><span>⚡ ${g.power.toLocaleString('tr')}</span></div></div>`).join('');
+async function filterGList(){await sbSearchGuilds(document.getElementById('gsearch-inp')?.value||'');}
+async function sbSearchGuilds(q){
+  let query=supa.from('guilds').select('id,name,emblem,member_count,level,type,treasury');
+  if(q) query=query.ilike('name','%'+q+'%');
+  const {data}=await query.limit(20);
+  if(!data){document.getElementById('g-search-list').innerHTML='';return;}
+  if(!data.length){document.getElementById('g-search-list').innerHTML=`<div style="text-align:center;color:var(--ink3);font-size:12px;padding:16px;">Lonca bulunamadı.</div>`;return;}
+  document.getElementById('g-search-list').innerHTML=data.map(g=>`
+    <div class="card" style="cursor:pointer;margin-bottom:7px;" onclick="joinGuild('${g.id}','${(g.name||'').replace(/'/g,'\\'')}')">
+      <div style="display:flex;align-items:center;gap:9px;">
+        <span style="font-size:28px;">${g.emblem||'🛡'}</span>
+        <div style="flex:1;">
+          <div style="font-family:var(--font-head);font-size:13px;font-weight:600;color:var(--perg);">${g.name}</div>
+          <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;">
+            <span class="tag tag-gold">Sv.${g.level||1}</span>
+            <span class="tag ${g.type==='open'?'tag-green':'tag-red'}">${g.type==='open'?'🔓 Açık':'🔒 Davetli'}</span>
+            <span class="tag tag-blue">👥 ${g.member_count||1}</span>
+          </div>
+        </div>
+        <button class="btn btn-sm">Katıl</button>
+      </div>
+    </div>`).join('');
 }
-function joinGuild(n){toast(`${n} loncasına katılıyorsun!`);}
-function createGuild(){if(G.gold<500){toast('500🪙 gerekli!');return;}G.gold-=500;toast('Lonca kuruldu!');updateHUD();}
+async function joinGuild(id,name){
+  if(!currentUser){toast('Giriş yapmalısın!');return;}
+  if(G.guildId){toast('Zaten bir loncadasın!');return;}
+  const {error}=await supa.from('guild_members').insert({guild_id:id,profile_id:currentUser.id,role:'member'});
+  if(error){toast('Katılma hatası: '+error.message);return;}
+  G.guildId=id;G.guildName=name;
+  await supa.from('profiles').update({guild_id:id,guild_name:name}).eq('id',currentUser.id);
+  toast(name+' loncasına katıldın! 🛡');
+  glgo('home');
+}
+async function createGuild(){
+  if(G.gold<1000){toast('1.000🪙 gerekli!');return;}
+  const name=document.getElementById('new-guild-name')?.value.trim();
+  if(!name){toast('Lonca adı gir!');return;}
+  const {data,error}=await supa.from('guilds').insert({name,emblem:'🛡',leader_id:currentUser.id,level:1,member_count:1,type:'open',focus:'war',treasury:0}).select().single();
+  if(error){toast('Hata: '+error.message);return;}
+  await supa.from('guild_members').insert({guild_id:data.id,profile_id:currentUser.id,role:'leader'});
+  G.gold-=1000;G.guildId=data.id;G.guildName=name;G.guildTreasury=0;
+  await supa.from('profiles').update({guild_id:data.id,guild_name:name}).eq('id',currentUser.id);
+  gainXP(50);updateHUD();
+  toast('"'+name+'" loncası kuruldu! 🎉');
+  glgo('home');
+}
+
+
 
 /* ══════════════════════════════════════
    ÜRETİM
@@ -1531,10 +1664,10 @@ function renderProd(t){
   if(t==='depot'){renderDepot();return;}
   const bld=PROD_BUILDINGS[t];
   if(!bld){el.innerHTML='';return;}
-  if(bld.level===0){el.innerHTML=`<div style="text-align:center;padding:28px 16px;"><div style="font-size:44px;margin-bottom:9px;">${bld.icon}</div><div style="font-family:'Cinzel',serif;font-size:14px;color:var(--perg2);margin-bottom:5px;">${bld.name}</div><div style="font-size:11px;color:var(--ink3);font-style:italic;margin-bottom:14px;">Henüz inşa edilmedi</div><button class="btn" onclick="buildProd('${t}')" ${G.gold>=bld.cost?'':'disabled'}>İnşa Et (${bld.cost}🪙)</button>${G.gold<bld.cost?`<div style="font-size:9px;color:#f87171;margin-top:6px;">${G.gold}/${bld.cost}🪙</div>`:''}</div>`;return;}
+  if(bld.level===0){el.innerHTML=`<div style="text-align:center;padding:28px 16px;"><div style="font-size:44px;margin-bottom:9px;">${bld.icon}</div><div style="font-family:var(--font-head);font-size:14px;color:var(--perg2);margin-bottom:5px;">${bld.name}</div><div style="font-size:11px;color:var(--ink3);font-style:italic;margin-bottom:14px;">Henüz inşa edilmedi</div><button class="btn" onclick="buildProd('${t}')" ${G.gold>=bld.cost?'':'disabled'}>İnşa Et (${bld.cost}🪙)</button>${G.gold<bld.cost?`<div style="font-size:9px;color:#f87171;margin-top:6px;">${G.gold}/${bld.cost}🪙</div>`:''}</div>`;return;}
   const recipes=PROD_RECIPES[t]||[];
   const activeTimers=G.prodTimers.filter(x=>x.building===t);
-  let html=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><div style="width:44px;height:44px;border-radius:9px;background:#2a1a0822;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:24px;">${bld.icon}</div><div><div style="font-family:'Cinzel',serif;font-size:12px;color:var(--perg);">${bld.name}</div><span class="tag tag-gold" style="font-size:8px;">Sv.${bld.level}/${bld.max}</span></div></div>`;
+  let html=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><div style="width:44px;height:44px;border-radius:9px;background:#2a1a0822;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:24px;">${bld.icon}</div><div><div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">${bld.name}</div><span class="tag tag-gold" style="font-size:8px;">Sv.${bld.level}/${bld.max}</span></div></div>`;
   if(activeTimers.length){html+=`<div class="sec">AKTİF ÜRETİM</div>`;html+=activeTimers.map(x=>timerCardHTML(x)).join('');}
   html+=`<div class="sec">TARİFLER</div>`;
   recipes.forEach(r=>{
@@ -1543,7 +1676,7 @@ function renderProd(t){
     const inChips=Object.entries(r.inputs).map(([k,v])=>{const has=(G.prodInv[k]||0)>=v;return `<span class="mat-chip${!has?' missing':''}"><span style="font-size:10px;">${ITEM_ICONS[k]||'📦'}</span>${ITEM_LABELS[k]||k} ×${v}</span>`;}).join('');
     const outChips=Object.entries(r.outputs).map(([k,o])=>`<span class="mat-chip output"><span style="font-size:10px;">${ITEM_ICONS[k]||'📦'}</span>${ITEM_LABELS[k]||k} ×${o.base} <span style="font-size:7px;color:var(--g-purple);">${Math.round(o.chance*100)}%✨</span></span>`).join('');
     const fmtT=s=>{const m=Math.floor(s/60),sc=s%60;return `${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;};
-    html+=`<div class="recipe" style="${locked?'opacity:.4;':''}"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-family:'Cinzel',serif;font-size:11px;color:var(--perg2);">${r.icon} ${r.name}</span><span style="font-size:9px;color:var(--ink3);">${locked?`🔒 Sv.${r.minLv}`:fmtT(r.dur)}</span></div><div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">${Object.keys(r.inputs).length?inChips+'<span style="color:var(--ink3);font-size:11px;">→</span>':'<span style="font-size:9px;color:var(--ink3);">Malzeme yok</span><span style="color:var(--ink3);font-size:11px;">→</span>'}${outChips}</div>${!locked?`<button class="btn btn-xs" style="width:100%;margin-top:6px;" onclick="startProd('${t}','${r.id}')" ${canAfford?'':'disabled'}>${canAfford?'▶ Başlat':'Malzeme Eksik'}</button>`:''}</div>`;
+    html+=`<div class="recipe" style="${locked?'opacity:.4;':''}"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${r.icon} ${r.name}</span><span style="font-size:9px;color:var(--ink3);">${locked?`🔒 Sv.${r.minLv}`:fmtT(r.dur)}</span></div><div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">${Object.keys(r.inputs).length?inChips+'<span style="color:var(--ink3);font-size:11px;">→</span>':'<span style="font-size:9px;color:var(--ink3);">Malzeme yok</span><span style="color:var(--ink3);font-size:11px;">→</span>'}${outChips}</div>${!locked?`<button class="btn btn-xs" style="width:100%;margin-top:6px;" onclick="startProd('${t}','${r.id}')" ${canAfford?'':'disabled'}>${canAfford?'▶ Başlat':'Malzeme Eksik'}</button>`:''}</div>`;
   });
   if(bld.level<bld.max){const uc=Math.floor(bld.cost*Math.pow(1.6,bld.level));html+=`<div class="sec">GELİŞTİR</div><div class="card row-between"><span style="font-size:11px;color:var(--perg2);">Sv.${bld.level} → Sv.${bld.level+1}</span><button class="btn btn-sm" onclick="upgProd('${t}',${uc})" ${G.gold>=uc?'':'disabled'}>${uc}🪙</button></div>`;}
   el.innerHTML=html;
@@ -1554,7 +1687,7 @@ function timerCardHTML(t){
   const pct=Math.round((1-t.remaining/t.total)*100);
   const fmtT=s=>{const m=Math.floor(s/60),sc=s%60;return `${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;};
   const outChips=Object.entries(t.outputs).map(([k,v])=>`<span class="mat-chip ${v.bonus?'':'output'}" style="${v.bonus?'border-color:var(--g-purple);color:var(--g-purple);':''}">${ITEM_ICONS[k]||'📦'} ${ITEM_LABELS[k]||k} ×${v.amount}${v.bonus?' ✨':''}</span>`).join('');
-  return `<div class="timer-card${isDone?' t-done':''}" id="tc-${t.id}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;"><span style="font-family:'Cinzel',serif;font-size:11px;color:var(--perg2);">${r.icon} ${r.name}</span><div style="display:flex;align-items:center;gap:5px;"><span style="font-family:'Cinzel',serif;font-size:12px;color:${isDone?'var(--g-green)':'var(--gold)'};" id="tsecs-${t.id}">${isDone?'✓ Hazır':fmtT(t.remaining)}</span>${!isDone?`<button class="btn btn-xs btn-ghost" onclick="cancelProd(${t.id})" style="font-size:8px;padding:2px 5px;">✕</button>`:''}</div></div><div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px;">${outChips}</div>${isDone?`<button class="collect-btn" onclick="collectProd(${t.id})">🎁 Topla</button>`:''}<div class="timer-prog-bg"><div class="timer-prog-fill" id="tprog-${t.id}" style="width:${pct}%;"></div></div></div>`;
+  return `<div class="timer-card${isDone?' t-done':''}" id="tc-${t.id}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;"><span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${r.icon} ${r.name}</span><div style="display:flex;align-items:center;gap:5px;"><span style="font-family:var(--font-head);font-size:12px;color:${isDone?'var(--g-green)':'var(--gold)'};" id="tsecs-${t.id}">${isDone?'✓ Hazır':fmtT(t.remaining)}</span>${!isDone?`<button class="btn btn-xs btn-ghost" onclick="cancelProd(${t.id})" style="font-size:8px;padding:2px 5px;">✕</button>`:''}</div></div><div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px;">${outChips}</div>${isDone?`<button class="collect-btn" onclick="collectProd(${t.id})">🎁 Topla</button>`:''}<div class="timer-prog-bg"><div class="timer-prog-fill" id="tprog-${t.id}" style="width:${pct}%;"></div></div></div>`;
 }
 function buildProd(t){const bld=PROD_BUILDINGS[t];if(G.gold<bld.cost){toast('Yeterli altın yok!');return;}G.gold-=bld.cost;bld.level=1;toast(`${bld.name} inşa edildi!`);updateHUD();renderProd(t);}
 function upgProd(t,cost){const bld=PROD_BUILDINGS[t];if(G.gold<cost){toast('Yeterli altın yok!');return;}G.gold-=cost;bld.level++;gainXP(20);toast(`${bld.name} Sv.${bld.level}'e yükseltildi!`);updateHUD();renderProd(t);}
@@ -1578,13 +1711,13 @@ function collectProd(id){
   const t=G.prodTimers[idx];const bonusItems=[];
   Object.entries(t.outputs).forEach(([k,v])=>{G.prodInv[k]=(G.prodInv[k]||0)+v.amount;if(v.bonus) bonusItems.push(`${ITEM_ICONS[k]} ${ITEM_LABELS[k]||k} ×${v.amount}`);});
   G.prodTimers.splice(idx,1);updateInvStrip();renderProd(t.building);
-  if(bonusItems.length){const el=document.createElement('div');el.className='bonus-flash';el.innerHTML=`<span style="font-size:28px;display:block;margin-bottom:4px;">✨</span><div style="font-family:'Cinzel',serif;font-size:13px;color:var(--g-purple);">BONUS ÜRETİM!</div><div style="font-size:11px;color:var(--perg2);margin-top:3px;">${bonusItems.join('<br>')}</div>`;document.body.appendChild(el);setTimeout(()=>el.remove(),2000);}
+  if(bonusItems.length){const el=document.createElement('div');el.className='bonus-flash';el.innerHTML=`<span style="font-size:28px;display:block;margin-bottom:4px;">✨</span><div style="font-family:var(--font-head);font-size:13px;color:var(--g-purple);">BONUS ÜRETİM!</div><div style="font-size:11px;color:var(--perg2);margin-top:3px;">${bonusItems.join('<br>')}</div>`;document.body.appendChild(el);setTimeout(()=>el.remove(),2000);}
   else toast('Ürünler toplandı!');
 }
 function cancelProd(id){const idx=G.prodTimers.findIndex(x=>x.id===id);if(idx<0)return;const t=G.prodTimers[idx];const r=(PROD_RECIPES[t.building]||[]).find(x=>x.id===t.recipe);if(r) Object.entries(r.inputs).forEach(([k,v])=>{G.prodInv[k]=(G.prodInv[k]||0)+Math.floor(v/2);});G.prodTimers.splice(idx,1);updateInvStrip();renderProd(t.building);toast('İptal edildi. Malzemenin yarısı iade edildi.');}
 function renderDepot(){
   const groups=[{lbl:'🌾 Tarla',keys:['bugday','saman','arpa','sebze']},{lbl:'⚙ Değirmen',keys:['un','arpa_unu']},{lbl:'🐄 Çiftlik',keys:['tuy','yumurta','yun','sut']},{lbl:'🍳 Aşevi',keys:['ekmek','corba','kek']}];
-  let html='';groups.forEach(g=>{const items=g.keys.filter(k=>G.prodInv[k]!==undefined);html+=`<div class="sec">${g.lbl}</div>`;html+=items.map(k=>`<div class="card-sm row-between"><span style="display:flex;align-items:center;gap:6px;"><span style="font-size:18px;">${ITEM_ICONS[k]||'📦'}</span><span style="font-family:'Cinzel',serif;font-size:11px;color:var(--perg2);">${ITEM_LABELS[k]||k}</span></span><span style="font-family:'Cinzel',serif;font-size:14px;color:var(--gold);">${G.prodInv[k]||0}</span></div>`).join('');});
+  let html='';groups.forEach(g=>{const items=g.keys.filter(k=>G.prodInv[k]!==undefined);html+=`<div class="sec">${g.lbl}</div>`;html+=items.map(k=>`<div class="card-sm row-between"><span style="display:flex;align-items:center;gap:6px;"><span style="font-size:18px;">${ITEM_ICONS[k]||'📦'}</span><span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${ITEM_LABELS[k]||k}</span></span><span style="font-family:var(--font-head);font-size:14px;color:var(--gold);">${G.prodInv[k]||0}</span></div>`).join('');});
   document.getElementById('prod-content').innerHTML=html;
 }
 setInterval(()=>{
@@ -1610,7 +1743,7 @@ function renderProfile(t){
     el.innerHTML=`
       <div class="card" style="text-align:center;margin-bottom:10px;">
         <div style="width:72px;height:72px;border-radius:50%;border:2px solid var(--gold);background:var(--panel);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;overflow:hidden;">${avatarContent}</div>
-        <div style="font-family:'Cinzel',serif;font-size:16px;color:var(--gold2);">${G.heroName||'Kahraman'}</div>
+        <div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);">${G.heroName||'Kahraman'}</div>
         <div style="font-size:11px;color:var(--ink3);font-style:italic;">Seviye ${G.level} · ${cls.name}</div>
         <div style="display:flex;justify-content:center;gap:5px;margin-top:7px;flex-wrap:wrap;"><span class="tag tag-gold">👑 Kral</span><span class="tag tag-blue">⚔ Arena</span><span class="tag" style="background:#100820;color:var(--g-purple);border:1px solid var(--g-purple-b);">🛡 Subay</span></div>
       </div>
@@ -1622,8 +1755,8 @@ function renderProfile(t){
       </div>
       <div class="sec">BİLDİRİMLER</div>
       <div class="card" style="margin-bottom:8px;">
-        <div class="row-between" style="margin-bottom:6px;"><span style="font-family:'Cinzel',serif;font-size:11px;color:var(--perg2);">Okunmamış Bildirimler</span><span style="background:var(--hp);color:white;font-family:'Cinzel',serif;font-size:9px;padding:2px 7px;border-radius:8px;">${unread}</span></div>
-        ${NOTIFS.slice(0,4).map(n=>`<div class="notif-card ${n.read?'':'ur-'+n.color}" onclick="readNotif(${n.id})" style="margin-bottom:5px;"><div style="width:30px;height:30px;border-radius:7px;background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;">${n.icon}</div><div style="flex:1;"><div style="font-family:'Cinzel',serif;font-size:10px;color:var(--perg);">${n.title}</div><div style="font-size:10px;color:var(--perg2);margin-top:1px;">${n.desc}</div><div style="font-size:8px;color:var(--ink3);margin-top:2px;">${n.time}</div></div><div class="notif-dot" style="background:${n.read?'transparent':'var(--gold)'}"></div></div>`).join('')}
+        <div class="row-between" style="margin-bottom:6px;"><span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">Okunmamış Bildirimler</span><span style="background:var(--hp);color:white;font-family:var(--font-head);font-size:9px;padding:2px 7px;border-radius:8px;">${unread}</span></div>
+        ${NOTIFS.slice(0,4).map(n=>`<div class="notif-card ${n.read?'':'ur-'+n.color}" onclick="readNotif(${n.id})" style="margin-bottom:5px;"><div style="width:30px;height:30px;border-radius:7px;background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;">${n.icon}</div><div style="flex:1;"><div style="font-family:var(--font-head);font-size:10px;color:var(--perg);">${n.title}</div><div style="font-size:10px;color:var(--perg2);margin-top:1px;">${n.desc}</div><div style="font-size:8px;color:var(--ink3);margin-top:2px;">${n.time}</div></div><div class="notif-dot" style="background:${n.read?'transparent':'var(--gold)'}"></div></div>`).join('')}
         <button class="btn btn-sm" style="width:100%;margin-top:4px;" onclick="markAllRead()">Tümünü Oku</button>
       </div>
       <div class="sec">HESAP</div>
@@ -1642,7 +1775,7 @@ function renderProfile(t){
       <div class="stat-grid2"><div class="stat2"><div class="stat2-val">${Math.floor(G.gold)}</div><div class="stat2-lbl">Güncel Altın</div></div><div class="stat2"><div class="stat2-val">${G.folk.population}</div><div class="stat2-lbl">Nüfus</div></div><div class="stat2"><div class="stat2-val">${G.folk.happiness}%</div><div class="stat2-lbl">Halk Mutluluk</div></div><div class="stat2"><div class="stat2-val">${G.folk.tax}%</div><div class="stat2-lbl">Vergi</div></div></div>`;
   } else if(t==='ach'){
     const done=ACHIEVEMENTS.filter(a=>a.done);const prog=ACHIEVEMENTS.filter(a=>!a.done);
-    el.innerHTML=`<div class="sec" style="margin-top:0;">TAMAMLANDI (${done.length}/${ACHIEVEMENTS.length})</div>${done.map(a=>`<div class="ach-card"><span style="font-size:24px;">${a.icon}</span><div style="flex:1;"><div style="font-family:'Cinzel',serif;font-size:11px;color:var(--perg);">${a.name}</div><div style="font-size:9px;color:var(--ink3);">${a.desc}</div></div><span class="tag tag-green">✓</span></div>`).join('')}<div class="sec">DEVAM EDEN</div>${prog.map(a=>{const pct=Math.round(a.prog/a.max*100);return `<div class="ach-card"><span style="font-size:24px;opacity:.6;">${a.icon}</span><div style="flex:1;"><div style="font-family:'Cinzel',serif;font-size:11px;color:var(--ink3);">${a.name}</div><div style="font-size:9px;color:var(--ink3);">${a.desc}</div><div style="font-size:8px;color:var(--copper);margin-top:2px;">${a.prog}/${a.max}</div><div style="height:4px;background:var(--panel);border-radius:2px;margin-top:3px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:var(--copper);border-radius:2px;"></div></div></div><span style="font-size:9px;color:var(--ink3);">${pct}%</span></div>`;}).join('')}`;
+    el.innerHTML=`<div class="sec" style="margin-top:0;">TAMAMLANDI (${done.length}/${ACHIEVEMENTS.length})</div>${done.map(a=>`<div class="ach-card"><span style="font-size:24px;">${a.icon}</span><div style="flex:1;"><div style="font-family:var(--font-head);font-size:11px;color:var(--perg);">${a.name}</div><div style="font-size:9px;color:var(--ink3);">${a.desc}</div></div><span class="tag tag-green">✓</span></div>`).join('')}<div class="sec">DEVAM EDEN</div>${prog.map(a=>{const pct=Math.round(a.prog/a.max*100);return `<div class="ach-card"><span style="font-size:24px;opacity:.6;">${a.icon}</span><div style="flex:1;"><div style="font-family:var(--font-head);font-size:11px;color:var(--ink3);">${a.name}</div><div style="font-size:9px;color:var(--ink3);">${a.desc}</div><div style="font-size:8px;color:var(--copper);margin-top:2px;">${a.prog}/${a.max}</div><div style="height:4px;background:var(--panel);border-radius:2px;margin-top:3px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:var(--copper);border-radius:2px;"></div></div></div><span style="font-size:9px;color:var(--ink3);">${pct}%</span></div>`;}).join('')}`;
   } else {
     el.innerHTML=`
       <div class="sec" style="margin-top:0;">SES</div>
@@ -1661,8 +1794,8 @@ function renderProfile(t){
         <div class="setting-row"><span style="font-size:12px;color:var(--perg2);">Tema</span><select style="background:var(--panel);border:1px solid var(--border);color:var(--perg2);font-size:9px;padding:3px 6px;border-radius:3px;"><option>Pergamen</option><option>Gotik</option><option>Fantasy</option></select></div>
         <div class="setting-row"><span style="font-size:12px;color:var(--perg2);">Dil</span><select style="background:var(--panel);border:1px solid var(--border);color:var(--perg2);font-size:9px;padding:3px 6px;border-radius:3px;"><option>Türkçe</option><option>English</option></select></div>
       </div>
-      <div style="background:#1a0808;border:1px solid #4a1a1a;border-radius:10px;padding:11px;margin-top:4px;">
-        <div style="font-family:'Cinzel',serif;font-size:9px;color:#f87171;letter-spacing:1px;margin-bottom:8px;">⚠ TEHLİKELİ BÖLGE</div>
+      <div style="background:var(--panel2);border:1px solid #4a1a1a;border-radius:10px;padding:11px;margin-top:4px;">
+        <div style="font-family:var(--font-head);font-size:9px;color:#f87171;letter-spacing:1px;margin-bottom:8px;">⚠ TEHLİKELİ BÖLGE</div>
         <div class="setting-row"><span style="font-size:12px;color:#f87171;">Çıkış Yap</span><button class="btn btn-xs btn-danger" onclick="sbLogout()">Çıkış</button></div>
       </div>
       <div style="text-align:center;padding:10px 0;font-size:10px;color:var(--ink3);">Demir Taht v0.1.0</div>`;
@@ -1777,6 +1910,14 @@ async function sbLoadProfile() {
   G.arenaWins = p.arena_wins;
   G.arenaLosses = p.arena_losses;
   G.stats = { str:p.stat_str, def:p.stat_def, agi:p.stat_agi, wis:p.stat_wis, cha:p.stat_cha, hp:p.hp, maxhp:p.max_hp };
+
+  // Lonca
+  if (p.guild_id) {
+    G.guildId = p.guild_id;
+    G.guildName = p.guild_name || '';
+    const { data: gld } = await supa.from('guilds').select('treasury').eq('id', p.guild_id).single();
+    if (gld) G.guildTreasury = gld.treasury || 0;
+  }
 
   // Kale
   const { data: c } = await supa.from('castles').select('*').eq('profile_id', currentUser.id).single();
