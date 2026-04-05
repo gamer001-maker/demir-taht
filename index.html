@@ -1867,7 +1867,7 @@ function timerCardHTML(t){
 }
 function buildProd(t){const bld=PROD_BUILDINGS[t];if(G.gold<bld.cost){toast('Yeterli altın yok!');return;}G.gold-=bld.cost;bld.level=1;toast(`${bld.name} inşa edildi!`);updateHUD();renderProd(t);}
 function upgProd(t,cost){const bld=PROD_BUILDINGS[t];if(G.gold<cost){toast('Yeterli altın yok!');return;}G.gold-=cost;bld.level++;gainXP(20);toast(`${bld.name} Sv.${bld.level}'e yükseltildi!`);updateHUD();renderProd(t);}
-function startProd(bKey,rId){
+async function startProd(bKey,rId){
   const r=(PROD_RECIPES[bKey]||[]).find(x=>x.id===rId);if(!r)return;
   if(!Object.entries(r.inputs).every(([k,v])=>(G.prodInv[k]||0)>=v)){toast('Malzeme eksik!');return;}
   Object.entries(r.inputs).forEach(([k,v])=>{G.prodInv[k]-=v;});
@@ -1879,20 +1879,37 @@ function startProd(bKey,rId){
     const baseAmt=bld.level>=4?o.base+1:o.base;
     outputs[k]={amount:baseAmt*(bonus?o.mult:1),bonus};
   });
-  G.prodTimers.push({id:G.prodTimerId++,building:bKey,recipe:rId,remaining:r.dur,total:r.dur,outputs});
+  // Supabase'e kaydet
+  let dbId=null;
+  if(currentUser){
+    const {data,error}=await supa.from('production_timers').insert({
+      profile_id:currentUser.id,
+      building:bKey,
+      recipe_id:rId,
+      duration_secs:r.dur,
+      outputs:outputs
+    }).select().single();
+    if(!error&&data) dbId=data.id;
+  }
+  // Yerel timer (remaining = sunucu zamanından hesaplanır)
+  G.prodTimers.push({id:G.prodTimerId++,dbId,building:bKey,recipe:rId,remaining:r.dur,total:r.dur,outputs});
   trackQuest('prodStart1');
   updateInvStrip();renderProd(bKey);toast(`${r.name} başlatıldı!`);
 }
-function collectProd(id){
+
+async function collectProd(id){
   const idx=G.prodTimers.findIndex(x=>x.id===id);if(idx<0)return;
   const t=G.prodTimers[idx];const bonusItems=[];let foodGained=0;
   Object.entries(t.outputs).forEach(([k,v])=>{
     G.prodInv[k]=(G.prodInv[k]||0)+v.amount;
     if(v.bonus) bonusItems.push(`${ITEM_ICONS[k]} ${ITEM_LABELS[k]||k} ×${v.amount}`);
-    // Yemek değeri hesapla
     const fv=(FOOD_VALUE[k]||0)*v.amount;
     if(fv>0){G.food+=fv;foodGained+=fv;}
   });
+  // Supabase'den sil
+  if(currentUser&&t.dbId){
+    await supa.from('production_timers').delete().eq('id',t.dbId);
+  }
   G.prodTimers.splice(idx,1);updateInvStrip();renderProd(t.building);updateHUD();
   if(bonusItems.length){
     const el=document.createElement('div');el.className='bonus-flash';
@@ -1900,7 +1917,42 @@ function collectProd(id){
     document.body.appendChild(el);setTimeout(()=>el.remove(),2500);
   } else toast(`Ürünler toplandı!${foodGained>0?' 🍖 +'+foodGained+' yemek':''}`);
 }
-function cancelProd(id){const idx=G.prodTimers.findIndex(x=>x.id===id);if(idx<0)return;const t=G.prodTimers[idx];const r=(PROD_RECIPES[t.building]||[]).find(x=>x.id===t.recipe);if(r) Object.entries(r.inputs).forEach(([k,v])=>{G.prodInv[k]=(G.prodInv[k]||0)+Math.floor(v/2);});G.prodTimers.splice(idx,1);updateInvStrip();renderProd(t.building);toast('İptal edildi. Malzemenin yarısı iade edildi.');}
+
+async function cancelProd(id){
+  const idx=G.prodTimers.findIndex(x=>x.id===id);if(idx<0)return;
+  const t=G.prodTimers[idx];
+  const r=(PROD_RECIPES[t.building]||[]).find(x=>x.id===t.recipe);
+  if(r) Object.entries(r.inputs).forEach(([k,v])=>{G.prodInv[k]=(G.prodInv[k]||0)+Math.floor(v/2);});
+  if(currentUser&&t.dbId){
+    await supa.from('production_timers').delete().eq('id',t.dbId);
+  }
+  G.prodTimers.splice(idx,1);updateInvStrip();renderProd(t.building);toast('İptal edildi. Malzemenin yarısı iade edildi.');
+}
+
+/* Supabase'den aktif üretimleri yükle — sayfa açılınca çağrılır */
+async function sbLoadProdTimers(){
+  if(!currentUser) return;
+  const {data}=await supa.from('production_timers')
+    .select('*').eq('profile_id',currentUser.id);
+  if(!data||!data.length) return;
+  const now=Date.now();
+  data.forEach(row=>{
+    const startedAt=new Date(row.started_at).getTime();
+    const elapsed=Math.floor((now-startedAt)/1000);
+    const remaining=Math.max(0,row.duration_secs-elapsed);
+    G.prodTimers.push({
+      id:G.prodTimerId++,
+      dbId:row.id,
+      building:row.building,
+      recipe:row.recipe_id,
+      remaining,
+      total:row.duration_secs,
+      outputs:row.outputs
+    });
+  });
+  updateInvStrip();
+}
+
 function renderDepot(){
   const groups=[{lbl:'🌾 Tarla',keys:['bugday','saman','arpa','sebze']},{lbl:'⚙ Değirmen',keys:['un','arpa_unu']},{lbl:'🐄 Çiftlik',keys:['tuy','yumurta','yun','sut']},{lbl:'🍳 Aşevi',keys:['ekmek','corba','kek']}];
   let html='';groups.forEach(g=>{const items=g.keys.filter(k=>G.prodInv[k]!==undefined);html+=`<div class="sec">${g.lbl}</div>`;html+=items.map(k=>`<div class="card-sm row-between"><span style="display:flex;align-items:center;gap:6px;"><span style="font-size:18px;">${ITEM_ICONS[k]||'📦'}</span><span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${ITEM_LABELS[k]||k}</span></span><span style="font-family:var(--font-head);font-size:14px;color:var(--gold);">${G.prodInv[k]||0}</span></div>`).join('');});
@@ -2125,6 +2177,9 @@ async function sbLoadProfile() {
   // Keşfedilen hücreler
   const { data: cells } = await supa.from('explored_cells').select('cell_index').eq('profile_id', currentUser.id);
   if (cells?.length) G.explored = new Set(cells.map(c => c.cell_index));
+
+  // Aktif üretim sayaçları
+  await sbLoadProdTimers();
 
   return true;
 }
