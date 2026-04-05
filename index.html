@@ -1840,22 +1840,98 @@ function renderProd(t){
   if(t==='depot'){renderDepot();return;}
   const bld=PROD_BUILDINGS[t];
   if(!bld){el.innerHTML='';return;}
-  if(bld.level===0){el.innerHTML=`<div style="text-align:center;padding:28px 16px;"><div style="font-size:44px;margin-bottom:9px;">${bld.icon}</div><div style="font-family:var(--font-head);font-size:14px;color:var(--perg2);margin-bottom:5px;">${bld.name}</div><div style="font-size:11px;color:var(--ink3);font-style:italic;margin-bottom:14px;">Henüz inşa edilmedi</div><button class="btn" onclick="buildProd('${t}')" ${G.gold>=bld.cost?'':'disabled'}>İnşa Et (${bld.cost}🪙)</button>${G.gold<bld.cost?`<div style="font-size:9px;color:#f87171;margin-top:6px;">${G.gold}/${bld.cost}🪙</div>`:''}</div>`;return;}
+
+  // Henüz inşa edilmemiş
+  if(bld.level===0){
+    el.innerHTML=`<div style="text-align:center;padding:40px 16px;">
+      <div style="font-size:52px;margin-bottom:12px;">${bld.icon}</div>
+      <div style="font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--perg2);margin-bottom:6px;">${bld.name}</div>
+      <div style="font-size:12px;color:var(--ink3);margin-bottom:16px;">Henüz inşa edilmedi</div>
+      <button class="btn" onclick="buildProd('${t}')" ${G.gold>=bld.cost?'':'disabled'}>
+        İnşa Et — ${bld.cost}🪙
+      </button>
+      ${G.gold<bld.cost?`<div style="font-size:10px;color:var(--hp);margin-top:6px;">Yetersiz altın (${Math.floor(G.gold)}/${bld.cost}🪙)</div>`:''}
+    </div>`;
+    return;
+  }
+
   const recipes=PROD_RECIPES[t]||[];
   const activeTimers=G.prodTimers.filter(x=>x.building===t);
-  let html=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><div style="width:44px;height:44px;border-radius:9px;background:#2a1a0822;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:24px;">${bld.icon}</div><div><div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">${bld.name}</div><span class="tag tag-gold" style="font-size:8px;">Sv.${bld.level}/${bld.max}</span></div></div>`;
-  if(activeTimers.length){html+=`<div class="sec">AKTİF ÜRETİM</div>`;html+=activeTimers.map(x=>timerCardHTML(x)).join('');}
-  html+=`<div class="sec">TARİFLER</div>`;
+  const fmtT=s=>{const m=Math.floor(s/60),sc=s%60;return `${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;};
+
+  // ── SOL: Tarifler + Geliştir ──
+  let leftHtml=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+      <div style="width:42px;height:42px;border-radius:9px;background:var(--panel);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:22px;">${bld.icon}</div>
+      <div>
+        <div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--perg);">${bld.name}</div>
+        <span class="tag tag-gold" style="font-size:8px;">Sv.${bld.level}/${bld.max}</span>
+      </div>
+    </div>
+    <div class="sec" style="margin-top:0;">TARİFLER</div>`;
+
   recipes.forEach(r=>{
     const locked=r.minLv>bld.level;
     const canAfford=!locked&&Object.entries(r.inputs).every(([k,v])=>(G.prodInv[k]||0)>=v);
-    const inChips=Object.entries(r.inputs).map(([k,v])=>{const has=(G.prodInv[k]||0)>=v;return `<span class="mat-chip${!has?' missing':''}"><span style="font-size:10px;">${ITEM_ICONS[k]||'📦'}</span>${ITEM_LABELS[k]||k} ×${v}</span>`;}).join('');
-    const outChips=Object.entries(r.outputs).map(([k,o])=>`<span class="mat-chip output"><span style="font-size:10px;">${ITEM_ICONS[k]||'📦'}</span>${ITEM_LABELS[k]||k} ×${o.base} <span style="font-size:7px;color:var(--g-purple);">${Math.round(o.chance*100)}%✨</span></span>`).join('');
-    const fmtT=s=>{const m=Math.floor(s/60),sc=s%60;return `${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;};
-    html+=`<div class="recipe" style="${locked?'opacity:.4;':''}"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${r.icon} ${r.name}</span><span style="font-size:9px;color:var(--ink3);">${locked?`🔒 Sv.${r.minLv}`:fmtT(r.dur)}</span></div><div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">${Object.keys(r.inputs).length?inChips+'<span style="color:var(--ink3);font-size:11px;">→</span>':'<span style="font-size:9px;color:var(--ink3);">Malzeme yok</span><span style="color:var(--ink3);font-size:11px;">→</span>'}${outChips}</div>${!locked?`<button class="btn btn-xs" style="width:100%;margin-top:6px;" onclick="startProd('${t}','${r.id}')" ${canAfford?'':'disabled'}>${canAfford?'▶ Başlat':'Malzeme Eksik'}</button>`:''}</div>`;
+    const inChips=Object.entries(r.inputs).map(([k,v])=>{
+      const has=(G.prodInv[k]||0)>=v;
+      return `<span class="mat-chip${!has?' missing':''}"><span style="font-size:10px;">${ITEM_ICONS[k]||'📦'}</span>${ITEM_LABELS[k]||k} ×${v}</span>`;
+    }).join('');
+    const outChips=Object.entries(r.outputs).map(([k,o])=>{
+      const fv=FOOD_VALUE[k]||0;
+      return `<span class="mat-chip output"><span style="font-size:10px;">${ITEM_ICONS[k]||'📦'}</span>${ITEM_LABELS[k]||k} ×${o.base}${fv>0?` <span style="color:var(--g-green);font-size:8px;">+${fv*o.base}🍖</span>`:''} <span style="font-size:7px;color:var(--g-purple);">${Math.round(o.chance*100)}%✨</span></span>`;
+    }).join('');
+
+    leftHtml+=`<div class="recipe" style="${locked?'opacity:.45;':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-family:var(--font-head);font-size:12px;font-weight:600;color:var(--perg2);">${r.icon} ${r.name}</span>
+        <span style="font-size:10px;color:var(--ink3);">${locked?`🔒 Sv.${r.minLv}`:fmtT(r.dur)}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:6px;">
+        ${Object.keys(r.inputs).length?inChips+'<span style="color:var(--ink3);font-size:13px;margin:0 2px;">→</span>':'<span style="font-size:10px;color:var(--ink3);">Malzeme yok →</span>'}
+        ${outChips}
+      </div>
+      ${!locked?`<button class="btn btn-xs" style="width:100%;" onclick="startProd('${t}','${r.id}')" ${canAfford?'':'disabled'}>${canAfford?'▶ Başlat':'Malzeme Eksik'}</button>`:''}
+    </div>`;
   });
-  if(bld.level<bld.max){const uc=Math.floor(bld.cost*Math.pow(1.6,bld.level));html+=`<div class="sec">GELİŞTİR</div><div class="card row-between"><span style="font-size:11px;color:var(--perg2);">Sv.${bld.level} → Sv.${bld.level+1}</span><button class="btn btn-sm" onclick="upgProd('${t}',${uc})" ${G.gold>=uc?'':'disabled'}>${uc}🪙</button></div>`;}
-  el.innerHTML=html;
+
+  // Geliştir butonu sol altta
+  if(bld.level<bld.max){
+    const uc=Math.floor(bld.cost*Math.pow(1.6,bld.level));
+    leftHtml+=`<div class="sec">GELİŞTİR</div>
+      <div class="card row-between">
+        <div>
+          <div style="font-family:var(--font-head);font-size:12px;font-weight:600;color:var(--perg);">Sv.${bld.level} → Sv.${bld.level+1}</div>
+          <div style="font-size:10px;color:var(--ink3);margin-top:2px;">Üretim kapasitesi artar</div>
+        </div>
+        <button class="btn btn-sm" onclick="upgProd('${t}',${uc})" ${G.gold>=uc?'':'disabled'}>${uc}🪙</button>
+      </div>`;
+  }
+
+  // ── SAĞ: Aktif üretimler ──
+  let rightHtml=`<div class="sec" style="margin-top:0;">AKTİF ÜRETİM</div>`;
+  if(activeTimers.length){
+    rightHtml+=activeTimers.map(x=>timerCardHTML(x)).join('');
+  } else {
+    rightHtml+=`<div style="text-align:center;padding:32px 16px;border:1px dashed var(--border);border-radius:10px;color:var(--ink3);">
+      <div style="font-size:32px;margin-bottom:8px;">⏳</div>
+      <div style="font-size:12px;">Aktif üretim yok</div>
+      <div style="font-size:10px;margin-top:4px;">Sol taraftan bir tarif başlat</div>
+    </div>`;
+  }
+
+  // ── SPLIT LAYOUT ──
+  el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+    <div>${leftHtml}</div>
+    <div>${rightHtml}</div>
+  </div>
+  <style>
+    @media(max-width:700px){
+      #prod-content > div[style*="grid-template-columns"]{
+        grid-template-columns:1fr !important;
+      }
+    }
+  </style>`;
 }
 function timerCardHTML(t){
   const r=(PROD_RECIPES[t.building]||[]).find(x=>x.id===t.recipe);if(!r)return'';
