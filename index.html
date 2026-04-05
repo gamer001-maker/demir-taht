@@ -768,7 +768,25 @@ html,body{
   .char-shield{width:130px;height:130px;}
   .inv-grid{grid-template-columns:repeat(10,1fr);}
   .char-sheet{max-width:700px;margin:0 auto;}
+  .eq-slot{max-height:90px;}
 }
+
+/* Equipped slotlar */
+.eq-slots-row{display:flex;gap:8px;margin-bottom:4px;}
+.eq-slot{
+  flex:1;aspect-ratio:1;max-height:72px;
+  border-radius:5px;background:#0f0b08;
+  border:1px solid var(--border2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;position:relative;overflow:visible;
+  transition:border-color .15s;
+  box-shadow:inset 1px 1px 0 #ffffff06,inset -1px -1px 0 #00000040;
+}
+.eq-slot:hover{border-color:var(--gold);}
+.eq-slot:hover .inv-tooltip{display:block;}
+.eq-slot-lbl{font-family:var(--font-head);font-size:7px;color:var(--ink3);letter-spacing:1px;position:absolute;bottom:3px;}
+.eq-filled{background:var(--panel);border-color:var(--border2);}
+.eq-empty .eq-slot-lbl{bottom:6px;}
 
 #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#2a1e0c;border:1px solid var(--border2);border-top:1px solid var(--gold);color:var(--perg);font-family:var(--font-head);font-size:11px;padding:8px 18px;border-radius:6px;z-index:500;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:320px;text-align:center;box-shadow:0 4px 16px #00000080;}
 </style>
@@ -941,7 +959,12 @@ html,body{
           <!-- ── ENVANTER GRID ── -->
           <div class="inventory-section">
             <div class="parch-header">
-              <span class="parch-title">⚔ ENVANTER</span>
+              <span class="parch-title">⚔ KUŞANILMIŞ</span>
+            </div>
+            <div class="eq-slots-row" id="eq-slots"></div>
+            <div class="parch-header" style="margin-top:12px;">
+              <span class="parch-title">📦 ENVANTER</span>
+              <span class="parch-sp" id="inv-count">0/50</span>
             </div>
             <div class="inv-grid" id="inv-grid"></div>
           </div>
@@ -1435,6 +1458,8 @@ const G={
   },
   completedQuests:new Set(),
   dailyCollected:new Set(),
+  inventory:[], // max 50 slot — {id, name, icon, type, grade, price, stats, desc, seller:'player', sellerName}
+  equipped:{weapon:null, armor:null, ring:null},
 };
 
 /* ══════════════════════════════════════
@@ -1740,25 +1765,161 @@ function renderKarakter(){
     </div>`;
   }).join('');
 
-  // Envanter grid — 50 slot (5x10 mobil, 10x5 desktop)
-  const items=[
-    {icon:'⚔',name:'Eski Kılıç',type:'Silah',stats:'Atak +8',flavor:'Demirci Aldus\'un dükkanından.',rarity:'gray'},
-    {icon:'🧥',name:'Deri Zırh',type:'Zırh',stats:'Savunma +10, Can +20',flavor:'Savaş meydanından artık.',rarity:'gray'},
-    ...Array(48).fill(null)
+  // Equipped slotlar
+  const eqSlots=[
+    {key:'weapon', lbl:'Silah',  icon:'⚔'},
+    {key:'armor',  lbl:'Zırh',   icon:'🛡'},
+    {key:'ring',   lbl:'Yüzük',  icon:'💍'},
   ];
+  const equippedHTML=eqSlots.map(s=>{
+    const item=G.equipped[s.key];
+    return `<div class="eq-slot ${item?'eq-filled rarity-'+(item.grade||'gray'):'eq-empty'}"
+      onclick="openInvModal(null,'${s.key}')"
+      title="${item?item.name:s.lbl+' slotu'}">
+      <div class="eq-slot-lbl">${s.lbl}</div>
+      ${item
+        ?`<span style="font-size:20px;">${item.icon}</span>
+           <div class="inv-tooltip">
+             <div class="tt-name">${item.icon} ${item.name}</div>
+             <div class="tt-type">${item.type}</div>
+             <div class="tt-stat">${formatStats(item.stats)}</div>
+             <div class="tt-flavor">${item.desc}</div>
+           </div>`
+        :`<span style="font-size:18px;opacity:.3;">${s.icon}</span>`
+      }
+    </div>`;
+  }).join('');
+  document.getElementById('eq-slots').innerHTML=equippedHTML;
+
+  // Envanter grid — 50 slot
+  const invCount=document.getElementById('inv-count');
+  if(invCount) invCount.textContent=`${G.inventory.length}/50`;
   const grid=document.getElementById('inv-grid');
-  grid.innerHTML=items.map((item,i)=>{
+  const slots=Array(50).fill(null);
+  G.inventory.forEach((item,i)=>{if(i<50)slots[i]=item;});
+  grid.innerHTML=slots.map((item,i)=>{
     if(!item) return `<div class="inv-slot"></div>`;
-    return `<div class="inv-slot has-item rarity-${item.rarity}">
-      <span>${item.icon}</span>
+    return `<div class="inv-slot has-item rarity-${item.grade||'gray'}" onclick="openInvModal(${item.id})">
+      <span style="font-size:16px;">${item.icon}</span>
       <div class="inv-tooltip">
         <div class="tt-name">${item.icon} ${item.name}</div>
         <div class="tt-type">${item.type}</div>
-        <div class="tt-stat">${item.stats}</div>
-        <div class="tt-flavor">${item.flavor}</div>
+        <div class="tt-stat">${formatStats(item.stats)}</div>
+        <div class="tt-flavor">${item.desc}</div>
       </div>
     </div>`;
   }).join('');
+}
+
+function formatStats(stats){
+  if(!stats||!Object.keys(stats).length) return '—';
+  const labels={atk:'Saldırı',def:'Savunma',hp:'Can',mgc:'Büyü',str:'Güç',spd:'Hız',crit:'Kritik',wis:'Bilgelik',rng:'Menzil',luck:'Şans'};
+  return Object.entries(stats).map(([k,v])=>`${labels[k]||k}: +${v}`).join(', ');
+}
+
+function openInvModal(itemId, eqSlotKey=null){
+  const item=itemId?G.inventory.find(x=>x.id===itemId):null;
+  let html='';
+
+  if(!item && eqSlotKey){
+    // Equipped slota tıklandı — sadece çıkar seçeneği
+    const eq=G.equipped[eqSlotKey];
+    if(!eq){html=`<div style="text-align:center;color:var(--ink3);padding:16px;">Bu slot boş.</div>`;showGModal(html);return;}
+    html=`
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:36px;margin-bottom:6px;">${eq.icon}</div>
+        <div style="font-family:var(--font-head);font-size:14px;color:var(--gold2);">${eq.name}</div>
+        <div style="font-size:10px;color:var(--ink3);">${eq.type} · ${eq.grade}</div>
+        <div style="font-size:11px;color:var(--perg2);margin-top:6px;">${formatStats(eq.stats)}</div>
+      </div>
+      <button class="btn" style="width:100%;margin-bottom:8px;" onclick="unequipItem('${eqSlotKey}')">Çıkar → Envantere Al</button>`;
+    showGModal(html);return;
+  }
+
+  if(!item)return;
+
+  // Eşya tipi → hangi slot?
+  const slotMap={Kılıç:'weapon',Asa:'weapon',Hançer:'weapon',Yay:'weapon','Deri Zırh':'armor',Plaka:'armor',Zırh:'armor',Yüzük:'ring'};
+  const targetSlot=slotMap[item.type]||null;
+
+  html=`
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="font-size:40px;margin-bottom:6px;">${item.icon}</div>
+      <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);">${item.name}</div>
+      <div style="font-size:10px;color:var(--ink3);margin-bottom:6px;">${item.type} · <span class="tag rarity-${item.grade}" style="font-size:9px;">${item.grade}</span></div>
+      <div style="font-size:12px;color:var(--perg2);margin-bottom:4px;">${formatStats(item.stats)}</div>
+      <div style="font-size:10px;color:var(--ink3);font-style:italic;">${item.desc}</div>
+    </div>
+    ${targetSlot?`<button class="btn" style="width:100%;margin-bottom:8px;" onclick="equipItem(${item.id},'${targetSlot}')">⚔ Kuşan</button>`:''}
+    <button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="openSellModal(${item.id})">🪙 Pazara Sat</button>
+    <button class="btn btn-danger" style="width:100%;" onclick="dropItem(${item.id})">🗑 At</button>`;
+  showGModal(html);
+}
+
+function equipItem(itemId, slot){
+  const item=G.inventory.find(x=>x.id===itemId);if(!item)return;
+  // Zaten equipped varsa envantere geri al
+  if(G.equipped[slot]) G.inventory.push(G.equipped[slot]);
+  G.equipped[slot]=item;
+  G.inventory=G.inventory.filter(x=>x.id!==itemId);
+  closeGModal();
+  toast(`${item.name} kuşanıldı!`);
+  renderKarakter();
+}
+
+function unequipItem(slot){
+  const item=G.equipped[slot];if(!item)return;
+  if(G.inventory.length>=50){toast('Envanter dolu!');return;}
+  G.inventory.push(item);
+  G.equipped[slot]=null;
+  closeGModal();
+  toast(`${item.name} çıkarıldı.`);
+  renderKarakter();
+}
+
+function dropItem(itemId){
+  G.inventory=G.inventory.filter(x=>x.id!==itemId);
+  closeGModal();toast('Eşya atıldı.');renderKarakter();
+}
+
+function openSellModal(itemId){
+  const item=G.inventory.find(x=>x.id===itemId);if(!item)return;
+  const suggested=Math.floor(item.price*0.5);
+  const html=`
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="font-size:36px;">${item.icon}</div>
+      <div style="font-family:var(--font-head);font-size:14px;color:var(--gold2);margin-top:6px;">${item.name}</div>
+      <div style="font-size:10px;color:var(--ink3);">Alış fiyatı: ${item.price}🪙</div>
+    </div>
+    <div style="font-size:11px;color:var(--ink3);margin-bottom:6px;">Satış fiyatını belirle:</div>
+    <input class="input-field" id="sell-price-inp" type="number" min="1" value="${suggested}" style="margin-bottom:10px;"/>
+    <button class="btn" style="width:100%;" onclick="confirmSellItem(${itemId})">🪙 Pazara Listele</button>`;
+  showGModal(html);
+}
+
+function confirmSellItem(itemId){
+  const item=G.inventory.find(x=>x.id===itemId);if(!item)return;
+  const price=parseInt(document.getElementById('sell-price-inp')?.value)||1;
+  if(price<1){toast('Geçersiz fiyat!');return;}
+  // Pazar listesine ekle
+  const newId=Math.max(...MARKET_ITEMS.map(x=>x.id),100)+Math.floor(Math.random()*1000);
+  MARKET_ITEMS.push({
+    id:newId, name:item.name, icon:item.icon,
+    cat: getCatFromType(item.type),
+    grade:item.grade||'gray', price,
+    qty:1, seller:'player',
+    sellerName:G.heroName||G.username,
+    type:item.type, desc:item.desc, stats:item.stats
+  });
+  G.inventory=G.inventory.filter(x=>x.id!==itemId);
+  closeGModal();
+  toast(`${item.name} ${price}🪙 fiyatıyla pazara listelendi!`);
+  renderKarakter();renderMarket();
+}
+
+function getCatFromType(type){
+  const map={Kılıç:'weapon',Asa:'weapon',Hançer:'weapon',Yay:'weapon','Deri Zırh':'armor',Plaka:'armor',Yüzük:'accessory',İksir:'consumable'};
+  return map[type]||'resource';
 }
 function addStat(k){
   if(!G.skillPoints) return;
@@ -2124,12 +2285,26 @@ function renderMarket(){
   if(!items.length) document.getElementById('market-content').innerHTML=`<div style="text-align:center;padding:30px;font-size:12px;color:var(--ink3);font-style:italic;">İlan bulunamadı.</div>`;
 }
 function buyItem(id){
-  const item=MARKET_ITEMS.find(x=>x.id===id);if(!item)return;
+  const item=MARKET_ITEMS.find(x=>x.id===id)||G.inventory.find(x=>x.id===id);
+  if(!item)return;
   if(G.gold<item.price){toast('Yeterli altın yok!');return;}
-  G.gold-=item.price;if(item.qty<=98) item.qty--;
-  gainXP(10);toast(`${item.name} satın alındı! -${item.price}🪙`);
+  if(G.inventory.length>=50){toast('Envanter dolu! Önce bir eşya sat.');return;}
+  G.gold-=item.price;
+  if(item.qty!==undefined&&item.qty<=98) item.qty--;
+  // Envantere ekle
+  const invItem={
+    id: Date.now(),
+    name: item.name, icon: item.icon,
+    type: item.type||'Eşya', grade: item.grade||'gray',
+    price: item.price, stats: item.stats||{},
+    desc: item.desc||'', seller:'player',
+    sellerName: G.heroName||G.username
+  };
+  G.inventory.push(invItem);
+  gainXP(10);
+  toast(`${item.name} envantere eklendi! -${item.price}🪙`);
   trackQuest('marketBuy1');
-  updateHUD();renderMarket();
+  updateHUD();renderMarket();renderKarakter();
 }
 
 /* ══════════════════════════════════════
@@ -2666,6 +2841,7 @@ function logout(){document.querySelectorAll('.page').forEach(el=>el.classList.re
    MODAL & TOAST
 ══════════════════════════════════════ */
 function closeGModal(e){if(!e||e.target===document.getElementById('g-modal')) document.getElementById('g-modal').style.display='none';}
+function showGModal(html){document.getElementById('g-modal-content').innerHTML=html;document.getElementById('g-modal').style.display='flex';}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.style.opacity='1';clearTimeout(window._nt);window._nt=setTimeout(()=>el.style.opacity='0',2800);}
 
 /* ══════════════════════════════════════
