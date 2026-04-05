@@ -870,18 +870,16 @@ let G_MAP=[]; // Aktif harita
 let exploreTimers=[]; // Keşif sayaçları
 
 async function initPlayerMap(){
-  if(!currentUser){G_MAP=generateMap(42);return;}
-  // Supabase'den yükle
+  if(!currentUser){G_MAP=generateMap(42);renderHarita();return;}
   const {data}=await supa.from('player_maps').select('cells').eq('profile_id',currentUser.id).single();
   if(data?.cells?.length){
     G_MAP=data.cells;
   } else {
-    // İlk defa — harita üret ve kaydet
     G_MAP=generateMap(userSeed(currentUser.id));
     await supa.from('player_maps').upsert({profile_id:currentUser.id,cells:G_MAP});
   }
-  // Keşif sayaçlarını yükle
   await loadExporeTimers();
+  renderHarita();
 }
 
 async function loadExporeTimers(){
@@ -951,59 +949,6 @@ setInterval(async()=>{
   }
 },1000);
 
-function renderHarita(){
-  const grid=document.getElementById('map-grid');grid.innerHTML='';
-  if(!G_MAP.length){grid.innerHTML='<div style="padding:20px;color:var(--ink3);font-size:12px;">Harita yükleniyor...</div>';return;}
-  G_MAP.forEach((cell,idx)=>{
-    const exp=G.explored.has(idx);
-    const sel=G.selectedCell===idx;
-    const exploring=exploreTimers.find(t=>t.cellIdx===idx);
-    const d=document.createElement('div');
-    d.className=`map-cell t-${cell.t}${!exp&&!exploring?' fog':''}${sel?' sel':''}`;
-    if(exp){
-      // Keşfedilmiş — görsel göster
-      d.style.backgroundImage=`url('${cell.img}')`;
-      d.style.backgroundSize='cover';
-      d.style.backgroundPosition='center';
-      d.innerHTML=`<span class="mlbl" style="background:#00000066;padding:1px 4px;border-radius:3px;">${cell.n}</span>`;
-    } else if(exploring){
-      // Keşfediliyor — sayaç göster
-      d.style.background='#1a1040';
-      d.innerHTML=`<span style="font-size:16px;">🔍</span><span class="mlbl" id="explore-timer-${idx}" style="color:var(--gold);">--:--</span>`;
-    } else {
-      // Keşfedilmemiş — soru işareti
-      d.innerHTML=`<span style="font-size:16px;">❓</span>`;
-    }
-    d.onclick=()=>cellClick(idx,cell);
-    grid.appendChild(d);
-  });
-}
-
-function cellClick(idx,cell){
-  const info=document.getElementById('map-info-card');
-  const exploring=exploreTimers.find(t=>t.cellIdx===idx);
-  if(exploring){
-    info.style.display='block';
-    const m=Math.floor(exploring.remaining/60),s=exploring.remaining%60;
-    info.innerHTML=`<div class="row-between"><span style="font-family:var(--font-head);font-size:13px;color:var(--gold);">🔍 Keşif Devam Ediyor</span><span style="font-family:var(--font-head);font-size:14px;color:var(--daily2);">${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</span></div><div style="font-size:11px;color:var(--ink3);margin-top:4px;">Bu bölge keşfediliyor, bekle...</div>`;
-    return;
-  }
-  if(!G.explored.has(idx)){
-    if([idx-1,idx+1,idx-6,idx+6].some(n=>G.explored.has(n))){
-      info.style.display='block';
-      info.innerHTML=`<div class="row-between" style="margin-bottom:8px;"><span style="font-family:var(--font-head);font-size:13px;color:var(--gold);">❓ Keşfedilmemiş Bölge</span><span class="tag tag-red">Bilinmiyor</span></div><div style="font-size:11px;color:var(--ink3);margin-bottom:10px;">Bu bölgede ne olduğu bilinmiyor. Keşfetmek 2 dakika sürer.</div><button class="btn" style="width:100%;" onclick="startExplore(${idx})">🗺 Keşfet — 10🪙 + 2dk</button>`;
-    } else {
-      toast('Önce komşu bölgeleri keşfet.');
-    }
-    return;
-  }
-  G.selectedCell=G.selectedCell===idx?null:idx;
-  if(G.selectedCell!==null){
-    info.style.display='block';
-    info.innerHTML=`<div class="row-between"><span style="font-family:var(--font-head);font-size:13px;color:var(--gold);">${cell.n}</span><span class="tag tag-gold">✓ Keşfedildi</span></div><div style="font-size:11px;color:var(--ink3);margin-top:4px;">${cell.info}</div>`;
-  } else info.style.display='none';
-  renderHarita();
-}
 const OPPONENTS=[
   {name:'Demir Yumruk Krag',cls:'Savaşçı',icon:'⚔',power:120,reward:30,pts:15,win:'Krag yenildi!',lose:'Krag seni geri püskürttü.'},
   {name:'Büyücü Selara',cls:'Büyücü',icon:'🔮',power:95,reward:25,pts:12,win:'Selara büyüleri söndü!',lose:'Büyüler seni yendi.'},
