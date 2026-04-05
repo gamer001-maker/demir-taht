@@ -902,6 +902,7 @@ const PROD_RECIPES={
     {id:'kek',name:'Kek Pişir',icon:'🎂',minLv:2,dur:180,inputs:{un:2,yumurta:2},outputs:{kek:{base:1,chance:.35,mult:2}}},
   ],
 };
+const FOOD_VALUE={bugday:1,arpa:1,sebze:2,saman:0,un:0,arpa_unu:0,tuy:0,yumurta:2,yun:0,sut:2,ekmek:10,corba:12,kek:15};
 const ITEM_LABELS={bugday:'Buğday',saman:'Saman',arpa:'Arpa',sebze:'Sebze',un:'Un',arpa_unu:'Arpa Unu',tuy:'Tüy',yumurta:'Yumurta',yun:'Yün',sut:'Süt',ekmek:'Ekmek',corba:'Çorba',kek:'Kek'};
 const ITEM_ICONS={bugday:'🌾',saman:'🌿',arpa:'🌱',sebze:'🥦',un:'🥛',arpa_unu:'🥛',tuy:'🪶',yumurta:'🥚',yun:'🧶',sut:'🥛',ekmek:'🍞',corba:'🥣',kek:'🎂'};
 const GRADES={gray:{name:'Ortak'},green:{name:'Nadir'},blue:{name:'Değerli'},purple:{name:'Epik'},orange:{name:'Efsanevi'}};
@@ -925,11 +926,11 @@ const G={
   armorColor:'#8a8a8a',cloakColor:'#8b0000',
   level:1,xp:0,skillPoints:3,
   stats:{str:0,def:0,agi:0,wis:0,cha:0,hp:100,maxhp:100},
-  gold:500,food:80,wood:40,army:30,morale:72,
+  gold:500,food:50,wood:40,army:0,morale:72,
   turn:1,season:0,
   castle:{hp:100,maxhp:100,def:40,atk:25,morale:72,walls:1,towers:1,barracks:1,farm:1,market:1},
-  units:[{id:'infantry',name:'Piyade',icon:'🗡',count:20,atk:8,def:5,cost:2},{id:'archer',name:'Okçu',icon:'🏹',count:8,atk:12,def:3,cost:3},{id:'cavalry',name:'Süvari',icon:'🐴',count:2,atk:18,def:8,cost:8}],
-  folk:{population:320,happiness:68,tax:15},
+  units:[{id:'infantry',name:'Piyade',icon:'🗡',count:0,atk:8,def:5,goldCost:20,popCost:5},{id:'archer',name:'Okçu',icon:'🏹',count:0,atk:12,def:3,goldCost:35,popCost:8},{id:'cavalry',name:'Süvari',icon:'🐴',count:0,atk:18,def:8,goldCost:80,popCost:15}],
+  folk:{population:100,happiness:68,tax:10},
   folkEvents:[
     {id:'fe1',title:'Kıtlık Haberleri',desc:'Güney köylerinde yiyecek sıkıntısı.',done:false,choices:[{t:'Yardım gönder (-30🌾)',fn:()=>{if(G.food<30){toast('Yeterli yiyecek yok!');return;}G.food-=30;G.folk.happiness=Math.min(100,G.folk.happiness+12);}},{t:'Görmezden gel',fn:()=>{G.folk.happiness=Math.max(0,G.folk.happiness-8);}}]},
     {id:'fe2',title:'Şenlik Talebi',desc:'Halk şenlik istiyor.',done:false,choices:[{t:'Şenlik (-40🪙)',fn:()=>{if(G.gold<40){toast('Yeterli altın yok!');return;}G.gold-=40;G.folk.happiness=Math.min(100,G.folk.happiness+15);}},{t:'Reddet',fn:()=>{G.folk.happiness=Math.max(0,G.folk.happiness-5);}}]},
@@ -1260,42 +1261,104 @@ function upgBld(key,cost){
 }
 function endTurn(){
   G.turn++;G.season=(G.season+1)%4;
-  G.gold+=20+G.castle.market*15;
-  G.food+=10+G.castle.farm*12;
-  G.army+=G.castle.barracks*2;
+
+  /* ── ALTIN GELİRİ ── */
+  const taxIncome=Math.floor(G.folk.population*G.folk.tax/100);
+  G.gold+=20+G.castle.market*15+taxIncome;
+
+  /* ── NÜFUS BÜYÜMESI ── */
+  const tax=G.folk.tax;
+  const popGrowth=tax<=10?12:tax<=20?8:tax<=30?4:0;
+  // Yemek yoksa nüfus azalır
+  const foodPerPop=0.1;
+  const foodNeeded=Math.ceil(G.folk.population*foodPerPop);
+  const totalArmy=G.units.reduce((a,u)=>a+u.count,0);
+  const armyFood=Math.floor(totalArmy*0.5);
+  const totalFoodCost=foodNeeded+armyFood;
+  if(G.food>=totalFoodCost){
+    G.food-=totalFoodCost;
+    G.folk.population+=popGrowth;
+  } else if(G.food>0){
+    // Kısmi yemek — nüfus az büyür
+    G.food=0;
+    G.folk.population+=Math.floor(popGrowth/2);
+    G.morale=Math.max(0,G.morale-5);
+    toast('⚠ Yemek azalıyor! Üretimi artır.');
+  } else {
+    // Yemek yok — nüfus azalır, moral düşer
+    G.folk.population=Math.max(10,G.folk.population-10);
+    G.morale=Math.max(0,G.morale-10);
+    toast('🚨 Kıtlık! Halk aç, nüfus azalıyor!');
+  }
+
+  /* ── ASKER GİDERLERİ: ALTIN ── */
+  const maint=Math.floor(G.units.reduce((a,u)=>a+u.count*(u.goldCost||u.cost||2)*0.15,0));
+  G.gold-=maint;
+
+  /* ── MORAL & KALE ── */
   G.morale=Math.min(100,G.morale+(G.folk.happiness>60?2:-3));
   G.castle.hp=Math.min(G.castle.maxhp,G.castle.hp+5);
-  const maint=Math.floor(G.units.reduce((a,u)=>a+u.count*u.cost*0.3,0));
-  G.gold-=maint;G.food-=Math.floor(G.units.reduce((a,u)=>a+u.count*0.5,0));
-  if(G.food<0){G.morale=Math.max(0,G.morale-8);G.food=0;toast('Kıtlık! Çiftlikleri geliştir.');}
   if(G.gold<0) G.gold=0;
   G.stats.hp=Math.min(G.stats.maxhp,G.stats.hp+10);
   gainXP(15);
+
+  /* ── GÖREV TAKİBİ ── */
   if(G.gold>=100) trackQuest('goldReached100');
-  const totalArmy=G.units.reduce((a,u)=>a+u.count,0);
   if(totalArmy>=30) trackQuest('armyCount30');
   if(G.folk.happiness>=60) trackQuest('happiness60');
+
   const seasons=['Bahar','Yaz','Sonbahar','Kış'];
-  toast(`${seasons[G.season]} geldi! Tur ${G.turn}`);
-  updateHUD();renderGame('kale');
+  const log=`${seasons[G.season]} geldi! Nüfus: ${G.folk.population} | Yemek: ${Math.floor(G.food)} | Vergi geliri: ${taxIncome}🪙`;
+  toast(log);
+  updateHUD();renderGame('kale');renderHalk();
 }
 
 /* ── ORDU ── */
 function renderOrdu(){
   const total=G.units.reduce((a,u)=>a+u.count,0);
-  const cost=G.units.reduce((a,u)=>a+u.count*u.cost*0.3,0);
+  const maint=Math.floor(G.units.reduce((a,u)=>a+u.count*(u.goldCost||20)*0.15,0));
   document.getElementById('total-army').textContent=total;
-  document.getElementById('army-cost').textContent=Math.floor(cost)+'🪙/tur';
-  document.getElementById('unit-list').innerHTML=G.units.map(u=>`<div class="card-sm" style="display:flex;align-items:center;gap:9px;"><span style="font-size:22px;">${u.icon}</span><div style="flex:1;"><div style="font-family:var(--font-head);font-size:11px;color:var(--perg);">${u.name}</div><div style="font-size:9px;color:var(--ink3);">⚔${u.atk} 🛡${u.def}</div></div><span style="font-family:var(--font-head);font-size:14px;color:var(--gold);">${u.count}</span></div>`).join('');
-  const recruits=[{name:'Piyade',icon:'🗡',count:10,uid:'infantry',cost:20},{name:'Okçu',icon:'🏹',count:5,uid:'archer',cost:35},{name:'Süvari',icon:'🐴',count:2,uid:'cavalry',cost:80}];
-  document.getElementById('recruit-list').innerHTML=recruits.map(r=>`<div class="card-sm row-between"><span>${r.icon} <span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${r.count}x ${r.name}</span></span><button class="btn btn-xs" onclick="recruit('${r.uid}',${r.count},${r.cost})" ${G.gold<r.cost?'disabled':''}>${r.cost}🪙</button></div>`).join('');
+  document.getElementById('army-cost').textContent=maint+'🪙/tur';
+  document.getElementById('unit-list').innerHTML=G.units.map(u=>`<div class="card-sm" style="display:flex;align-items:center;gap:9px;"><span style="font-size:22px;">${u.icon}</span><div style="flex:1;"><div style="font-family:var(--font-head);font-size:11px;color:var(--perg);">${u.name}</div><div style="font-size:9px;color:var(--ink3);">⚔${u.atk} 🛡${u.def} · ${(u.goldCost||20)*0.15|0}🪙/tur</div></div><span style="font-family:var(--font-head);font-size:14px;color:var(--gold);">${u.count}</span></div>`).join('');
+  // İşe alım: altın + vatandaş gereksinimi
+  const recruits=[
+    {name:'Piyade',icon:'🗡',count:5,uid:'infantry'},
+    {name:'Okçu',icon:'🏹',count:3,uid:'archer'},
+    {name:'Süvari',icon:'🐴',count:1,uid:'cavalry'},
+  ];
+  document.getElementById('recruit-list').innerHTML=recruits.map(r=>{
+    const u=G.units.find(x=>x.id===r.uid);
+    const goldNeed=u.goldCost*r.count;
+    const popNeed=u.popCost*r.count;
+    const canAfford=G.gold>=goldNeed&&G.folk.population>=popNeed+10;
+    return `<div class="card-sm"><div style="display:flex;align-items:center;gap:9px;margin-bottom:5px;">
+      <span style="font-size:20px;">${r.icon}</span>
+      <div style="flex:1;"><div style="font-family:var(--font-head);font-size:11px;color:var(--perg);">${r.count}x ${r.name}</div>
+      <div style="font-size:9px;color:var(--ink3);">⚔${u.atk} 🛡${u.def}</div></div>
+    </div>
+    <div style="display:flex;gap:4px;margin-bottom:5px;flex-wrap:wrap;">
+      <span class="tag ${G.gold>=goldNeed?'tag-gold':'tag-red'}">${goldNeed}🪙</span>
+      <span class="tag ${G.folk.population>=popNeed+10?'tag-blue':'tag-red'}">👥 ${popNeed} vatandaş</span>
+      <span class="tag tag-blue" style="font-size:8px;">Mevcut: ${G.folk.population}</span>
+    </div>
+    <button class="btn btn-xs" style="width:100%;" onclick="recruit('${r.uid}',${r.count})" ${canAfford?'':'disabled'}>${canAfford?'İşe Al':'Yetersiz'}</button>
+    </div>`;
+  }).join('');
 }
-function recruit(uid,count,cost){
-  if(G.gold<cost){toast('Yeterli altın yok!');return;}
-  G.gold-=cost;G.units.find(u=>u.id===uid).count+=count;
+function recruit(uid,count){
+  const u=G.units.find(x=>x.id===uid);
+  const goldNeed=u.goldCost*count;
+  const popNeed=u.popCost*count;
+  if(G.gold<goldNeed){toast('Yeterli altın yok! '+goldNeed+'🪙 gerekli');return;}
+  if(G.folk.population<popNeed+10){toast('Yeterli vatandaş yok! En az '+(popNeed+10)+' kişi gerekli');return;}
+  G.gold-=goldNeed;
+  G.folk.population-=popNeed;
+  u.count+=count;
   const totalArmy=G.units.reduce((a,u)=>a+u.count,0);
   if(totalArmy>=30) trackQuest('armyCount30');
-  gainXP(10);toast(count+'x asker işe alındı!');updateHUD();renderOrdu();
+  gainXP(10);
+  toast(`${count}x ${u.name} işe alındı! -${goldNeed}🪙 -${popNeed} vatandaş`);
+  updateHUD();renderOrdu();renderHalk();
 }
 
 /* ── HALK ── */
@@ -1303,7 +1366,31 @@ function renderHalk(){
   const f=G.folk;
   const mood=f.happiness>=70?'Mutlu 😊':f.happiness>=45?'Nötr 😐':'Mutsuz 😠';
   const moodCls=f.happiness>=70?'tag-green':f.happiness>=45?'tag-gold':'tag-red';
-  document.getElementById('folk-overview-card').innerHTML=`<div class="row-between" style="margin-bottom:7px;"><span style="font-family:var(--font-head);font-size:13px;color:var(--perg);">Nüfus</span><span style="font-family:var(--font-head);font-size:16px;color:var(--gold);">${f.population}</span></div><div class="row-between" style="margin-bottom:7px;"><span style="font-size:12px;color:var(--ink3);">Durum</span><span class="tag ${moodCls}">${mood}</span></div><div class="castle-stat" style="margin-bottom:0;"><span class="cs-icon">😊</span><span class="cs-lbl">Mutluluk</span><div class="cs-bar-bg"><div class="cs-bar" style="width:${f.happiness}%;background:var(--mor);"></div></div><span class="cs-val">${f.happiness}%</span></div>`;
+  const foodNeeded=Math.ceil(f.population*0.1);
+  const totalArmy=G.units.reduce((a,u)=>a+u.count,0);
+  const armyFood=Math.floor(totalArmy*0.5);
+  const totalFoodCost=foodNeeded+armyFood;
+  const foodOk=G.food>=totalFoodCost;
+  const tax=f.tax;
+  const popGrowth=tax<=10?'+12':tax<=20?'+8':tax<=30?'+4':'0';
+  document.getElementById('folk-overview-card').innerHTML=`
+    <div class="row-between" style="margin-bottom:7px;">
+      <span style="font-family:var(--font-head);font-size:13px;color:var(--perg);">Nüfus</span>
+      <span style="font-family:var(--font-head);font-size:16px;color:var(--gold);">${f.population} <span style="font-size:11px;color:var(--g-green);">(${popGrowth}/tur)</span></span>
+    </div>
+    <div class="row-between" style="margin-bottom:7px;">
+      <span style="font-size:11px;color:var(--ink3);">Durum</span>
+      <span class="tag ${moodCls}">${mood}</span>
+    </div>
+    <div class="row-between" style="margin-bottom:7px;">
+      <span style="font-size:11px;color:var(--ink3);">🍖 Yemek tüketimi/tur</span>
+      <span style="font-family:var(--font-head);font-size:12px;color:${foodOk?'var(--g-green)':'var(--hp)'};">${totalFoodCost} (Mevcut: ${Math.floor(G.food)})</span>
+    </div>
+    <div class="row-between" style="margin-bottom:7px;">
+      <span style="font-size:10px;color:var(--ink3);">  Halk: ${foodNeeded} + Ordu: ${armyFood}</span>
+      <span class="tag ${foodOk?'tag-green':'tag-red'}">${foodOk?'✓ Yeterli':'⚠ Yetersiz'}</span>
+    </div>
+    <div class="castle-stat" style="margin-bottom:0;"><span class="cs-icon">😊</span><span class="cs-lbl">Mutluluk</span><div class="cs-bar-bg"><div class="cs-bar" style="width:${f.happiness}%;background:var(--mor);"></div></div><span class="cs-val">${f.happiness}%</span></div>`;
   document.getElementById('folk-actions-wrap').innerHTML=`<div class="row-between" style="margin-bottom:7px;"><span style="font-size:12px;color:var(--perg2);">Vergi: ${f.tax}%</span><div style="display:flex;gap:5px;"><button class="btn btn-xs" onclick="changeTax(-5)">▼ İndir</button><button class="btn btn-xs" onclick="changeTax(5)">▲ Artır</button></div></div><button class="btn btn-sm" style="width:100%;margin-bottom:5px;" onclick="festival()">🎉 Şenlik (-40🪙)</button><button class="btn btn-sm" style="width:100%;" onclick="feedPeople()">🌾 Yiyecek Dağıt (-30🌾)</button>`;
   const evs=G.folkEvents.filter(e=>!e.done);
   document.getElementById('folk-events-wrap').innerHTML=evs.length===0?`<div style="font-size:11px;color:var(--ink3);">Şu an sakin...</div>`:evs.map(e=>`<div class="card-sm"><div style="font-family:var(--font-head);font-size:11px;color:var(--gold2);margin-bottom:3px;">${e.title}</div><div style="font-size:11px;color:var(--ink3);margin-bottom:5px;">${e.desc}</div><div style="display:flex;gap:5px;flex-wrap:wrap;">${e.choices.map((c,ci)=>`<button class="btn btn-xs" onclick="folkChoice('${e.id}',${ci})">${c.t}</button>`).join('')}</div></div>`).join('');
@@ -1798,11 +1885,20 @@ function startProd(bKey,rId){
 }
 function collectProd(id){
   const idx=G.prodTimers.findIndex(x=>x.id===id);if(idx<0)return;
-  const t=G.prodTimers[idx];const bonusItems=[];
-  Object.entries(t.outputs).forEach(([k,v])=>{G.prodInv[k]=(G.prodInv[k]||0)+v.amount;if(v.bonus) bonusItems.push(`${ITEM_ICONS[k]} ${ITEM_LABELS[k]||k} ×${v.amount}`);});
-  G.prodTimers.splice(idx,1);updateInvStrip();renderProd(t.building);
-  if(bonusItems.length){const el=document.createElement('div');el.className='bonus-flash';el.innerHTML=`<span style="font-size:28px;display:block;margin-bottom:4px;">✨</span><div style="font-family:var(--font-head);font-size:13px;color:var(--g-purple);">BONUS ÜRETİM!</div><div style="font-size:11px;color:var(--perg2);margin-top:3px;">${bonusItems.join('<br>')}</div>`;document.body.appendChild(el);setTimeout(()=>el.remove(),2000);}
-  else toast('Ürünler toplandı!');
+  const t=G.prodTimers[idx];const bonusItems=[];let foodGained=0;
+  Object.entries(t.outputs).forEach(([k,v])=>{
+    G.prodInv[k]=(G.prodInv[k]||0)+v.amount;
+    if(v.bonus) bonusItems.push(`${ITEM_ICONS[k]} ${ITEM_LABELS[k]||k} ×${v.amount}`);
+    // Yemek değeri hesapla
+    const fv=(FOOD_VALUE[k]||0)*v.amount;
+    if(fv>0){G.food+=fv;foodGained+=fv;}
+  });
+  G.prodTimers.splice(idx,1);updateInvStrip();renderProd(t.building);updateHUD();
+  if(bonusItems.length){
+    const el=document.createElement('div');el.className='bonus-flash';
+    el.innerHTML=`<span style="font-size:28px;display:block;margin-bottom:4px;">✨</span><div style="font-family:var(--font-head);font-size:13px;color:var(--g-purple);">BONUS ÜRETİM!</div><div style="font-size:11px;color:var(--perg2);margin-top:3px;">${bonusItems.join('<br>')}${foodGained>0?'<br>🍖 +'+foodGained+' yemek':''}</div>`;
+    document.body.appendChild(el);setTimeout(()=>el.remove(),2500);
+  } else toast(`Ürünler toplandı!${foodGained>0?' 🍖 +'+foodGained+' yemek':''}`);
 }
 function cancelProd(id){const idx=G.prodTimers.findIndex(x=>x.id===id);if(idx<0)return;const t=G.prodTimers[idx];const r=(PROD_RECIPES[t.building]||[]).find(x=>x.id===t.recipe);if(r) Object.entries(r.inputs).forEach(([k,v])=>{G.prodInv[k]=(G.prodInv[k]||0)+Math.floor(v/2);});G.prodTimers.splice(idx,1);updateInvStrip();renderProd(t.building);toast('İptal edildi. Malzemenin yarısı iade edildi.');}
 function renderDepot(){
