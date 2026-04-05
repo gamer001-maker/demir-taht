@@ -1866,7 +1866,7 @@ function timerCardHTML(t){
   return `<div class="timer-card${isDone?' t-done':''}" id="tc-${t.id}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;"><span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${r.icon} ${r.name}</span><div style="display:flex;align-items:center;gap:5px;"><span style="font-family:var(--font-head);font-size:12px;color:${isDone?'var(--g-green)':'var(--gold)'};" id="tsecs-${t.id}">${isDone?'✓ Hazır':fmtT(t.remaining)}</span>${!isDone?`<button class="btn btn-xs btn-ghost" onclick="cancelProd(${t.id})" style="font-size:8px;padding:2px 5px;">✕</button>`:''}</div></div><div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px;">${outChips}</div>${isDone?`<button class="collect-btn" onclick="collectProd(${t.id})">🎁 Topla</button>`:''}<div class="timer-prog-bg"><div class="timer-prog-fill" id="tprog-${t.id}" style="width:${pct}%;"></div></div></div>`;
 }
 function buildProd(t){const bld=PROD_BUILDINGS[t];if(G.gold<bld.cost){toast('Yeterli altın yok!');return;}G.gold-=bld.cost;bld.level=1;toast(`${bld.name} inşa edildi!`);updateHUD();renderProd(t);sbSave();}
-function upgProd(t,cost){const bld=PROD_BUILDINGS[t];if(G.gold<cost){toast('Yeterli altın yok!');return;}G.gold-=cost;bld.level++;gainXP(20);toast(`${bld.name} Sv.${bld.level}'e yükseltildi!`);updateHUD();renderProd(t);sbSave();}!`);updateHUD();renderProd(t);}
+function upgProd(t,cost){const bld=PROD_BUILDINGS[t];if(G.gold<cost){toast('Yeterli altın yok!');return;}G.gold-=cost;bld.level++;gainXP(20);toast(`${bld.name} Sv.${bld.level}'e yükseltildi!`);updateHUD();renderProd(t);sbSave();}
 async function startProd(bKey,rId){
   const r=(PROD_RECIPES[bKey]||[]).find(x=>x.id===rId);if(!r)return;
   if(!Object.entries(r.inputs).every(([k,v])=>(G.prodInv[k]||0)>=v)){toast('Malzeme eksik!');return;}
@@ -2181,13 +2181,13 @@ async function sbLoadProfile() {
   // Aktif üretim sayaçları
   await sbLoadProdTimers();
 
-// Bina seviyeleri
-if(p.prod_farm !== undefined) PROD_BUILDINGS.farm.level = p.prod_farm;
-if(p.prod_mill !== undefined) PROD_BUILDINGS.mill.level = p.prod_mill;
-if(p.prod_ranch !== undefined) PROD_BUILDINGS.ranch.level = p.prod_ranch;
-if(p.prod_kitchen !== undefined) PROD_BUILDINGS.kitchen.level = p.prod_kitchen;
-// Üretim envanteri
-if(p.prod_inv && Object.keys(p.prod_inv).length) G.prodInv = p.prod_inv;
+  // Bina seviyeleri
+  if(p.prod_farm !== undefined) PROD_BUILDINGS.farm.level = p.prod_farm;
+  if(p.prod_mill !== undefined) PROD_BUILDINGS.mill.level = p.prod_mill;
+  if(p.prod_ranch !== undefined) PROD_BUILDINGS.ranch.level = p.prod_ranch;
+  if(p.prod_kitchen !== undefined) PROD_BUILDINGS.kitchen.level = p.prod_kitchen;
+  // Üretim envanteri
+  if(p.prod_inv && Object.keys(p.prod_inv).length) G.prodInv = p.prod_inv;
 
   return true;
 }
@@ -2195,35 +2195,35 @@ if(p.prod_inv && Object.keys(p.prod_inv).length) G.prodInv = p.prod_inv;
 /* ── VERİ KAYDET ── */
 async function sbSave() {
   if (!currentUser) return;
-await supa.from('profiles').update({
-  hero_name:    G.heroName,
-  level:        G.level,
-  xp:           G.xp,
-  skill_points: G.skillPoints,
-  gold:         Math.floor(G.gold),
-  food:         Math.floor(G.food),
-  wood:         Math.floor(G.wood),
-  army:         G.units.reduce((a,u)=>a+u.count,0),
-  morale:       Math.floor(G.morale),
-  turn:         G.turn,
-  season:       G.season,
-  arena_score:  G.arenaScore,
-  arena_wins:   G.arenaWins,
-  arena_losses: G.arenaLosses,
-  stat_str:     G.stats.str,
-  stat_def:     G.stats.def,
-  stat_agi:     G.stats.agi,
-  stat_wis:     G.stats.wis,
-  stat_cha:     G.stats.cha,
-  hp:           G.stats.hp,
-  max_hp:       G.stats.maxhp,
-  updated_at:   new Date().toISOString(),
-  prod_farm:    PROD_BUILDINGS.farm.level,
-  prod_mill:    PROD_BUILDINGS.mill.level,
-  prod_ranch:   PROD_BUILDINGS.ranch.level,
-  prod_kitchen: PROD_BUILDINGS.kitchen.level,
-  prod_inv:     G.prodInv,
-}).eq('id', currentUser.id);
+  await supa.from('profiles').update({
+    hero_name:    G.heroName,
+    level:        G.level,
+    xp:           G.xp,
+    skill_points: G.skillPoints,
+    gold:         Math.floor(G.gold),
+    food:         Math.floor(G.food),
+    wood:         Math.floor(G.wood),
+    army:         G.units.reduce((a,u)=>a+u.count,0),
+    morale:       Math.floor(G.morale),
+    turn:         G.turn,
+    season:       G.season,
+    arena_score:  G.arenaScore,
+    arena_wins:   G.arenaWins,
+    arena_losses: G.arenaLosses,
+    stat_str:     G.stats.str,
+    stat_def:     G.stats.def,
+    stat_agi:     G.stats.agi,
+    stat_wis:     G.stats.wis,
+    stat_cha:     G.stats.cha,
+    hp:           G.stats.hp,
+    max_hp:       G.stats.maxhp,
+    updated_at:   new Date().toISOString(),
+    prod_farm:    PROD_BUILDINGS.farm.level,
+    prod_mill:    PROD_BUILDINGS.mill.level,
+    prod_ranch:   PROD_BUILDINGS.ranch.level,
+    prod_kitchen: PROD_BUILDINGS.kitchen.level,
+    prod_inv:     G.prodInv,
+  }).eq('id', currentUser.id);
 
   await supa.from('castles').update({
     hp:       G.castle.hp,
