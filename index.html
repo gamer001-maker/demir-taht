@@ -39,7 +39,7 @@
   /* ── Gece arka plan gradient ── */
   --night-bg: radial-gradient(ellipse at 20% 20%, #1a0a3a 0%, #0a0814 50%, #0d0a1a 100%);
 }
-html,body{height:100%;height:100dvh;background:var(--panel3);background-image:var(--night-bg);display:flex;align-items:flex-start;justify-content:center;padding:12px 8px;font-family:var(--font-body);font-size:clamp(13px,1.8vw,16px);font-weight:300;overflow:hidden;}
+html,body{height:100%;background:var(--panel3);background-image:var(--night-bg);display:flex;align-items:flex-start;justify-content:center;padding:12px 8px;font-family:var(--font-body);font-size:clamp(13px,1.8vw,16px);font-weight:300;}
 
 /* ── PHONE SHELL ── */
 .phone{
@@ -54,7 +54,7 @@ html,body{height:100%;height:100dvh;background:var(--panel3);background-image:va
 @media (min-width:900px){
   html,body{align-items:flex-start;padding:0;}
   .phone{
-    width:100vw;min-height:100dvh;
+    width:100vw;min-height:100vh;
     border-radius:0;border:none;
     flex-direction:row;
   }
@@ -62,7 +62,7 @@ html,body{height:100%;height:100dvh;background:var(--panel3);background-image:va
   .bottom-nav{
     flex-direction:column !important;
     width:90px;min-width:90px;
-    height:100dvh;
+    height:100vh;
     border-top:none !important;
     border-right:1px solid var(--border);
     padding:16px 0;
@@ -85,7 +85,7 @@ html,body{height:100%;height:100dvh;background:var(--panel3);background-image:va
   .bnav-lbl{font-size:8px !important;}
 
   /* Sayfa içeriği */
-  .page{flex:1;height:100dvh;}
+  .page{flex:1;height:100vh;}
 
   /* Resource bar daha büyük */
   .res-bar{padding:8px 20px;}
@@ -116,24 +116,8 @@ html,body{height:100%;height:100dvh;background:var(--panel3);background-image:va
   .map-cell{font-size:22px !important;}
   .map-cell .mlbl{font-size:8px !important;}
 
-  /* Onboarding desktop — tam ekran, ortada geniş kart */
-  #p-onboard{display:flex;align-items:center;justify-content:center;min-height:100dvh;}
-  #p-onboard .scroll{max-width:680px !important;width:100%;padding:20px;}
-  .ob-screen.active{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
-  #obs-0.active, #obs-3.active{display:block !important;max-width:460px;margin:0 auto;}
-  .ob-logo{padding:40px 20px 24px;}
-  .ob-logo-title{font-size:32px !important;}
-  .class-grid{grid-template-columns:1fr 1fr 1fr !important;}
-  .avatar-grid{grid-template-columns:repeat(4,1fr) !important;}
-  .ob-steps{padding:0 0 8px;}
-  /* Adım 2: sınıf solda, skill sağda */
-  #obs-1.active .class-grid{grid-column:1;}
-  #obs-1.active #ob-skill-preview{grid-column:2;}
-  #obs-1.active > button, #obs-1.active > .btn{grid-column:1 / -1;}
-  /* Adım 3: avatar solda, renkler sağda */
-  #obs-2.active .avatar-grid{grid-column:1;}
-  #obs-2.active .color-row{grid-column:2;}
-  #obs-2.active > input, #obs-2.active > button, #obs-2.active > .btn, #obs-2.active > div:first-child{grid-column:1 / -1;}
+  /* Onboarding desktop */
+  #p-onboard .scroll{max-width:480px !important;}
 
   /* Stat grid 4 kolon */
   .stat-grid2{grid-template-columns:1fr 1fr 1fr 1fr !important;}
@@ -855,25 +839,25 @@ const MARKET_ITEMS=[
 const QUEST_DATA={
   story:[
     {id:'s1',type:'story',num:'Bölüm 1',title:'Tahtın Uyanışı',desc:'Krallığını uyandır, ilk adımlarını at.',icon:'👑',status:'active',objectives:[{text:'Ordu ekranını ziyaret et',key:'visitArmy',cur:0,max:1},{text:'100 altın topla',key:'goldReached100',cur:0,max:1}],rewards:[{t:'gold',v:200},{t:'xp',v:150}]},
-    {id:'s2',type:'story',num:'Bölüm 2',title:'İlk Sınav',desc:'Orduyu topla ve sınırı koru.',icon:'⚔',status:'locked',lockReason:'Bölüm 1\'i tamamla',objectives:[{text:'30 asker topla',key:'armyCount30',cur:0,max:1},{text:'Arena\'da 1 dövüş yap',key:'arenaWin1',cur:0,max:1}],rewards:[{t:'gold',v:350},{t:'xp',v:250}]},
-    {id:'s3',type:'story',num:'Bölüm 3',title:'Demir Kale\'nin Sırrı',desc:'Doğudaki harabede gizli hazine var.',icon:'🏚',status:'locked',lockReason:'Bölüm 2\'yi tamamla',objectives:[{text:'5 bölge keşfet',key:'explore5',cur:0,max:5},{text:'Harabe keşfet',key:'exploreRuin',cur:0,max:1}],rewards:[{t:'gold',v:500},{t:'xp',v:400}]},
-    {id:'s4',type:'story',num:'Bölüm 4',title:'Kuzeyden Gelen Tehdit',desc:'Barbar kabileleri ilerliyor.',icon:'🌨',status:'locked',lockReason:'Bölüm 3\'ü tamamla',objectives:[{text:'Surları Sv.2\'ye yükselt',key:'wallsLv2',cur:0,max:1},{text:'Lonca kur veya katıl',key:'joinGuild',cur:0,max:1}],rewards:[{t:'gold',v:800},{t:'xp',v:600}]},
+    {id:'s2',type:'story',num:'Bölüm 2',title:'İlk Sınav',desc:'Orduyu topla ve sınırı koru.',icon:'⚔',status:'locked',lockReason:"Bölüm 1'i tamamla",objectives:[{text:'30 asker topla',key:'armyCount30',cur:0,max:1},{text:"Arena'da 1 dövüş yap",key:'arenaFight1',cur:0,max:1}],rewards:[{t:'gold',v:350},{t:'xp',v:250}]},
+    {id:'s3',type:'story',num:'Bölüm 3',title:"Demir Kale'nin Sırrı",desc:'Doğudaki harabede gizli hazine var.',icon:'🏚',status:'locked',lockReason:"Bölüm 2'yi tamamla",objectives:[{text:'5 bölge keşfet',key:'explore5',cur:0,max:5},{text:'Harabe keşfet',key:'exploreRuin',cur:0,max:1}],rewards:[{t:'gold',v:500},{t:'xp',v:400}]},
+    {id:'s4',type:'story',num:'Bölüm 4',title:'Kuzeyden Gelen Tehdit',desc:'Barbar kabileleri ilerliyor.',icon:'🌨',status:'locked',lockReason:"Bölüm 3'ü tamamla",objectives:[{text:"Surları Sv.2'ye yükselt",key:'wallsLv2',cur:0,max:1},{text:'Lonca kur veya katıl',key:'joinGuild',cur:0,max:1}],rewards:[{t:'gold',v:800},{t:'xp',v:600}]},
   ],
   daily:[
     {id:'d1',type:'daily',title:'Savaş Hazırlığı',icon:'⚔',objectives:[{text:'Ordu ekranını ziyaret et',key:'visitArmy',cur:0,max:1}],rewards:[{t:'gold',v:50},{t:'xp',v:30}]},
     {id:'d2',type:'daily',title:'Hazineyi Doldur',icon:'🪙',objectives:[{text:'100 altın topla',key:'goldReached100',cur:0,max:1}],rewards:[{t:'gold',v:80},{t:'xp',v:40}]},
-    {id:'d3',type:'daily',title:'Arena Antrenmanı',icon:'🛡',objectives:[{text:'Arena\'da 1 dövüş yap',key:'arenaFight1',cur:0,max:1}],rewards:[{t:'gold',v:60},{t:'xp',v:50}]},
-    {id:'d4',type:'daily',title:'Halkı Mutlu Et',icon:'😊',objectives:[{text:'Halk mutluluğunu %60\'a çıkar',key:'happiness60',cur:0,max:1}],rewards:[{t:'gold',v:100},{t:'xp',v:60}]},
+    {id:'d3',type:'daily',title:'Arena Antrenmanı',icon:'🛡',objectives:[{text:"Arena'da 1 dövüş yap",key:'arenaFight1',cur:0,max:1}],rewards:[{t:'gold',v:60},{t:'xp',v:50}]},
+    {id:'d4',type:'daily',title:'Halkı Mutlu Et',icon:'😊',objectives:[{text:"Halk mutluluğunu %60'a çıkar",key:'happiness60',cur:0,max:1}],rewards:[{t:'gold',v:100},{t:'xp',v:60}]},
     {id:'d5',type:'daily',title:'Keşifçi',icon:'🗺',objectives:[{text:'1 yeni bölge keşfet',key:'exploreDaily',cur:0,max:1}],rewards:[{t:'gold',v:70},{t:'xp',v:45}]},
     {id:'d6',type:'daily',title:'Üretim Ustası',icon:'🌾',objectives:[{text:'1 üretim başlat',key:'prodStart1',cur:0,max:1}],rewards:[{t:'gold',v:40},{t:'xp',v:35}]},
   ],
   side:[
-    {id:'q1',type:'side',title:'Kayıp Tüccar',icon:'🧳',status:'active',objectives:[{text:'3 köy keşfet',key:'exploreVillage3',cur:0,max:3},{text:'Pazar\'da alışveriş yap',key:'marketBuy1',cur:0,max:1}],rewards:[{t:'gold',v:300},{t:'xp',v:180}]},
-    {id:'q2',type:'side',title:'Büyücünün Kitabı',icon:'📖',status:'active',objectives:[{text:'2 harabe keşfet',key:'exploreRuin2',cur:0,max:2}],rewards:[{t:'xp',v:250}]},
+    {id:'q1',type:'side',title:'Kayıp Tüccar',icon:'🧳',status:'active',objectives:[{text:'3 köy keşfet',key:'exploreVillage3',cur:0,max:3},{text:"Pazar'da alışveriş yap",key:'marketBuy1',cur:0,max:1}],rewards:[{t:'gold',v:300},{t:'xp',v:180}]},
+    {id:'q2',type:'side',title:"Büyücünün Kitabı",icon:'📖',status:'active',objectives:[{text:'2 harabe keşfet',key:'exploreRuin2',cur:0,max:2}],rewards:[{t:'xp',v:250}]},
     {id:'q3',type:'side',title:'Kalesiz Şövalye',icon:'🗡',status:'active',objectives:[{text:'5 arena dövüşü yap',key:'arenaFight5',cur:0,max:5}],rewards:[{t:'gold',v:400},{t:'xp',v:300}]},
   ],
   guild:[
-    {id:'g1',type:'guild',title:'Lonca Savaşçısı',icon:'⚔',status:'active',objectives:[{text:'Arena\'da 5 galibiyet al',key:'arenaWin5',cur:0,max:5}],rewards:[{t:'gold',v:300},{t:'xp',v:400}]},
+    {id:'g1',type:'guild',title:'Lonca Savaşçısı',icon:'⚔',status:'active',objectives:[{text:"Arena'da 5 galibiyet al",key:'arenaWin5',cur:0,max:5}],rewards:[{t:'gold',v:300},{t:'xp',v:400}]},
     {id:'g2',type:'guild',title:'Hazine Katkısı',icon:'💰',status:'active',objectives:[{text:'Lonca hazinesine 100🪙 yatır',key:'treasuryDeposit100',cur:0,max:1}],rewards:[{t:'gold',v:200},{t:'xp',v:300}]},
   ],
 };
@@ -965,17 +949,14 @@ const G={
   activeBranch:{},
   notifCount:0,
   arenaLog:[],
-  /* Görev ilerleme takibi */
   qp:{
-    visitArmy:0, goldReached100:0, arenaFight1:0, arenaFight5:0,
-    arenaWin1:0, arenaWin5:0, explore5:0, exploreDaily:0,
-    exploreRuin:0, exploreRuin2:0, exploreVillage3:0,
-    armyCount30:0, happiness60:0, marketBuy1:0, prodStart1:0,
-    wallsLv2:0, joinGuild:0, treasuryDeposit100:0,
+    visitArmy:0,goldReached100:0,arenaFight1:0,arenaFight5:0,
+    arenaWin1:0,arenaWin5:0,explore5:0,exploreDaily:0,
+    exploreRuin:0,exploreRuin2:0,exploreVillage3:0,
+    armyCount30:0,happiness60:0,marketBuy1:0,prodStart1:0,
+    wallsLv2:0,joinGuild:0,treasuryDeposit100:0,
   },
-  /* Tamamlanan görevler */
   completedQuests:new Set(),
-  /* Günlük görev ödülleri alındı mı */
   dailyCollected:new Set(),
 };
 
@@ -1077,7 +1058,6 @@ async function startGame(){
   updateHUD();renderGame('karakter');renderGame('kale');renderGame('ordu');renderGame('halk');renderGame('harita');renderGame('arena');
   renderQuest(G.questTab);renderMarket();renderGuild(G.guildTab);renderProd(G.prodTab);renderProfile(G.profileTab);
   updateInvStrip();
-  // Başlangıç görev kontrolü
   if(G.gold>=100) trackQuest('goldReached100');
   const initArmy=G.units.reduce((a,u)=>a+u.count,0);
   if(initArmy>=30) trackQuest('armyCount30');
@@ -1291,7 +1271,6 @@ function endTurn(){
   if(G.gold<0) G.gold=0;
   G.stats.hp=Math.min(G.stats.maxhp,G.stats.hp+10);
   gainXP(15);
-  // Görev takibi
   if(G.gold>=100) trackQuest('goldReached100');
   const totalArmy=G.units.reduce((a,u)=>a+u.count,0);
   if(totalArmy>=30) trackQuest('armyCount30');
@@ -1352,12 +1331,8 @@ function cellClick(idx,cell){
     if([idx-1,idx+1,idx-6,idx+6].some(n=>G.explored.has(n))){
       if(G.gold>=10){
         G.gold-=10;G.explored.add(idx);
-        if(cell.t==='ruins'){const b=Math.floor(Math.random()*40)+20;G.gold+=b;toast('Harabede '+b+' altın!');
-          trackQuest('exploreRuin');trackQuest('exploreRuin2',Math.min(2,[...G.explored].filter(i=>TERRAINS[i]?.t==='ruins').length));
-        }
-        else if(cell.t==='village'){G.folk.population+=20;toast('Köy ele geçirildi! +20 nüfus');
-          trackQuest('exploreVillage3',Math.min(3,[...G.explored].filter(i=>TERRAINS[i]?.t==='village').length));
-        }
+        if(cell.t==='ruins'){const b=Math.floor(Math.random()*40)+20;G.gold+=b;toast('Harabede '+b+' altın!');trackQuest('exploreRuin');trackQuest('exploreRuin2',Math.min(2,[...G.explored].filter(i=>TERRAINS[i]?.t==='ruins').length));}
+        else if(cell.t==='village'){G.folk.population+=20;toast('Köy ele geçirildi! +20 nüfus');trackQuest('exploreVillage3',Math.min(3,[...G.explored].filter(i=>TERRAINS[i]?.t==='village').length));}
         trackQuest('exploreDaily');trackQuest('explore5',Math.min(5,G.explored.size-7));
         gainXP(10);updateHUD();renderHarita();
       }else toast('10🪙 gerekli!');
@@ -1397,13 +1372,8 @@ function fight(name){
     oppHp-=md;myHp-=od;
     lines.push({t:`Tur ${r}: ${md} hasar verdin, ${od} hasar aldın.`,c:md>od?'bl-good':'bl-bad'});
   }
-  if(won){G.gold+=opp.reward;G.arenaScore+=opp.pts;G.arenaWins++;gainXP(30);lines.push({t:`🏆 ZAFEr! ${opp.win} +${opp.reward}🪙 +30XP`,c:'bl-bold bl-good'});toast('Zafer! +'+opp.reward+'🪙');
-    trackQuest('arenaFight1');trackQuest('arenaFight5',Math.min(5,G.arenaWins));
-    trackQuest('arenaWin1');trackQuest('arenaWin5',Math.min(5,G.arenaWins));
-  }
-  else{G.stats.hp=Math.max(1,Math.floor(G.stats.hp*.8));G.arenaLosses++;lines.push({t:`💀 Yenildin. ${opp.lose}`,c:'bl-bold bl-bad'});toast('Yenildin! Güçlen.');
-    trackQuest('arenaFight1');trackQuest('arenaFight5',Math.min(5,G.arenaWins+G.arenaLosses));
-  }
+  if(won){G.gold+=opp.reward;G.arenaScore+=opp.pts;G.arenaWins++;gainXP(30);lines.push({t:`🏆 ZAFEr! ${opp.win} +${opp.reward}🪙 +30XP`,c:'bl-bold bl-good'});toast('Zafer! +'+opp.reward+'🪙');trackQuest('arenaFight1');trackQuest('arenaWin1');trackQuest('arenaFight5',Math.min(5,G.arenaWins+G.arenaLosses));trackQuest('arenaWin5',Math.min(5,G.arenaWins));}
+  else{G.stats.hp=Math.max(1,Math.floor(G.stats.hp*.8));G.arenaLosses++;lines.push({t:`💀 Yenildin. ${opp.lose}`,c:'bl-bold bl-bad'});toast('Yenildin! Güçlen.');trackQuest('arenaFight1');trackQuest('arenaFight5',Math.min(5,G.arenaWins+G.arenaLosses));}
   const logWrap=document.getElementById('battle-log-wrap');
   logWrap.style.display='block';
   logWrap.innerHTML=`<div class="battle-log-box">${lines.map(l=>`<div class="bl-line ${l.c}">${l.t}</div>`).join('')}</div>`;
@@ -1421,51 +1391,36 @@ setInterval(()=>{
   if(el) el.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 },1000);
 
-/* Görev ilerlemesini güncelle */
-function trackQuest(key, val=1){
+function trackQuest(key,val=1){
   if(!(key in G.qp)) return;
-  G.qp[key]=Math.max(G.qp[key], val);
-  // Tamamlanan görevleri kontrol et
+  G.qp[key]=Math.max(G.qp[key],val);
   checkQuestCompletion();
   if(G.questTab) renderQuest(G.questTab);
 }
-
+function getQuestProgress(obj){return Math.min(G.qp[obj.key]||0,obj.max);}
 function checkQuestCompletion(){
-  ['story','daily','side','guild'].forEach(type=>{
+  ['story','side','guild'].forEach(type=>{
     QUEST_DATA[type].forEach(q=>{
-      if(G.completedQuests.has(q.id)) return;
-      if(q.status==='locked') return;
+      if(G.completedQuests.has(q.id)||q.status==='locked') return;
       const allDone=q.objectives.every(o=>getQuestProgress(o)>=o.max);
-      if(allDone && type!=='daily'){
-        // Hikaye/yan/lonca: otomatik ödül
+      if(allDone){
         giveQuestReward(q);
         G.completedQuests.add(q.id);
-        // Sonraki story görevini aç
         if(type==='story'){
           const idx=QUEST_DATA.story.indexOf(q);
-          if(idx>=0 && idx<QUEST_DATA.story.length-1){
-            QUEST_DATA.story[idx+1].status='active';
-          }
+          if(idx>=0&&idx<QUEST_DATA.story.length-1) QUEST_DATA.story[idx+1].status='active';
         }
       }
     });
   });
 }
-
-function getQuestProgress(obj){
-  const v=G.qp[obj.key]||0;
-  return Math.min(v, obj.max);
-}
-
 function giveQuestReward(q){
   q.rewards.forEach(r=>{
-    if(r.t==='gold'){G.gold+=r.v;toast(`Görev tamamlandı! +${r.v}🪙 🎉`);}
+    if(r.t==='gold'){G.gold+=r.v;toast(`"${q.title}" tamamlandı! +${r.v}🪙 🎉`);}
     if(r.t==='xp'){gainXP(r.v);}
   });
   updateHUD();
-  addNotif({type:'quest',icon:'📜',color:'gold',title:'Görev Tamamlandı!',desc:`"${q.title}" görevi tamamlandı!`});
 }
-
 function collectDailyReward(qid){
   if(G.dailyCollected.has(qid)){toast('Bu ödülü zaten aldın!');return;}
   const q=QUEST_DATA.daily.find(x=>x.id===qid);if(!q)return;
@@ -1476,72 +1431,37 @@ function collectDailyReward(qid){
   renderQuest('daily');
 }
 
-function addNotif(n){
-  NOTIFS.unshift({id:Date.now(),read:false,time:'Az önce',...n});
-  G.notifCount=NOTIFS.filter(x=>!x.read).length;
-  const dot=document.getElementById('notif-dot');
-  if(dot) dot.style.display=G.notifCount>0?'block':'none';
-}
-
 function qgo(t){G.questTab=t;['story','daily','side','guild'].forEach(x=>{document.getElementById('qt-'+x).classList.toggle('active',x===t);});renderQuest(t);}
 
 function renderQuest(t){
   document.getElementById('quest-hdr-sub').textContent=`${G.heroName||'Kral'} · Seviye ${G.level}`;
   const data=QUEST_DATA[t]||[];
-
+  const accentColor=t==='story'?'var(--story2)':t==='daily'?'var(--daily2)':t==='side'?'var(--side2)':'var(--guild2)';
   const rr=q=>{
     const isCompleted=G.completedQuests.has(q.id);
     const isLocked=q.status==='locked';
     const isDailyCollected=t==='daily'&&G.dailyCollected.has(q.id);
-
-    // Her hedefin gerçek ilerlemesini hesapla
-    const objectives=q.objectives.map(o=>{
-      const cur=Math.min(getQuestProgress(o), o.max);
-      return {...o, cur};
-    });
+    const objectives=q.objectives.map(o=>({...o,cur:Math.min(getQuestProgress(o),o.max)}));
     const allDone=objectives.every(o=>o.cur>=o.max);
-    const pct=objectives.reduce((a,o)=>a+(o.cur/o.max),0)/objectives.length*100;
-
     const cardCls=isCompleted||isDailyCollected?'done-card':isLocked?'locked-card':t+'-card';
     const barCls=isCompleted||isDailyCollected?'done-bar':t+'-bar';
-    const accentColor=t==='story'?'var(--story2)':t==='daily'?'var(--daily2)':t==='side'?'var(--side2)':'var(--guild2)';
-
-    const oBars=objectives.map(o=>{
-      const p=Math.round(o.cur/o.max*100);
-      return `<div style="margin-bottom:5px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
-          <span style="font-size:10px;color:var(--perg2);">${o.cur>=o.max?'✓ ':''}${o.text}</span>
-          <span style="font-family:var(--font-head);font-size:9px;color:${o.cur>=o.max?'var(--g-green)':accentColor};">${o.cur}/${o.max}</span>
-        </div>
-        <div class="prog-bar-bg"><div class="prog-bar ${barCls}" style="width:${p}%;"></div></div>
-      </div>`;
-    }).join('');
-
-    const rwLabels=q.rewards.map(r=>`<span class="reward-chip rc-${r.t==='gold'?'gold':r.t==='xp'?'xp':'item'}">${r.t==='gold'?r.v+'🪙':r.t==='xp'?r.v+' XP':r.v}</span>`).join('');
-
-    // Günlük görev: tamamlandıysa "Ödül Al" butonu
+    const oBars=objectives.map(o=>{const p=Math.round(o.cur/o.max*100);return `<div style="margin-bottom:5px;"><div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span style="font-size:10px;color:var(--perg2);">${o.cur>=o.max?'✓ ':''}${o.text}</span><span style="font-family:var(--font-head);font-size:9px;color:${o.cur>=o.max?'var(--g-green)':accentColor};">${o.cur}/${o.max}</span></div><div class="prog-bar-bg"><div class="prog-bar ${barCls}" style="width:${p}%;"></div></div></div>`;}).join('');
+    const rws=q.rewards.map(r=>`<span class="reward-chip rc-${r.t==='gold'?'gold':r.t==='xp'?'xp':'item'}">${r.t==='gold'?r.v+'🪙':r.t==='xp'?r.v+' XP':r.v}</span>`).join('');
     const actionBtn=t==='daily'&&allDone&&!isDailyCollected
       ?`<button class="btn btn-sm" style="width:100%;margin-top:6px;background:var(--g-green);border-color:var(--g-green);color:var(--panel3);" onclick="event.stopPropagation();collectDailyReward('${q.id}')">🎁 Ödül Al!</button>`
       :isDailyCollected?`<div style="font-size:10px;color:var(--g-green);margin-top:5px;">✓ Ödül alındı</div>`:'';
-
     return `<div class="qcard ${cardCls}">
       <div style="display:flex;align-items:flex-start;gap:9px;margin-bottom:7px;">
         <div class="q-icon" style="background:${t==='story'?'#2a0a4a':t==='daily'?'#0a1a38':t==='side'?'#0a1030':'var(--panel2)'}">${q.icon}</div>
-        <div style="flex:1;">
-          <div style="font-family:var(--font-head);font-size:9px;font-weight:600;color:${accentColor};margin-bottom:1px;">${q.num||''}</div>
-          <div style="font-family:var(--font-head);font-size:12px;font-weight:600;color:var(--perg);">${q.title}</div>
-          ${isCompleted||isDailyCollected?`<div style="font-size:9px;color:var(--g-green);">✓ Tamamlandı</div>`:''}
-        </div>
+        <div style="flex:1;"><div style="font-family:var(--font-head);font-size:9px;font-weight:600;color:${accentColor};margin-bottom:1px;">${q.num||''}</div><div style="font-family:var(--font-head);font-size:12px;font-weight:600;color:var(--perg);">${q.title}</div>${isCompleted||isDailyCollected?'<div style="font-size:9px;color:var(--g-green);">✓ Tamamlandı</div>':''}</div>
       </div>
       ${isLocked?`<div style="font-size:10px;color:var(--ink3);">🔒 ${q.lockReason}</div>`:oBars}
-      ${!isLocked?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;">${rwLabels}</div>`:''}
+      ${!isLocked?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;">${rws}</div>`:''}
       ${actionBtn}
     </div>`;
   };
-
   document.getElementById('quest-content').innerHTML=data.map(rr).join('');
 }
-
 
 /* ══════════════════════════════════════
    MARKET
@@ -1643,7 +1563,6 @@ async function treasuryAction(type){
     G.gold-=amt; G.guildTreasury=(G.guildTreasury||0)+amt;
     await supa.from('guilds').update({treasury:G.guildTreasury}).eq('id',G.guildId);
     toast(amt.toLocaleString('tr')+'🪙 hazineye yatırıldı!');
-    if(amt>=100) trackQuest('treasuryDeposit100');
   } else {
     if((G.guildTreasury||0)<amt){toast('Hazinede yeterli altın yok!');return;}
     G.gold+=amt; G.guildTreasury=(G.guildTreasury||0)-amt;
@@ -1800,7 +1719,6 @@ async function joinGuild(id,name){
   const {error}=await supa.from('guild_members').insert({guild_id:id,profile_id:currentUser.id,role:'member'});
   if(error){toast('Katılma hatası: '+error.message);return;}
   G.guildId=id;G.guildName=name;
-  trackQuest('joinGuild');
   await supa.from('profiles').update({guild_id:id,guild_name:name}).eq('id',currentUser.id);
   toast(name+' loncasına katıldın! 🛡');
   glgo('home');
@@ -2244,12 +2162,8 @@ async function logout() {
 /* ══════════════════════════════════════
    INIT
 ══════════════════════════════════════ */
-// Başlangıçta tüm sayfaları gizle, sadece yükleniyor göster
-document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
-document.getElementById('bottom-nav').style.display='none';
-
-// Notif dot
-const nd=document.getElementById('notif-dot');if(nd) nd.style.display='none';
+// Notif dot başlangıç
+const nd=document.getElementById('notif-dot');if(nd) nd.style.display='block';
 
 // Oturum kontrolü — daha önce giriş yaptıysa direkt oyuna al
 (async () => {
@@ -2260,7 +2174,7 @@ const nd=document.getElementById('notif-dot');if(nd) nd.style.display='none';
     const loaded = await sbLoadProfile();
     if (loaded) {
       obClass = G.classId;
-      document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+      document.getElementById('p-onboard').classList.remove('active');
       document.getElementById('p-game').classList.add('active');
       document.getElementById('bottom-nav').style.display='flex';
       updateHUD();
@@ -2271,8 +2185,7 @@ const nd=document.getElementById('notif-dot');if(nd) nd.style.display='none';
       return;
     }
   }
-  // Oturum yoksa login ekranını göster
-  document.getElementById('p-onboard').classList.add('active');
+  // Oturum yoksa login/register ekranını göster
   showLoginScreen();
 })();
 </script>
