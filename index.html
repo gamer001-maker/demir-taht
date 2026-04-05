@@ -292,7 +292,7 @@ html,body{height:100%;background:var(--panel3);background-image:var(--night-bg);
 .bnav-btn.active .nav-img{opacity:1;}
 .bnav-btn:hover .nav-img{opacity:.8;}
 .bnav-notif{position:relative;display:block;text-align:center;}
-.bnav-dot{position:absolute;top:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:var(--hp);border:1px solid var(--panel2);}
+.bnav-dot{position:absolute;top:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:var(--hp);border:1px solid var(--panel2);display:none;}
 
 /* ═══════════════════════════════
    RESOURCE BAR
@@ -321,11 +321,11 @@ html,body{height:100%;background:var(--panel3);background-image:var(--night-bg);
    HARITA
 ═══════════════════════════════ */
 .map-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;}
-.map-cell{aspect-ratio:1;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:15px;cursor:pointer;border:1px solid transparent;transition:filter .15s,transform .15s;}
-.map-cell:hover{filter:brightness(1.3);transform:scale(1.05);z-index:2;}
-.map-cell.sel{border-color:var(--gold);}
-.map-cell.fog{filter:grayscale(1);opacity:.3;}
-.map-cell .mlbl{font-size:6px;font-family:var(--font-head);color:#fff9;}
+.map-cell{aspect-ratio:1;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:15px;cursor:pointer;border:1px solid transparent;transition:filter .15s,transform .15s;overflow:hidden;position:relative;}
+.map-cell:hover{filter:brightness(1.2);transform:scale(1.05);z-index:2;}
+.map-cell.sel{border-color:var(--gold);box-shadow:0 0 8px var(--gold);}
+.map-cell.fog{background:#0a0814 !important;filter:none;opacity:.6;}
+.map-cell .mlbl{font-size:6px;font-family:var(--font-head);color:#fff;text-shadow:0 1px 3px #000;}
 .t-plains{background:#2a4a1a;}.t-forest{background:#1a3a12;}.t-mountain{background:#4a3c2a;}
 .t-water{background:#1a2e3a;}.t-castle{background:#3a2a1a;}.t-village{background:#3a3010;}.t-ruins{background:#2a2218;}
 
@@ -830,26 +830,180 @@ const SKILL_TREES={
     {id:'beastmaster',name:'Hayvan Efendisi',icon:'🐺',nodes:[{icon:'🐺',name:'Kurt Çağrısı',desc:'Kurt çağır',req:'Sv.1',unlocked:true},{icon:'🦅',name:'Kartal Gözü',desc:'Haritayı gör',req:'Sv.4',unlocked:false},{icon:'🐻',name:'Ayı Formu',desc:'Güç kazan',req:'Sv.8',unlocked:false},{icon:'🐉',name:'Ejder Çağrı',desc:'Efsanevi yaratık',req:'Sv.14',unlocked:false}]},
   ]},
 };
-const TERRAINS=[
-  {t:'water',i:'🌊',n:'Deniz',info:'Geçilemez'},{t:'forest',i:'🌲',n:'Orman',info:'Odun kaynağı'},
-  {t:'mountain',i:'⛰',n:'Dağlar',info:'Savunma noktası'},{t:'plains',i:'🌿',n:'Ova',info:'Tarım'},
-  {t:'village',i:'🏘',n:'Köy',info:'Vergi'},{t:'ruins',i:'🏚',n:'Harabe',info:'Hazine!'},
-  {t:'plains',i:'🌿',n:'Ova',info:'Tarım'},{t:'forest',i:'🌲',n:'Orman',info:'Odun'},
-  {t:'mountain',i:'⛰',n:'Dağlar',info:'Savunma'},{t:'plains',i:'🌿',n:'Ova',info:'Tarım'},
-  {t:'village',i:'🏘',n:'Köy',info:'Vergi'},{t:'water',i:'🌊',n:'Nehir',info:'Balık'},
-  {t:'forest',i:'🌲',n:'Orman',info:'Odun'},{t:'ruins',i:'🏚',n:'Harabe',info:'Hazine!'},
-  {t:'plains',i:'🌿',n:'Ova',info:'Tarım'},{t:'castle',i:'🏰',n:'Kaleniz',info:'Ana üs'},
-  {t:'village',i:'🏘',n:'Köy',info:'Vergi'},{t:'forest',i:'🌲',n:'Orman',info:'Odun'},
-  {t:'water',i:'🌊',n:'Göl',info:'Su kaynağı'},{t:'plains',i:'🌿',n:'Ova',info:'Tarım'},
-  {t:'mountain',i:'⛰',n:'Dağlar',info:'Savunma'},{t:'castle',i:'🏰',n:'Kale',info:'İkinci kale'},
-  {t:'village',i:'🏘',n:'Köy',info:'Vergi'},{t:'ruins',i:'🏚',n:'Harabe',info:'Hazine!'},
-  {t:'plains',i:'🌿',n:'Ova',info:'Tarım'},{t:'forest',i:'🌲',n:'Orman',info:'Odun'},
-  {t:'water',i:'🌊',n:'Deniz',info:'Geçilemez'},{t:'mountain',i:'⛰',n:'Dağlar',info:'Savunma'},
-  {t:'plains',i:'🌿',n:'Ova',info:'Tarım'},{t:'village',i:'🏘',n:'Köy',info:'Vergi'},
-  {t:'forest',i:'🌲',n:'Orman',info:'Odun'},{t:'ruins',i:'🏚',n:'Harabe',info:'Hazine!'},
-  {t:'water',i:'🌊',n:'Deniz',info:'Geçilemez'},{t:'plains',i:'🌿',n:'Ova',info:'Tarım'},
-  {t:'mountain',i:'⛰',n:'Dağlar',info:'Savunma'},
+/* ── TERRAIN TİPLERİ ── */
+const TERRAIN_TYPES=[
+  {t:'castle', n:'Kaleniz',  info:'Ana üs',        img:'images/kasaba.png',  weight:0},
+  {t:'plains', n:'Ova',      info:'Tarım arazisi', img:'images/ova.png',     weight:30},
+  {t:'forest', n:'Orman',    info:'Odun kaynağı',  img:'images/orman.png',   weight:25},
+  {t:'mountain',n:'Dağlar',  info:'Savunma noktası',img:'images/daglar.png', weight:15},
+  {t:'village',n:'Kasaba',   info:'Vergi geliri',  img:'images/kasaba.png',  weight:12},
+  {t:'ruins',  n:'Harabeler',info:'Hazine olabilir!',img:'images/harabeler.png',weight:8},
+  {t:'water',  n:'Deniz',    info:'Geçilemez',     img:'images/deniz.png',   weight:5},
+  {t:'water',  n:'Nehir',    info:'Balık kaynağı', img:'images/nehir.png',   weight:3},
+  {t:'water',  n:'Göl',      info:'Su kaynağı',    img:'images/gol.jpeg',    weight:2},
 ];
+
+/* Harita üreteci — her oyuncu için rastgele 35 hücre */
+function generateMap(seed){
+  const rng=mulberry32(seed);
+  const cells=[];
+  // Ağırlıklı rastgele terrain seçimi
+  const pool=TERRAIN_TYPES.filter(t=>t.t!=='castle');
+  const totalW=pool.reduce((a,t)=>a+t.weight,0);
+  for(let i=0;i<35;i++){
+    if(i===15){cells.push({...TERRAIN_TYPES[0],idx:i});continue;} // Kale sabit ortada
+    let r=rng()*totalW,cum=0;
+    for(const tt of pool){cum+=tt.weight;if(r<cum){cells.push({...tt,idx:i});break;}}
+  }
+  return cells;
+}
+/* Basit seed-based RNG */
+function mulberry32(seed){
+  let s=seed>>>0;
+  return function(){s+=0x6D2B79F5;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};
+}
+/* Kullanıcı ID'sinden seed üret */
+function userSeed(uid){if(!uid)return 42;let h=0;for(let i=0;i<uid.length;i++){h=Math.imul(31,h)+uid.charCodeAt(i)|0;}return Math.abs(h);}
+
+/* ── PLAYER MAP ── */
+let G_MAP=[]; // Aktif harita
+let exploreTimers=[]; // Keşif sayaçları
+
+async function initPlayerMap(){
+  if(!currentUser){G_MAP=generateMap(42);return;}
+  // Supabase'den yükle
+  const {data}=await supa.from('player_maps').select('cells').eq('profile_id',currentUser.id).single();
+  if(data?.cells?.length){
+    G_MAP=data.cells;
+  } else {
+    // İlk defa — harita üret ve kaydet
+    G_MAP=generateMap(userSeed(currentUser.id));
+    await supa.from('player_maps').upsert({profile_id:currentUser.id,cells:G_MAP});
+  }
+  // Keşif sayaçlarını yükle
+  await loadExporeTimers();
+}
+
+async function loadExporeTimers(){
+  if(!currentUser) return;
+  const {data}=await supa.from('explore_timers').select('*').eq('profile_id',currentUser.id);
+  if(!data||!data.length) return;
+  const now=Date.now();
+  exploreTimers=data.map(row=>{
+    const started=new Date(row.started_at).getTime();
+    const elapsed=Math.floor((now-started)/1000);
+    const remaining=Math.max(0,row.duration_secs-elapsed);
+    return {id:row.id,cellIdx:row.cell_index,remaining,total:row.duration_secs};
+  });
+  // Süresi dolmuşları hemen keşfet
+  for(const t of exploreTimers.filter(x=>x.remaining<=0)){
+    await finishExplore(t.cellIdx,t.id);
+  }
+  exploreTimers=exploreTimers.filter(x=>x.remaining>0);
+}
+
+async function startExplore(idx){
+  if(G.gold<10){toast('10🪙 gerekli!');return;}
+  if(exploreTimers.find(t=>t.cellIdx===idx)){toast('Bu bölge zaten keşfediliyor!');return;}
+  G.gold-=10;updateHUD();
+  let dbId=null;
+  if(currentUser){
+    const {data}=await supa.from('explore_timers').insert({
+      profile_id:currentUser.id,cell_index:idx,duration_secs:120
+    }).select().single();
+    if(data) dbId=data.id;
+  }
+  exploreTimers.push({id:dbId,cellIdx:idx,remaining:120,total:120});
+  toast('Keşif başladı! 2 dakika sonra sonuç belli olacak. 🗺');
+  renderHarita();
+}
+
+async function finishExplore(idx,dbId){
+  const cell=G_MAP[idx];if(!cell)return;
+  G.explored.add(idx);
+  // Keşif bonusları
+  if(cell.t==='ruins'){const b=Math.floor(Math.random()*40)+20;G.gold+=b;toast(`Harabeler keşfedildi! ${b}🪙 hazine bulundu! 💰`);trackQuest('exploreRuin');trackQuest('exploreRuin2',Math.min(2,[...G.explored].filter(i=>G_MAP[i]?.t==='ruins').length));}
+  else if(cell.t==='village'){G.folk.population+=20;toast(`${cell.n} keşfedildi! +20 nüfus 🏘`);trackQuest('exploreVillage3',Math.min(3,[...G.explored].filter(i=>G_MAP[i]?.t==='village').length));}
+  else toast(`${cell.n} keşfedildi! 🗺`);
+  trackQuest('exploreDaily');trackQuest('explore5',Math.min(5,G.explored.size-7));
+  gainXP(10);updateHUD();
+  // Supabase'den timer'ı sil
+  if(dbId&&currentUser) await supa.from('explore_timers').delete().eq('id',dbId);
+  // Keşfedilen hücreyi kaydet
+  if(currentUser) await supa.from('explored_cells').upsert({profile_id:currentUser.id,cell_index:idx}).onConflict('profile_id,cell_index');
+  renderHarita();
+}
+
+/* Keşif sayacı interval */
+setInterval(async()=>{
+  let changed=false;
+  for(const t of exploreTimers){
+    if(t.remaining>0){
+      t.remaining--;changed=true;
+      // Grid'deki sayacı güncelle
+      const el=document.getElementById(`explore-timer-${t.cellIdx}`);
+      if(el){const m=Math.floor(t.remaining/60),s=t.remaining%60;el.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
+      if(t.remaining<=0){
+        await finishExplore(t.cellIdx,t.id);
+        exploreTimers=exploreTimers.filter(x=>x.cellIdx!==t.cellIdx);
+      }
+    }
+  }
+},1000);
+
+function renderHarita(){
+  const grid=document.getElementById('map-grid');grid.innerHTML='';
+  if(!G_MAP.length){grid.innerHTML='<div style="padding:20px;color:var(--ink3);font-size:12px;">Harita yükleniyor...</div>';return;}
+  G_MAP.forEach((cell,idx)=>{
+    const exp=G.explored.has(idx);
+    const sel=G.selectedCell===idx;
+    const exploring=exploreTimers.find(t=>t.cellIdx===idx);
+    const d=document.createElement('div');
+    d.className=`map-cell t-${cell.t}${!exp&&!exploring?' fog':''}${sel?' sel':''}`;
+    if(exp){
+      // Keşfedilmiş — görsel göster
+      d.style.backgroundImage=`url('${cell.img}')`;
+      d.style.backgroundSize='cover';
+      d.style.backgroundPosition='center';
+      d.innerHTML=`<span class="mlbl" style="background:#00000066;padding:1px 4px;border-radius:3px;">${cell.n}</span>`;
+    } else if(exploring){
+      // Keşfediliyor — sayaç göster
+      d.style.background='#1a1040';
+      d.innerHTML=`<span style="font-size:16px;">🔍</span><span class="mlbl" id="explore-timer-${idx}" style="color:var(--gold);">--:--</span>`;
+    } else {
+      // Keşfedilmemiş — soru işareti
+      d.innerHTML=`<span style="font-size:16px;">❓</span>`;
+    }
+    d.onclick=()=>cellClick(idx,cell);
+    grid.appendChild(d);
+  });
+}
+
+function cellClick(idx,cell){
+  const info=document.getElementById('map-info-card');
+  const exploring=exploreTimers.find(t=>t.cellIdx===idx);
+  if(exploring){
+    info.style.display='block';
+    const m=Math.floor(exploring.remaining/60),s=exploring.remaining%60;
+    info.innerHTML=`<div class="row-between"><span style="font-family:var(--font-head);font-size:13px;color:var(--gold);">🔍 Keşif Devam Ediyor</span><span style="font-family:var(--font-head);font-size:14px;color:var(--daily2);">${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</span></div><div style="font-size:11px;color:var(--ink3);margin-top:4px;">Bu bölge keşfediliyor, bekle...</div>`;
+    return;
+  }
+  if(!G.explored.has(idx)){
+    if([idx-1,idx+1,idx-6,idx+6].some(n=>G.explored.has(n))){
+      info.style.display='block';
+      info.innerHTML=`<div class="row-between" style="margin-bottom:8px;"><span style="font-family:var(--font-head);font-size:13px;color:var(--gold);">❓ Keşfedilmemiş Bölge</span><span class="tag tag-red">Bilinmiyor</span></div><div style="font-size:11px;color:var(--ink3);margin-bottom:10px;">Bu bölgede ne olduğu bilinmiyor. Keşfetmek 2 dakika sürer.</div><button class="btn" style="width:100%;" onclick="startExplore(${idx})">🗺 Keşfet — 10🪙 + 2dk</button>`;
+    } else {
+      toast('Önce komşu bölgeleri keşfet.');
+    }
+    return;
+  }
+  G.selectedCell=G.selectedCell===idx?null:idx;
+  if(G.selectedCell!==null){
+    info.style.display='block';
+    info.innerHTML=`<div class="row-between"><span style="font-family:var(--font-head);font-size:13px;color:var(--gold);">${cell.n}</span><span class="tag tag-gold">✓ Keşfedildi</span></div><div style="font-size:11px;color:var(--ink3);margin-top:4px;">${cell.info}</div>`;
+  } else info.style.display='none';
+  renderHarita();
+}
 const OPPONENTS=[
   {name:'Demir Yumruk Krag',cls:'Savaşçı',icon:'⚔',power:120,reward:30,pts:15,win:'Krag yenildi!',lose:'Krag seni geri püskürttü.'},
   {name:'Büyücü Selara',cls:'Büyücü',icon:'🔮',power:95,reward:25,pts:12,win:'Selara büyüleri söndü!',lose:'Büyüler seni yendi.'},
@@ -1103,6 +1257,8 @@ async function startGame(){
   if(G.gold>=100) trackQuest('goldReached100');
   const initArmy=G.units.reduce((a,u)=>a+u.count,0);
   if(initArmy>=30) trackQuest('armyCount30');
+  // Harita başlat
+  initPlayerMap().then(()=>renderGame('harita'));
   toast(`Hoş geldin, ${G.heroName}! 🏰`);
 }
 
@@ -2297,6 +2453,8 @@ async function sbLoadProfile() {
 
   // Aktif üretim sayaçları
   await sbLoadProdTimers();
+  // Harita
+  await initPlayerMap();
 
   // Bina seviyeleri
   if(p.prod_farm !== undefined) PROD_BUILDINGS.farm.level = p.prod_farm;
