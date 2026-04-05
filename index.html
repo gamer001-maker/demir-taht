@@ -83,6 +83,7 @@ html,body{height:100%;background:var(--panel3);background-image:var(--night-bg);
   }
   .bnav-icon{font-size:22px !important;}
   .bnav-lbl{font-size:8px !important;}
+  .nav-img{width:28px;height:28px;}
 
   /* Sayfa içeriği */
   .page{flex:1;height:100vh;}
@@ -250,6 +251,9 @@ html,body{height:100%;background:var(--panel3);background-image:var(--night-bg);
 .bnav-icon{font-size:18px;display:block;}
 .bnav-lbl{font-family:var(--font-head);font-size:7px;color:var(--ink3);margin-top:2px;}
 .bnav-btn.active .bnav-lbl{color:var(--gold);}
+.nav-img{width:24px;height:24px;object-fit:contain;opacity:.5;transition:opacity .15s,filter .15s;filter:brightness(0) invert(1);}
+.bnav-btn.active .nav-img{opacity:1;filter:brightness(0) saturate(100%) invert(72%) sepia(60%) saturate(400%) hue-rotate(210deg) brightness(105%);}
+.bnav-btn:hover .nav-img{opacity:.8;}
 .bnav-notif{position:relative;display:inline-block;}
 .bnav-dot{position:absolute;top:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:var(--hp);border:1px solid var(--panel2);}
 
@@ -724,12 +728,12 @@ html,body{height:100%;background:var(--panel3);background-image:var(--night-bg);
 
   <!-- BOTTOM NAV -->
   <div class="bottom-nav" id="bottom-nav" style="display:none;">
-    <div class="bnav-btn active" id="bn-game"    onclick="showPage('game')">   <span class="bnav-icon">🏰</span><span class="bnav-lbl">Oyun</span></div>
-    <div class="bnav-btn"        id="bn-quest"   onclick="showPage('quest')">  <span class="bnav-icon">📜</span><span class="bnav-lbl">Görev</span></div>
-    <div class="bnav-btn"        id="bn-market"  onclick="showPage('market')"> <span class="bnav-icon">🏪</span><span class="bnav-lbl">Pazar</span></div>
-    <div class="bnav-btn"        id="bn-guild"   onclick="showPage('guild')">  <span class="bnav-icon">🛡</span><span class="bnav-lbl">Lonca</span></div>
-    <div class="bnav-btn"        id="bn-prod"    onclick="showPage('prod')">   <span class="bnav-icon">🏭</span><span class="bnav-lbl">Üretim</span></div>
-    <div class="bnav-btn"        id="bn-profile" onclick="showPage('profile')"><div class="bnav-notif"><span class="bnav-icon">👤</span><div class="bnav-dot" id="notif-dot"></div></div><span class="bnav-lbl">Profil</span></div>
+    <div class="bnav-btn active" id="bn-game"    onclick="showPage('game')">   <span class="bnav-icon"><img src="images/oyun.png" class="nav-img" alt="Oyun"/></span><span class="bnav-lbl">Oyun</span></div>
+    <div class="bnav-btn"        id="bn-quest"   onclick="showPage('quest')">  <span class="bnav-icon"><img src="images/gorev.png" class="nav-img" alt="Görev"/></span><span class="bnav-lbl">Görev</span></div>
+    <div class="bnav-btn"        id="bn-market"  onclick="showPage('market')"> <span class="bnav-icon"><img src="images/pazar.png" class="nav-img" alt="Pazar"/></span><span class="bnav-lbl">Pazar</span></div>
+    <div class="bnav-btn"        id="bn-guild"   onclick="showPage('guild')">  <span class="bnav-icon"><img src="images/lonca.png" class="nav-img" alt="Lonca"/></span><span class="bnav-lbl">Lonca</span></div>
+    <div class="bnav-btn"        id="bn-prod"    onclick="showPage('prod')">   <span class="bnav-icon"><img src="images/uretim.png" class="nav-img" alt="Üretim"/></span><span class="bnav-lbl">Üretim</span></div>
+    <div class="bnav-btn"        id="bn-profile" onclick="showPage('profile')"><div class="bnav-notif"><span class="bnav-icon"><img src="images/profil.png" class="nav-img" alt="Profil"/></span><div class="bnav-dot" id="notif-dot"></div></div><span class="bnav-lbl">Profil</span></div>
   </div>
 
   <!-- MODAL -->
