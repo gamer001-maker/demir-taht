@@ -496,8 +496,280 @@ html,body{
 .notif-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px;}
 
 /* ═══════════════════════════════
-   TOAST
+   KARAKTER SAYFASI — MEDİEVAL
 ═══════════════════════════════ */
+.char-sheet{
+  padding:14px;
+  background:
+    radial-gradient(ellipse at 50% 0%,#2a1a0a 0%,var(--panel3) 60%);
+  min-height:100%;
+}
+
+/* ── Üst alan: Avatar + Kimlik ── */
+.char-top{
+  display:flex;gap:14px;align-items:flex-start;
+  margin-bottom:14px;
+  padding-bottom:14px;
+  border-bottom:1px solid var(--border2);
+}
+
+/* ── Kalkan/Metal çerçeve ── */
+.char-shield-wrap{
+  position:relative;flex-shrink:0;
+  width:100px;height:100px;
+}
+.char-shield{
+  width:100px;height:100px;
+  border-radius:50% 50% 45% 45%;
+  border:3px solid var(--border2);
+  background:var(--panel);
+  overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:
+    0 0 0 2px #0f0b08,
+    0 0 0 4px var(--border),
+    inset 0 2px 0 #ffffff12,
+    inset 0 -2px 0 #00000040,
+    0 6px 20px #00000080;
+  position:relative;z-index:1;
+}
+.char-shield img{width:100%;height:100%;object-fit:cover;}
+.char-shield svg{width:72%;height:72%;}
+.char-shield-corner{
+  position:absolute;
+  width:12px;height:12px;
+  background:var(--gold);
+  clip-path:polygon(0 0,100% 0,100% 30%,30% 30%,30% 100%,0 100%);
+  z-index:2;
+}
+.char-shield-corner.tl{top:-2px;left:-2px;}
+.char-shield-corner.tr{top:-2px;right:-2px;transform:scaleX(-1);}
+.char-shield-corner.bl{bottom:-2px;left:-2px;transform:scaleY(-1);}
+.char-shield-corner.br{bottom:-2px;right:-2px;transform:scale(-1);}
+
+/* ── Kimlik alanı ── */
+.char-identity{flex:1;min-width:0;}
+.char-name{
+  font-family:var(--font-head);
+  font-size:clamp(15px,2.2vw,20px);
+  font-weight:700;
+  color:var(--gold2);
+  letter-spacing:1px;
+  text-shadow:0 2px 6px #00000080;
+  margin-bottom:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.char-class{
+  font-size:11px;color:var(--ink3);
+  font-style:italic;margin-bottom:7px;
+}
+.char-badges{display:flex;gap:5px;margin-bottom:9px;flex-wrap:wrap;}
+.char-badge{
+  font-family:var(--font-head);font-size:9px;font-weight:700;
+  padding:2px 8px;border-radius:3px;
+  box-shadow:inset 0 1px 0 #ffffff10;
+}
+.badge-gold{background:#2a1e08;color:var(--gold2);border:1px solid var(--border2);}
+.badge-hp{background:#1a0808;color:#c87070;border:1px solid #4a1818;}
+
+/* ── Metal barlar ── */
+.mbar-wrap{display:flex;align-items:center;gap:5px;margin-bottom:5px;}
+.mbar-label{
+  font-family:var(--font-head);font-size:7px;font-weight:700;
+  color:var(--ink3);letter-spacing:1px;width:50px;flex-shrink:0;
+}
+.mbar-bg{
+  flex:1;height:10px;
+  background:#0a0806;
+  border:1px solid var(--border2);
+  border-radius:2px;
+  overflow:hidden;
+  position:relative;
+  box-shadow:inset 0 2px 4px #00000080;
+}
+.mbar-fill{height:100%;border-radius:1px;transition:width .5s;position:relative;}
+.mbar-hp{background:linear-gradient(90deg,#5a1010,#8b1e1e,#c03030);}
+.mbar-xp{background:linear-gradient(90deg,#7a6020,#b08d57,var(--gold2));}
+.mbar-shine{
+  position:absolute;top:0;left:0;right:0;height:40%;
+  background:linear-gradient(180deg,#ffffff15,transparent);
+  pointer-events:none;
+}
+.mbar-val{
+  font-family:var(--font-head);font-size:8px;
+  color:var(--ink3);min-width:45px;text-align:right;
+}
+
+/* HP düşükken pulse */
+@keyframes hp-pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.mbar-hp.low{animation:hp-pulse 1.5s ease-in-out infinite;}
+
+/* ── Parşömen bölümü ── */
+.parchment-section{
+  background:
+    radial-gradient(ellipse at 30% 50%,#2e2010 0%,#1e1608 100%);
+  border:1px solid var(--border2);
+  border-radius:6px;
+  padding:12px;
+  margin-bottom:12px;
+  position:relative;
+  box-shadow:
+    inset 0 1px 0 #ffffff08,
+    inset 0 -1px 0 #00000030,
+    0 3px 10px #00000060;
+  /* Hafif doku çizgileri */
+  background-image:
+    repeating-linear-gradient(
+      0deg,transparent,transparent 22px,
+      #ffffff03 22px,#ffffff03 23px
+    ),
+    radial-gradient(ellipse at 30% 50%,#2e2010 0%,#1e1608 100%);
+}
+.parch-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;padding-bottom:7px;
+  border-bottom:1px solid var(--border2);
+}
+.parch-title{
+  font-family:var(--font-head);font-size:9px;font-weight:700;
+  color:var(--gold);letter-spacing:2px;
+  text-shadow:0 1px 3px #00000080;
+}
+.parch-sp{font-size:9px;color:var(--ink3);}
+.parch-sp strong{color:var(--gold2);}
+
+/* ── Rune stat grid ── */
+.stat-rune-grid{display:flex;flex-direction:column;gap:7px;}
+.stat-rune-row{display:flex;align-items:center;gap:8px;}
+.stat-rune-icon{
+  width:22px;height:22px;border-radius:4px;
+  background:var(--panel);border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;flex-shrink:0;
+  box-shadow:inset 0 1px 0 #ffffff08;
+}
+.stat-rune-lbl{
+  font-family:var(--font-head);font-size:9px;
+  color:var(--ink3);width:60px;flex-shrink:0;
+}
+.stat-rune-bar{
+  flex:1;height:8px;
+  background:#0a0806;
+  border:1px solid var(--border);
+  border-radius:1px;
+  overflow:hidden;
+  position:relative;
+  box-shadow:inset 0 1px 3px #00000060;
+}
+.stat-rune-fill{
+  height:100%;
+  border-radius:1px;
+  transition:width .4s;
+  box-shadow:inset 0 1px 0 #ffffff15;
+  position:relative;
+}
+/* Segment çizgileri üzerine */
+.stat-rune-fill::after{
+  content:'';
+  position:absolute;inset:0;
+  background:repeating-linear-gradient(
+    90deg,transparent,transparent 18%,
+    #00000030 18%,#00000030 19%
+  );
+}
+.stat-rune-val{
+  font-family:var(--font-head);font-size:11px;
+  color:var(--perg2);min-width:18px;text-align:right;
+}
+.stat-rune-btn{
+  width:18px;height:18px;border-radius:3px;
+  border:1px solid var(--gold);color:var(--gold);
+  background:linear-gradient(180deg,#3a2a18,#221608);
+  cursor:pointer;font-size:10px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+  box-shadow:inset 0 1px 0 #ffffff10;
+  transition:all .15s;
+}
+.stat-rune-btn:hover{background:var(--gold);color:var(--panel3);}
+.stat-rune-btn:disabled{border-color:var(--border);color:var(--border3);cursor:not-allowed;background:var(--panel3);}
+
+/* ── Envanter bölümü ── */
+.inventory-section{
+  border:1px solid var(--border2);
+  border-radius:6px;
+  padding:12px;
+  background:var(--panel2);
+  box-shadow:inset 0 1px 0 #ffffff06,0 3px 10px #00000060;
+}
+.inv-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:4px;
+  margin-top:8px;
+}
+.inv-slot{
+  aspect-ratio:1;
+  border-radius:4px;
+  background:#0f0b08;
+  border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;
+  position:relative;
+  cursor:pointer;
+  transition:border-color .15s,box-shadow .15s;
+  /* Metal köşe efekti */
+  box-shadow:
+    inset 1px 1px 0 #ffffff08,
+    inset -1px -1px 0 #00000040;
+}
+.inv-slot:hover{border-color:var(--border2);box-shadow:inset 1px 1px 0 #ffffff10,0 0 6px #00000060;}
+.inv-slot.has-item{
+  background:var(--panel);
+  border-color:var(--border2);
+  cursor:pointer;
+}
+.inv-slot.has-item:hover .inv-tooltip{display:block;}
+.inv-slot.rarity-gray{border-color:var(--g-gray);}
+.inv-slot.rarity-green{border-color:var(--g-green);}
+.inv-slot.rarity-blue{border-color:var(--g-blue);}
+.inv-slot.rarity-purple{border-color:var(--g-purple);}
+.inv-slot.rarity-orange{border-color:var(--g-orange);box-shadow:0 0 6px #8a5a2a40;}
+
+/* Tooltip */
+.inv-tooltip{
+  display:none;
+  position:absolute;
+  bottom:calc(100% + 6px);
+  left:50%;transform:translateX(-50%);
+  background:#1e1608;
+  border:1px solid var(--border2);
+  border-top:2px solid var(--gold);
+  border-radius:5px;
+  padding:7px 9px;
+  min-width:120px;max-width:160px;
+  z-index:100;
+  box-shadow:0 4px 16px #00000080;
+  pointer-events:none;
+}
+.inv-tooltip::after{
+  content:'';position:absolute;
+  top:100%;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;
+  border-top-color:var(--border2);
+}
+.tt-name{font-family:var(--font-head);font-size:10px;font-weight:700;color:var(--gold2);margin-bottom:3px;}
+.tt-type{font-size:8px;color:var(--ink3);margin-bottom:4px;}
+.tt-stat{font-size:9px;color:var(--perg2);}
+.tt-flavor{font-size:8px;color:var(--ink3);font-style:italic;margin-top:4px;border-top:1px solid var(--border);padding-top:4px;}
+
+@media(min-width:900px){
+  .char-shield-wrap{width:130px;height:130px;}
+  .char-shield{width:130px;height:130px;}
+  .inv-grid{grid-template-columns:repeat(10,1fr);}
+  .char-sheet{max-width:700px;margin:0 auto;}
+}
+
 #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#2a1e0c;border:1px solid var(--border2);border-top:1px solid var(--gold);color:var(--perg);font-family:var(--font-head);font-size:11px;padding:8px 18px;border-radius:6px;z-index:500;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:320px;text-align:center;box-shadow:0 4px 16px #00000080;}
 </style>
 </head>
@@ -617,30 +889,63 @@ html,body{
 
     <div class="scroll" id="game-content">
       <!-- KARAKTER -->
-      <div class="pad" id="gs-karakter">
-        <div class="card" style="text-align:center;">
-          <div class="portrait-lg" id="g-portrait"><svg></svg></div>
-          <div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);" id="g-name">—</div>
-          <div style="font-size:12px;color:var(--ink3);font-style:italic;" id="g-class">—</div>
-          <div style="display:flex;justify-content:center;gap:6px;margin-top:7px;">
-            <span class="tag tag-gold" id="g-lvl">Sv.1</span>
-            <span class="tag tag-red" id="g-hp">❤ 100/100</span>
+      <div class="scroll" id="gs-karakter">
+        <div class="char-sheet">
+
+          <!-- ── ÜSTTE: Avatar + Kimlik + HP/XP ── -->
+          <div class="char-top">
+            <div class="char-shield-wrap">
+              <div class="char-shield" id="g-portrait"><svg></svg></div>
+              <div class="char-shield-corner tl"></div>
+              <div class="char-shield-corner tr"></div>
+              <div class="char-shield-corner bl"></div>
+              <div class="char-shield-corner br"></div>
+            </div>
+            <div class="char-identity">
+              <div class="char-name" id="g-name">—</div>
+              <div class="char-class" id="g-class">—</div>
+              <div class="char-badges">
+                <span class="char-badge badge-gold" id="g-lvl">Sv.1</span>
+                <span class="char-badge badge-hp" id="g-hp-badge">❤ 100</span>
+              </div>
+              <!-- HP Bar -->
+              <div class="mbar-wrap">
+                <div class="mbar-label">CAN</div>
+                <div class="mbar-bg">
+                  <div class="mbar-fill mbar-hp" id="g-hpbar" style="width:100%;"></div>
+                  <div class="mbar-shine"></div>
+                </div>
+                <div class="mbar-val" id="g-hp-val">100/100</div>
+              </div>
+              <!-- XP Bar -->
+              <div class="mbar-wrap">
+                <div class="mbar-label">DENEYİM</div>
+                <div class="mbar-bg">
+                  <div class="mbar-fill mbar-xp" id="g-xpbar" style="width:0%;"></div>
+                  <div class="mbar-shine"></div>
+                </div>
+                <div class="mbar-val" id="g-xplbl">0/100</div>
+              </div>
+            </div>
           </div>
-          <div class="xp-bar" style="margin-top:8px;"><div class="xp-fill" id="g-xpbar" style="width:0%;background:var(--gold);"></div></div>
-          <div style="font-size:10px;color:var(--ink3);display:flex;justify-content:space-between;"><span>XP</span><span id="g-xplbl">0/100</span></div>
-        </div>
-        <div class="card">
-          <div class="row-between" style="margin-bottom:9px;">
-            <span style="font-family:var(--font-head);font-size:10px;color:var(--gold);letter-spacing:1px;">YETENEKLER</span>
-            <span style="font-size:10px;color:var(--ink3);">Serbest: <span style="color:var(--gold);" id="g-sp">0</span></span>
+
+          <!-- ── STAT PARŞÖMEN ── -->
+          <div class="parchment-section">
+            <div class="parch-header">
+              <span class="parch-title">⚜ KAHRAMAN NİTELİKLERİ</span>
+              <span class="parch-sp">Serbest Puan: <strong id="g-sp">0</strong></span>
+            </div>
+            <div id="g-stats" class="stat-rune-grid"></div>
           </div>
-          <div id="g-stats"></div>
-        </div>
-        <div class="card">
-          <div style="font-family:var(--font-head);font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">EKİPMAN</div>
-          <div class="row-between" style="margin-bottom:5px;"><span style="font-size:10px;color:var(--ink3);">Silah</span><span style="font-size:12px;color:var(--perg2);" id="eq-weapon">Eski Kılıç ⚔</span></div>
-          <div class="row-between" style="margin-bottom:5px;"><span style="font-size:10px;color:var(--ink3);">Zırh</span><span style="font-size:12px;color:var(--perg2);">Deri Zırh 🛡</span></div>
-          <div class="row-between"><span style="font-size:10px;color:var(--ink3);">Yüzük</span><span style="font-size:12px;color:var(--ink3);">—</span></div>
+
+          <!-- ── ENVANTER GRID ── -->
+          <div class="inventory-section">
+            <div class="parch-header">
+              <span class="parch-title">⚔ ENVANTER</span>
+            </div>
+            <div class="inv-grid" id="inv-grid"></div>
+          </div>
+
         </div>
       </div>
       <!-- KALE -->
@@ -1394,18 +1699,65 @@ function renderGame(s){
 /* ── KARAKTER ── */
 function renderKarakter(){
   const cls=CLASSES.find(c=>c.id===G.classId)||CLASSES[0];
+
+  // Avatar
   document.getElementById('g-portrait').innerHTML=getAvatarHTML(G.classId,G.avatarIdx,G.armorColor,G.cloakColor,'lg');
+
+  // Kimlik
   document.getElementById('g-name').textContent=G.heroName||'Kahraman';
   document.getElementById('g-class').textContent=cls.name;
   document.getElementById('g-lvl').textContent='Sv.'+G.level;
-  document.getElementById('g-hp').textContent=`❤ ${G.stats.hp}/${G.stats.maxhp}`;
+  document.getElementById('g-hp-badge').textContent=`❤ ${G.stats.hp}`;
+
+  // HP bar
+  const hpPct=Math.min(100,Math.round(G.stats.hp/G.stats.maxhp*100));
+  const hpBar=document.getElementById('g-hpbar');
+  hpBar.style.width=hpPct+'%';
+  hpBar.classList.toggle('low',hpPct<30);
+  document.getElementById('g-hp-val').textContent=`${G.stats.hp}/${G.stats.maxhp}`;
+
+  // XP bar
   const need=G.level*100;
   document.getElementById('g-xpbar').style.width=Math.min(100,Math.round(G.xp/need*100))+'%';
   document.getElementById('g-xplbl').textContent=G.xp+'/'+need;
+
+  // Serbest puan
   document.getElementById('g-sp').textContent=G.skillPoints;
+
+  // Stat rune barları
+  const statIcons={str:'⚔',def:'🛡',agi:'💨',wis:'📖',cha:'👑'};
   document.getElementById('g-stats').innerHTML=Object.entries(STAT_META).map(([k,m])=>{
     const v=G.stats[k]||0;
-    return `<div class="stat-row"><span class="stat-lbl">${m.lbl}</span><div class="stat-bw"><div class="stat-bf" style="width:${Math.min(100,Math.round(v/15*100))}%;background:${m.color};"></div></div><span class="stat-val">${v}</span><button class="sp-btn" onclick="addStat('${k}')" ${G.skillPoints>0?'':'disabled'}>+</button></div>`;
+    const pct=Math.min(100,Math.round(v/20*100));
+    return `<div class="stat-rune-row">
+      <div class="stat-rune-icon">${statIcons[k]||'◆'}</div>
+      <span class="stat-rune-lbl">${m.lbl}</span>
+      <div class="stat-rune-bar">
+        <div class="stat-rune-fill" style="width:${pct}%;background:${m.color};"></div>
+      </div>
+      <span class="stat-rune-val">${v}</span>
+      <button class="stat-rune-btn" onclick="addStat('${k}')" ${G.skillPoints>0?'':'disabled'}>+</button>
+    </div>`;
+  }).join('');
+
+  // Envanter grid — 50 slot (5x10 mobil, 10x5 desktop)
+  const items=[
+    {icon:'⚔',name:'Eski Kılıç',type:'Silah',stats:'Atak +8',flavor:'Demirci Aldus\'un dükkanından.',rarity:'gray'},
+    {icon:'🧥',name:'Deri Zırh',type:'Zırh',stats:'Savunma +10, Can +20',flavor:'Savaş meydanından artık.',rarity:'gray'},
+    ...Array(48).fill(null)
+  ];
+  const grid=document.getElementById('inv-grid');
+  grid.innerHTML=items.map((item,i)=>{
+    if(!item) return `<div class="inv-slot"></div>`;
+    return `<div class="inv-slot has-item rarity-${item.rarity}">
+      <span>${item.icon}</span>
+      <div class="inv-tooltip">
+        <div class="tt-name">${item.icon} ${item.name}</div>
+        <div class="tt-type">${item.type}</div>
+        <div class="tt-stat">${item.stats}</div>
+        <div class="tt-flavor">${item.flavor}</div>
+      </div>
+    </div>`;
   }).join('');
 }
 function addStat(k){
