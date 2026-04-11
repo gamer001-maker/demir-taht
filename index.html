@@ -2203,6 +2203,7 @@ function confirmSellItem(itemId){
   closeGModal();
   toast(`${item.name} ${price}🪙 fiyatıyla pazara listelendi!`);
   renderKarakter();renderMarket();
+  if(currentUser) sbSave();
 }
 
 function getCatFromType(type){
@@ -2456,6 +2457,8 @@ function fight(name){
   logWrap.style.display='block';
   logWrap.innerHTML=`<div class="battle-log-box">${lines.map(l=>`<div class="bl-line ${l.c}">${l.t}</div>`).join('')}</div>`;
   updateHUD();renderArena();renderKarakter();
+  // Anında kaydet — F5'te altın kaybolmasın
+  if(currentUser) sbSave();
 }
 
 /* ══════════════════════════════════════
@@ -2615,6 +2618,7 @@ function buyItem(id){
   toast(`${item.name} envantere eklendi! -${item.price}🪙`);
   trackQuest('marketBuy1');
   updateHUD();renderMarket();renderKarakter();
+  if(currentUser) sbSave();
 }
 
 /* ══════════════════════════════════════
@@ -3011,6 +3015,7 @@ function showBossResult(boss){
   if(won){
     G.gold += 500;
     updateHUD();
+    if(currentUser) sbSave();
   }
   showGModal(`
     <div style="text-align:center;margin-bottom:12px;">
