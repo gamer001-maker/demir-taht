@@ -260,9 +260,28 @@ html,body{
 /* ═══════════════════════════════
    ONBOARDING
 ═══════════════════════════════ */
-#p-onboard{background:var(--panel3);background-image:radial-gradient(ellipse at 50% 20%,#2a1a0a 0%,var(--panel3) 70%);position:relative;}
-#ember-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;}
-#p-onboard .scroll{position:relative;z-index:1;}
+#p-onboard{
+  background:#0f0b08;
+  background-image:url('images/girisekranianasayfa.jpg');
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  position:relative;
+}
+#p-onboard::before{
+  content:'';position:absolute;inset:0;
+  background:rgba(0,0,0,0.55);
+  z-index:0;
+}
+#ember-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;}
+#p-onboard .scroll{position:relative;z-index:2;}
+/* Input alanları normal font — Cinzel'den muaf */
+.input-field{
+  font-family:system-ui,-apple-system,'Segoe UI',sans-serif !important;
+  font-size:14px !important;
+  text-transform:none !important;
+  letter-spacing:normal !important;
+}
 .ob-logo{text-align:center;padding:32px 20px 20px;position:relative;}
 .ob-logo-icon{font-size:56px;display:block;margin-bottom:10px;filter:drop-shadow(0 2px 8px #00000080);}
 .ob-logo-title{font-family:var(--font-head);font-size:26px;color:var(--gold2);letter-spacing:4px;text-shadow:0 2px 8px #00000080;}
@@ -816,54 +835,42 @@ html,body{
         <div class="ob-step-dot"></div>
       </div>
 
-      <!-- Adım 1: Hesap -->
+      <!-- Adım 1: Hesap (Kayıt) -->
       <div class="ob-screen active" id="obs-0">
         <div class="ob-title">Hesap Oluştur</div>
-        <div class="ob-desc">Oyun ilerlemen sunucuda saklanır. Kayıt olarak tüm cihazlardan devam edebilirsin.</div>
         <div style="margin-bottom:10px;">
-          <div class="color-lbl" style="font-family:var(--font-head);font-size:9px;color:var(--ink3);letter-spacing:1px;margin-bottom:5px;">KULLANICI ADI</div>
-          <input class="input-field" id="reg-username" placeholder="Kullanıcı adın..." maxlength="16"/>
+          <div class="color-lbl">KULLANICI ADI</div>
+          <input class="input-field" id="reg-username" placeholder="Kullanıcı adın..." maxlength="16" autocomplete="username"/>
         </div>
         <div style="margin-bottom:10px;">
-          <div class="color-lbl" style="font-family:var(--font-head);font-size:9px;color:var(--ink3);letter-spacing:1px;margin-bottom:5px;">E-POSTA</div>
-          <input class="input-field" id="reg-email" type="email" placeholder="e-posta adresin..."/>
+          <div class="color-lbl">E-POSTA</div>
+          <input class="input-field" id="reg-email" type="email" placeholder="e-posta adresin..." autocomplete="email"/>
         </div>
         <div style="margin-bottom:14px;">
-          <div class="color-lbl" style="font-family:var(--font-head);font-size:9px;color:var(--ink3);letter-spacing:1px;margin-bottom:5px;">ŞİFRE</div>
-          <input class="input-field" id="reg-pass" type="password" placeholder="şifren..."/>
+          <div class="color-lbl">ŞİFRE</div>
+          <input class="input-field" id="reg-pass" type="password" placeholder="en az 6 karakter..." autocomplete="new-password"/>
         </div>
         <button class="btn" style="width:100%;margin-bottom:8px;" onclick="obNext(0)">Devam Et →</button>
         <div style="text-align:center;font-size:11px;color:var(--ink3);">Zaten hesabın var mı? <span style="color:var(--gold);cursor:pointer;" onclick="showLoginScreen()">Giriş Yap</span></div>
-        <div style="text-align:center;font-size:11px;color:var(--ink3);margin-top:6px;"><span style="cursor:pointer;color:var(--ink3);" onclick="obGuest()">Misafir olarak devam et</span></div>
       </div>
 
       <!-- Adım 2: Sınıf -->
       <div class="ob-screen" id="obs-1">
         <div class="ob-title">Sınıfını Seç</div>
-        <div class="ob-desc">Her sınıfın kendine özgü skill ağacı ve başlangıç statları vardır.</div>
+        <div class="ob-desc">Her sınıfın kendine özgü güçlü ve zayıf yönleri vardır.</div>
         <div class="class-grid" id="ob-class-grid"></div>
-        <div id="ob-skill-preview"></div>
         <button class="btn" style="width:100%;margin-bottom:6px;" onclick="obNext(1)">Devam Et →</button>
         <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="obBack(1)">← Geri</button>
       </div>
 
       <!-- Adım 3: Avatar -->
       <div class="ob-screen" id="obs-2">
-        <div class="ob-title">Görünümünü Seç</div>
-        <div class="ob-desc">Zırh ve pelerín rengini seçerek karakterini kişiselleştir.</div>
+        <div class="ob-title">Karakterini Oluştur</div>
         <div style="margin-bottom:10px;">
           <div class="color-lbl">KARAKTERİN ADI</div>
-          <input class="input-field" id="hero-name" placeholder="Kahramanının adı..." maxlength="18"/>
+          <input class="input-field" id="hero-name" placeholder="Kahramanının adı..." maxlength="18" autocomplete="off"/>
         </div>
         <div class="avatar-grid" id="ob-avatar-grid"></div>
-        <div class="color-row">
-          <div class="color-lbl">ZIRH RENGİ</div>
-          <div class="swatches" id="ob-armor-colors"></div>
-        </div>
-        <div class="color-row">
-          <div class="color-lbl">PELERİN / SAÇ</div>
-          <div class="swatches" id="ob-cloak-colors"></div>
-        </div>
         <button class="btn" style="width:100%;margin-bottom:6px;" onclick="obNext(2)">Devam Et →</button>
         <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="obBack(2)">← Geri</button>
       </div>
@@ -1274,16 +1281,17 @@ html,body{
    CONSTANTS
 ══════════════════════════════════════ */
 const CLASSES=[
-  {id:'warrior',name:'Savaşçı',icon:'⚔',flavor:'Güçlü ve dayanıklı.',tags:['Güç','Dayanıklılık'],badge:'⚔',
+  {id:'warrior',name:'Savaşçı', icon:'⚔', flavor:'Güçlü ve dayanıklı.',  tags:['Güç','Dayanıklılık'], badge:'⚔', img:'images/savasci.webp',
    base:{str:8,def:6,agi:4,wis:2,cha:3,hp:120,maxhp:120}},
-  {id:'mage',name:'Büyücü',icon:'🔮',flavor:'Gizemin efendisi.',tags:['Büyü','Zeka'],badge:'🔮',
+  {id:'mage',   name:'Büyücü',  icon:'🔮', flavor:'Gizemin efendisi.',     tags:['Büyü','Zeka'],        badge:'🔮', img:'images/buyucu.webp',
    base:{str:3,def:3,agi:5,wis:10,cha:6,hp:70,maxhp:70}},
-  {id:'rogue',name:'Haydut',icon:'🗡',flavor:'Gölgelerden saldırır.',tags:['Hız','Kritik'],badge:'🗡',
+  {id:'rogue',  name:'Haydut',  icon:'🗡', flavor:'Gölgelerden saldırır.', tags:['Hız','Kritik'],       badge:'🗡', img:'images/haydut.webp',
    base:{str:5,def:4,agi:10,wis:4,cha:5,hp:90,maxhp:90}},
-  {id:'paladin',name:'Şövalye',icon:'🛡',flavor:'Onurlu koruyucu.',tags:['Savunma','İman'],badge:'🛡',
-   base:{str:6,def:9,agi:3,wis:5,cha:7,hp:110,maxhp:110}},
-  {id:'ranger',name:'Avcı',icon:'🏹',flavor:'Uzak mesafeden yok eder.',tags:['Menzil','Hız'],badge:'🏹',
+  {id:'ranger', name:'Avcı',    icon:'🏹', flavor:'Uzak mesafeden yok eder.',tags:['Menzil','Hız'],     badge:'🏹', img:'images/avci.webp',
    base:{str:6,def:4,agi:8,wis:5,cha:4,hp:95,maxhp:95}},
+  // Şövalye ilerleyen dönemde aktif edilecek
+  // {id:'paladin',name:'Şövalye',icon:'🛡',flavor:'Onurlu koruyucu.',tags:['Savunma','İman'],badge:'🛡',img:'images/sovalye.webp',
+  //  base:{str:6,def:9,agi:3,wis:5,cha:7,hp:110,maxhp:110}},
 ];
 const STAT_META={
   str:{lbl:'Güç',color:'#c0392b'},def:{lbl:'Savunma',color:'#2980b9'},
@@ -1664,12 +1672,15 @@ const EMBLEMS=['🛡','⚔','🏰','🐉','🦁','🌑','🔥','🌿','💎','�
 function obRenderClasses(){
   document.getElementById('ob-class-grid').innerHTML=CLASSES.map(c=>`
     <div class="class-card${obClass===c.id?' sel':''}" onclick="obSelClass('${c.id}')">
-      <span class="class-emoji">${c.icon}</span>
+      ${c.img
+        ?`<img src="${c.img}" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:64px;height:64px;object-fit:contain;margin-bottom:4px;"/>
+           <span style="display:none;font-size:30px;">${c.icon}</span>`
+        :`<span class="class-emoji">${c.icon}</span>`
+      }
       <span class="class-name">${c.name}</span>
       <div class="class-flavor">${c.flavor}</div>
       <div class="class-tags">${c.tags.map(t=>`<span class="ctag">${t}</span>`).join('')}</div>
     </div>`).join('');
-  obRenderSkillPreview(obClass);
 }
 function obSelClass(id){obClass=id;obRenderClasses();}
 function obRenderSkillPreview(cid){
@@ -1682,14 +1693,11 @@ function obRenderSkillPreview(cid){
 }
 function obSwitchBranch(cid,bid){G.activeBranch[cid]=bid;obRenderSkillPreview(cid);}
 function obRenderAvatars(){
-  const avList=Array.from({length:4},(_,i)=>({id:i,locked:i>1}));
-  document.getElementById('ob-avatar-grid').innerHTML=avList.map((av,i)=>
-    getAvatarSlotHTML(obClass, i, obAvIdx===i, av.locked, G.armorColor, G.cloakColor)
+  // 4 slot — hepsi seçilebilir, lock yok
+  const avList=Array.from({length:4},(_,i)=>i);
+  document.getElementById('ob-avatar-grid').innerHTML=avList.map(i=>
+    getAvatarSlotHTML(obClass, i, obAvIdx===i, false, G.armorColor, G.cloakColor)
   ).join('');
-  const ap=document.getElementById('ob-armor-colors');
-  if(ap) ap.innerHTML=ARMOR_COLORS.map(c=>`<div class="swatch${G.armorColor===c?' sel':''}" style="background:${c};" data-color="${c}" onclick="obSetColor('armor','${c}')"></div>`).join('');
-  const cp=document.getElementById('ob-cloak-colors');
-  if(cp) cp.innerHTML=CLOAK_COLORS.map(c=>`<div class="swatch${G.cloakColor===c?' sel':''}" style="background:${c};" data-color="${c}" onclick="obSetColor('cloak','${c}')"></div>`).join('');
 }
 function obSelAv(i){obAvIdx=i;G.avatarIdx=i;obRenderAvatars();}
 function obSetColor(type,hex){
@@ -3650,40 +3658,36 @@ endTurn = async function() {
 /* ── ONBOARDING'E LOGIN EKLE ── */
 function showLoginScreen() {
   document.getElementById('obs-0').innerHTML = `
-    <div class="ob-title" style="margin-bottom:4px;">Giriş Yap</div>
-    <div class="ob-desc">Hesabınla giriş yap, kaldığın yerden devam et.</div>
+    <div class="ob-title" style="margin-bottom:12px;">Giriş Yap</div>
     <div style="margin-bottom:10px;">
       <div class="color-lbl">E-POSTA</div>
-      <input class="input-field" id="login-email" type="email" placeholder="e-posta adresin..."/>
+      <input class="input-field" id="login-email" type="email" placeholder="e-posta adresin..." autocomplete="email"/>
     </div>
     <div style="margin-bottom:14px;">
       <div class="color-lbl">ŞİFRE</div>
-      <input class="input-field" id="login-pass" type="password" placeholder="şifren..."/>
+      <input class="input-field" id="login-pass" type="password" placeholder="şifren..." autocomplete="current-password"/>
     </div>
     <button class="btn" style="width:100%;margin-bottom:8px;" onclick="doLogin()">Giriş Yap →</button>
-    <div style="text-align:center;font-size:11px;color:var(--ink3);">Hesabın yok mu? <span style="color:var(--gold);cursor:pointer;" onclick="showRegisterScreen()">Kayıt Ol</span></div>
-    <div style="text-align:center;font-size:11px;color:var(--ink3);margin-top:6px;"><span style="cursor:pointer;color:var(--ink3);" onclick="obGuest()">Misafir olarak devam et</span></div>`;
+    <div style="text-align:center;font-size:11px;color:var(--ink3);">Hesabın yok mu? <span style="color:var(--gold);cursor:pointer;" onclick="showRegisterScreen()">Kayıt Ol</span></div>`;
 }
 
 function showRegisterScreen() {
   document.getElementById('obs-0').innerHTML = `
-    <div class="ob-title" style="margin-bottom:4px;">Hesap Oluştur</div>
-    <div class="ob-desc">Oyun ilerlemenin kalıcı olması için kayıt ol.</div>
+    <div class="ob-title" style="margin-bottom:12px;">Hesap Oluştur</div>
     <div style="margin-bottom:10px;">
       <div class="color-lbl">KULLANICI ADI</div>
-      <input class="input-field" id="reg-username" placeholder="Kullanıcı adın..." maxlength="16"/>
+      <input class="input-field" id="reg-username" placeholder="Kullanıcı adın..." maxlength="16" autocomplete="username"/>
     </div>
     <div style="margin-bottom:10px;">
       <div class="color-lbl">E-POSTA</div>
-      <input class="input-field" id="reg-email" type="email" placeholder="e-posta adresin..."/>
+      <input class="input-field" id="reg-email" type="email" placeholder="e-posta adresin..." autocomplete="email"/>
     </div>
     <div style="margin-bottom:14px;">
       <div class="color-lbl">ŞİFRE</div>
-      <input class="input-field" id="reg-pass" type="password" placeholder="en az 6 karakter..."/>
+      <input class="input-field" id="reg-pass" type="password" placeholder="en az 6 karakter..." autocomplete="new-password"/>
     </div>
     <button class="btn" style="width:100%;margin-bottom:8px;" onclick="obNext(0)">Devam Et →</button>
-    <div style="text-align:center;font-size:11px;color:var(--ink3);">Zaten hesabın var mı? <span style="color:var(--gold);cursor:pointer;" onclick="showLoginScreen()">Giriş Yap</span></div>
-    <div style="text-align:center;font-size:11px;color:var(--ink3);margin-top:6px;"><span style="cursor:pointer;color:var(--ink3);" onclick="obGuest()">Misafir olarak devam et</span></div>`;
+    <div style="text-align:center;font-size:11px;color:var(--ink3);">Zaten hesabın var mı? <span style="color:var(--gold);cursor:pointer;" onclick="showLoginScreen()">Giriş Yap</span></div>`;
 }
 
 async function doLogin() {
