@@ -6,11 +6,11 @@
 <title>Demir Taht</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
-  --font-head:'Poppins',sans-serif;
-  --font-body:'Poppins',sans-serif;
+  --font-head:'Cinzel',serif;
+  --font-body:'Cinzel',serif;
 
   /* ── Yazı renkleri ── */
   --perg:#e8dcc0;--perg2:#c9b99a;--perg3:#b09870;
@@ -47,7 +47,7 @@ html,body{
     radial-gradient(ellipse at 50% 25%, #2a1a0a 0%, #0f0b08 65%);
   display:flex;align-items:flex-start;justify-content:center;
   padding:12px 8px;
-  font-family:var(--font-body);font-size:clamp(13px,1.8vw,16px);font-weight:300;
+  font-family:var(--font-body);font-size:clamp(12px,1.6vw,15px);font-weight:400;
   color:var(--ink);
 }
 
@@ -772,7 +772,7 @@ html,body{
 }
 
 /* Equipped slotlar */
-.eq-slots-row{display:flex;gap:8px;margin-bottom:4px;}
+.eq-slots-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:4px;}
 .eq-slot{
   flex:1;aspect-ratio:1;max-height:72px;
   border-radius:5px;background:#0f0b08;
@@ -962,6 +962,7 @@ html,body{
               <span class="parch-title">⚔ KUŞANILMIŞ</span>
             </div>
             <div class="eq-slots-row" id="eq-slots"></div>
+            <div id="set-bonus-display"></div>
             <div class="parch-header" style="margin-top:12px;">
               <span class="parch-title">📦 ENVANTER</span>
               <span class="parch-sp" id="inv-count">0/50</span>
@@ -1316,24 +1317,88 @@ const OPPONENTS=[
   {name:'Avcı Lyra',cls:'Avcı',icon:'🏹',power:110,reward:35,pts:18,win:"Lyra'nın okları tükendi!",lose:'Lyra okunu sana sapladı.'},
 ];
 const MARKET_ITEMS=[
-  {id:1,name:'Pas Tutmuş Kılıç',icon:'⚔',cat:'weapon',grade:'gray',price:80,qty:99,seller:'npc',sellerName:'Demirci Aldus',type:'Kılıç',desc:'Kullanılmış demir kılıç.',stats:{atk:8,spd:4}},
-  {id:2,name:'Meşe Asası',icon:'🪄',cat:'weapon',grade:'gray',price:70,qty:99,seller:'npc',sellerName:'Büyücü Tezgahı',type:'Asa',desc:'Sıradan meşe asası.',stats:{mgc:10,wis:3}},
-  {id:3,name:'Demir Hançer',icon:'🗡',cat:'weapon',grade:'gray',price:60,qty:99,seller:'npc',sellerName:'Demirci Aldus',type:'Hançer',desc:'Keskin hançer.',stats:{atk:6,crit:8}},
-  {id:4,name:'Budanmış Kılıç',icon:'⚔',cat:'weapon',grade:'green',price:220,qty:15,seller:'npc',sellerName:'Demirci Aldus',type:'Kılıç',desc:'Usta işi kılıç.',stats:{atk:18,str:4}},
-  {id:5,name:'Kana Susamış Kılıç',icon:'⚔',cat:'weapon',grade:'blue',price:850,qty:1,seller:'player',sellerName:'Kragos',type:'Kılıç',desc:'Can çalar.',stats:{atk:35,str:8}},
-  {id:6,name:'Ejderha Dili Asası',icon:'🪄',cat:'weapon',grade:'purple',price:3200,qty:1,seller:'player',sellerName:'MiraBüyücü',type:'Asa',desc:'Ateş büyüsü ×2.',stats:{mgc:65,wis:20}},
-  {id:7,name:'Efsane Yay',icon:'🏹',cat:'weapon',grade:'orange',price:8500,qty:1,seller:'player',sellerName:'LyraEfsane',type:'Yay',desc:'Tanrıça hediyesi.',stats:{rng:80,atk:55}},
-  {id:8,name:'Deri Zırh',icon:'🧥',cat:'armor',grade:'gray',price:90,qty:99,seller:'npc',sellerName:'Zırh Ustası',type:'Deri Zırh',desc:'Hafif zırh.',stats:{def:10,hp:20}},
-  {id:9,name:'Demir Plaka',icon:'🛡',cat:'armor',grade:'gray',price:140,qty:99,seller:'npc',sellerName:'Zırh Ustası',type:'Plaka',desc:'Standart plaka.',stats:{def:18,hp:30}},
-  {id:10,name:'Ejderha Derisi Zırh',icon:'🧥',cat:'armor',grade:'purple',price:4500,qty:1,seller:'player',sellerName:'DragonSlayer',type:'Deri Zırh',desc:'Ateşe dirençli.',stats:{def:55,hp:120}},
-  {id:11,name:'Bakır Yüzük',icon:'💍',cat:'accessory',grade:'gray',price:50,qty:99,seller:'npc',sellerName:'Mücevherci',type:'Yüzük',desc:'Sıradan yüzük.',stats:{mgc:3,wis:2}},
-  {id:12,name:'Kaderin Yüzüğü',icon:'💍',cat:'accessory',grade:'orange',price:15000,qty:1,seller:'player',sellerName:'FateMaster',type:'Yüzük',desc:'Ölümden kurtarır.',stats:{hp:150,luck:50}},
-  {id:13,name:'Küçük Can İksiri',icon:'🧪',cat:'consumable',grade:'gray',price:30,qty:99,seller:'npc',sellerName:'Eczacı',type:'İksir',desc:'30 can yeniler.',stats:{hp_restore:30}},
-  {id:14,name:'Güç Runesi',icon:'🔶',cat:'consumable',grade:'green',price:120,qty:20,seller:'npc',sellerName:'Rune Ustası',type:'Rune',desc:'Saldırı +%50.',stats:{atk_boost:50}},
-  {id:15,name:'Ejderha Kanı İksiri',icon:'🧪',cat:'consumable',grade:'purple',price:600,qty:5,seller:'player',sellerName:'AlchemyKing',type:'İksir',desc:'200 can yeniler.',stats:{hp_restore:200}},
-  {id:16,name:'Ham Demir',icon:'⛏',cat:'resource',grade:'gray',price:15,qty:999,seller:'npc',sellerName:'Maden Ocağı',type:'Kaynak',desc:'Demir hammaddesi.',stats:{craft_iron:1}},
-  {id:17,name:'Meşe Odunu',icon:'🪵',cat:'resource',grade:'gray',price:10,qty:999,seller:'npc',sellerName:'Kereste',type:'Kaynak',desc:'İnşaat malzemesi.',stats:{craft_wood:1}},
-  {id:18,name:'Ejderha Pulu',icon:'🐉',cat:'resource',grade:'purple',price:1200,qty:8,seller:'player',sellerName:'DragonHunter',type:'Kaynak',desc:'Efsanevi yapım.',stats:{craft_legendary:1}},
+  /* ══════════════════════════════════════
+     SILAHLAR — BIÇAK / HANÇER (Haydut Ana)
+  ══════════════════════════════════════ */
+  {id:101,name:'Paslı Bıçak',     icon:'🗡',cat:'weapon',grade:'gray',  price:50, qty:99,seller:'npc',sellerName:'Demirci Aldus',  type:'Bıçak',  reqLv:1, material:null,desc:'Çürümeye yüz tutmuş eski bıçak.',   stats:{atk:5,crit:4},   img:'paslibicak',   classBonus:{rogue:'agi'}},
+  {id:102,name:'İlkel Bıçak',     icon:'🗡',cat:'weapon',grade:'gray',  price:65, qty:99,seller:'npc',sellerName:'Demirci Aldus',  type:'Bıçak',  reqLv:1, material:null,desc:'Taştan yontulmuş ilkel bıçak.',     stats:{atk:7,crit:5},   img:'ilkelbicak',   classBonus:{rogue:'agi'}},
+  {id:103,name:'Kemik Bıçak',     icon:'🗡',cat:'weapon',grade:'green', price:180,qty:30,seller:'npc',sellerName:'Kemik Ustası',   type:'Bıçak',  reqLv:10,material:null,desc:'Canavar kemiğinden yapılmış.',       stats:{atk:14,crit:10},  img:'kemikbicak',   classBonus:{rogue:'agi'}},
+  {id:104,name:'Runlu Bıçak',     icon:'🗡',cat:'weapon',grade:'blue',  price:750,qty:8, seller:'npc',sellerName:'Rune Ustası',    type:'Bıçak',  reqLv:15,material:null,desc:'Rune yazıları işlenmiş keskin bıçak.',stats:{atk:28,crit:18,agi:4},img:'runlubicak', classBonus:{rogue:'agi'}},
+  {id:105,name:"Sef'in Kılıcı",   icon:'⚔',cat:'weapon',grade:'orange',price:0,  qty:1, seller:'boss',sellerName:"Lonca Ödülü",  type:'Kılıç',  reqLv:25,material:null,desc:"Sef'i yenen efsanevi savaşçılara düşer.",stats:{atk:75,str:20,crit:15},img:'Sefinkilici',classBonus:{warrior:'str',paladin:'str'}},
+
+  /* ══════════════════════════════════════
+     SILAHLAR — HANÇER (Haydut Ana)
+  ══════════════════════════════════════ */
+  {id:111,name:'Paslı Hançer',    icon:'🗡',cat:'weapon',grade:'gray',  price:60, qty:99,seller:'npc',sellerName:'Demirci Aldus',  type:'Hançer', reqLv:1, material:null,desc:'Kullanılmış demir hançer.',           stats:{atk:6,crit:8},   img:'paslihancer',  classBonus:{rogue:'agi'}},
+  {id:112,name:'Element Hançer',  icon:'🗡',cat:'weapon',grade:'blue',  price:900,qty:5, seller:'npc',sellerName:'Element Ustası', type:'Hançer', reqLv:20,material:null,desc:'4 elementi barındıran hançer.',        stats:{atk:32,crit:20,wis:6},img:'elementhancer',classBonus:{rogue:'agi',mage:'wis'}},
+  {id:113,name:'Yadigar Hançer',  icon:'🗡',cat:'weapon',grade:'orange',price:7500,qty:1,seller:'player',sellerName:'Gölge Usta', type:'Hançer', reqLv:25,material:null,desc:'Atadan kalma efsane hançer.',          stats:{atk:60,crit:35,agi:15},img:'yadigarhancer',classBonus:{rogue:'agi'}},
+
+  /* ══════════════════════════════════════
+     SILAHLAR — KILIÇ (Savaşçı/Şövalye Ana)
+  ══════════════════════════════════════ */
+  {id:121,name:'Element Kılıcı',  icon:'⚔',cat:'weapon',grade:'blue',  price:1100,qty:5,seller:'npc',sellerName:'Element Ustası', type:'Kılıç',  reqLv:20,material:null,desc:'Element gücü yüklü kılıç.',           stats:{atk:40,str:10},  img:'elementkilic', classBonus:{warrior:'str',paladin:'str'}},
+  {id:122,name:'Yadigar Kılıç',   icon:'⚔',cat:'weapon',grade:'orange',price:9000,qty:1,seller:'player',sellerName:'Demir Usta', type:'Kılıç',  reqLv:25,material:null,desc:'Nesiller boyu aktarılan efsane kılıç.',stats:{atk:80,str:25},  img:'yadigarkilic', classBonus:{warrior:'str',paladin:'str'}},
+
+  /* ══════════════════════════════════════
+     SILAHLAR — SOPA / ASA (Büyücü Ana)
+  ══════════════════════════════════════ */
+  {id:131,name:'Düz Sopa',        icon:'🪄',cat:'weapon',grade:'gray',  price:45, qty:99,seller:'npc',sellerName:'Büyücü Tezgahı',type:'Asa',    reqLv:1, material:null,desc:'Sıradan meşe dalı.',                   stats:{mgc:6,wis:2},    img:'duzsopa',      classBonus:{mage:'wis'}},
+  {id:132,name:'Basit Asa',       icon:'🪄',cat:'weapon',grade:'gray',  price:70, qty:99,seller:'npc',sellerName:'Büyücü Tezgahı',type:'Asa',    reqLv:1, material:null,desc:'Büyücü çırağının asası.',              stats:{mgc:10,wis:3},   img:'basitasa',     classBonus:{mage:'wis'}},
+  {id:133,name:'Alev Sopası',     icon:'🪄',cat:'weapon',grade:'green', price:220,qty:20,seller:'npc',sellerName:'Ateş Büyücüsü', type:'Asa',    reqLv:8, material:null,desc:'Ucunda daima alev dans eder.',         stats:{mgc:18,wis:5},   img:'alevsopasi',   classBonus:{mage:'wis'}},
+  {id:134,name:'Kemik Asa',       icon:'🪄',cat:'weapon',grade:'green', price:200,qty:15,seller:'npc',sellerName:'Kemik Ustası',  type:'Asa',    reqLv:10,material:null,desc:'Ejderha kemiğinden yapılmış asa.',     stats:{mgc:20,wis:6},   img:'kemikasa',     classBonus:{mage:'wis'}},
+  {id:135,name:'Element Sopa',    icon:'🪄',cat:'weapon',grade:'blue',  price:800,qty:5, seller:'npc',sellerName:'Element Ustası',type:'Asa',    reqLv:20,material:null,desc:'4 elementi barındıran güçlü sopa.',    stats:{mgc:38,wis:12},  img:'elementsopa',  classBonus:{mage:'wis'}},
+  {id:136,name:'Element Asa',     icon:'🪄',cat:'weapon',grade:'blue',  price:1000,qty:4,seller:'npc',sellerName:'Element Ustası',type:'Asa',    reqLv:20,material:null,desc:'Büyücünün en büyük hazinesi.',         stats:{mgc:45,wis:15},  img:'elementasa',   classBonus:{mage:'wis'}},
+
+  /* ══════════════════════════════════════
+     SILAHLAR — YAY (Avcı Ana)
+  ══════════════════════════════════════ */
+  {id:141,name:'Basit Yay',       icon:'🏹',cat:'weapon',grade:'gray',  price:55, qty:99,seller:'npc',sellerName:'Avcı Tezgahı',  type:'Yay',    reqLv:1, material:null,desc:'Sıradan meşe yay.',                    stats:{rng:8,atk:5},    img:'basityay',     classBonus:{ranger:'agi'}},
+  {id:142,name:'Kemik Yay',       icon:'🏹',cat:'weapon',grade:'green', price:190,qty:20,seller:'npc',sellerName:'Kemik Ustası',  type:'Yay',    reqLv:10,material:null,desc:'Canavar kemiğiyle güçlendirilmiş yay.',stats:{rng:18,atk:12},  img:'kemikyay',     classBonus:{ranger:'agi'}},
+  {id:143,name:'Element Yay',     icon:'🏹',cat:'weapon',grade:'blue',  price:950,qty:5, seller:'npc',sellerName:'Element Ustası',type:'Yay',    reqLv:20,material:null,desc:'Elementlerin rüzgarını taşıyan yay.',  stats:{rng:35,atk:28,agi:8},img:'elementyay', classBonus:{ranger:'agi'}},
+
+  /* ══════════════════════════════════════
+     ZIRH — TAHTA SET (gray, Lv.1)
+  ══════════════════════════════════════ */
+  {id:201,name:'Tahta Göğüslük',  icon:'🛡',cat:'armor',grade:'gray',  price:80, qty:99,seller:'npc',sellerName:'Zırh Ustası',   type:'Göğüslük',reqLv:1,material:'tahta',desc:'Basit tahta göğüslük.',              stats:{def:4,hp:15},    img:'tahtazirh',    classBonus:null},
+  {id:202,name:'Tahta Kask',      icon:'🪖',cat:'armor',grade:'gray',  price:60, qty:99,seller:'npc',sellerName:'Zırh Ustası',   type:'Kask',    reqLv:1,material:'tahta',desc:'Başı koruyan tahta kask.',           stats:{def:3,hp:10},    img:'tahtakask',    classBonus:null},
+  {id:203,name:'Tahta Eldiven',   icon:'🧤',cat:'armor',grade:'gray',  price:50, qty:99,seller:'npc',sellerName:'Zırh Ustası',   type:'Eldiven', reqLv:1,material:'tahta',desc:'Elleri koruyan tahta eldiven.',      stats:{def:2,hp:8},     img:'tahtaeldiven', classBonus:null},
+  {id:204,name:'Tahta Bot',       icon:'👢',cat:'armor',grade:'gray',  price:55, qty:99,seller:'npc',sellerName:'Zırh Ustası',   type:'Bot',     reqLv:1,material:'tahta',desc:'Ayakları koruyan tahta bot.',        stats:{def:2,hp:8},     img:'tahtabot',     classBonus:null},
+
+  /* ══════════════════════════════════════
+     ZIRH — DERİ SET (green, Lv.8)
+  ══════════════════════════════════════ */
+  {id:211,name:'Deri Göğüslük',   icon:'🛡',cat:'armor',grade:'green', price:200,qty:30,seller:'npc',sellerName:'Zırh Ustası',   type:'Göğüslük',reqLv:8,material:'deri', desc:'Hafif ve esnek deri göğüslük.',     stats:{def:6,agi:3,hp:20},img:'derizirh',   classBonus:null},
+  {id:212,name:'Deri Kask',       icon:'🪖',cat:'armor',grade:'green', price:150,qty:30,seller:'npc',sellerName:'Zırh Ustası',   type:'Kask',    reqLv:8,material:'deri', desc:'Hafif deri kask.',                   stats:{def:4,agi:2,hp:15},img:'derikask',   classBonus:null},
+  {id:213,name:'Deri Eldiven',    icon:'🧤',cat:'armor',grade:'green', price:120,qty:30,seller:'npc',sellerName:'Zırh Ustası',   type:'Eldiven', reqLv:8,material:'deri', desc:'Hareket kısıtlamayan deri eldiven.',  stats:{def:3,agi:2,hp:10},img:'derieldiven',classBonus:null},
+  {id:214,name:'Deri Bot',        icon:'👢',cat:'armor',grade:'green', price:130,qty:30,seller:'npc',sellerName:'Zırh Ustası',   type:'Bot',     reqLv:8,material:'deri', desc:'Sessiz adımlar için deri bot.',      stats:{def:3,agi:2,hp:10},img:'deribot',    classBonus:null},
+
+  /* ══════════════════════════════════════
+     ZIRH — DEMİR SET (blue, Lv.15)
+  ══════════════════════════════════════ */
+  {id:221,name:'Demir Göğüslük',  icon:'🛡',cat:'armor',grade:'blue',  price:600,qty:10,seller:'npc',sellerName:'Zırh Ustası',   type:'Göğüslük',reqLv:15,material:'demir',desc:'Sağlam demir göğüslük.',            stats:{def:14,hp:40},   img:'demirzirh',    classBonus:null},
+  {id:222,name:'Demir Kask',      icon:'🪖',cat:'armor',grade:'blue',  price:450,qty:10,seller:'npc',sellerName:'Zırh Ustası',   type:'Kask',    reqLv:15,material:'demir',desc:'Kafayı tamamen koruyan demir kask.', stats:{def:10,hp:30},   img:'demirkask',    classBonus:null},
+  {id:223,name:'Demir Eldiven',   icon:'🧤',cat:'armor',grade:'blue',  price:380,qty:10,seller:'npc',sellerName:'Zırh Ustası',   type:'Eldiven', reqLv:15,material:'demir',desc:'Güçlü darbeler indiren demir eldiven.',stats:{def:8,hp:25},   img:'demireldiven', classBonus:null},
+  {id:224,name:'Demir Bot',       icon:'👢',cat:'armor',grade:'blue',  price:400,qty:10,seller:'npc',sellerName:'Zırh Ustası',   type:'Bot',     reqLv:15,material:'demir',desc:'Zırhlı demir bot.',                  stats:{def:8,hp:25},   img:'demirbot',     classBonus:null},
+
+  /* ══════════════════════════════════════
+     AKSESUAR
+  ══════════════════════════════════════ */
+  {id:301,name:'Bakır Yüzük',     icon:'💍',cat:'accessory',grade:'gray',  price:50,  qty:99,seller:'npc',sellerName:'Mücevherci',  type:'Yüzük',reqLv:1, material:null,desc:'Sıradan bakır yüzük.',                stats:{mgc:3,wis:2},   img:null,classBonus:null},
+  {id:302,name:'Kaderin Yüzüğü',  icon:'💍',cat:'accessory',grade:'orange',price:15000,qty:1,seller:'player',sellerName:'FateMaster',type:'Yüzük',reqLv:25,material:null,desc:'Ölümden kurtarır.',                  stats:{hp:150,luck:50},img:null,classBonus:null},
+
+  /* ══════════════════════════════════════
+     TÜKETİLEBİLİR
+  ══════════════════════════════════════ */
+  {id:401,name:'Küçük Can İksiri',icon:'🧪',cat:'consumable',grade:'gray',  price:30, qty:99,seller:'npc',sellerName:'Eczacı',      type:'İksir',reqLv:1, material:null,desc:'30 can yeniler.',                    stats:{hp_restore:30}, img:null,classBonus:null},
+  {id:402,name:'Güç Runesi',      icon:'🔶',cat:'consumable',grade:'green', price:120,qty:20,seller:'npc',sellerName:'Rune Ustası', type:'Rune', reqLv:5, material:null,desc:'Saldırı +%50.',                     stats:{atk_boost:50},  img:null,classBonus:null},
+  {id:403,name:'Ejderha Kanı',    icon:'🧪',cat:'consumable',grade:'purple',price:600,qty:5, seller:'player',sellerName:'AlchemyKing',type:'İksir',reqLv:15,material:null,desc:'200 can yeniler.',                 stats:{hp_restore:200},img:null,classBonus:null},
+
+  /* ══════════════════════════════════════
+     KAYNAK
+  ══════════════════════════════════════ */
+  {id:501,name:'Ham Demir',       icon:'⛏',cat:'resource',grade:'gray',  price:15, qty:999,seller:'npc',sellerName:'Maden Ocağı', type:'Kaynak',reqLv:1,material:null,desc:'Demir hammaddesi.',                   stats:{craft_iron:1},  img:null,classBonus:null},
+  {id:502,name:'Meşe Odunu',      icon:'🪵',cat:'resource',grade:'gray',  price:10, qty:999,seller:'npc',sellerName:'Kereste',     type:'Kaynak',reqLv:1,material:null,desc:'İnşaat malzemesi.',                  stats:{craft_wood:1},  img:null,classBonus:null},
+  {id:503,name:'Ejderha Pulu',    icon:'🐉',cat:'resource',grade:'purple',price:1200,qty:8, seller:'player',sellerName:'DragonHunter',type:'Kaynak',reqLv:20,material:null,desc:'Efsanevi yapım maddesi.',        stats:{craft_legendary:1},img:null,classBonus:null},
 ];
 const QUEST_DATA={
   story:[
@@ -1459,7 +1524,7 @@ const G={
   completedQuests:new Set(),
   dailyCollected:new Set(),
   inventory:[], // max 50 slot — {id, name, icon, type, grade, price, stats, desc, seller:'player', sellerName}
-  equipped:{weapon:null, armor:null, ring:null},
+  equipped:{weapon:null, chest:null, helmet:null, gloves:null, boots:null, ring:null},
 };
 
 /* ══════════════════════════════════════
@@ -1767,29 +1832,44 @@ function renderKarakter(){
 
   // Equipped slotlar
   const eqSlots=[
-    {key:'weapon', lbl:'Silah',  icon:'⚔'},
-    {key:'armor',  lbl:'Zırh',   icon:'🛡'},
-    {key:'ring',   lbl:'Yüzük',  icon:'💍'},
+    {key:'weapon',  lbl:'Silah',    icon:'⚔'},
+    {key:'helmet',  lbl:'Kask',     icon:'🪖'},
+    {key:'chest',   lbl:'Göğüslük', icon:'🛡'},
+    {key:'gloves',  lbl:'Eldiven',  icon:'🧤'},
+    {key:'boots',   lbl:'Bot',      icon:'👢'},
+    {key:'ring',    lbl:'Yüzük',    icon:'💍'},
   ];
   const equippedHTML=eqSlots.map(s=>{
     const item=G.equipped[s.key];
+    const iconHtml=item?.img
+      ?`<img src="images/${item.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:60%;height:60%;object-fit:contain;"/><span style="display:none;font-size:20px;">${item.icon}</span>`
+      :`<span style="font-size:20px;${item?'':'opacity:.3;'}">${item?item.icon:s.icon}</span>`;
     return `<div class="eq-slot ${item?'eq-filled rarity-'+(item.grade||'gray'):'eq-empty'}"
       onclick="openInvModal(null,'${s.key}')"
       title="${item?item.name:s.lbl+' slotu'}">
       <div class="eq-slot-lbl">${s.lbl}</div>
-      ${item
-        ?`<span style="font-size:20px;">${item.icon}</span>
-           <div class="inv-tooltip">
-             <div class="tt-name">${item.icon} ${item.name}</div>
-             <div class="tt-type">${item.type}</div>
-             <div class="tt-stat">${formatStats(item.stats)}</div>
-             <div class="tt-flavor">${item.desc}</div>
-           </div>`
-        :`<span style="font-size:18px;opacity:.3;">${s.icon}</span>`
-      }
+      ${iconHtml}
+      ${item?`<div class="inv-tooltip">
+        <div class="tt-name">${item.icon} ${item.name}</div>
+        <div class="tt-type">${item.type}${item.reqLv>1?' · Sv.'+item.reqLv:''}</div>
+        <div class="tt-stat">${formatStats(item.stats)}</div>
+        <div class="tt-flavor">${item.desc}</div>
+      </div>`:''}
     </div>`;
   }).join('');
   document.getElementById('eq-slots').innerHTML=equippedHTML;
+
+  // Set bonusu göstergesi
+  const activeSet=getActiveBonusStats();
+  const setLabel=getSetBonus();
+  let setBonusHtml='';
+  if(activeSet&&setLabel){
+    setBonusHtml=`<div style="margin-top:6px;padding:6px 10px;background:#1e1a08;border:1px solid var(--gold);border-radius:5px;font-size:10px;color:var(--gold2);text-align:center;">
+      ✨ <b>${setLabel} Seti Aktif</b> — +${activeSet.def} Sav, +${activeSet.agi} Çev, +${activeSet.wis} Bil
+    </div>`;
+  }
+  const setBonusEl=document.getElementById('set-bonus-display');
+  if(setBonusEl) setBonusEl.innerHTML=setBonusHtml;
 
   // Envanter grid — 50 slot
   const invCount=document.getElementById('inv-count');
@@ -1799,11 +1879,14 @@ function renderKarakter(){
   G.inventory.forEach((item,i)=>{if(i<50)slots[i]=item;});
   grid.innerHTML=slots.map((item,i)=>{
     if(!item) return `<div class="inv-slot"></div>`;
+    const iconHtml=item.img
+      ?`<img src="images/${item.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:70%;height:70%;object-fit:contain;"/><span style="display:none;font-size:16px;">${item.icon}</span>`
+      :`<span style="font-size:16px;">${item.icon}</span>`;
     return `<div class="inv-slot has-item rarity-${item.grade||'gray'}" onclick="openInvModal(${item.id})">
-      <span style="font-size:16px;">${item.icon}</span>
+      ${iconHtml}
       <div class="inv-tooltip">
         <div class="tt-name">${item.icon} ${item.name}</div>
-        <div class="tt-type">${item.type}</div>
+        <div class="tt-type">${item.type}${item.reqLv>1?' · Sv.'+item.reqLv:''}</div>
         <div class="tt-stat">${formatStats(item.stats)}</div>
         <div class="tt-flavor">${item.desc}</div>
       </div>
@@ -1839,18 +1922,48 @@ function openInvModal(itemId, eqSlotKey=null){
   if(!item)return;
 
   // Eşya tipi → hangi slot?
-  const slotMap={Kılıç:'weapon',Asa:'weapon',Hançer:'weapon',Yay:'weapon','Deri Zırh':'armor',Plaka:'armor',Zırh:'armor',Yüzük:'ring'};
+  const slotMap={
+    'Kılıç':'weapon','Asa':'weapon','Hançer':'weapon','Yay':'weapon','Bıçak':'weapon',
+    'Göğüslük':'chest','Zırh':'chest',
+    'Kask':'helmet',
+    'Eldiven':'gloves',
+    'Bot':'boots',
+    'Yüzük':'ring'
+  };
   const targetSlot=slotMap[item.type]||null;
+
+  // Level kontrolü
+  const canEquip = G.level >= (item.reqLv||1);
+  // Sınıf bonusu etiketi
+  const classBonusKey = item.classBonus?.[G.classId];
+  const classBonusLabels={str:'Güç',agi:'Çeviklik',wis:'Bilgelik',def:'Savunma'};
+  const classNames={warrior:'Savaşçı',mage:'Büyücü',rogue:'Haydut',paladin:'Şövalye',ranger:'Avcı'};
+  const classBonusHtml = classBonusKey
+    ? `<div style="margin:4px auto;font-size:10px;background:#2a1e08;border:1px solid var(--gold);border-radius:3px;padding:2px 8px;display:inline-block;color:var(--gold2);">⭐ ${classNames[G.classId]} Bonusu: +%10 ${classBonusLabels[classBonusKey]}</div>`
+    : '';
+  // Set bonusu bilgisi
+  let setHtml='';
+  if(item.material){
+    const bonus=SET_BONUSES[item.material];
+    if(bonus) setHtml=`<div style="margin-top:4px;font-size:10px;color:var(--ink3);font-style:italic;">4×${bonus.label} seti: +${bonus.def} Sav, +${bonus.agi} Çev, +${bonus.wis} Bil</div>`;
+  }
+  // Görsel
+  const imgHtml = item.img
+    ? `<img src="images/${item.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:80px;height:80px;object-fit:contain;margin-bottom:6px;filter:drop-shadow(0 2px 8px #00000080);"/><span style="display:none;font-size:48px;">${item.icon}</span>`
+    : `<div style="font-size:48px;margin-bottom:6px;">${item.icon}</div>`;
 
   html=`
     <div style="text-align:center;margin-bottom:12px;">
-      <div style="font-size:40px;margin-bottom:6px;">${item.icon}</div>
+      ${imgHtml}
       <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);">${item.name}</div>
-      <div style="font-size:10px;color:var(--ink3);margin-bottom:6px;">${item.type} · <span class="tag rarity-${item.grade}" style="font-size:9px;">${item.grade}</span></div>
+      <div style="font-size:10px;color:var(--ink3);margin-bottom:4px;">${item.type}${item.reqLv>1?` · <span style="color:${canEquip?'var(--gold2)':'#c87070'}">Sv.${item.reqLv}</span>`:''}</div>
       <div style="font-size:12px;color:var(--perg2);margin-bottom:4px;">${formatStats(item.stats)}</div>
-      <div style="font-size:10px;color:var(--ink3);font-style:italic;">${item.desc}</div>
+      ${classBonusHtml}
+      ${setHtml}
+      <div style="font-size:10px;color:var(--ink3);font-style:italic;margin-top:6px;">${item.desc}</div>
     </div>
-    ${targetSlot?`<button class="btn" style="width:100%;margin-bottom:8px;" onclick="equipItem(${item.id},'${targetSlot}')">⚔ Kuşan</button>`:''}
+    ${targetSlot&&canEquip?`<button class="btn" style="width:100%;margin-bottom:8px;" onclick="equipItem(${item.id},'${targetSlot}')">⚔ Kuşan</button>`:''}
+    ${targetSlot&&!canEquip?`<button class="btn" disabled style="width:100%;margin-bottom:8px;">🔒 Seviye ${item.reqLv} Gerekli</button>`:''}
     <button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="openSellModal(${item.id})">🪙 Pazara Sat</button>
     <button class="btn btn-danger" style="width:100%;" onclick="dropItem(${item.id})">🗑 At</button>`;
   showGModal(html);
@@ -1858,13 +1971,52 @@ function openInvModal(itemId, eqSlotKey=null){
 
 function equipItem(itemId, slot){
   const item=G.inventory.find(x=>x.id===itemId);if(!item)return;
-  // Zaten equipped varsa envantere geri al
+  // Level kısıtı kontrolü
+  if(item.reqLv && G.level < item.reqLv){
+    toast(`Bu eşya için Seviye ${item.reqLv} gerekiyor! (Sen: Sv.${G.level})`);
+    return;
+  }
   if(G.equipped[slot]) G.inventory.push(G.equipped[slot]);
   G.equipped[slot]=item;
   G.inventory=G.inventory.filter(x=>x.id!==itemId);
   closeGModal();
-  toast(`${item.name} kuşanıldı!`);
+  // Sınıf bonusu kontrolü
+  const bonus=getClassBonus(item);
+  const setInfo=getSetBonus();
+  let msg=`${item.name} kuşanıldı!`;
+  if(bonus) msg+=` (+%10 ${bonus} bonusu!)`;
+  if(setInfo) msg+=` ✨ ${setInfo} seti aktif!`;
+  toast(msg);
   renderKarakter();
+}
+
+/* Sınıf bonusu: kendi sınıf silahına +%10 str/agi/wis/def */
+function getClassBonus(item){
+  if(!item||!item.classBonus) return null;
+  return item.classBonus[G.classId]||null;
+}
+
+/* Set bonusu: 4 aynı materyal zırh takılıysa aktif */
+const SET_BONUSES={
+  tahta:{def:4,agi:6,wis:6,label:'Tahta'},
+  deri: {def:1,agi:5,wis:10,label:'Deri'},
+  demir:{def:10,agi:3,wis:3,label:'Demir'},
+};
+function getSetBonus(){
+  const armorSlots=['chest','helmet','gloves','boots'];
+  const materials=armorSlots.map(s=>G.equipped[s]?.material).filter(Boolean);
+  if(materials.length<4) return null;
+  const mat=materials[0];
+  if(materials.every(m=>m===mat)) return SET_BONUSES[mat]?.label||null;
+  return null;
+}
+function getActiveBonusStats(){
+  const armorSlots=['chest','helmet','gloves','boots'];
+  const materials=armorSlots.map(s=>G.equipped[s]?.material).filter(Boolean);
+  if(materials.length===4 && materials.every(m=>m===materials[0])){
+    return SET_BONUSES[materials[0]]||null;
+  }
+  return null;
 }
 
 function unequipItem(slot){
@@ -2275,11 +2427,29 @@ function renderMarket(){
   const cnt=document.getElementById('market-count');if(cnt) cnt.textContent=items.length+' ilan';
   document.getElementById('market-content').innerHTML=items.map(item=>{
     const statsP=Object.entries(item.stats).slice(0,2).map(([k,v])=>`<span style="font-size:8px;padding:1px 4px;border-radius:3px;background:var(--panel);color:var(--perg2);border:1px solid var(--border);">+${v} ${STAT_LABELS[k]||k}</span>`).join('');
-    const canBuy=G.gold>=item.price;
+    const canBuy=item.seller!=='boss'&&G.gold>=item.price;
+    const isBoss=item.seller==='boss';
+    const canEquipLv=G.level>=(item.reqLv||1);
+    const lvBadge=item.reqLv>1?`<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:var(--panel);border:1px solid ${canEquipLv?'var(--gold)':'#8b1e1e'};color:${canEquipLv?'var(--gold2)':'#c87070'};">Sv.${item.reqLv}</span>`:'';
+    const iconContent=item.img
+      ?`<img src="images/${item.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:30px;height:30px;object-fit:contain;"/><span style="display:none">${item.icon}</span>`
+      :`<span>${item.icon}</span>`;
     return `<div class="listing-card ${item.grade}" onclick="buyItem(${item.id})">
-      <div class="item-icon ${item.grade}"><span>${item.icon}</span><div class="grade-pip gp-${item.grade}">${GRADES[item.grade].name}</div></div>
-      <div style="flex:1;min-width:0;"><div class="item-name ${item.grade}" style="font-family:var(--font-head);font-size:11px;">${item.name}</div><div style="font-size:9px;color:var(--ink3);">${item.type}</div><div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:3px;">${statsP}</div><div style="font-size:9px;color:var(--ink3);margin-top:2px;">${item.seller==='npc'?'🤖':'👤'} ${item.sellerName}</div></div>
-      <div style="text-align:right;flex-shrink:0;"><div style="font-family:var(--font-head);font-size:12px;color:var(--gold);">${item.price.toLocaleString('tr')}🪙</div><div style="font-size:8px;color:var(--ink3);">${item.qty>98?'∞':item.qty} adet</div><button class="buy-btn-sm" style="margin-top:5px;" onclick="event.stopPropagation();buyItem(${item.id})" ${!canBuy?'disabled':''}>Al</button></div>
+      <div class="item-icon ${item.grade}">${iconContent}<div class="grade-pip gp-${item.grade}">${GRADES[item.grade].name}</div></div>
+      <div style="flex:1;min-width:0;">
+        <div class="item-name ${item.grade}" style="font-family:var(--font-head);font-size:11px;">${item.name}</div>
+        <div style="display:flex;gap:4px;align-items:center;margin:2px 0;">${lvBadge}<span style="font-size:9px;color:var(--ink3);">${item.type}</span></div>
+        <div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:2px;">${statsP}</div>
+        <div style="font-size:9px;color:var(--ink3);margin-top:2px;">${isBoss?'⚔':item.seller==='npc'?'🤖':'👤'} ${item.sellerName}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        ${isBoss
+          ?`<div style="font-family:var(--font-head);font-size:10px;color:var(--g-orange);line-height:1.3;">Boss<br>Drop</div>`
+          :`<div style="font-family:var(--font-head);font-size:12px;color:var(--gold);">${item.price.toLocaleString('tr')}🪙</div>
+           <div style="font-size:8px;color:var(--ink3);">${item.qty>98?'∞':item.qty} adet</div>
+           <button class="buy-btn-sm" style="margin-top:5px;" onclick="event.stopPropagation();buyItem(${item.id})" ${!canBuy?'disabled':''}>Al</button>`
+        }
+      </div>
     </div>`;
   }).join('');
   if(!items.length) document.getElementById('market-content').innerHTML=`<div style="text-align:center;padding:30px;font-size:12px;color:var(--ink3);font-style:italic;">İlan bulunamadı.</div>`;
@@ -2287,18 +2457,22 @@ function renderMarket(){
 function buyItem(id){
   const item=MARKET_ITEMS.find(x=>x.id===id)||G.inventory.find(x=>x.id===id);
   if(!item)return;
+  if(item.seller==='boss'){toast("Bu eşya sadece Boss savaşından düşer!");return;}
   if(G.gold<item.price){toast('Yeterli altın yok!');return;}
   if(G.inventory.length>=50){toast('Envanter dolu! Önce bir eşya sat.');return;}
   G.gold-=item.price;
   if(item.qty!==undefined&&item.qty<=98) item.qty--;
-  // Envantere ekle
   const invItem={
     id: Date.now(),
     name: item.name, icon: item.icon,
     type: item.type||'Eşya', grade: item.grade||'gray',
     price: item.price, stats: item.stats||{},
     desc: item.desc||'', seller:'player',
-    sellerName: G.heroName||G.username
+    sellerName: G.heroName||G.username,
+    img: item.img||null,
+    reqLv: item.reqLv||1,
+    material: item.material||null,
+    classBonus: item.classBonus||null,
   };
   G.inventory.push(invItem);
   gainXP(10);
@@ -2984,6 +3158,9 @@ async function sbLoadProfile() {
   if(p.prod_kitchen !== undefined) PROD_BUILDINGS.kitchen.level = p.prod_kitchen;
   // Üretim envanteri
   if(p.prod_inv && Object.keys(p.prod_inv).length) G.prodInv = p.prod_inv;
+  // Oyuncu envanteri ve kuşanılan eşyalar
+  if(p.inventory && Array.isArray(p.inventory)) G.inventory = p.inventory;
+  if(p.equipped  && typeof p.equipped==='object') G.equipped  = {...G.equipped, ...p.equipped};
 
   return true;
 }
@@ -3019,6 +3196,8 @@ async function sbSave() {
     prod_ranch:   PROD_BUILDINGS.ranch.level,
     prod_kitchen: PROD_BUILDINGS.kitchen.level,
     prod_inv:     G.prodInv,
+    inventory:    G.inventory,
+    equipped:     G.equipped,
   }).eq('id', currentUser.id);
 
   await supa.from('castles').update({
