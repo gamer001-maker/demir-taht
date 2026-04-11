@@ -2404,7 +2404,7 @@ function equipItem(itemId, slot){
   G.equipped[slot]=item;
   G.inventory=G.inventory.filter(x=>x.id!==itemId);
   closeGModal();
-  // Sınıf bonusu kontrolü
+  syncHpWithEffective();
   const bonus=getClassBonus(item);
   const setInfo=getSetBonus();
   let msg=`${item.name} kuşanıldı!`;
@@ -2412,6 +2412,19 @@ function equipItem(itemId, slot){
   if(setInfo) msg+=` ✨ ${setInfo} seti aktif!`;
   toast(msg);
   renderKarakter();
+  if(currentUser) sbSave();
+}
+
+/* Eşya takınca/çıkarınca maxhp'yi effective ile senkronize et */
+function syncHpWithEffective(){
+  const eff = getEffectiveStats();
+  const oldMax = G.stats.maxhp;
+  G.stats.maxhp = eff.maxhp;
+  if(eff.maxhp !== oldMax && oldMax > 0){
+    G.stats.hp = Math.max(1, Math.round(G.stats.hp * (eff.maxhp / oldMax)));
+  }
+  G.stats.hp = Math.min(G.stats.hp, G.stats.maxhp);
+  updateHUD();
 }
 
 /* Sınıf bonusu: kendi sınıf silahına +%10 str/agi/wis/def */
@@ -2449,8 +2462,10 @@ function unequipItem(slot){
   G.inventory.push(item);
   G.equipped[slot]=null;
   closeGModal();
+  syncHpWithEffective();
   toast(`${item.name} çıkarıldı.`);
   renderKarakter();
+  if(currentUser) sbSave();
 }
 
 function dropItem(itemId){
@@ -2854,10 +2869,18 @@ function zdGetTicketKey(){ return new Date().toISOString().slice(0,10); }
 
 function zdCheckTicketReset(){
   const today = zdGetTicketKey();
-  // G'den oku
+  // Tarih değiştiyse veya hiç ayarlanmadıysa sıfırla
   if(G.zdTicketDate !== today){
     G.zdTickets = ZD_MAX_TICKETS;
     G.zdTicketDate = today;
+  }
+  // Maksimumun altındaysa ve eski limit 3'tü ise güncelle (migration fix)
+  if(G.zdTickets < ZD_MAX_TICKETS && G.zdTicketDate === today){
+    // Bugünkü tarihle kayıtlıysa bile limit artmışsa tavan uygula
+    // (eski limit 3'ten 20'ye çıktığında mevcut kullanıcıları güncelle)
+    if(G.zdTickets === 0 || G.zdTickets === 3){
+      G.zdTickets = ZD_MAX_TICKETS;
+    }
   }
   ZD.tickets = G.zdTickets;
   ZD.ticketResetDate = G.zdTicketDate;
@@ -4452,6 +4475,14 @@ async function sbLoadProfile() {
   if(p.equipped  && typeof p.equipped==='object') G.equipped  = {...G.equipped, ...p.equipped};
   if(p.zd_tickets !== undefined) G.zdTickets = p.zd_tickets;
   if(p.zd_ticket_date) G.zdTicketDate = p.zd_ticket_date;
+
+  // Eşya bonuslarıyla gerçek maxhp'yi güncelle
+  // (G.stats.maxhp sadece base stat içerir, effective hesapla)
+  const effAfterLoad = getEffectiveStats();
+  G.stats.maxhp = effAfterLoad.maxhp;
+  // Mevcut HP oranını koru
+  if(G.stats.hp < G.stats.maxhp * 0.1) G.stats.hp = Math.floor(G.stats.maxhp * 0.3);
+  G.stats.hp = Math.min(G.stats.hp, G.stats.maxhp);
 
   return true;
 }
