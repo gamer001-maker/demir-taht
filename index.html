@@ -2622,26 +2622,44 @@ async function sbLoadGuildMembers(){
     +(mems.length    ? `<div class="sec">Üyeler</div>${mems.map(mc).join('')}`       : '');
 }
 /* ══════════════════════════════════════
-   LONCA BOSS SAVAŞ SİSTEMİ
-   - Server UTC saati kullanılır (herkeste aynı)
-   - Her 10 dakikanın başı = boss spawn (00,10,20,30,40,50)
-   - Boss spawn'dan 30sn içinde "Katıl" aktif
-   - Savaş 30sn sürer, sonuç açıklanır
-   - %5 şans Sef'in Kılıcı düşer
+   LONCA BOSS SAVAŞ SİSTEMİ v2
+   Döngü (600sn = 10dk):
+   0–569sn  → Bekleme + "Ava Çık" lobi
+   570–599sn → Savaş (30sn)
+   Boss sırayla: cycle çift=DevSef, tek=ThrosWing
 ══════════════════════════════════════ */
+const BOSSES = [
+  {
+    id:'devsef', name:'Dev Sef', img:'devsef',
+    drop:{name:"Sef'in Kılıcı", img:'sefinkilici', icon:'⚔', chance:0.10,
+      item:{type:'Kılıç',grade:'orange',stats:{atk:75,str:20,crit:15},
+        desc:"Dev Sef'i yenen efsanevi savaşçılara düşer.",
+        reqLv:25,material:null,classBonus:{warrior:'str',paladin:'str'}}},
+  },
+  {
+    id:'throswing', name:'Thros Wing', img:'devthros',
+    drop:{name:"Thros'un Yayı", img:'throsyay', icon:'🏹', chance:0.10,
+      item:{type:'Yay',grade:'orange',stats:{rng:80,atk:55,agi:15},
+        desc:"Thros Wing'i yenen efsanevi avcılara düşer.",
+        reqLv:25,material:null,classBonus:{ranger:'agi'}}},
+  },
+];
+
 function getBossPhase(){
-  const now = Date.now(); // ms, UTC
-  const secInCycle = Math.floor(now / 1000) % 600; // 600sn = 10dk döngüsü
-  // 0-29: boss aktif (katıl penceresi)
-  // 30-59: savaş devam ediyor
-  // 60+: bekleme
-  if(secInCycle < 30)  return {phase:'join',   remaining: 30 - secInCycle};
-  if(secInCycle < 60)  return {phase:'battle',  remaining: 60 - secInCycle};
-  return {phase:'wait', remaining: 600 - secInCycle};
+  const secInCycle = Math.floor(Date.now()/1000) % 600;
+  if(secInCycle < 570) return {phase:'wait',   remaining: 570 - secInCycle};
+  return                      {phase:'battle', remaining: 600 - secInCycle};
+}
+function getCurrentBoss(){
+  const cycle = Math.floor(Date.now()/600000);
+  return BOSSES[cycle % BOSSES.length];
 }
 
-let bossJoined = false;
+// Lobi: bu cycle'da ava çıkan oyuncular (local)
+let bossHunters = []; // [{name, classIcon}]
+let bossJoined  = false;
 let bossRenderInterval = null;
+let bossResultShown = false;
 
 function renderGuildWar(){
   if(!G.guildId){
@@ -2649,142 +2667,202 @@ function renderGuildWar(){
     return;
   }
   if(bossRenderInterval) clearInterval(bossRenderInterval);
+  // Yeni cycle'da lobi sıfırla
+  const cycle = Math.floor(Date.now()/600000);
+  if((window._lastBossCycle||0) !== cycle){
+    window._lastBossCycle = cycle;
+    bossJoined = false;
+    bossHunters = [];
+    bossResultShown = false;
+  }
   document.getElementById('guild-content').innerHTML=`
     <div class="sec" style="margin-top:0;">LONCA BOSS SAVAŞI</div>
     <div id="boss-panel"></div>`;
   renderBossPanel();
-  bossRenderInterval = setInterval(renderBossPanel, 1000);
+  bossRenderInterval = setInterval(()=>{
+    // Cycle değişti mi?
+    const c = Math.floor(Date.now()/600000);
+    if((window._lastBossCycle||0) !== c){
+      window._lastBossCycle = c;
+      bossJoined = false;
+      bossHunters = [];
+      bossResultShown = false;
+    }
+    renderBossPanel();
+  }, 1000);
 }
 
 function renderBossPanel(){
   const el = document.getElementById('boss-panel');
   if(!el){ clearInterval(bossRenderInterval); return; }
   const {phase, remaining} = getBossPhase();
+  const boss = getCurrentBoss();
 
   if(phase === 'wait'){
-    bossJoined = false;
+    // Savaş bitti mi, sonuç göster
+    if(bossJoined && remaining > 570 && !bossResultShown){
+      bossResultShown = true;
+      showBossResult(boss);
+    }
     const m = Math.floor(remaining/60), s = remaining%60;
+    const nextBossIdx = (Math.floor(Date.now()/600000)+1) % BOSSES.length;
+    const nextBoss = BOSSES[nextBossIdx];
     el.innerHTML=`
-      <div style="background:var(--panel2);border:1px solid var(--border2);border-radius:10px;padding:20px;text-align:center;">
-        <div style="font-size:52px;margin-bottom:8px;filter:grayscale(0.4);">💀</div>
-        <div style="font-family:var(--font-head);font-size:14px;color:var(--perg);margin-bottom:4px;">Boss Bekleniyor</div>
-        <div style="font-size:11px;color:var(--ink3);margin-bottom:12px;">Sonraki boss'a kalan süre</div>
-        <div style="font-family:var(--font-head);font-size:28px;color:var(--gold2);">${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</div>
-        <div style="font-size:10px;color:var(--ink3);margin-top:8px;">Her 10 dakikada bir boss belirir</div>
+      <div style="background:var(--panel2);border:1px solid var(--border2);border-radius:10px;padding:16px;text-align:center;margin-bottom:8px;">
+        <img src="images/${boss.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:90px;height:90px;object-fit:contain;margin-bottom:6px;filter:grayscale(0.5) brightness(0.6);"/>
+        <span style="display:none;font-size:52px;">💀</span>
+        <div style="font-family:var(--font-head);font-size:14px;color:var(--perg);margin-bottom:2px;">${boss.name}</div>
+        <div style="font-size:10px;color:var(--ink3);margin-bottom:10px;">Sonraki Boss</div>
+        <div style="font-family:var(--font-head);font-size:30px;color:var(--gold2);">${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</div>
+        <div style="font-size:10px;color:var(--ink3);margin-top:6px;">Her 10 dakikada bir boss belirir</div>
       </div>
-      <div style="margin-top:10px;background:#160e04;border:1px solid var(--g-orange-b);border-radius:8px;padding:10px;text-align:center;">
-        <div style="font-size:10px;color:var(--ink3);margin-bottom:3px;">Olası Düşme</div>
-        <img src="images/sefinkilici.webp" onerror="this.style.display='none'" style="width:40px;height:40px;object-fit:contain;vertical-align:middle;"/> 
-        <span style="font-family:var(--font-head);font-size:11px;color:var(--g-orange);">Sef'in Kılıcı</span>
-        <span style="font-size:9px;color:var(--ink3);margin-left:4px;">%5</span>
-      </div>`;
-  }
-  else if(phase === 'join'){
-    el.innerHTML=`
-      <div style="background:#1a0808;border:2px solid #8b1e1e;border-radius:10px;padding:16px;text-align:center;box-shadow:0 0 20px #8b1e1e40;">
-        <div style="font-size:52px;margin-bottom:6px;animation:pulse 1s infinite;">💀</div>
-        <div style="font-family:var(--font-head);font-size:15px;color:#f87171;margin-bottom:3px;">SEF BELĐRDI!</div>
-        <div style="font-size:11px;color:var(--ink3);margin-bottom:10px;">Savaşa katılmak için kalan süre</div>
-        <div style="font-family:var(--font-head);font-size:32px;color:#f87171;margin-bottom:14px;">${remaining}s</div>
-        ${bossJoined
-          ?`<div style="background:#0e1a08;border:1px solid var(--g-green);border-radius:6px;padding:8px;font-size:11px;color:#7aaa5a;">✅ Savaşa katıldın! Savaş başlayana kadar bekle...</div>`
-          :`<button class="btn" style="width:100%;background:linear-gradient(180deg,#4a1010,#2a0808);border-color:#8b1e1e;color:#f87171;font-size:14px;padding:12px;" onclick="joinBossFight()">⚔ SAVAŞA KATIL</button>`
-        }
-      </div>
-      <div style="margin-top:8px;background:#160e04;border:1px solid var(--g-orange-b);border-radius:8px;padding:10px;text-align:center;">
-        <span style="font-size:10px;color:var(--ink3);">Olası Düşme: </span>
-        <img src="images/sefinkilici.webp" onerror="this.style.display='none'" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;"/>
-        <span style="font-family:var(--font-head);font-size:11px;color:var(--g-orange);">Sef'in Kılıcı</span>
-        <span style="font-size:9px;color:var(--ink3);"> %5</span>
-      </div>`;
+      ${_bossLobbyHtml(boss)}`;
   }
   else if(phase === 'battle'){
-    if(remaining === 29 && bossJoined){
-      // Savaş başladığında sonucu hesapla (bir kez)
-      scheduleBossResult();
+    // Savaş başladı
+    if(!bossResultShown){
+      bossResultShown = true;
+      if(bossJoined) setTimeout(()=>showBossResult(boss), 30000);
     }
     const pct = Math.round(((30-remaining)/30)*100);
     el.innerHTML=`
       <div style="background:#1a0808;border:2px solid #8b1e1e;border-radius:10px;padding:16px;text-align:center;box-shadow:0 0 20px #8b1e1e40;">
-        <div style="font-size:52px;margin-bottom:6px;">⚔</div>
-        <div style="font-family:var(--font-head);font-size:15px;color:#f87171;margin-bottom:8px;">SAVAŞ DEVAM EDİYOR!</div>
+        <img src="images/${boss.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:90px;height:90px;object-fit:contain;margin-bottom:6px;animation:pulse 0.8s infinite;"/>
+        <span style="display:none;font-size:52px;animation:pulse 0.8s infinite;">⚔</span>
+        <div style="font-family:var(--font-head);font-size:15px;color:#f87171;margin-bottom:8px;">${boss.name.toUpperCase()} İLE SAVAŞ!</div>
         <div style="height:10px;background:var(--panel3);border-radius:5px;overflow:hidden;margin-bottom:6px;border:1px solid var(--border);">
-          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#8b1e1e,#f87171);border-radius:5px;transition:width .5s;"></div>
+          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#8b1e1e,#f87171);border-radius:5px;transition:width .8s;"></div>
         </div>
-        <div style="font-family:var(--font-head);font-size:24px;color:#f87171;">${remaining}s</div>
+        <div style="font-family:var(--font-head);font-size:28px;color:#f87171;">${remaining}s</div>
         ${bossJoined
-          ?`<div style="margin-top:10px;font-size:11px;color:#7aaa5a;">⚔ Grubunla savaşıyorsun...</div>`
-          :`<div style="margin-top:10px;font-size:11px;color:var(--ink3);">Savaş başladı. Bir sonrakini bekle.</div>`
+          ?`<div style="margin-top:8px;font-size:11px;color:#7aaa5a;">⚔ ${bossHunters.length} avcıyla savaşıyorsun...</div>`
+          :`<div style="margin-top:8px;font-size:11px;color:var(--ink3);">Savaş başladı. Bir sonrakini bekle.</div>`
         }
       </div>`;
   }
 }
 
-let bossResultScheduled = false;
-function scheduleBossResult(){
-  if(bossResultScheduled) return;
-  bossResultScheduled = true;
-  setTimeout(()=>{
-    bossResultScheduled = false;
-    showBossResult();
-  }, 30000);
+function _bossLobbyHtml(boss){
+  const hunterList = bossHunters.length
+    ? bossHunters.map(h=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--panel);border-radius:5px;margin-bottom:4px;">
+          <span style="font-size:16px;">${h.classIcon}</span>
+          <span style="font-size:11px;color:var(--perg);font-family:var(--font-head);">${h.name}</span>
+          ${h.isMe?`<button style="margin-left:auto;font-size:9px;padding:2px 7px;border-radius:3px;background:transparent;border:1px solid var(--border2);color:var(--ink3);cursor:pointer;" onclick="leaveBossHunt()">Çık</button>`:''}
+        </div>`).join('')
+    : `<div style="font-size:10px;color:var(--ink3);text-align:center;padding:8px;">Henüz kimse katılmadı.</div>`;
+
+  return `
+    <div style="background:var(--panel2);border:1px solid var(--border2);border-radius:10px;padding:12px;margin-bottom:8px;">
+      <div style="font-family:var(--font-head);font-size:11px;color:var(--gold);margin-bottom:8px;letter-spacing:1px;">🏹 BOSS AVINA ÇIK</div>
+      ${bossJoined
+        ?`<div style="background:#0e1a08;border:1px solid var(--g-green);border-radius:6px;padding:7px 10px;font-size:11px;color:#7aaa5a;margin-bottom:8px;">✅ Av lobisine katıldın!</div>`
+        :`<button class="btn" style="width:100%;margin-bottom:8px;" onclick="joinBossHunt()">🏹 Ava Çık</button>`
+      }
+      <div style="font-size:10px;color:var(--ink3);margin-bottom:6px;">Katılanlar (${bossHunters.length})</div>
+      ${hunterList}
+    </div>
+    <div style="background:#160e04;border:1px solid var(--g-orange-b);border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px;">
+      <img src="images/${boss.drop.img}.webp" onerror="this.style.display='none'" style="width:36px;height:36px;object-fit:contain;"/>
+      <div>
+        <div style="font-family:var(--font-head);font-size:11px;color:var(--g-orange);">${boss.drop.name}</div>
+        <div style="font-size:9px;color:var(--ink3);">%${Math.round(boss.drop.chance*100)} ihtimalle düşer · Zafer: +500🪙</div>
+      </div>
+    </div>`;
 }
 
-function joinBossFight(){
+function joinBossHunt(){
+  if(bossJoined) return;
   bossJoined = true;
-  renderBossPanel();
-  toast('Savaşa katıldın! Boss belirince grubunla savaşacaksın. ⚔');
-  // Supabase'e katılım kaydı (opsiyonel — guild_boss_sessions tablosu hazır olunca)
+  const cls = CLASSES.find(c=>c.id===G.classId);
+  const me = {name: G.heroName||G.username||'Sen', classIcon: cls?.icon||'⚔', isMe:true};
+  bossHunters.push(me);
+  // Supabase lobi kaydı
   if(currentUser && G.guildId){
     supa.from('guild_boss_sessions').upsert({
       guild_id: G.guildId,
       profile_id: currentUser.id,
       joined_at: new Date().toISOString(),
       cycle: Math.floor(Date.now()/600000),
-    }, {onConflict:'guild_id,profile_id,cycle'}).then(()=>{});
+    },{onConflict:'guild_id,profile_id,cycle'}).then(()=>{});
+    // Diğer katılımcıları çek
+    _loadBossHunters();
   }
+  toast('Boss avına çıktın! 🏹');
+  renderBossPanel();
 }
 
-function showBossResult(){
-  if(!bossJoined) return;
+function leaveBossHunt(){
   bossJoined = false;
-  const won = Math.random() > 0.3; // %70 zafer
-  const sefDrop = won && Math.random() < 0.05; // %5 Sef kılıcı
+  bossHunters = bossHunters.filter(h=>!h.isMe);
+  if(currentUser && G.guildId){
+    supa.from('guild_boss_sessions').delete()
+      .eq('profile_id', currentUser.id)
+      .eq('guild_id', G.guildId)
+      .eq('cycle', Math.floor(Date.now()/600000))
+      .then(()=>{});
+  }
+  toast('Boss avından çıktın.');
+  renderBossPanel();
+}
 
+async function _loadBossHunters(){
+  if(!G.guildId) return;
+  const cycle = Math.floor(Date.now()/600000);
+  const {data} = await supa.from('guild_boss_sessions')
+    .select('profile_id, profiles(hero_name,username,class_id)')
+    .eq('guild_id', G.guildId)
+    .eq('cycle', cycle);
+  if(!data) return;
+  // Profilleri ayrıca çek
+  const ids = data.map(d=>d.profile_id);
+  const {data:profs} = await supa.from('profiles').select('id,hero_name,username,class_id').in('id',ids);
+  const profMap={};(profs||[]).forEach(p=>profMap[p.id]=p);
+  bossHunters = data.map(d=>{
+    const p = profMap[d.profile_id]||{};
+    const cls = CLASSES.find(c=>c.id===p.class_id);
+    return {
+      name: p.hero_name||p.username||'Avcı',
+      classIcon: cls?.icon||'⚔',
+      isMe: d.profile_id===currentUser?.id
+    };
+  });
+  renderBossPanel();
+}
+
+function showBossResult(boss){
+  const won = Math.random() > 0.3; // %70 zafer
+  const dropped = won && Math.random() < boss.drop.chance;
   let dropHtml = '';
-  if(sefDrop){
-    // Envantere ekle
-    if(G.inventory.length < 50){
-      G.inventory.push({
-        id: Date.now(),
-        name:"Sef'in Kılıcı", icon:'⚔',
-        type:'Kılıç', grade:'orange',
-        price:0, stats:{atk:75,str:20,crit:15},
-        desc:"Sef'i yenen efsanevi savaşçılara düşer.",
-        seller:'player', sellerName: G.heroName||G.username,
-        img:'sefinkilici', reqLv:25, material:null,
-        classBonus:{warrior:'str',paladin:'str'},
-      });
-      renderKarakter();
-    }
+  if(dropped && G.inventory.length < 50){
+    G.inventory.push({
+      id: Date.now(),
+      name: boss.drop.name,
+      icon: boss.drop.icon,
+      ...boss.drop.item,
+      price:0,
+      seller:'player',
+      sellerName: G.heroName||G.username,
+      img: boss.drop.img,
+    });
+    renderKarakter();
     dropHtml=`
       <div style="margin-top:12px;background:#160e04;border:2px solid var(--g-orange);border-radius:8px;padding:12px;text-align:center;box-shadow:0 0 16px #8a5a2a60;">
         <div style="font-size:10px;color:var(--gold2);margin-bottom:6px;font-family:var(--font-head);">✨ EŞYA DÜŞTÜ!</div>
-        <img src="images/sefinkilici.webp" onerror="this.style.display='none'" style="width:48px;height:48px;object-fit:contain;"/>
-        <div style="font-family:var(--font-head);font-size:13px;color:var(--g-orange);margin-top:4px;">Sef'in Kılıcı</div>
+        <img src="images/${boss.drop.img}.webp" onerror="this.style.display='none'" style="width:56px;height:56px;object-fit:contain;"/>
+        <div style="font-family:var(--font-head);font-size:13px;color:var(--g-orange);margin-top:4px;">${boss.drop.name}</div>
         <div style="font-size:10px;color:var(--ink3);">Envantere eklendi!</div>
       </div>`;
   }
-
+  if(won){
+    G.gold += 500;
+    updateHUD();
+  }
   showGModal(`
     <div style="text-align:center;margin-bottom:12px;">
-      <div style="font-size:52px;margin-bottom:8px;">${won?'🏆':'💀'}</div>
-      <div style="font-family:var(--font-head);font-size:16px;color:${won?'var(--gold2)':'#f87171'};margin-bottom:6px;">
-        ${won?'ZAFER!':'YENİLDİN!'}
-      </div>
-      <div style="font-size:12px;color:var(--ink3);">
-        ${won?'Loncan Sef\'i yendi! Kahramanca bir mücadeleydi.':'Loncan bu sefere yenik düştü. Bir sonraki boss\'u bekle.'}
-      </div>
+      <img src="images/${boss.img}.webp" onerror="this.style.display='none'" style="width:72px;height:72px;object-fit:contain;margin-bottom:8px;${won?'':'filter:grayscale(0.5)'}"/>
+      <div style="font-family:var(--font-head);font-size:16px;color:${won?'var(--gold2)':'#f87171'};margin-bottom:6px;">${won?'ZAFER!':'YENİLDİN!'}</div>
+      <div style="font-size:12px;color:var(--ink3);">${won?`${boss.name} yenildi! +500🪙 kazandın.`:`${boss.name} bu sefer çok güçlüydü.`}</div>
       ${dropHtml}
     </div>
     <button class="btn" style="width:100%;" onclick="closeGModal()">Tamam</button>
