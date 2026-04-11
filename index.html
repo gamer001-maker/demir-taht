@@ -260,7 +260,9 @@ html,body{
 /* ═══════════════════════════════
    ONBOARDING
 ═══════════════════════════════ */
-#p-onboard{background:var(--panel3);background-image:radial-gradient(ellipse at 50% 20%,#2a1a0a 0%,var(--panel3) 70%);}
+#p-onboard{background:var(--panel3);background-image:radial-gradient(ellipse at 50% 20%,#2a1a0a 0%,var(--panel3) 70%);position:relative;}
+#ember-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+#p-onboard .scroll{position:relative;z-index:1;}
 .ob-logo{text-align:center;padding:32px 20px 20px;position:relative;}
 .ob-logo-icon{font-size:56px;display:block;margin-bottom:10px;filter:drop-shadow(0 2px 8px #00000080);}
 .ob-logo-title{font-family:var(--font-head);font-size:26px;color:var(--gold2);letter-spacing:4px;text-shadow:0 2px 8px #00000080;}
@@ -800,6 +802,7 @@ html,body{
        ONBOARDING
   ════════════════════════════ -->
   <div class="page active" id="p-onboard">
+    <canvas id="ember-canvas"></canvas>
     <div class="scroll">
       <div class="ob-logo">
         <span class="ob-logo-icon">⚔</span>
@@ -1143,6 +1146,130 @@ html,body{
 <div id="toast"></div>
 
 <script>
+/* ══════════════════════════════════════
+   EMBER PARÇACIK SİSTEMİ
+══════════════════════════════════════ */
+(function initEmbers(){
+  const canvas = document.getElementById('ember-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const COLORS = ['#c9a646','#b08d57','#e8c060','#f0a030','#ff7020','#ff4010'];
+  let W, H, embers = [], raf;
+
+  function resize(){
+    const p = document.getElementById('p-onboard');
+    W = canvas.width  = p ? p.offsetWidth  : window.innerWidth;
+    H = canvas.height = p ? p.offsetHeight : window.innerHeight;
+  }
+
+  function spawnEmber(){
+    const x = Math.random() * W;
+    const size = Math.random() * 2.5 + 0.6;
+    embers.push({
+      x, y: H + size,
+      vx: (Math.random() - 0.5) * 0.7,
+      vy: -(Math.random() * 1.2 + 0.5),
+      size,
+      alpha: Math.random() * 0.6 + 0.4,
+      decay: Math.random() * 0.004 + 0.002,
+      wobble: Math.random() * Math.PI * 2,
+      wobbleSpeed: Math.random() * 0.06 + 0.02,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      // Küçük bir kıvılcım kuyruğu için geçmiş pozisyonlar
+      trail: [],
+    });
+  }
+
+  function tick(){
+    ctx.clearRect(0, 0, W, H);
+
+    // Alttaki ateş parlaması — hafif glow
+    const grd = ctx.createLinearGradient(0, H, 0, H * 0.75);
+    grd.addColorStop(0, 'rgba(180,80,10,0.10)');
+    grd.addColorStop(1, 'rgba(180,80,10,0)');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, H * 0.75, W, H * 0.25);
+
+    // Her frame ~2 yeni ember
+    if(Math.random() < 0.6) spawnEmber();
+    if(Math.random() < 0.3) spawnEmber();
+
+    embers = embers.filter(e => e.alpha > 0.01 && e.y > -10);
+
+    for(const e of embers){
+      e.wobble += e.wobbleSpeed;
+      e.x  += e.vx + Math.sin(e.wobble) * 0.4;
+      e.y  += e.vy;
+      e.alpha -= e.decay;
+
+      // Kuyruk
+      e.trail.push({x: e.x, y: e.y});
+      if(e.trail.length > 6) e.trail.shift();
+
+      // Kuyruk çiz
+      for(let i = 0; i < e.trail.length - 1; i++){
+        const t = e.trail[i];
+        const alpha = (i / e.trail.length) * e.alpha * 0.4;
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, e.size * 0.5, 0, Math.PI * 2);
+        ctx.fillStyle = e.color.replace(')', `,${alpha})`).replace('rgb','rgba').replace('##','#');
+        // Renk alpha enjeksiyonu
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = e.color;
+        ctx.fill();
+      }
+
+      // Ana parçacık
+      ctx.globalAlpha = e.alpha;
+      // Dış parlama
+      const glow = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.size * 3);
+      glow.addColorStop(0, e.color);
+      glow.addColorStop(1, 'transparent');
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, e.size * 3, 0, Math.PI * 2);
+      ctx.fillStyle = glow;
+      ctx.globalAlpha = e.alpha * 0.25;
+      ctx.fill();
+
+      // Merkez nokta
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff8e0';
+      ctx.globalAlpha = e.alpha * 0.9;
+      ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+
+    // Sadece onboarding aktifken çalış
+    if(document.getElementById('p-onboard')?.classList.contains('active')){
+      raf = requestAnimationFrame(tick);
+    } else {
+      embers = [];
+    }
+  }
+
+  function start(){
+    resize();
+    cancelAnimationFrame(raf);
+    embers = [];
+    tick();
+  }
+
+  window.addEventListener('resize', ()=>{ resize(); });
+
+  // Onboarding aktif olduğunda başlat, kapanınca dur
+  const observer = new MutationObserver(()=>{
+    const p = document.getElementById('p-onboard');
+    if(p?.classList.contains('active')) start();
+    else { cancelAnimationFrame(raf); embers=[]; ctx.clearRect(0,0,W,H); }
+  });
+  const p = document.getElementById('p-onboard');
+  if(p){
+    observer.observe(p, {attributes:true, attributeFilter:['class']});
+    if(p.classList.contains('active')) start();
+  }
+})();
 /* ══════════════════════════════════════
    CONSTANTS
 ══════════════════════════════════════ */
