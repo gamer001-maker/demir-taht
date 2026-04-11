@@ -2584,13 +2584,25 @@ function renderGuildMembers(){
 }
 async function sbLoadGuildMembers(){
   if(!G.guildId) return;
-  const {data}=await supa.from('guild_members')
-    .select('profile_id,role,profiles(username,hero_name,class_id,level)')
-    .eq('guild_id',G.guildId);
-  if(!data||!data.length){document.getElementById('guild-content').innerHTML=`<div style="text-align:center;padding:20px;color:var(--ink3);">Üye bulunamadı.</div>`;return;}
+  // 1. guild_members al
+  const {data:members}=await supa.from('guild_members')
+    .select('profile_id,role')
+    .eq('guild_id', G.guildId);
+  if(!members||!members.length){
+    document.getElementById('guild-content').innerHTML=`<div style="text-align:center;padding:20px;color:var(--ink3);">Üye bulunamadı.</div>`;
+    return;
+  }
+  // 2. profilleri ayrıca çek
+  const ids = members.map(m=>m.profile_id);
+  const {data:profiles}=await supa.from('profiles')
+    .select('id,username,hero_name,class_id,level')
+    .in('id', ids);
+  const profMap={};
+  (profiles||[]).forEach(p=>{ profMap[p.id]=p; });
+
   const mc=m=>{
-    const prof=m.profiles||{};
-    const displayName = prof.hero_name || prof.username || '—';
+    const prof=profMap[m.profile_id]||{};
+    const displayName = prof.hero_name || prof.username || '(İsimsiz)';
     const cls=CLASSES.find(c=>c.id===prof.class_id);
     return `<div class="member-card">
       <div class="m-av">${cls?.icon||'⚔'}</div>
@@ -2601,13 +2613,13 @@ async function sbLoadGuildMembers(){
       <span class="rb ${m.role==='leader'?'rb-leader':m.role==='officer'?'rb-officer':'rb-member'}">${m.role==='leader'?'👑 Lider':m.role==='officer'?'🔷 Subay':'👤 Üye'}</span>
     </div>`;
   };
-  const leaders=data.filter(m=>m.role==='leader');
-  const officers=data.filter(m=>m.role==='officer');
-  const members=data.filter(m=>m.role==='member');
+  const leaders  = members.filter(m=>m.role==='leader');
+  const officers = members.filter(m=>m.role==='officer');
+  const mems     = members.filter(m=>m.role==='member');
   document.getElementById('guild-content').innerHTML=
-    (leaders.length?`<div class="sec" style="margin-top:0;">Lider</div>${leaders.map(mc).join('')}`:'')
-    +(officers.length?`<div class="sec">Subaylar</div>${officers.map(mc).join('')}`:'')
-    +(members.length?`<div class="sec">Üyeler</div>${members.map(mc).join('')}`:'');
+    (leaders.length  ? `<div class="sec" style="margin-top:0;">Lider</div>${leaders.map(mc).join('')}`  : '')
+    +(officers.length? `<div class="sec">Subaylar</div>${officers.map(mc).join('')}` : '')
+    +(mems.length    ? `<div class="sec">Üyeler</div>${mems.map(mc).join('')}`       : '');
 }
 /* ══════════════════════════════════════
    LONCA BOSS SAVAŞ SİSTEMİ
@@ -2864,10 +2876,13 @@ async function sbSearchGuilds(q){
 async function joinGuild(id,name){
   if(!currentUser){toast('Giriş yapmalısın!');return;}
   if(G.guildId){toast('Zaten bir loncadasın!');return;}
-  const {error}=await supa.from('guild_members').insert({guild_id:id,profile_id:currentUser.id,role:'member'});
+  const {error}=await supa.from('guild_members').upsert(
+    {guild_id:id, profile_id:currentUser.id, role:'member'},
+    {onConflict:'guild_id,profile_id', ignoreDuplicates:false}
+  );
   if(error){toast('Katılma hatası: '+error.message);return;}
-  G.guildId=id;G.guildName=name;
-  await supa.from('profiles').update({guild_id:id,guild_name:name}).eq('id',currentUser.id);
+  G.guildId=id; G.guildName=name;
+  await supa.from('profiles').update({guild_id:id, guild_name:name}).eq('id',currentUser.id);
   toast(name+' loncasına katıldın! 🛡');
   glgo('home');
 }
@@ -2877,10 +2892,13 @@ async function createGuild(){
   if(!name){toast('Lonca adı gir!');return;}
   const {data,error}=await supa.from('guilds').insert({name,emblem:'🛡',leader_id:currentUser.id,level:1,member_count:1,type:'open',focus:'war',treasury:0}).select().single();
   if(error){toast('Hata: '+error.message);return;}
-  await supa.from('guild_members').insert({guild_id:data.id,profile_id:currentUser.id,role:'leader'});
-  G.gold-=1000;G.guildId=data.id;G.guildName=name;G.guildTreasury=0;
-  await supa.from('profiles').update({guild_id:data.id,guild_name:name}).eq('id',currentUser.id);
-  gainXP(50);updateHUD();
+  await supa.from('guild_members').upsert(
+    {guild_id:data.id, profile_id:currentUser.id, role:'leader'},
+    {onConflict:'guild_id,profile_id', ignoreDuplicates:false}
+  );
+  G.gold-=1000; G.guildId=data.id; G.guildName=name; G.guildTreasury=0;
+  await supa.from('profiles').update({guild_id:data.id, guild_name:name}).eq('id',currentUser.id);
+  gainXP(50); updateHUD();
   toast('"'+name+'" loncası kuruldu! 🎉');
   glgo('home');
 }
