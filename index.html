@@ -2217,14 +2217,6 @@ function renderKarakter(){
   document.getElementById('g-name').textContent=G.heroName||'Kahraman';
   document.getElementById('g-class').textContent=cls.name;
   document.getElementById('g-lvl').textContent='Sv.'+G.level;
-  document.getElementById('g-hp-badge').textContent=`❤ ${G.stats.hp}`;
-
-  // HP bar
-  const hpPct=Math.min(100,Math.round(G.stats.hp/G.stats.maxhp*100));
-  const hpBar=document.getElementById('g-hpbar');
-  hpBar.style.width=hpPct+'%';
-  hpBar.classList.toggle('low',hpPct<30);
-  document.getElementById('g-hp-val').textContent=`${G.stats.hp}/${G.stats.maxhp}`;
 
   // XP bar
   const need=G.level*100;
@@ -2234,21 +2226,33 @@ function renderKarakter(){
   // Serbest puan
   document.getElementById('g-sp').textContent=G.skillPoints;
 
-  // Stat rune barları
+  // Stat rune barları — base + item bonusu göster
+  const eff=getEffectiveStats();
   const statIcons={str:'⚔',def:'🛡',agi:'💨',wis:'📖',cha:'👑'};
   document.getElementById('g-stats').innerHTML=Object.entries(STAT_META).map(([k,m])=>{
-    const v=G.stats[k]||0;
-    const pct=Math.min(100,Math.round(v/20*100));
+    const base=G.stats[k]||0;
+    const total=eff[k]||base;
+    const bonus=total-base;
+    const pct=Math.min(100,Math.round(total/20*100));
+    const bonusHtml=bonus>0?`<span style="font-size:8px;color:#7aaa5a;margin-left:2px;">+${bonus}</span>`:'';
     return `<div class="stat-rune-row">
       <div class="stat-rune-icon">${statIcons[k]||'◆'}</div>
       <span class="stat-rune-lbl">${m.lbl}</span>
       <div class="stat-rune-bar">
         <div class="stat-rune-fill" style="width:${pct}%;background:${m.color};"></div>
       </div>
-      <span class="stat-rune-val">${v}</span>
+      <span class="stat-rune-val">${base}${bonusHtml}</span>
       <button class="stat-rune-btn" onclick="addStat('${k}')" ${G.skillPoints>0?'':'disabled'}>+</button>
     </div>`;
   }).join('');
+
+  // Effective maxhp'yi HP barında göster
+  const effMaxHp = eff.maxhp;
+  const curHp = Math.min(G.stats.hp, effMaxHp);
+  document.getElementById('g-hp-badge').textContent=`❤ ${curHp}`;
+  const hpPct=Math.min(100,Math.round(curHp/effMaxHp*100));
+  document.getElementById('g-hpbar').style.width=hpPct+'%';
+  document.getElementById('g-hp-val').textContent=`${curHp}/${effMaxHp}`;
 
   // Equipped slotlar
   const eqSlots=[
@@ -2722,18 +2726,28 @@ function renderArena(){
     return `<div class="opp-card" onclick="fight('${o.name}')"><span style="font-size:26px;">${o.icon}</span><div style="flex:1;"><div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">${o.name}</div><div style="font-size:10px;color:var(--ink3);">${o.cls} · Güç: ${o.power}</div><div style="margin-top:3px;"><span class="tag ${dt}">${dl}</span></div></div><div style="text-align:right;"><div style="font-family:var(--font-head);font-size:11px;color:var(--gold);">+${o.pts}pt</div><div style="font-size:10px;color:var(--ink3);">+${o.reward}🪙</div></div></div>`;
   }).join('');
 }
-function calcPow(){const s=G.stats;return(s.str||0)*4+(s.def||0)*3+(s.agi||0)*3+(s.wis||0)*2+G.level*10+G.units.reduce((a,u)=>a+u.count,0)/2;}
+function calcPow(){
+  const eff=getEffectiveStats();
+  return eff.physDmg*3 + eff.maxhp*0.5 + eff.def*4 + G.level*10 + G.units.reduce((a,u)=>a+u.count,0)/2;
+}
 function fight(name){
   const opp=OPPONENTS.find(o=>o.name===name);if(!opp)return;
+  const eff=getEffectiveStats();
   const myPow=calcPow();
   const won=Math.random()<Math.min(.85,Math.max(.15,.5+(myPow-opp.power)/200));
   const lines=[{t:`⚔ ${G.heroName} vs ${opp.name}`,c:'bl-bold'}];
-  let myHp=G.stats.hp,oppHp=opp.power;
+  let myHp=eff.maxhp, oppHp=opp.power;
   for(let r=1;r<=5&&myHp>0&&oppHp>0;r++){
-    const md=Math.floor((G.stats.str||5)*2+Math.random()*10);
-    const od=Math.floor(opp.power/10+Math.random()*8);
-    oppHp-=md;myHp-=od;
-    lines.push({t:`Tur ${r}: ${md} hasar verdin, ${od} hasar aldın.`,c:md>od?'bl-good':'bl-bad'});
+    const md=Math.max(1,Math.floor(eff.physDmg*(0.8+Math.random()*0.4)));
+    const od=Math.max(1,Math.floor(opp.power/10+Math.random()*8)-Math.floor(eff.damageReduction*opp.power/10));
+    // Kritik kontrol
+    const crit=Math.random()<eff.critChance;
+    const finalMd=crit?Math.floor(md*1.8):md;
+    // Kaçınma kontrol
+    const dodged=Math.random()<eff.dodgeChance;
+    oppHp-=finalMd;
+    if(!dodged) myHp-=od;
+    lines.push({t:`Tur ${r}: ${finalMd}${crit?' 💥':''} hasar verdin${dodged?' · Saldırıdan kaçındın 💨':`, ${od} hasar aldın`}.`,c:finalMd>od?'bl-good':'bl-bad'});
   }
   if(won){G.gold+=opp.reward;G.arenaScore+=opp.pts;G.arenaWins++;gainXP(30);lines.push({t:`🏆 ZAFEr! ${opp.win} +${opp.reward}🪙 +30XP`,c:'bl-bold bl-good'});toast('Zafer! +'+opp.reward+'🪙');trackQuest('arenaFight1');trackQuest('arenaWin1');trackQuest('arenaFight5',Math.min(5,G.arenaWins+G.arenaLosses));trackQuest('arenaWin5',Math.min(5,G.arenaWins));}
   else{G.stats.hp=Math.max(1,Math.floor(G.stats.hp*.8));G.arenaLosses++;lines.push({t:`💀 Yenildin. ${opp.lose}`,c:'bl-bold bl-bad'});toast('Yenildin! Güçlen.');trackQuest('arenaFight1');trackQuest('arenaFight5',Math.min(5,G.arenaWins+G.arenaLosses));}
@@ -2741,7 +2755,6 @@ function fight(name){
   logWrap.style.display='block';
   logWrap.innerHTML=`<div class="battle-log-box">${lines.map(l=>`<div class="bl-line ${l.c}">${l.t}</div>`).join('')}</div>`;
   updateHUD();renderArena();renderKarakter();
-  // Anında kaydet — F5'te altın kaybolmasın
   if(currentUser) sbSave();
 }
 
@@ -2749,7 +2762,57 @@ function fight(name){
    ZİNDAN SİSTEMİ
 ══════════════════════════════════════ */
 const ZD_FLOORS = 5;
-const ZD_MAX_TICKETS = 3;
+const ZD_MAX_TICKETS = 20;
+
+/* ══════════════════════════════════════
+   EFFECTİVE STAT HESAPLAMA
+   Temel stat + kuşanılan eşyalar + set bonusu
+   Her combat ve UI bu fonksiyonu kullanır
+══════════════════════════════════════ */
+function getEffectiveStats(){
+  const s = {
+    str: G.stats.str||0, def: G.stats.def||0,
+    agi: G.stats.agi||0, wis: G.stats.wis||0,
+    cha: G.stats.cha||0, hp:  G.stats.hp||1,
+    maxhp: G.stats.maxhp||100,
+    atk:0, mgc:0, rng:0, crit:0, luck:0,
+  };
+  // Kuşanılan eşya statları
+  Object.values(G.equipped).forEach(item=>{
+    if(!item?.stats) return;
+    const st=item.stats;
+    ['atk','def','str','agi','wis','cha','mgc','rng','crit','luck'].forEach(k=>{ if(st[k]) s[k]+=st[k]; });
+    if(st.hp) s.maxhp += st.hp;
+    // Sınıf bonusu +%10
+    const bk=item.classBonus?.[G.classId];
+    if(bk) s[bk]=Math.floor((s[bk]||0)*1.10);
+  });
+  // Set bonusu
+  const sb=getActiveBonusStats();
+  if(sb){ s.def+=(sb.def||0); s.agi+=(sb.agi||0); s.wis+=(sb.wis||0); s.maxhp+=(sb.def||0)*5; }
+  // Savunma → maxhp + hasar azaltma
+  s.maxhp += s.def*8;
+  s.damageReduction = Math.min(0.60, s.def*0.015);
+  // Çeviklik → kaçınma
+  s.dodgeChance = Math.min(0.40, s.agi*0.008);
+  // Karizma → kritik şansı
+  s.critChance = Math.min(0.50, s.cha*0.012 + s.crit*0.005);
+  // Sınıf bazlı fiziksel hasar
+  const cid=G.classId;
+  if(cid==='warrior'||cid==='paladin')
+    s.physDmg = Math.floor(s.str*2.5 + s.atk + s.agi*0.5);
+  else if(cid==='rogue')
+    s.physDmg = Math.floor(s.agi*2.0 + s.atk + s.str*0.8);
+  else if(cid==='ranger')
+    s.physDmg = Math.floor(s.agi*1.8 + s.atk + s.rng*0.8);
+  else if(cid==='mage')
+    s.physDmg = Math.floor(s.wis*2.5 + s.mgc);
+  else
+    s.physDmg = Math.floor(s.str*2.0 + s.atk);
+  s.magicDmg = Math.floor(s.wis*2.0 + s.mgc);
+  s.hp = Math.min(s.hp, s.maxhp);
+  return s;
+}
 
 // Düşman havuzu — kat çarpanıyla güçlenir
 const ZD_ENEMIES = [
@@ -2969,7 +3032,7 @@ function zdBattleHTML(){
   if(!ZD.battle) return '';
   const b = ZD.battle;
   const eHpPct = Math.max(0,Math.round(b.enemyHp/b.enemy.hp*100));
-  const pHpPct = Math.max(0,Math.round(b.playerHp/G.stats.maxhp*100));
+  const pHpPct = Math.max(0,Math.round(b.playerHp/(b.playerMaxHp||G.stats.maxhp)*100));
   const hpColor = pHpPct>50?'#7aaa5a':pHpPct>25?'#c9a646':'#f87171';
   const cls = CLASSES.find(c=>c.id===G.classId)||CLASSES[0];
   const hasMagic = G.classId==='mage'||G.classId==='paladin';
@@ -2994,7 +3057,7 @@ function zdBattleHTML(){
       <div class="zd-hp-bar-wrap" style="margin-bottom:4px;">
         <span class="zd-hp-label" style="color:var(--gold);">${cls.icon}</span>
         <div class="zd-hp-bg"><div class="zd-hp-fill player" id="zd-player-hp-bar" style="width:${pHpPct}%;background:linear-gradient(90deg,#8b1e1e,${hpColor});"></div></div>
-        <span class="zd-hp-val" id="zd-player-hp-val">${b.playerHp}/${G.stats.maxhp}</span>
+        <span class="zd-hp-val" id="zd-player-hp-val">${b.playerHp}/${b.playerMaxHp||G.stats.maxhp}</span>
       </div>
       ${b.defending?`<div style="font-size:9px;color:#6a9abf;text-align:center;margin-bottom:4px;">🛡 Savunma duruşu aktif</div>`:''}
 
@@ -3071,11 +3134,12 @@ function zdEnterRoom(idx){
   ZD.currentRoom=idx;
 
   if(room.type==='fight'||room.type==='boss'){
-    // Savaş başlat
+    const eff = getEffectiveStats();
     ZD.battle={
       enemy:{...room.enemy},
       enemyHp: room.enemy.hp,
-      playerHp: G.stats.hp,
+      playerHp: eff.hp,
+      playerMaxHp: eff.maxhp,
       defending:false,
       roomIdx: idx,
       log:[{text:`${room.enemy.name} karşınıza çıktı!`, type:'info'}],
@@ -3119,41 +3183,43 @@ function zdEnterRoom(idx){
 function zdAction(action){
   if(!ZD.battle) return;
   const b=ZD.battle;
-  const cls=CLASSES.find(c=>c.id===G.classId)||CLASSES[0];
+  const eff=getEffectiveStats();
   const log=(text,type)=>{ b.log.push({text,type}); };
   b.defending=false;
 
   // Oyuncu turu
   let playerDmg=0, fled=false;
   if(action==='attack'){
-    const base=(G.stats.str||5)*2+(G.stats.atk||0);
-    playerDmg=Math.max(1,Math.floor(base+Math.random()*base*0.4)-Math.floor(b.enemy.def*0.5));
-    const crit=Math.random()<(G.stats.agi||5)/100;
-    if(crit){playerDmg=Math.floor(playerDmg*1.8);log(`💥 Kritik! ${playerDmg} hasar verdin.`,'good');}
-    else log(`⚔ ${playerDmg} hasar verdin.`,'good');
+    playerDmg=Math.max(1, Math.floor(eff.physDmg*(0.85+Math.random()*0.3)) - Math.floor(b.enemy.def*0.5));
+    if(Math.random()<eff.critChance){
+      playerDmg=Math.floor(playerDmg*1.8);
+      log(`💥 Kritik! ${playerDmg} hasar verdin.`,'good');
+    } else {
+      log(`⚔ ${playerDmg} hasar verdin.`,'good');
+    }
   }
   else if(action==='defend'){
     b.defending=true;
     log('🛡 Savunma duruşu aldın. Hasar -%40.','info');
   }
   else if(action==='magic'){
-    const base=(G.stats.wis||5)*3;
-    playerDmg=Math.max(1,Math.floor(base+Math.random()*base*0.5));
+    playerDmg=Math.max(1, Math.floor(eff.magicDmg*(0.9+Math.random()*0.4)));
     log(`✨ Büyü! ${playerDmg} büyü hasarı verdin.`,'good');
   }
   else if(action==='flee'){
-    if(Math.random()<0.5){
+    const fleeChance=0.4+(eff.agi*0.01);
+    if(Math.random()<fleeChance){
       fled=true;
       log('💨 Kaçmayı başardın!','info');
+      G.stats.hp=b.playerHp;
       ZD.battle=null;
-      renderZindan();
+      updateHUD();renderZindan();
       return;
     } else {
       log('🚫 Kaçamadın!','bad');
     }
   }
 
-  // Hasar uygula
   if(playerDmg>0){
     b.enemyHp=Math.max(0,b.enemyHp-playerDmg);
     zdAnimateHit('enemy');
@@ -3164,35 +3230,38 @@ function zdAction(action){
     const room=ZD.rooms[b.roomIdx];
     room.cleared=true;
     G.gold+=b.enemy.gold; ZD.totalGold+=b.enemy.gold;
-    gainXP(b.enemy.xp);  ZD.totalXP+=b.enemy.xp;
-    G.stats.hp=b.playerHp;
+    gainXP(b.enemy.xp);   ZD.totalXP+=b.enemy.xp;
+    G.stats.hp=Math.max(1,b.playerHp);
     log(`🏆 ${b.enemy.name} yenildi! +${b.enemy.gold}🪙 +${b.enemy.xp}XP`,'gold');
-    updateHUD();
-    ZD.battle=null;
+    updateHUD(); ZD.battle=null;
     toast(`${b.enemy.name} yenildi! 🏆`);
     if(currentUser) sbSave();
     renderZindan();
     return;
   }
 
-  // Düşman turu
-  const eDmgBase=b.enemy.atk;
-  let eDmg=Math.max(1,Math.floor(eDmgBase+Math.random()*eDmgBase*0.3-((G.stats.def||5)*0.4)));
-  if(b.defending) eDmg=Math.floor(eDmg*0.6);
-  b.playerHp=Math.max(0,b.playerHp-eDmg);
-  G.stats.hp=b.playerHp;
-  log(`${b.enemy.icon} ${b.enemy.name}: ${eDmg} hasar verdi.`,'bad');
-  zdAnimateHit('player');
+  // Düşman turu — kaçınma kontrolü
+  if(Math.random()<eff.dodgeChance){
+    log(`💨 Saldırıdan kaçındın!`,'good');
+  } else {
+    let eDmg=Math.max(1, Math.floor(b.enemy.atk*(0.85+Math.random()*0.3) * (1-eff.damageReduction)));
+    if(b.defending) eDmg=Math.floor(eDmg*0.6);
+    b.playerHp=Math.max(0,b.playerHp-eDmg);
+    log(`${b.enemy.icon} ${b.enemy.name}: ${eDmg} hasar verdi.`,'bad');
+    zdAnimateHit('player');
+  }
 
   // Oyuncu öldü mü?
   if(b.playerHp<=0){
+    G.stats.hp=0;
     log('💀 Düşün! Zindandan çıkıyorsun...','bad');
     ZD.battle=null;
     updateHUD();
-    setTimeout(()=>{zdDeath();},800);
+    setTimeout(()=>zdDeath(),800);
     return;
   }
 
+  G.stats.hp=b.playerHp;
   updateHUD();
   zdUpdateBattleUI();
 }
