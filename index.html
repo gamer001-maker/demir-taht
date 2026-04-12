@@ -1858,35 +1858,66 @@ const GUILD_LIST=[
   {id:4,name:'Doğa Çocukları',emblem:'🌿',motto:'Doğayla bir ol.',members:14,level:5,focus:'casual',type:'open',power:3100},
 ];
 const PROD_BUILDINGS={
-  farm:{level:1,max:4,cost:150,name:'Tarla',icon:'🌾'},
-  mill:{level:0,max:3,cost:200,name:'Değirmen',icon:'⚙'},
-  ranch:{level:0,max:3,cost:250,name:'Çiftlik',icon:'🐄'},
-  kitchen:{level:0,max:3,cost:300,name:'Aşevi',icon:'🍳'},
+  farm:   {level:1, max:10, cost:150,  name:'Tarla',     icon:'🌾', upgradingSince:null},
+  mill:   {level:0, max:10, cost:200,  name:'Değirmen',  icon:'⚙',  upgradingSince:null},
+  ranch:  {level:0, max:10, cost:250,  name:'Çiftlik',   icon:'🐄', upgradingSince:null},
+  kitchen:{level:0, max:10, cost:300,  name:'Aşevi',     icon:'🍳', upgradingSince:null},
 };
+
+/* ── TARLA ÜRÜN TANIMLAMALARI ──
+   Her ürün 2 dakika (120sn) üretim süresi
+   outputs sadece saman üretir (direkt)
+   bonusChance / bonusMult bina seviyesinden hesaplanır
+*/
+const FARM_CROPS=[
+  {id:'bugday', name:'Buğday',  icon:'🌾', minLv:1,  saman:3, dur:120},
+  {id:'arpa',   name:'Arpa',    icon:'🌱', minLv:2,  saman:3, dur:120},
+  {id:'patates',name:'Patates', icon:'🥔', minLv:3,  saman:1, dur:120},
+  {id:'cicek',  name:'Çiçek',   icon:'🌸', minLv:5,  saman:0, dur:120},
+  {id:'domates', name:'Domates',icon:'🍅', minLv:6,  saman:2, dur:120},
+  {id:'yonca',  name:'Yonca',   icon:'🍀', minLv:7,  saman:6, dur:120},
+  {id:'cilek',  name:'Çilek',   icon:'🍓', minLv:8,  saman:0, dur:120},
+];
+
+/* Seviyeye göre tarla bonusu hesapla */
+function farmGetBonus(lv){
+  // Sv.1-3: %5 şans, ×2
+  // Sv.4+:  %20 şans, ×3
+  // Sv.9:   %30 şans, ×3
+  // Sv.10:  %60 şans, ×3
+  let chance = lv <= 3 ? 0.05 : 0.20;
+  if(lv >= 9)  chance = 0.30;
+  if(lv >= 10) chance = 0.60;
+  const mult = lv >= 4 ? 3 : 2;
+  return {chance, mult};
+}
+
+/* Seviyeye göre max eş zamanlı ekim */
+function farmMaxSlots(lv){ return 4 + lv; } // Sv.1→5, Sv.2→6 ... Sv.10→14
+
+/* Sv.6+ saman miktarı +1 bonus */
+function farmSamanBonus(lv){ return lv >= 6 ? 1 : 0; }
+
 const PROD_RECIPES={
-  farm:[
-    {id:'bugday',name:'Buğday Ek',icon:'🌾',minLv:1,dur:120,inputs:{},outputs:{bugday:{base:2,chance:.25,mult:2},saman:{base:1,chance:.2,mult:2}}},
-    {id:'arpa',name:'Arpa Ek',icon:'🌱',minLv:2,dur:150,inputs:{},outputs:{arpa:{base:2,chance:.3,mult:2},saman:{base:2,chance:.2,mult:2}}},
-    {id:'sebze',name:'Sebze Ye',icon:'🥦',minLv:3,dur:180,inputs:{},outputs:{sebze:{base:3,chance:.35,mult:2}}},
-  ],
+  farm:[], // dinamik — farmGetRecipes() kullan
   mill:[
-    {id:'un',name:'Un Öğüt',icon:'🌾→🥛',minLv:1,dur:90,inputs:{bugday:2},outputs:{un:{base:2,chance:.3,mult:2}}},
-    {id:'arpa_unu',name:'Arpa Unu',icon:'🌱→🥛',minLv:2,dur:100,inputs:{arpa:2},outputs:{arpa_unu:{base:2,chance:.3,mult:2}}},
+    {id:'un',      name:'Un Öğüt',    icon:'🌾→🥛', minLv:1, dur:90,  inputs:{bugday:2}, outputs:{un:{base:2,chance:.3,mult:2}}},
+    {id:'arpa_unu',name:'Arpa Unu',   icon:'🌱→🥛', minLv:2, dur:100, inputs:{arpa:2},   outputs:{arpa_unu:{base:2,chance:.3,mult:2}}},
   ],
   ranch:[
     {id:'tavuk',name:'Tavuk Besle',icon:'🐔',minLv:1,dur:120,inputs:{saman:1},outputs:{tuy:{base:2,chance:.25,mult:2},yumurta:{base:2,chance:.4,mult:3}}},
     {id:'koyun',name:'Koyun Besle',icon:'🐑',minLv:1,dur:150,inputs:{saman:1},outputs:{sut:{base:2,chance:.3,mult:2},yun:{base:1,chance:.25,mult:2}}},
-    {id:'inek',name:'İnek Besle',icon:'🐄',minLv:2,dur:180,inputs:{saman:2},outputs:{sut:{base:3,chance:.35,mult:3}}},
+    {id:'inek', name:'İnek Besle', icon:'🐄',minLv:2,dur:180,inputs:{saman:2},outputs:{sut:{base:3,chance:.35,mult:3}}},
   ],
   kitchen:[
-    {id:'ekmek',name:'Ekmek Pişir',icon:'🍞',minLv:1,dur:120,inputs:{un:2},outputs:{ekmek:{base:2,chance:.3,mult:2}}},
+    {id:'ekmek',name:'Ekmek Pişir',icon:'🍞',minLv:1,dur:120,inputs:{un:2},          outputs:{ekmek:{base:2,chance:.3,mult:2}}},
     {id:'corba',name:'Çorba Kaynat',icon:'🥣',minLv:1,dur:150,inputs:{sebze:2,sut:1},outputs:{corba:{base:2,chance:.25,mult:2}}},
-    {id:'kek',name:'Kek Pişir',icon:'🎂',minLv:2,dur:180,inputs:{un:2,yumurta:2},outputs:{kek:{base:1,chance:.35,mult:2}}},
+    {id:'kek',  name:'Kek Pişir',  icon:'🎂',minLv:2,dur:180,inputs:{un:2,yumurta:2},outputs:{kek:{base:1,chance:.35,mult:2}}},
   ],
 };
-const FOOD_VALUE={bugday:1,arpa:1,sebze:2,saman:0,un:0,arpa_unu:0,tuy:0,yumurta:2,yun:0,sut:2,ekmek:10,corba:12,kek:15};
-const ITEM_LABELS={bugday:'Buğday',saman:'Saman',arpa:'Arpa',sebze:'Sebze',un:'Un',arpa_unu:'Arpa Unu',tuy:'Tüy',yumurta:'Yumurta',yun:'Yün',sut:'Süt',ekmek:'Ekmek',corba:'Çorba',kek:'Kek'};
-const ITEM_ICONS={bugday:'🌾',saman:'🌿',arpa:'🌱',sebze:'🥦',un:'🥛',arpa_unu:'🥛',tuy:'🪶',yumurta:'🥚',yun:'🧶',sut:'🥛',ekmek:'🍞',corba:'🥣',kek:'🎂'};
+const FOOD_VALUE={bugday:1,arpa:1,sebze:2,saman:0,un:0,arpa_unu:0,tuy:0,yumurta:2,yun:0,sut:2,ekmek:10,corba:12,kek:15,patates:1,domates:2,cicek:0,yonca:0,cilek:3};
+const ITEM_LABELS={bugday:'Buğday',saman:'Saman',arpa:'Arpa',sebze:'Sebze',un:'Un',arpa_unu:'Arpa Unu',tuy:'Tüy',yumurta:'Yumurta',yun:'Yün',sut:'Süt',ekmek:'Ekmek',corba:'Çorba',kek:'Kek',patates:'Patates',domates:'Domates',cicek:'Çiçek',yonca:'Yonca',cilek:'Çilek',patates_tohum:'Patates Tohumu',domates_tohum:'Domates Tohumu',cicek_tohum:'Çiçek Tohumu',yonca_tohum:'Yonca Tohumu',cilek_tohum:'Çilek Tohumu'};
+const ITEM_ICONS={bugday:'🌾',saman:'🌿',arpa:'🌱',sebze:'🥦',un:'🥛',arpa_unu:'🥛',tuy:'🪶',yumurta:'🥚',yun:'🧶',sut:'🥛',ekmek:'🍞',corba:'🥣',kek:'🎂',patates:'🥔',domates:'🍅',cicek:'🌸',yonca:'🍀',cilek:'🍓',patates_tohum:'🌱',domates_tohum:'🌱',cicek_tohum:'🌱',yonca_tohum:'🌱',cilek_tohum:'🌱'};
 const GRADES={gray:{name:'Ortak'},green:{name:'Nadir'},blue:{name:'Değerli'},purple:{name:'Epik'},orange:{name:'Efsanevi'}};
 const STAT_LABELS={atk:'Saldırı',def:'Savunma',mgc:'Büyü',wis:'Bilgelik',spd:'Hız',crit:'Kritik',rng:'Menzil',str:'Güç',hp:'Can',hp_restore:'Can Yenile',atk_boost:'Saldırı Artış',craft_iron:'Demir',craft_wood:'Odun',craft_legendary:'Efsanevi Crafting',luck:'Şans'};
 const NOTIFS=[];
@@ -1922,7 +1953,7 @@ const G={
   explored:new Set([14,15,20,21,22,27,28]),
   selectedCell:null,
   prodTimers:[],prodTimerId:1,
-  prodInv:{bugday:5,saman:3,arpa:0,sebze:0,un:2,arpa_unu:0,tuy:1,yumurta:3,yun:1,sut:4,ekmek:1,corba:0,kek:0},
+  prodInv:{bugday:5,saman:3,arpa:0,sebze:0,un:2,arpa_unu:0,tuy:1,yumurta:3,yun:1,sut:4,ekmek:1,corba:0,kek:0,patates:0,domates:0,cicek:0,yonca:0,cilek:0,patates_tohum:0,domates_tohum:0,cicek_tohum:0,yonca_tohum:0,cilek_tohum:0},
   guildName:'',
   guildId:null,
   guildTreasury:0,
@@ -4054,6 +4085,7 @@ function updateInvStrip(){
 function renderProd(t){
   const el=document.getElementById('prod-content');
   if(t==='depot'){renderDepot();return;}
+  if(t==='farm'){renderFarm();return;}
   const bld=PROD_BUILDINGS[t];
   if(!bld){el.innerHTML='';return;}
 
@@ -4075,7 +4107,6 @@ function renderProd(t){
   const activeTimers=G.prodTimers.filter(x=>x.building===t);
   const fmtT=s=>{const m=Math.floor(s/60),sc=s%60;return `${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;};
 
-  // ── SOL: Tarifler + Geliştir ──
   let leftHtml=`
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">
       <div style="width:42px;height:42px;border-radius:9px;background:var(--panel);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:22px;">${bld.icon}</div>
@@ -4097,7 +4128,6 @@ function renderProd(t){
       const fv=FOOD_VALUE[k]||0;
       return `<span class="mat-chip output"><span style="font-size:10px;">${ITEM_ICONS[k]||'📦'}</span>${ITEM_LABELS[k]||k} ×${o.base}${fv>0?` <span style="color:var(--g-green);font-size:8px;">+${fv*o.base}🍖</span>`:''} <span style="font-size:7px;color:var(--g-purple);">${Math.round(o.chance*100)}%✨</span></span>`;
     }).join('');
-
     leftHtml+=`<div class="recipe" style="${locked?'opacity:.45;':''}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
         <span style="font-family:var(--font-head);font-size:12px;font-weight:600;color:var(--perg2);">${r.icon} ${r.name}</span>
@@ -4111,7 +4141,6 @@ function renderProd(t){
     </div>`;
   });
 
-  // Geliştir butonu sol altta
   if(bld.level<bld.max){
     const uc=Math.floor(bld.cost*Math.pow(1.6,bld.level));
     leftHtml+=`<div class="sec">GELİŞTİR</div>
@@ -4124,7 +4153,6 @@ function renderProd(t){
       </div>`;
   }
 
-  // ── SAĞ: Aktif üretimler ──
   let rightHtml=`<div class="sec" style="margin-top:0;">AKTİF ÜRETİM</div>`;
   if(activeTimers.length){
     rightHtml+=activeTimers.map(x=>timerCardHTML(x)).join('');
@@ -4136,7 +4164,6 @@ function renderProd(t){
     </div>`;
   }
 
-  // ── SPLIT LAYOUT ──
   el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
     <div>${leftHtml}</div>
     <div>${rightHtml}</div>
@@ -4148,6 +4175,248 @@ function renderProd(t){
       }
     }
   </style>`;
+}
+
+/* ══════════════════════════════════════
+   TARLA SİSTEMİ (10 Seviye)
+══════════════════════════════════════ */
+function renderFarm(){
+  const el=document.getElementById('prod-content');
+  const bld=PROD_BUILDINGS.farm;
+  const lv=bld.level;
+  const fmtT=s=>{const m=Math.floor(s/60),sc=s%60;return `${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;};
+
+  // Bina yükseltme sayacı kontrolü
+  const upgTimer=G.prodTimers.find(x=>x.building==='farm'&&x.recipe==='__upgrade__');
+
+  // Aktif ekim sayaçları
+  const activeTimers=G.prodTimers.filter(x=>x.building==='farm'&&x.recipe!=='__upgrade__');
+  const maxSlots=farmMaxSlots(lv);
+  const usedSlots=activeTimers.length;
+
+  const {chance,mult}=farmGetBonus(lv);
+  const samanBonus=farmSamanBonus(lv);
+
+  // Seviye bilgi şeridi
+  const lvInfoHtml=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+      <div style="width:42px;height:42px;border-radius:9px;background:var(--panel);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:22px;">🌾</div>
+      <div style="flex:1;">
+        <div style="font-family:var(--font-head);font-size:13px;color:var(--perg);">Tarla <span class="tag tag-gold" style="font-size:8px;margin-left:4px;">Sv.${lv}/${bld.max}</span></div>
+        <div style="font-size:9px;color:var(--ink3);margin-top:2px;">
+          Slot: ${usedSlots}/${maxSlots} · Bonus: %${Math.round(chance*100)} ×${mult}${samanBonus>0?' · Saman +'+samanBonus:''}
+        </div>
+      </div>
+    </div>`;
+
+  // Yükseltme bölümü
+  let upgHtml='';
+  if(upgTimer){
+    const pct=Math.round((1-upgTimer.remaining/upgTimer.total)*100);
+    upgHtml=`
+      <div class="card" style="margin-bottom:12px;background:#0a120a;border-color:var(--g-green);">
+        <div style="font-family:var(--font-head);font-size:11px;color:#7aaa5a;margin-bottom:6px;">⬆ Sv.${lv+1}'e Yükseltiliyor...</div>
+        <div style="height:8px;background:var(--panel3);border-radius:4px;overflow:hidden;margin-bottom:4px;">
+          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#2a6a2a,#7aaa5a);border-radius:4px;transition:width .5s;"></div>
+        </div>
+        <div style="font-family:var(--font-head);font-size:13px;color:var(--gold2);text-align:center;" id="farm-upg-timer">${fmtT(upgTimer.remaining)}</div>
+      </div>`;
+  } else if(lv<bld.max){
+    const uc=Math.floor(bld.cost*Math.pow(1.6,lv));
+    const nextLv=lv+1;
+    const nextCrop=FARM_CROPS.find(c=>c.minLv===nextLv);
+    const nextSlots=farmMaxSlots(nextLv);
+    const nextBonus=farmGetBonus(nextLv);
+    upgHtml=`
+      <div class="sec">GELİŞTİR</div>
+      <div class="card row-between" style="margin-bottom:12px;">
+        <div>
+          <div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">Sv.${lv} → Sv.${nextLv}</div>
+          <div style="font-size:9px;color:var(--ink3);margin-top:3px;line-height:1.6;">
+            ${nextCrop?`🌱 <b style="color:var(--perg2);">${nextCrop.name}</b> açılır<br>`:''}
+            📦 Slot ${maxSlots} → ${nextSlots}<br>
+            ✨ Bonus %${Math.round(chance*100)} → %${Math.round(nextBonus.chance*100)} ×${nextBonus.mult}
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <button class="btn btn-sm" onclick="startFarmUpgrade(${uc})" ${G.gold>=uc?'':'disabled'}>${uc}🪙</button>
+          <div style="font-size:8px;color:var(--ink3);margin-top:3px;">⏱ 2 dk</div>
+        </div>
+      </div>`;
+  }
+
+  // Ürün slotları
+  const availCrops=FARM_CROPS.filter(c=>c.minLv<=lv);
+  let slotsHtml=`<div class="sec" style="margin-top:0;">EKİLİ TARLALAR (${usedSlots}/${maxSlots})</div>`;
+
+  // Aktif ekimler
+  if(activeTimers.length){
+    slotsHtml+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">`;
+    slotsHtml+=activeTimers.map(x=>farmTimerCardHTML(x,lv)).join('');
+    slotsHtml+=`</div>`;
+  }
+
+  // Boş slot varsa ürün seçici
+  if(usedSlots<maxSlots){
+    const emptyCount=maxSlots-usedSlots;
+    slotsHtml+=`
+      <div class="sec">EKMEK İÇİN ÜRÜN SEÇ</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">
+        ${availCrops.map(c=>{
+          const seedKey=(c.id==='bugday'||c.id==='arpa')?c.id:c.id+'_tohum';
+          const seedCount=G.prodInv[seedKey]||0;
+          const hasSeed=seedCount>0;
+          const samanOut=c.saman+samanBonus;
+          const seedLabel=c.id==='bugday'||c.id==='arpa'?`${seedCount} adet`:`Tohum: ${seedCount}`;
+          return `<div class="card" style="text-align:center;padding:10px 6px;cursor:${hasSeed?'pointer':'not-allowed'};border-color:${hasSeed?'var(--border2)':'var(--border)'};opacity:${hasSeed?'1':'0.5'};" onclick="${hasSeed?`startFarmCrop('${c.id}')`:''}" title="${hasSeed?'':'Tohum yok!'}">
+            <div style="font-size:26px;margin-bottom:4px;">${c.icon}</div>
+            <div style="font-family:var(--font-head);font-size:10px;color:var(--perg2);">${c.name}</div>
+            <div style="font-size:8px;color:${hasSeed?'var(--gold)':'var(--hp)'};margin-top:2px;">${seedLabel}</div>
+            <div style="font-size:8px;color:var(--ink3);">${samanOut>0?`🌿${samanOut}`:c.id==='cicek'?'🌸':'c.id==='cilek'?'🍓':''}</div>
+            <div style="font-size:7px;color:var(--g-purple);">%${Math.round(chance*100)} ×${mult}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  } else {
+    slotsHtml+=`<div style="text-align:center;padding:10px;font-size:10px;color:var(--ink3);">Tüm slotlar dolu (${maxSlots}/${maxSlots})</div>`;
+  }
+
+  el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+    <div>${lvInfoHtml}${upgHtml}</div>
+    <div>${slotsHtml}</div>
+  </div>
+  <style>@media(max-width:700px){#prod-content>div[style*="grid-template-columns"]{grid-template-columns:1fr !important;}}</style>`;
+}
+
+function farmTimerCardHTML(t, lv){
+  const crop=FARM_CROPS.find(c=>c.id===t.recipe);
+  if(!crop) return '';
+  const isDone=t.remaining<=0;
+  const pct=Math.round((1-t.remaining/t.total)*100);
+  const fmtT=s=>{const m=Math.floor(s/60),sc=s%60;return `${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;};
+  const outInfo=Object.entries(t.outputs).map(([k,v])=>`${ITEM_ICONS[k]}×${v.amount}${v.bonus?'✨':''}`).join(' ');
+  return `<div class="timer-card${isDone?' t-done':''}" style="padding:8px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <span style="font-size:14px;">${crop.icon}</span>
+      <span style="font-family:var(--font-head);font-size:10px;color:${isDone?'var(--g-green)':'var(--gold)'};" id="tsecs-${t.id}">${isDone?'✓ Hazır':fmtT(t.remaining)}</span>
+    </div>
+    <div style="font-size:9px;color:var(--ink3);margin-bottom:4px;">${outInfo||crop.name}</div>
+    <div class="timer-prog-bg" style="margin-bottom:4px;"><div class="timer-prog-fill" id="tprog-${t.id}" style="width:${pct}%;"></div></div>
+    ${isDone?`<button class="collect-btn" style="padding:5px;font-size:10px;" onclick="collectProd(${t.id})">🎁 Hasat Et</button>`:''}
+  </div>`;
+}
+
+function startFarmUpgrade(cost){
+  const bld=PROD_BUILDINGS.farm;
+  if(bld.level>=bld.max){toast('Maksimum seviye!');return;}
+  if(G.gold<cost){toast('Yeterli altın yok!');return;}
+  if(G.prodTimers.find(x=>x.building==='farm'&&x.recipe==='__upgrade__')){
+    toast('Yükseltme zaten devam ediyor!');return;
+  }
+  G.gold-=cost;
+  const tid=G.prodTimerId++;
+  G.prodTimers.push({
+    id:tid, dbId:null, building:'farm', recipe:'__upgrade__',
+    remaining:120, total:120, outputs:{}
+  });
+  updateHUD(); renderProd('farm');
+  toast(`Tarla Sv.${bld.level+1}'e yükseltiliyor... ⏱ 2 dk`);
+  if(currentUser) sbSave();
+}
+
+function completeFarmUpgrade(){
+  const bld=PROD_BUILDINGS.farm;
+  bld.level=Math.min(bld.max, bld.level+1);
+  gainXP(30);
+
+  // Seviyeye göre başlangıç tohumu ver
+  const seedRewards={
+    1:{key:'bugday',  name:'Buğday',   icon:'🌾'},
+    2:{key:'arpa',    name:'Arpa',     icon:'🌱'},
+    3:{key:'patates_tohum', name:'Patates Tohumu', icon:'🌱'},
+    5:{key:'cicek_tohum',   name:'Çiçek Tohumu',   icon:'🌸'},
+    6:{key:'domates_tohum', name:'Domates Tohumu',  icon:'🍅'},
+    7:{key:'yonca_tohum',   name:'Yonca Tohumu',    icon:'🍀'},
+    8:{key:'cilek_tohum',   name:'Çilek Tohumu',    icon:'🍓'},
+  };
+  const reward=seedRewards[bld.level];
+  if(reward){
+    G.prodInv[reward.key]=(G.prodInv[reward.key]||0)+1;
+    toast(`✨ Tarla Sv.${bld.level}'e yükseltildi! ${reward.icon} 1x ${reward.name} kazandın!`);
+  } else {
+    toast(`✨ Tarla Sv.${bld.level}'e yükseltildi!`);
+  }
+
+  updateInvStrip(); renderProd('farm'); updateHUD();
+  if(currentUser) sbSave();
+}
+
+function startFarmCrop(cropId){
+  const bld=PROD_BUILDINGS.farm;
+  const lv=bld.level;
+  const maxSlots=farmMaxSlots(lv);
+  const active=G.prodTimers.filter(x=>x.building==='farm'&&x.recipe!=='__upgrade__');
+  if(active.length>=maxSlots){toast(`Tüm slotlar dolu! (${maxSlots}/${maxSlots})`);return;}
+
+  const crop=FARM_CROPS.find(c=>c.id===cropId);
+  if(!crop||crop.minLv>lv){toast('Bu ürün bu seviyede yetiştirilemiyor!');return;}
+
+  // Tohum kontrolü — buğday ve arpa kendisi tohum, diğerleri ayrı tohum ister
+  const seedKey = (cropId==='bugday'||cropId==='arpa') ? cropId : cropId+'_tohum';
+  const hasSeed = (cropId==='bugday'||cropId==='arpa')
+    ? (G.prodInv[cropId]||0) >= 1
+    : (G.prodInv[seedKey]||0) >= 1;
+  if(!hasSeed){
+    const seedName = (cropId==='bugday'||cropId==='arpa')
+      ? ITEM_LABELS[cropId]
+      : (ITEM_LABELS[seedKey]||cropId+' tohumu');
+    toast(`${seedName} tohumu yok! NPC pazarından satın al.`);
+    return;
+  }
+
+  // Tohum tüket
+  G.prodInv[seedKey]=(G.prodInv[seedKey]||0)-1;
+
+  const {chance,mult}=farmGetBonus(lv);
+  const samanBonus=farmSamanBonus(lv);
+  const isBonus=Math.random()<chance;
+  const bMult=isBonus?mult:1;
+  const outputs={};
+
+  // Saman çıktısı
+  const samanBase=crop.saman+samanBonus;
+  if(samanBase>0){
+    outputs['saman']={amount:samanBase*bMult, bonus:isBonus};
+  }
+
+  // Ana ürün çıktısı
+  // Buğday, arpa: 3 adet (tohum olarak da kullanılır)
+  // Patates, domates, çilek, çiçek: 2 adet
+  // Yonca: sadece saman (ana ürün yok)
+  if(cropId!=='yonca'){
+    const baseAmt=(cropId==='bugday'||cropId==='arpa')?3:2;
+    outputs[cropId]={amount:baseAmt*bMult, bonus:isBonus};
+  }
+
+  // Tohum çıktısı (buğday/arpa hariç — onlar zaten kendileri tohum)
+  // Yonca dahil: 0, 1 veya 2 tohum
+  if(cropId!=='bugday'&&cropId!=='arpa'){
+    const seedOut=Math.floor(Math.random()*3); // 0, 1 veya 2
+    if(seedOut>0){
+      outputs[seedKey]={amount:seedOut*bMult, bonus:isBonus};
+    }
+  }
+
+  const tid=G.prodTimerId++;
+  G.prodTimers.push({
+    id:tid, dbId:null, building:'farm', recipe:cropId,
+    remaining:120, total:120, outputs
+  });
+  trackQuest('prodStart1');
+  updateInvStrip(); renderProd('farm');
+  const seedLabel=(cropId==='bugday'||cropId==='arpa')?ITEM_LABELS[cropId]:(ITEM_LABELS[seedKey]||seedKey);
+  toast(`${crop.icon} ${crop.name} ekildi! (1 ${seedLabel} harcandı)`);
+  if(currentUser) sbSave();
 }
 function timerCardHTML(t){
   const r=(PROD_RECIPES[t.building]||[]).find(x=>x.id===t.recipe);if(!r)return'';
@@ -4246,16 +4515,53 @@ async function sbLoadProdTimers(){
 }
 
 function renderDepot(){
-  const groups=[{lbl:'🌾 Tarla',keys:['bugday','saman','arpa','sebze']},{lbl:'⚙ Değirmen',keys:['un','arpa_unu']},{lbl:'🐄 Çiftlik',keys:['tuy','yumurta','yun','sut']},{lbl:'🍳 Aşevi',keys:['ekmek','corba','kek']}];
-  let html='';groups.forEach(g=>{const items=g.keys.filter(k=>G.prodInv[k]!==undefined);html+=`<div class="sec">${g.lbl}</div>`;html+=items.map(k=>`<div class="card-sm row-between"><span style="display:flex;align-items:center;gap:6px;"><span style="font-size:18px;">${ITEM_ICONS[k]||'📦'}</span><span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${ITEM_LABELS[k]||k}</span></span><span style="font-family:var(--font-head);font-size:14px;color:var(--gold);">${G.prodInv[k]||0}</span></div>`).join('');});
-  document.getElementById('prod-content').innerHTML=html;
+  const groups=[
+    {lbl:'🌾 Tarla', keys:['bugday','arpa','patates','domates','cicek','yonca','cilek','saman']},
+    {lbl:'⚙ Değirmen', keys:['un','arpa_unu']},
+    {lbl:'🐄 Çiftlik', keys:['tuy','yumurta','yun','sut']},
+    {lbl:'🍳 Aşevi', keys:['ekmek','corba','kek']},
+  ];
+  let html='';
+  groups.forEach(g=>{
+    const items=g.keys.filter(k=>(G.prodInv[k]||0)>0||(k==='saman'));
+    if(!items.length) return;
+    html+=`<div class="sec">${g.lbl}</div>`;
+    html+=items.map(k=>`<div class="card-sm row-between">
+      <span style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:18px;">${ITEM_ICONS[k]||'📦'}</span>
+        <span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${ITEM_LABELS[k]||k}</span>
+      </span>
+      <span style="font-family:var(--font-head);font-size:14px;color:var(--gold);">${G.prodInv[k]||0}</span>
+    </div>`).join('');
+  });
+  document.getElementById('prod-content').innerHTML=html||`<div style="text-align:center;padding:40px;color:var(--ink3);">Depo boş</div>`;
 }
 setInterval(()=>{
   G.prodTimers.forEach(t=>{
-    if(t.remaining>0){t.remaining--;
-      const se=document.getElementById(`tsecs-${t.id}`);const pe=document.getElementById(`tprog-${t.id}`);
-      if(se&&t.remaining>0){const m=Math.floor(t.remaining/60),s=t.remaining%60;se.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;if(pe)pe.style.width=Math.round((1-t.remaining/t.total)*100)+'%';}
-      else if(t.remaining<=0){if(G.prodTab===t.building){renderProd(t.building);}toast(`${PROD_BUILDINGS[t.building]?.name}: Üretim hazır! 🎁`);}
+    if(t.remaining>0){
+      t.remaining--;
+      // Farm upgrade timer
+      if(t.recipe==='__upgrade__'){
+        const farmUpgTimer=document.getElementById('farm-upg-timer');
+        const m=Math.floor(t.remaining/60),s=t.remaining%60;
+        if(farmUpgTimer) farmUpgTimer.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        if(t.remaining<=0){
+          G.prodTimers=G.prodTimers.filter(x=>x.id!==t.id);
+          completeFarmUpgrade();
+        }
+        return;
+      }
+      const se=document.getElementById(`tsecs-${t.id}`);
+      const pe=document.getElementById(`tprog-${t.id}`);
+      if(se&&t.remaining>0){
+        const m=Math.floor(t.remaining/60),s=t.remaining%60;
+        se.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        if(pe) pe.style.width=Math.round((1-t.remaining/t.total)*100)+'%';
+      } else if(t.remaining<=0){
+        if(G.prodTab===t.building) renderProd(t.building);
+        const bName=t.recipe==='__upgrade__'?'Yükseltme':PROD_BUILDINGS[t.building]?.name;
+        toast(`${bName}: Hazır! 🎁`);
+      }
     }
   });
 },1000);
