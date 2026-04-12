@@ -1825,7 +1825,7 @@ const MARKET_ITEMS=[
   /* ══════════════════════════════════════
      TÜKETİLEBİLİR
   ══════════════════════════════════════ */
-  {id:401,name:'Küçük Can İksiri',icon:'🧪',cat:'consumable',grade:'gray',  price:30, qty:99,seller:'npc',sellerName:'Eczacı',      type:'İksir',reqLv:1, material:null,desc:'30 can yeniler.',                    stats:{hp_restore:30}, img:null,classBonus:null},
+  {id:401,name:'Küçük Can İksiri',icon:'🧪',cat:'consumable',grade:'gray',  price:30, qty:99,seller:'npc',sellerName:'Eczacı',      type:'İksir',reqLv:1, material:null,desc:'Maksimum canın %10\'unu yeniler.',  stats:{hp_restore_pct:10}, img:null,classBonus:null},
   {id:402,name:'Güç Runesi',      icon:'🔶',cat:'consumable',grade:'green', price:120,qty:20,seller:'npc',sellerName:'Rune Ustası', type:'Rune', reqLv:5, material:null,desc:'Saldırı +%50.',                     stats:{atk_boost:50},  img:null,classBonus:null},
 
   /* ══════════════════════════════════════
@@ -2451,9 +2451,35 @@ function openInvModal(itemId, eqSlotKey=null){
     </div>
     ${targetSlot&&canEquip?`<button class="btn" style="width:100%;margin-bottom:8px;" onclick="equipItem(${item.id},'${targetSlot}')">⚔ Kuşan</button>`:''}
     ${targetSlot&&!canEquip?`<button class="btn" disabled style="width:100%;margin-bottom:8px;">🔒 Seviye ${item.reqLv} Gerekli</button>`:''}
+    ${item.type==='İksir'?`<button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#0a2a1a,#051408);border-color:var(--g-green);color:#7aaa5a;" onclick="useConsumable(${item.id})">⚗ Kullan</button>`:''}
     <button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="openSellModal(${item.id})">🪙 Pazara Sat</button>
     <button class="btn btn-danger" style="width:100%;" onclick="dropItem(${item.id})">🗑 At</button>`;
   showGModal(html);
+}
+
+function useConsumable(itemId){
+  const item=G.inventory.find(x=>x.id===itemId);if(!item)return;
+  const eff=getEffectiveStats();
+  let msg='';
+
+  if(item.stats?.hp_restore_pct){
+    const heal=Math.floor(eff.maxhp*(item.stats.hp_restore_pct/100));
+    G.stats.hp=Math.min(eff.maxhp, G.stats.hp+heal);
+    msg=`+${heal} can yenilendi! (${item.stats.hp_restore_pct}%)`;
+  } else if(item.stats?.hp_restore){
+    G.stats.hp=Math.min(eff.maxhp, G.stats.hp+item.stats.hp_restore);
+    msg=`+${item.stats.hp_restore} can yenilendi!`;
+  } else if(item.stats?.atk_boost){
+    msg=`Saldırı +%${item.stats.atk_boost} güçlendirildi!`;
+  } else {
+    msg=`${item.name} kullanıldı!`;
+  }
+
+  G.inventory=G.inventory.filter(x=>x.id!==itemId);
+  closeGModal();
+  toast(`${item.icon} ${msg}`);
+  updateHUD();renderKarakter();
+  if(currentUser) sbSave();
 }
 
 function equipItem(itemId, slot){
@@ -3659,20 +3685,39 @@ function buyItem(id){
 }
 
 async function buyMarketItem(id){
-  // NPC item mi yoksa gerçek listing mi?
-  const npcItem = MARKET_ITEMS.find(x=>x.id==id||(typeof id==='string'&&x.id==id));
+  // NPC item mi?
+  const npcItem = MARKET_ITEMS.find(x=>String(x.id)===String(id));
   if(npcItem){ buyItem(npcItem.id); return; }
 
   const listing = G_PLAYER_LISTINGS.find(x=>x.id===id);
-  if(!listing) return;
+  if(!listing){ toast('İlan bulunamadı, liste yenileniyor...'); await loadPlayerMarketItems(); renderMarket(); return; }
   if(listing.sellerId===currentUser?.id){ toast('Kendi ilanını satın alamazsın!'); return; }
   if(G.gold<listing.price){ toast('Yeterli altın yok!'); return; }
   if(G.inventory.length>=50){ toast('Envanter dolu!'); return; }
 
-  // Supabase'den sil
-  const {error} = await supa.from('marketplace').delete().eq('id', listing.dbId);
-  if(error){ toast('Satın alma hatası: '+error.message); return; }
+  // ATOMIC: önce local cache'den kaldır (çift satın alma önleme)
+  G_PLAYER_LISTINGS = G_PLAYER_LISTINGS.filter(x=>x.id!==id);
 
+  // 1. Marketplace'den sil
+  const {error:delErr} = await supa.from('marketplace').delete().eq('id', listing.dbId);
+  if(delErr){
+    // Sil başarısız — ilan zaten alınmış
+    toast('Bu ilan artık mevcut değil!');
+    await loadPlayerMarketItems();
+    renderMarket();
+    return;
+  }
+
+  // 2. Satıcıya altın gönder
+  // Satıcının mevcut altınını çek, üstüne ekle
+  const {data:sellerData} = await supa.from('profiles').select('gold').eq('id', listing.sellerId).single();
+  if(sellerData){
+    await supa.from('profiles').update({
+      gold: (sellerData.gold||0) + listing.price
+    }).eq('id', listing.sellerId);
+  }
+
+  // 3. Alıcının altınını düş
   G.gold -= listing.price;
   const invItem = {
     id: Date.now(),
@@ -3680,16 +3725,17 @@ async function buyMarketItem(id){
     type: listing.type, grade: listing.grade,
     price: listing.price, stats: listing.stats||{},
     desc: listing.desc||'', seller:'player',
-    sellerName: G.heroName||G.username,
+    sellerName: listing.sellerName,
     img: listing.img||null, reqLv: listing.reqLv||1,
     material: listing.material||null, classBonus: listing.classBonus||null,
   };
   G.inventory.push(invItem);
   gainXP(10);
-  toast(`${listing.name} envantere eklendi! -${listing.price}🪙`);
+  toast(`${listing.name} satın alındı! -${listing.price}🪙`);
   trackQuest('marketBuy1');
   updateHUD(); renderKarakter();
-  await loadPlayerMarketItems();
+  renderMarket(); // cache'den zaten silindi, hemen render
+  await loadPlayerMarketItems(); // sunucudan tazele
   renderMarket();
   if(currentUser) sbSave();
 }
@@ -3910,7 +3956,6 @@ function renderGuildWar(){
     bossResultShown = false;
   }
   const boss = getCurrentBoss();
-  // Arkaplan: boss görseli
   const guildContent = document.getElementById('guild-content');
   guildContent.style.backgroundImage=`url('images/${boss.img}.webp'), url('images/${boss.img}.jpg')`;
   guildContent.style.backgroundSize='cover';
@@ -3918,11 +3963,16 @@ function renderGuildWar(){
   guildContent.style.backgroundRepeat='no-repeat';
 
   guildContent.innerHTML=`
-    <div style="background:linear-gradient(to bottom,rgba(0,0,0,0.55) 0%,rgba(15,8,4,0.92) 40%);min-height:100%;padding-bottom:20px;">
+    <div style="background:linear-gradient(to bottom,rgba(0,0,0,0.55) 0%,rgba(15,8,4,0.95) 40%);min-height:100%;padding-bottom:20px;">
       <div class="sec" style="margin:0;padding:12px 12px 0;">LONCA BOSS SAVAŞI</div>
       <div id="boss-panel" style="padding:0 12px;"></div>
+      <div class="sec" style="padding:0 12px;margin-top:16px;">GEÇMİŞ SAVAŞLAR</div>
+      <div id="boss-history" style="padding:0 12px;">
+        <div style="font-size:10px;color:var(--ink3);text-align:center;padding:8px;">Yükleniyor...</div>
+      </div>
     </div>`;
   renderBossPanel();
+  loadBossHistory();
   bossRenderInterval = setInterval(()=>{
     const c = Math.floor(Date.now()/600000);
     if((window._lastBossCycle||0) !== c){
@@ -3930,12 +3980,37 @@ function renderGuildWar(){
       bossJoined = false;
       bossHunters = [];
       bossResultShown = false;
-      // Yeni boss için arkaplanı güncelle
       const nb = getCurrentBoss();
       guildContent.style.backgroundImage=`url('images/${nb.img}.webp'), url('images/${nb.img}.jpg')`;
     }
     renderBossPanel();
   }, 1000);
+}
+
+async function loadBossHistory(){
+  if(!G.guildId) return;
+  const el = document.getElementById('boss-history');
+  if(!el) return;
+  const {data} = await supa.from('guild_boss_history')
+    .select('*')
+    .eq('guild_id', G.guildId)
+    .order('created_at', {ascending:false})
+    .limit(10);
+  if(!data||!data.length){
+    el.innerHTML=`<div style="font-size:10px;color:var(--ink3);text-align:center;padding:8px;font-style:italic;">Henüz savaş yok.</div>`;
+    return;
+  }
+  el.innerHTML=data.map(h=>{
+    const date=new Date(h.created_at).toLocaleString('tr',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    return `<div style="display:flex;align-items:center;gap:10px;padding:7px 10px;background:rgba(30,16,8,0.75);border:1px solid var(--border);border-radius:7px;margin-bottom:5px;">
+      <span style="font-size:20px;">${h.won?'🏆':'💀'}</span>
+      <div style="flex:1;">
+        <div style="font-family:var(--font-head);font-size:11px;color:${h.won?'var(--gold2)':'#f87171'};">${h.won?'Zafer':'Yenilgi'} — ${h.boss_name||'Boss'}</div>
+        <div style="font-size:9px;color:var(--ink3);">${h.participants||0} katılımcı · ${date}</div>
+      </div>
+      <span style="font-size:10px;color:${h.won?'#7aaa5a':'#f87171'};">${h.won?'+500🪙':''}</span>
+    </div>`;
+  }).join('');
 }
 
 function renderBossPanel(){
@@ -4116,8 +4191,13 @@ function _subscribeBossResult(){
       if(bossResultShown) return;
       bossResultShown = true;
       const boss = getCurrentBoss();
-      // Diğer oyuncular lokal sonuç almaz — sadece bildirim
-      showBossResultNotif(boss, payload.payload.won, false);
+      const won = payload.payload.won;
+      // Diğer katılımcılar da ödülü alsın
+      if(bossJoined){
+        if(won){ G.gold+=500; updateHUD(); }
+        if(currentUser) sbSave();
+      }
+      showBossResultNotif(boss, won, false);
     })
     .subscribe();
 }
@@ -4125,8 +4205,30 @@ function _unsubscribeBossResult(){
   if(_bossResultChannel){ supa.removeChannel(_bossResultChannel); _bossResultChannel=null; }
 }
 
-function showBossResult(boss){
-  const won = Math.random() > 0.3;
+async function showBossResult(boss){
+  // Sonucu Supabase'de kontrol et — bu cycle'da zaten yazılmış mı?
+  const cycle = Math.floor(Date.now()/600000);
+  const {data:existing} = await supa.from('guild_boss_history')
+    .select('won').eq('guild_id',G.guildId).eq('cycle',cycle).single();
+
+  let won;
+  if(existing){
+    // Zaten yazılmış — aynı sonucu al
+    won = existing.won;
+  } else {
+    // İlk kişi — sonucu belirle ve yaz
+    won = Math.random() > 0.3;
+    await supa.from('guild_boss_history').insert({
+      guild_id: G.guildId,
+      boss_id: boss.id,
+      boss_name: boss.name,
+      cycle,
+      won,
+      participants: bossHunters.length,
+      created_at: new Date().toISOString(),
+    }).then(()=>{});
+  }
+
   const dropped = won && Math.random() < boss.drop.chance;
   let dropItem = null;
 
@@ -4143,11 +4245,11 @@ function showBossResult(boss){
   if(won){ G.gold+=500; updateHUD(); }
   if(currentUser) sbSave();
 
-  // Lonca üyelerine sonucu yayınla (Realtime broadcast)
+  // Broadcast: diğer katılımcılara yayınla
   if(currentUser && G.guildId && _bossResultChannel){
     supa.channel('boss_result_'+G.guildId).send({
       type:'broadcast', event:'boss_result',
-      payload:{ won, cycle: Math.floor(Date.now()/600000) }
+      payload:{ won, cycle }
     });
   }
 
