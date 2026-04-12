@@ -4276,7 +4276,7 @@ function renderFarm(){
             <div style="font-size:26px;margin-bottom:4px;">${c.icon}</div>
             <div style="font-family:var(--font-head);font-size:10px;color:var(--perg2);">${c.name}</div>
             <div style="font-size:8px;color:${hasSeed?'var(--gold)':'var(--hp)'};margin-top:2px;">${seedLabel}</div>
-            <div style="font-size:8px;color:var(--ink3);">${samanOut>0?`🌿${samanOut}`:c.id==='cicek'?'🌸':'c.id==='cilek'?'🍓':''}</div>
+            <div style="font-size:8px;color:var(--ink3);">${samanOut>0?`🌿${samanOut}`:(c.id==='cicek'?'🌸':(c.id==='cilek'?'🍓':''))}</div>
             <div style="font-size:7px;color:var(--g-purple);">%${Math.round(chance*100)} ×${mult}</div>
           </div>`;
         }).join('')}
