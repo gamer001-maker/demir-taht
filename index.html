@@ -613,6 +613,25 @@ html,body{
   to{opacity:1;transform:translateX(0);}
 }
 .zd-room-anim{animation:zd-room-enter .35s ease;}
+/* ── BOSS BİLDİRİM POPUP ── */
+.boss-notif-overlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.75);
+  z-index:9999;
+  display:flex;align-items:center;justify-content:center;
+  animation:fadein .3s ease;
+}
+.boss-notif-box{
+  background:var(--panel2);
+  border-radius:16px;padding:24px 20px;
+  max-width:300px;width:88%;
+  text-align:center;position:relative;
+  box-shadow:0 8px 40px #00000090;
+  animation:zd-enemy-enter .4s ease;
+}
+.boss-notif-box.won{border:2px solid var(--gold);}
+.boss-notif-box.lost{border:2px solid #8b1e1e;}
+
 .bottom-nav{display:flex;background:var(--panel2);border-top:2px solid var(--border2);flex-shrink:0;box-shadow:0 -2px 12px #00000060;}
 .bnav-btn{flex:1;padding:8px 2px 10px;text-align:center;cursor:pointer;border-top:2px solid transparent;transition:border-color .15s,background .15s;}
 .bnav-btn.active{border-top-color:var(--gold);background:#2a1e0c;}
@@ -3742,7 +3761,6 @@ function renderGuildWar(){
     return;
   }
   if(bossRenderInterval) clearInterval(bossRenderInterval);
-  // Yeni cycle'da lobi sıfırla
   const cycle = Math.floor(Date.now()/600000);
   if((window._lastBossCycle||0) !== cycle){
     window._lastBossCycle = cycle;
@@ -3750,18 +3768,30 @@ function renderGuildWar(){
     bossHunters = [];
     bossResultShown = false;
   }
-  document.getElementById('guild-content').innerHTML=`
-    <div class="sec" style="margin-top:0;">LONCA BOSS SAVAŞI</div>
-    <div id="boss-panel"></div>`;
+  const boss = getCurrentBoss();
+  // Arkaplan: boss görseli
+  const guildContent = document.getElementById('guild-content');
+  guildContent.style.backgroundImage=`url('images/${boss.img}.webp'), url('images/${boss.img}.jpg')`;
+  guildContent.style.backgroundSize='cover';
+  guildContent.style.backgroundPosition='center top';
+  guildContent.style.backgroundRepeat='no-repeat';
+
+  guildContent.innerHTML=`
+    <div style="background:linear-gradient(to bottom,rgba(0,0,0,0.55) 0%,rgba(15,8,4,0.92) 40%);min-height:100%;padding-bottom:20px;">
+      <div class="sec" style="margin:0;padding:12px 12px 0;">LONCA BOSS SAVAŞI</div>
+      <div id="boss-panel" style="padding:0 12px;"></div>
+    </div>`;
   renderBossPanel();
   bossRenderInterval = setInterval(()=>{
-    // Cycle değişti mi?
     const c = Math.floor(Date.now()/600000);
     if((window._lastBossCycle||0) !== c){
       window._lastBossCycle = c;
       bossJoined = false;
       bossHunters = [];
       bossResultShown = false;
+      // Yeni boss için arkaplanı güncelle
+      const nb = getCurrentBoss();
+      guildContent.style.backgroundImage=`url('images/${nb.img}.webp'), url('images/${nb.img}.jpg')`;
     }
     renderBossPanel();
   }, 1000);
@@ -3801,7 +3831,7 @@ function renderBossPanel(){
         <div style="width:90px;height:90px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;">
           <img id="boss-img-wait" src="images/${boss.img}.webp"
             style="max-width:88px;max-height:88px;object-fit:contain;filter:grayscale(0.5) brightness(0.6);"
-            onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'💀',style:'font-size:52px'}))"/>
+            onerror="this.src='images/${boss.img}.jpg';this.onerror=()=>this.replaceWith(Object.assign(document.createElement('span'),{textContent:'💀',style:'font-size:52px'}))"/>
         </div>
         <div style="font-family:var(--font-head);font-size:14px;color:var(--perg);margin-bottom:2px;">${boss.name}</div>
         <div style="font-size:10px;color:var(--ink3);margin-bottom:10px;">Sonraki Boss</div>
@@ -3822,7 +3852,7 @@ function renderBossPanel(){
         <div style="width:90px;height:90px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;">
           <img src="images/${boss.img}.webp"
             style="max-width:88px;max-height:88px;object-fit:contain;animation:pulse 0.8s infinite;"
-            onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'⚔',style:'font-size:52px;animation:pulse 0.8s infinite'}))"/>
+            onerror="this.src='images/${boss.img}.jpg';this.onerror=()=>this.replaceWith(Object.assign(document.createElement('span'),{textContent:'⚔',style:'font-size:52px'}))"/>
         </div>
         <div style="font-family:var(--font-head);font-size:15px;color:#f87171;margin-bottom:8px;">${boss.name.toUpperCase()} İLE SAVAŞ!</div>
         <div style="height:10px;background:var(--panel3);border-radius:5px;overflow:hidden;margin-bottom:6px;border:1px solid var(--border);">
@@ -3839,27 +3869,32 @@ function renderBossPanel(){
 function _bossLobbyHtml(boss){
   const hunterList = bossHunters.length
     ? bossHunters.map(h=>`
-        <div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--panel);border-radius:5px;margin-bottom:4px;">
-          <span style="font-size:16px;">${h.classIcon}</span>
-          <span style="font-size:11px;color:var(--perg);font-family:var(--font-head);">${h.name}</span>
-          ${h.isMe?`<button style="margin-left:auto;font-size:9px;padding:2px 7px;border-radius:3px;background:transparent;border:1px solid var(--border2);color:var(--ink3);cursor:pointer;" onclick="leaveBossHunt()">Çık</button>`:''}
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--panel);border-radius:8px;margin-bottom:6px;border:1px solid var(--border2);">
+          <div style="width:38px;height:38px;border-radius:50%;border:2px solid var(--border2);background:var(--panel2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;overflow:hidden;">
+            ${h.avatarHtml||`<span>${h.classIcon}</span>`}
+          </div>
+          <div style="flex:1;">
+            <div style="font-family:var(--font-head);font-size:13px;color:var(--perg);font-weight:600;">${h.name}</div>
+            <div style="font-size:10px;color:var(--ink3);">${h.className||''} ${h.isMe?'<span style="color:var(--gold);">(Sen)</span>':''}</div>
+          </div>
+          ${h.isMe?`<button style="font-size:9px;padding:3px 8px;border-radius:4px;background:transparent;border:1px solid var(--border2);color:var(--ink3);cursor:pointer;" onclick="leaveBossHunt()">Çık</button>`:''}
         </div>`).join('')
-    : `<div style="font-size:10px;color:var(--ink3);text-align:center;padding:8px;">Henüz kimse katılmadı.</div>`;
+    : `<div style="font-size:11px;color:var(--ink3);text-align:center;padding:12px;font-style:italic;">Henüz kimse katılmadı.</div>`;
 
   return `
-    <div style="background:var(--panel2);border:1px solid var(--border2);border-radius:10px;padding:12px;margin-bottom:8px;">
+    <div style="background:rgba(30,16,8,0.88);border:1px solid var(--border2);border-radius:10px;padding:12px;margin-bottom:8px;backdrop-filter:blur(4px);">
       <div style="font-family:var(--font-head);font-size:11px;color:var(--gold);margin-bottom:8px;letter-spacing:1px;">🏹 BOSS AVINA ÇIK</div>
       ${bossJoined
         ?`<div style="background:#0e1a08;border:1px solid var(--g-green);border-radius:6px;padding:7px 10px;font-size:11px;color:#7aaa5a;margin-bottom:8px;">✅ Av lobisine katıldın!</div>`
         :`<button class="btn" style="width:100%;margin-bottom:8px;" onclick="joinBossHunt()">🏹 Ava Çık</button>`
       }
-      <div style="font-size:10px;color:var(--ink3);margin-bottom:6px;">Katılanlar (${bossHunters.length})</div>
+      <div style="font-size:10px;color:var(--ink3);margin-bottom:8px;letter-spacing:1px;">KATILIMCILAR (${bossHunters.length})</div>
       ${hunterList}
     </div>
-    <div style="background:#160e04;border:1px solid var(--g-orange-b);border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px;">
-      <img src="images/${boss.drop.img}.webp" onerror="this.style.display='none'" style="width:36px;height:36px;object-fit:contain;"/>
+    <div style="background:rgba(22,14,4,0.88);border:1px solid var(--g-orange-b);border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px;backdrop-filter:blur(4px);">
+      <img src="images/${boss.drop.img}.webp" onerror="this.style.display='none'" style="width:40px;height:40px;object-fit:contain;"/>
       <div>
-        <div style="font-family:var(--font-head);font-size:11px;color:var(--g-orange);">${boss.drop.name}</div>
+        <div style="font-family:var(--font-head);font-size:12px;color:var(--g-orange);">${boss.drop.name}</div>
         <div style="font-size:9px;color:var(--ink3);">%${Math.round(boss.drop.chance*100)} ihtimalle düşer · Zafer: +500🪙</div>
       </div>
     </div>`;
@@ -3869,18 +3904,24 @@ function joinBossHunt(){
   if(bossJoined) return;
   bossJoined = true;
   const cls = CLASSES.find(c=>c.id===G.classId);
-  const me = {name: G.heroName||G.username||'Sen', classIcon: cls?.icon||'⚔', isMe:true};
-  bossHunters.push(me);
-  // Supabase lobi kaydı
+  const avSrc = AVATAR_IMAGES[G.classId]?.[G.avatarIdx]||'';
+  const avatarHtml = avSrc
+    ? `<img src="${avSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none'"/>`
+    : `<span>${cls?.icon||'⚔'}</span>`;
+  bossHunters.push({
+    name: G.heroName||G.username||'Sen',
+    classIcon: cls?.icon||'⚔',
+    className: cls?.name||'',
+    avatarHtml, isMe:true
+  });
   if(currentUser && G.guildId){
     supa.from('guild_boss_sessions').upsert({
-      guild_id: G.guildId,
-      profile_id: currentUser.id,
+      guild_id: G.guildId, profile_id: currentUser.id,
       joined_at: new Date().toISOString(),
       cycle: Math.floor(Date.now()/600000),
     },{onConflict:'guild_id,profile_id,cycle'}).then(()=>{});
-    // Diğer katılımcıları çek
     _loadBossHunters();
+    _subscribeBossResult();
   }
   toast('Boss avına çıktın! 🏹');
   renderBossPanel();
@@ -3896,6 +3937,7 @@ function leaveBossHunt(){
       .eq('cycle', Math.floor(Date.now()/600000))
       .then(()=>{});
   }
+  _unsubscribeBossResult();
   toast('Boss avından çıktın.');
   renderBossPanel();
 }
@@ -3904,64 +3946,103 @@ async function _loadBossHunters(){
   if(!G.guildId) return;
   const cycle = Math.floor(Date.now()/600000);
   const {data} = await supa.from('guild_boss_sessions')
-    .select('profile_id, profiles(hero_name,username,class_id)')
-    .eq('guild_id', G.guildId)
-    .eq('cycle', cycle);
+    .select('profile_id').eq('guild_id',G.guildId).eq('cycle',cycle);
   if(!data) return;
-  // Profilleri ayrıca çek
   const ids = data.map(d=>d.profile_id);
-  const {data:profs} = await supa.from('profiles').select('id,hero_name,username,class_id').in('id',ids);
+  const {data:profs} = await supa.from('profiles')
+    .select('id,hero_name,username,class_id,avatar_idx').in('id',ids);
   const profMap={};(profs||[]).forEach(p=>profMap[p.id]=p);
   bossHunters = data.map(d=>{
     const p = profMap[d.profile_id]||{};
     const cls = CLASSES.find(c=>c.id===p.class_id);
-    return {
-      name: p.hero_name||p.username||'Avcı',
-      classIcon: cls?.icon||'⚔',
-      isMe: d.profile_id===currentUser?.id
-    };
+    const isMe = d.profile_id===currentUser?.id;
+    const avSrc = AVATAR_IMAGES[p.class_id]?.[p.avatar_idx||0]||'';
+    const avatarHtml = avSrc
+      ? `<img src="${avSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none'"/>`
+      : `<span>${cls?.icon||'⚔'}</span>`;
+    return { name:p.hero_name||p.username||'Avcı', classIcon:cls?.icon||'⚔', className:cls?.name||'', avatarHtml, isMe };
   });
   renderBossPanel();
 }
 
+/* Realtime — lonca üyeleri aynı sonucu alır */
+let _bossResultChannel = null;
+function _subscribeBossResult(){
+  if(_bossResultChannel||!G.guildId) return;
+  _bossResultChannel = supa.channel('boss_result_'+G.guildId)
+    .on('broadcast',{event:'boss_result'},(payload)=>{
+      if(payload.payload?.cycle !== Math.floor(Date.now()/600000)) return;
+      if(bossResultShown) return;
+      bossResultShown = true;
+      const boss = getCurrentBoss();
+      // Diğer oyuncular lokal sonuç almaz — sadece bildirim
+      showBossResultNotif(boss, payload.payload.won, false);
+    })
+    .subscribe();
+}
+function _unsubscribeBossResult(){
+  if(_bossResultChannel){ supa.removeChannel(_bossResultChannel); _bossResultChannel=null; }
+}
+
 function showBossResult(boss){
-  const won = Math.random() > 0.3; // %70 zafer
+  const won = Math.random() > 0.3;
   const dropped = won && Math.random() < boss.drop.chance;
-  let dropHtml = '';
+  let dropItem = null;
+
   if(dropped && G.inventory.length < 50){
-    G.inventory.push({
-      id: Date.now(),
-      name: boss.drop.name,
-      icon: boss.drop.icon,
-      ...boss.drop.item,
-      price:0,
-      seller:'player',
-      sellerName: G.heroName||G.username,
-      img: boss.drop.img,
-    });
+    dropItem = {
+      id: Date.now(), name:boss.drop.name, icon:boss.drop.icon,
+      ...boss.drop.item, price:0,
+      seller:'player', sellerName:G.heroName||G.username,
+      img:boss.drop.img,
+    };
+    G.inventory.push(dropItem);
     renderKarakter();
+  }
+  if(won){ G.gold+=500; updateHUD(); }
+  if(currentUser) sbSave();
+
+  // Lonca üyelerine sonucu yayınla (Realtime broadcast)
+  if(currentUser && G.guildId && _bossResultChannel){
+    supa.channel('boss_result_'+G.guildId).send({
+      type:'broadcast', event:'boss_result',
+      payload:{ won, cycle: Math.floor(Date.now()/600000) }
+    });
+  }
+
+  showBossResultNotif(boss, won, true, dropped, dropItem);
+}
+
+/* Evrensel bildirim popup — hangi sayfada olursa olsun çıkar */
+function showBossResultNotif(boss, won, isLocal, dropped=false, dropItem=null){
+  document.getElementById('boss-notif-overlay')?.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'boss-notif-overlay';
+  overlay.className = 'boss-notif-overlay';
+  let dropHtml='';
+  if(dropped && dropItem){
     dropHtml=`
-      <div style="margin-top:12px;background:#160e04;border:2px solid var(--g-orange);border-radius:8px;padding:12px;text-align:center;box-shadow:0 0 16px #8a5a2a60;">
-        <div style="font-size:10px;color:var(--gold2);margin-bottom:6px;font-family:var(--font-head);">✨ EŞYA DÜŞTÜ!</div>
-        <img src="images/${boss.drop.img}.webp" onerror="this.style.display='none'" style="width:56px;height:56px;object-fit:contain;"/>
-        <div style="font-family:var(--font-head);font-size:13px;color:var(--g-orange);margin-top:4px;">${boss.drop.name}</div>
-        <div style="font-size:10px;color:var(--ink3);">Envantere eklendi!</div>
+      <div style="margin-top:10px;background:#160e04;border:2px solid var(--g-orange);border-radius:8px;padding:10px;">
+        <div style="font-size:9px;color:var(--gold2);margin-bottom:4px;font-family:var(--font-head);">✨ EŞYA DÜŞTÜ!</div>
+        <img src="images/${dropItem.img}.webp" onerror="this.style.display='none'" style="width:44px;height:44px;object-fit:contain;"/>
+        <div style="font-family:var(--font-head);font-size:12px;color:var(--g-orange);margin-top:3px;">${dropItem.name}</div>
+        <div style="font-size:9px;color:var(--ink3);">Envantere eklendi!</div>
       </div>`;
   }
-  if(won){
-    G.gold += 500;
-    updateHUD();
-    if(currentUser) sbSave();
-  }
-  showGModal(`
-    <div style="text-align:center;margin-bottom:12px;">
-      <img src="images/${boss.img}.webp" onerror="this.style.display='none'" style="width:72px;height:72px;object-fit:contain;margin-bottom:8px;${won?'':'filter:grayscale(0.5)'}"/>
-      <div style="font-family:var(--font-head);font-size:16px;color:${won?'var(--gold2)':'#f87171'};margin-bottom:6px;">${won?'ZAFER!':'YENİLDİN!'}</div>
-      <div style="font-size:12px;color:var(--ink3);">${won?`${boss.name} yenildi! +500🪙 kazandın.`:`${boss.name} bu sefer çok güçlüydü.`}</div>
+  overlay.innerHTML=`
+    <div class="boss-notif-box ${won?'won':'lost'}">
+      <img src="images/${boss.img}.webp" onerror="this.style.display='none'"
+        style="width:80px;height:80px;object-fit:contain;margin-bottom:8px;${won?'':'filter:grayscale(0.5) brightness(0.6)'}"/>
+      <div style="font-family:var(--font-head);font-size:20px;color:${won?'var(--gold2)':'#f87171'};margin-bottom:6px;">
+        ${won?'⚔ ZAFER!':'💀 YENİLDİN!'}
+      </div>
+      <div style="font-size:13px;color:var(--perg2);margin-bottom:4px;">${boss.name}</div>
+      <div style="font-size:11px;color:var(--ink3);">${won?'+500🪙 kazandın!':boss.name+' bu sefer çok güçlüydü.'}</div>
       ${dropHtml}
-    </div>
-    <button class="btn" style="width:100%;" onclick="closeGModal()">Tamam</button>
-  `);
+      <button class="btn" style="width:100%;margin-top:14px;" onclick="document.getElementById('boss-notif-overlay').remove()">Tamam</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  setTimeout(()=>overlay?.remove(), 15000);
 }
 let chatChannel=null;
 function renderGuildChat(){
