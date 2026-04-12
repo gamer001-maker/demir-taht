@@ -613,6 +613,57 @@ html,body{
   to{opacity:1;transform:translateX(0);}
 }
 .zd-room-anim{animation:zd-room-enter .35s ease;}
+/* ════════════════════════════════
+   GELİŞTİRME SİSTEMİ
+════════════════════════════════ */
+.enh-layout{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:12px;height:100%;}
+@media(max-width:700px){.enh-layout{grid-template-columns:1fr;}}
+
+/* Sol: eşya listesi */
+.enh-item-list{display:flex;flex-direction:column;gap:6px;}
+.enh-item-card{
+  background:var(--panel2);border:1px solid var(--border2);
+  border-radius:8px;padding:10px 12px;
+  display:flex;align-items:center;gap:10px;
+  cursor:pointer;transition:border-color .15s,background .15s;
+}
+.enh-item-card:hover{border-color:var(--gold);background:#2a1e0c;}
+.enh-item-card.selected{border-color:var(--gold);background:#2a1e0c;box-shadow:0 0 0 1px var(--gold);}
+.enh-item-icon{width:40px;height:40px;border-radius:6px;background:var(--panel);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.enh-item-info{flex:1;min-width:0;}
+.enh-item-name{font-family:var(--font-head);font-size:11px;color:var(--perg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.enh-item-level{font-size:9px;color:var(--gold);margin-top:2px;}
+
+/* Sağ: önizleme + aksiyon */
+.enh-preview{display:flex;flex-direction:column;gap:10px;}
+.enh-compare{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;}
+.enh-stat-box{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;}
+.enh-stat-box.after{border-color:var(--gold);background:#1e1608;}
+.enh-stat-title{font-family:var(--font-head);font-size:9px;color:var(--ink3);letter-spacing:1px;margin-bottom:6px;}
+.enh-stat-icon{font-size:32px;margin-bottom:4px;display:block;}
+.enh-stat-name{font-family:var(--font-head);font-size:10px;color:var(--perg2);margin-bottom:4px;}
+.enh-stat-vals{font-size:9px;color:var(--ink3);line-height:1.7;}
+.enh-stat-vals span{color:var(--gold2);}
+.enh-arrow{font-size:20px;color:var(--gold);text-align:center;}
+
+/* Materyal gereksinimleri */
+.enh-mats{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:8px;background:var(--panel2);border:1px solid var(--border2);border-radius:8px;}
+.enh-mat{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:48px;}
+.enh-mat-icon{font-size:22px;}
+.enh-mat-name{font-size:8px;color:var(--ink3);font-family:var(--font-head);text-align:center;}
+.enh-mat-count{font-size:9px;font-family:var(--font-head);}
+.enh-mat.ok .enh-mat-count{color:#7aaa5a;}
+.enh-mat.missing .enh-mat-count{color:#f87171;}
+
+/* Progress bar */
+.enh-progress-wrap{position:relative;height:14px;background:var(--panel3);border:1px solid var(--border2);border-radius:7px;overflow:hidden;}
+.enh-progress-fill{height:100%;width:0%;border-radius:7px;transition:none;background:linear-gradient(90deg,var(--gold),#fff8a0);}
+.enh-progress-fill.running{transition:width 5s linear;}
+.enh-progress-glow{position:absolute;top:0;right:0;width:20px;height:100%;background:linear-gradient(90deg,transparent,#ffffffa0);filter:blur(3px);}
+
+/* Duman efekti canvas */
+#enh-smoke-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9000;}
+
 /* ── BOSS BİLDİRİM POPUP ── */
 .boss-notif-overlay{
   position:fixed;top:0;left:0;right:0;bottom:0;
@@ -1207,7 +1258,7 @@ html,body{
     <div class="tabs" id="game-tabs">
       <div class="tab active" id="gt-karakter" onclick="ggo('karakter')"><span class="tab-icon">👑</span>Karakter</div>
       <div class="tab" id="gt-kale" onclick="ggo('kale')"><span class="tab-icon">🏰</span>Kale</div>
-      <div class="tab" id="gt-ordu" onclick="ggo('ordu')"><span class="tab-icon">⚔</span>Ordu</div>
+      <div class="tab" id="gt-gelistirme" onclick="ggo('gelistirme')"><span class="tab-icon">⚒</span>Geliştir</div>
       <div class="tab" id="gt-halk" onclick="ggo('halk')"><span class="tab-icon">🏘</span>Halk</div>
       <div class="tab" id="gt-harita" onclick="ggo('harita')"><span class="tab-icon">🗺</span>Harita</div>
       <div class="tab" id="gt-arena" onclick="ggo('arena')"><span class="tab-icon">🛡</span>Arena</div>
@@ -1294,15 +1345,8 @@ html,body{
         </div>
         <button class="btn" style="width:100%;" onclick="endTurn()">⏭ Tur Bitir</button>
       </div>
-      <!-- ORDU -->
-      <div class="pad" id="gs-ordu" style="display:none;">
-        <div class="card-sm row-between"><span style="font-size:12px;color:var(--perg2);">Toplam Asker</span><span style="font-family:var(--font-head);font-size:16px;color:var(--gold);" id="total-army">30</span></div>
-        <div class="card-sm row-between"><span style="font-size:12px;color:var(--perg2);">Tur Maaşı</span><span style="font-family:var(--font-head);font-size:13px;color:var(--copper);" id="army-cost">0🪙</span></div>
-        <div class="sec">Birlikler</div>
-        <div id="unit-list"></div>
-        <div class="sec">Asker İşe Al</div>
-        <div id="recruit-list"></div>
-      </div>
+      <!-- GELİŞTİRME -->
+      <div class="scroll" id="gs-gelistirme" style="display:none;"></div>
       <!-- HALK -->
       <div class="pad" id="gs-halk" style="display:none;">
         <div class="card" id="folk-overview-card"></div>
@@ -1831,8 +1875,10 @@ const MARKET_ITEMS=[
   /* ══════════════════════════════════════
      KAYNAK
   ══════════════════════════════════════ */
-  {id:501,name:'Ham Demir',       icon:'⛏',cat:'resource',grade:'gray',  price:15, qty:999,seller:'npc',sellerName:'Maden Ocağı', type:'Kaynak',reqLv:1,material:null,desc:'Demir hammaddesi.',   stats:{craft_iron:1}, img:null,classBonus:null},
-  {id:502,name:'Meşe Odunu',      icon:'🪵',cat:'resource',grade:'gray',  price:10, qty:999,seller:'npc',sellerName:'Kereste',     type:'Kaynak',reqLv:1,material:null,desc:'İnşaat malzemesi.',  stats:{craft_wood:1}, img:null,classBonus:null},
+  {id:501,name:'Ham Demir',       icon:'⛏',cat:'resource',grade:'gray',  price:1, qty:999,seller:'npc',sellerName:'Maden Ocağı', type:'Materyal',reqLv:1,material:null,desc:'+1 geliştirme için gerekli.',   stats:{}, img:null,classBonus:null,isMat:true,matKey:'ham_demir'},
+  {id:502,name:'Meşe Odunu',      icon:'🪵',cat:'resource',grade:'gray',  price:1, qty:999,seller:'npc',sellerName:'Kereste',     type:'Materyal',reqLv:1,material:null,desc:'İnşaat malzemesi.',            stats:{craft_wood:1}, img:null,classBonus:null},
+  {id:504,name:'Güç Rünesi',      icon:'🔶',cat:'resource',grade:'green', price:1, qty:999,seller:'npc',sellerName:'Rune Ustası', type:'Materyal',reqLv:1,material:null,desc:'+2 geliştirme için gerekli.',   stats:{}, img:null,classBonus:null,isMat:true,matKey:'guc_runesi'},
+  {id:505,name:'Ejderha Pulu',    icon:'🐉',cat:'resource',grade:'blue',  price:1, qty:999,seller:'npc',sellerName:'Ejderha Avcı',type:'Materyal',reqLv:1,material:null,desc:'+3 geliştirme için gerekli.',   stats:{}, img:null,classBonus:null,isMat:true,matKey:'ejderha_pulu'},
 
   /* ══════════════════════════════════════
      TOHUMLAR (NPC)
@@ -1981,6 +2027,7 @@ const G={
   selectedCell:null,
   prodTimers:[],prodTimerId:1,
   prodInv:{bugday:5,saman:3,arpa:0,sebze:0,un:2,arpa_unu:0,tuy:1,yumurta:3,yun:1,sut:4,ekmek:1,corba:0,kek:0,patates:0,domates:0,cicek:0,yonca:0,cilek:0,patates_tohum:0,domates_tohum:0,cicek_tohum:0,yonca_tohum:0,cilek_tohum:0},
+  matInv:{ham_demir:0, guc_runesi:0, ejderha_pulu:0, thros_kanadi:0, dev_disi:0},
   guildName:'',
   guildId:null,
   guildTreasury:0,
@@ -2103,7 +2150,7 @@ async function startGame(){
   document.getElementById('p-onboard').classList.remove('active');
   document.getElementById('p-game').classList.add('active');
   document.getElementById('bottom-nav').style.display='flex';
-  updateHUD();renderGame('karakter');renderGame('kale');renderGame('ordu');renderGame('halk');renderGame('harita');renderGame('arena');renderGame('zindan');
+  updateHUD();renderGame('karakter');renderGame('kale');renderGame('gelistirme');renderGame('halk');renderGame('harita');renderGame('arena');renderGame('zindan');
   renderQuest(G.questTab);renderMarket();renderGuild(G.guildTab);renderProd(G.prodTab);renderProfile(G.profileTab);
   updateInvStrip();
   loadPlayerMarketItems().then(()=>renderMarket());
@@ -2256,13 +2303,13 @@ function ggo(s){
   document.querySelectorAll('[id^="gt-"]').forEach(el=>el.classList.remove('active'));
   document.getElementById('gs-'+s).style.display='block';
   document.getElementById('gt-'+s).classList.add('active');
-  if(s==='ordu') trackQuest('visitArmy');
+  if(s==='gelistirme') trackQuest('visitArmy'); // eski quest key korundu
   renderGame(s);
 }
 function renderGame(s){
   if(s==='karakter') renderKarakter();
   if(s==='kale') renderKale();
-  if(s==='ordu') renderOrdu();
+  if(s==='gelistirme') renderGelistirme();
   if(s==='halk') renderHalk();
   if(s==='harita') renderHarita();
   if(s==='arena') renderArena();
@@ -2742,6 +2789,328 @@ function recruit(uid,count){
   gainXP(10);
   toast(`${count}x ${u.name} işe alındı! -${goldNeed}🪙 -${popNeed} vatandaş`);
   updateHUD();renderOrdu();renderHalk();
+}
+
+/* ══════════════════════════════════════
+   GELİŞTİRME SİSTEMİ
+══════════════════════════════════════ */
+const ENH_LEVELS = [
+  {plus:1, chance:0.90, mat:{key:'ham_demir',  name:'Ham Demir',   icon:'⛏',  qty:1}, goldCost:1, statBonus:0.10},
+  {plus:2, chance:0.80, mat:{key:'guc_runesi', name:'Güç Rünesi',  icon:'🔶', qty:1}, goldCost:1, statBonus:0.15},
+  {plus:3, chance:0.67, mat:{key:'ejderha_pulu',name:'Ejderha Pulu',icon:'🐉', qty:1}, goldCost:1, statBonus:0.20},
+  {plus:4, chance:0.50, mat:{key:'thros_kanadi',name:'Thros Kanadı',icon:'🪶', qty:1}, goldCost:1, statBonus:0.25},
+  {plus:5, chance:0.30, mat:{key:'dev_disi',   name:'Dev Dişi',    icon:'🦷', qty:1}, goldCost:1, statBonus:0.30},
+];
+const MAT_LABELS={ham_demir:'Ham Demir',guc_runesi:'Güç Rünesi',ejderha_pulu:'Ejderha Pulu',thros_kanadi:'Thros Kanadı',dev_disi:'Dev Dişi'};
+const MAT_ICONS ={ham_demir:'⛏',guc_runesi:'🔶',ejderha_pulu:'🐉',thros_kanadi:'🪶',dev_disi:'🦷'};
+
+let enhSelectedId = null; // seçili item id
+let enhRunning = false;
+
+function getItemEnhLevel(item){
+  return item.enhPlus||0;
+}
+
+/* Geliştirme ile artan statlar — %bonus oranında artış */
+function getEnhancedStats(item, targetPlus){
+  if(!item?.stats) return {};
+  const totalBonus = ENH_LEVELS.slice(0, targetPlus).reduce((acc,l)=>acc+l.statBonus, 0);
+  const result={};
+  const combatKeys=['atk','def','str','agi','wis','cha','mgc','rng','crit','hp'];
+  Object.entries(item.stats).forEach(([k,v])=>{
+    if(combatKeys.includes(k)) result[k]=Math.round(v*(1+totalBonus));
+    else result[k]=v;
+  });
+  return result;
+}
+
+function renderGelistirme(){
+  const el=document.getElementById('gs-gelistirme');
+  if(!el) return;
+
+  // Geliştirilebilir eşyalar: envanter + equipped'den silah ve zırhlar
+  const equippedItems=Object.values(G.equipped).filter(x=>x&&['weapon','chest','helmet','gloves','boots'].includes(
+    Object.keys(G.equipped).find(k=>G.equipped[k]===x)
+  ));
+  const allItems=[
+    ...Object.entries(G.equipped)
+      .filter(([k,v])=>v && k!=='ring')
+      .map(([k,v])=>({...v, _slot:k, _source:'equipped'})),
+    ...G.inventory.filter(i=>['Kılıç','Asa','Hançer','Yay','Bıçak','Göğüslük','Zırh','Kask','Eldiven','Bot'].includes(i.type))
+      .map(i=>({...i, _source:'inventory'}))
+  ];
+
+  if(!allItems.length){
+    el.innerHTML=`<div style="text-align:center;padding:40px 16px;">
+      <div style="font-size:48px;margin-bottom:10px;">⚒</div>
+      <div style="font-family:var(--font-head);font-size:14px;color:var(--perg2);margin-bottom:6px;">Geliştirme Ocağı</div>
+      <div style="font-size:11px;color:var(--ink3);">Geliştirilebilecek eşyan yok.<br>Pazar'dan silah veya zırh satın al.</div>
+    </div>`;
+    return;
+  }
+
+  // Seçili item yoksa ilkini seç
+  if(!enhSelectedId || !allItems.find(x=>x.id===enhSelectedId)){
+    enhSelectedId = allItems[0].id;
+  }
+  const selected = allItems.find(x=>x.id===enhSelectedId)||allItems[0];
+  const curPlus = selected.enhPlus||0;
+  const nextLevel = ENH_LEVELS[curPlus];
+
+  // Sol: eşya listesi
+  const listHtml = allItems.map(item=>{
+    const plus = item.enhPlus||0;
+    const plusLabel = plus>0?`<span style="color:var(--gold);">+${plus}</span>`:'';
+    const imgHtml = item.img
+      ?`<img src="images/${item.img}.webp" style="width:28px;height:28px;object-fit:contain;" onerror="this.style.display='none'"/>`
+      :`<span style="font-size:18px;">${item.icon}</span>`;
+    return `<div class="enh-item-card${item.id===enhSelectedId?' selected':''}" onclick="enhSelect(${item.id})">
+      <div class="enh-item-icon">${imgHtml}</div>
+      <div class="enh-item-info">
+        <div class="enh-item-name">${item.name}</div>
+        <div class="enh-item-level">${item.type} ${plusLabel} ${item._source==='equipped'?'<span style="color:var(--ink3);font-size:8px;">(Kuşanılmış)</span>':''}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Sağ: önizleme
+  const curStats = selected.stats||{};
+  const nextStats = nextLevel ? getEnhancedStats(selected, curPlus+1) : null;
+  const combatKeys=['atk','def','str','agi','wis','cha','mgc','rng','hp','crit'];
+
+  const statRows=(stats,highlight=false)=>Object.entries(stats)
+    .filter(([k])=>combatKeys.includes(k))
+    .map(([k,v])=>`<div>${STAT_LABELS[k]||k}: ${highlight?`<span>+${v}</span>`:v}</div>`)
+    .join('');
+
+  const curBox=`
+    <div class="enh-stat-box">
+      <div class="enh-stat-title">ŞU AN</div>
+      <span class="enh-stat-icon">${selected.icon}</span>
+      <div class="enh-stat-name">${selected.name}${curPlus>0?` <span style="color:var(--gold);">+${curPlus}</span>`:''}</div>
+      <div class="enh-stat-vals">${statRows(curStats)}</div>
+    </div>`;
+
+  const afterBox = nextLevel ? `
+    <div class="enh-stat-box after">
+      <div class="enh-stat-title" style="color:var(--gold);">+${curPlus+1} SONRASI</div>
+      <span class="enh-stat-icon">${selected.icon}</span>
+      <div class="enh-stat-name" style="color:var(--gold2);">${selected.name} <span style="color:var(--gold);">+${curPlus+1}</span></div>
+      <div class="enh-stat-vals">${statRows(nextStats,true)}</div>
+    </div>` : `
+    <div class="enh-stat-box after" style="opacity:.5;">
+      <div class="enh-stat-title">MAKSİMUM</div>
+      <span class="enh-stat-icon">⭐</span>
+      <div class="enh-stat-name" style="color:var(--gold2);">+5 Maksimum Seviye</div>
+    </div>`;
+
+  // Materyal kutusu
+  let matsHtml='', canEnhance=false;
+  if(nextLevel){
+    const mat=nextLevel.mat;
+    const has=G.matInv[mat.key]||0;
+    const hasGold=G.gold>=nextLevel.goldCost;
+    const hasMat=has>=mat.qty;
+    canEnhance=hasGold&&hasMat&&!enhRunning;
+    matsHtml=`
+      <div class="enh-mats">
+        <div class="enh-mat ${hasMat?'ok':'missing'}">
+          <span class="enh-mat-icon">${mat.icon}</span>
+          <span class="enh-mat-name">${mat.name}</span>
+          <span class="enh-mat-count">${has}/${mat.qty}</span>
+        </div>
+        <div class="enh-mat ${hasGold?'ok':'missing'}">
+          <span class="enh-mat-icon">🪙</span>
+          <span class="enh-mat-name">Altın</span>
+          <span class="enh-mat-count">${Math.floor(G.gold)}/${nextLevel.goldCost}</span>
+        </div>
+      </div>
+      <div style="font-size:9px;color:var(--ink3);text-align:center;margin-top:4px;">
+        Başarı şansı: <span style="color:var(--gold2);font-family:var(--font-head);">%${Math.round(nextLevel.chance*100)}</span>
+      </div>`;
+  }
+
+  // Progress bar + buton
+  const actionHtml = nextLevel ? `
+    <div class="enh-progress-wrap" id="enh-progress-wrap" style="margin-bottom:8px;${enhRunning?'':'display:none'}">
+      <div class="enh-progress-fill" id="enh-progress-fill"></div>
+    </div>
+    <button class="btn" style="width:100%;font-size:13px;padding:12px;${!canEnhance&&!enhRunning?'opacity:.5;cursor:not-allowed;':''}"
+      onclick="${canEnhance&&!enhRunning?`startEnhancement(${selected.id})`:'void(0)'}"
+      id="enh-btn">
+      ${enhRunning?'⚒ Geliştiriliyor...':'⚒ Geliştir'}
+    </button>` : '';
+
+  // Materyal envanteri özeti
+  const matSummaryHtml=`
+    <div style="background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:8px;margin-top:6px;">
+      <div style="font-family:var(--font-head);font-size:9px;color:var(--ink3);letter-spacing:1px;margin-bottom:6px;">MATERYAL DEPOSU</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        ${Object.entries(G.matInv).map(([k,v])=>`
+          <div style="display:flex;align-items:center;gap:4px;font-size:10px;">
+            <span>${MAT_ICONS[k]||'📦'}</span>
+            <span style="color:var(--perg2);">${v}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+
+  el.innerHTML=`
+    <div class="enh-layout">
+      <div>
+        <div class="sec" style="margin-top:0;">GELİŞTİRİLEBİLİR EŞYALAR</div>
+        <div class="enh-item-list">${listHtml}</div>
+        ${matSummaryHtml}
+      </div>
+      <div class="enh-preview">
+        <div class="sec" style="margin-top:0;">ÖNİZLEME</div>
+        <div class="enh-compare">
+          ${curBox}
+          <div class="enh-arrow">→</div>
+          ${afterBox}
+        </div>
+        ${matsHtml}
+        ${actionHtml}
+      </div>
+    </div>`;
+
+  // Progress bar devam ediyorsa
+  if(enhRunning){
+    const fill=document.getElementById('enh-progress-fill');
+    if(fill){ fill.style.width='0%'; requestAnimationFrame(()=>{ fill.classList.add('running'); fill.style.width='100%'; }); }
+  }
+}
+
+function enhSelect(id){
+  enhSelectedId=id;
+  renderGelistirme();
+}
+
+function startEnhancement(itemId){
+  if(enhRunning) return;
+  const allItems=[
+    ...Object.entries(G.equipped).filter(([k,v])=>v&&k!=='ring').map(([k,v])=>({...v,_slot:k,_source:'equipped'})),
+    ...G.inventory.filter(i=>['Kılıç','Asa','Hançer','Yay','Bıçak','Göğüslük','Zırh','Kask','Eldiven','Bot'].includes(i.type)).map(i=>({...i,_source:'inventory'}))
+  ];
+  const item=allItems.find(x=>x.id===itemId);
+  if(!item) return;
+  const curPlus=item.enhPlus||0;
+  const level=ENH_LEVELS[curPlus];
+  if(!level){toast('Maksimum seviye!');return;}
+  if(G.gold<level.goldCost){toast('Yeterli altın yok!');return;}
+  if((G.matInv[level.mat.key]||0)<level.mat.qty){toast(`${level.mat.name} yok!`);return;}
+
+  // Malzeme ve altın düş
+  G.gold-=level.goldCost;
+  G.matInv[level.mat.key]-=level.mat.qty;
+  enhRunning=true;
+  updateHUD();
+  renderGelistirme();
+
+  // Progress bar başlat
+  const fill=document.getElementById('enh-progress-fill');
+  const wrap=document.getElementById('enh-progress-wrap');
+  if(wrap) wrap.style.display='block';
+  if(fill){ fill.style.width='0%'; requestAnimationFrame(()=>{ fill.classList.add('running'); fill.style.width='100%'; }); }
+
+  // 5 saniye sonra sonuç
+  setTimeout(()=>{
+    enhRunning=false;
+    const success=Math.random()<level.chance;
+
+    if(success){
+      // Eşyayı güncelle
+      const newPlus=curPlus+1;
+      const enhStats=getEnhancedStats(item, newPlus);
+      if(item._source==='equipped'){
+        G.equipped[item._slot]={...G.equipped[item._slot], enhPlus:newPlus, stats:enhStats};
+        syncHpWithEffective();
+      } else {
+        const idx=G.inventory.findIndex(x=>x.id===itemId);
+        if(idx>=0) G.inventory[idx]={...G.inventory[idx], enhPlus:newPlus, stats:enhStats};
+      }
+      showEnhSmoke('success');
+      toast(`✨ ${item.name} +${newPlus} geliştirme başarılı!`);
+    } else {
+      showEnhSmoke('fail');
+      // Malzemeyi geri ver — sadece altın gitti
+      toast(`💔 Geliştirme başarısız! +${curPlus} kaldı.`);
+    }
+    renderGelistirme();
+    renderKarakter();
+    if(currentUser) sbSave();
+  }, 5000);
+}
+
+/* Duman efekti — canvas tabanlı */
+function showEnhSmoke(type){
+  // Varolan canvas varsa kaldır
+  document.getElementById('enh-smoke-canvas')?.remove();
+  const canvas=document.createElement('canvas');
+  canvas.id='enh-smoke-canvas';
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
+  document.body.appendChild(canvas);
+  const ctx=canvas.getContext('2d');
+  const color=type==='success'?['#2a6a2a','#7aaa5a','#a0e060','#c0ff80']:['#6a1a1a','#c03030','#f05050','#ff8080'];
+  const particles=[];
+
+  // 4 köşeden parçacık üret
+  const corners=[
+    {x:0,y:canvas.height},{x:canvas.width,y:canvas.height},
+    {x:0,y:0},{x:canvas.width,y:0}
+  ];
+  corners.forEach(corner=>{
+    for(let i=0;i<30;i++){
+      const angle=Math.random()*Math.PI*0.6+(corner.x===0?-0.3:Math.PI-0.3)+(corner.y===0?Math.PI*0.7:0);
+      particles.push({
+        x:corner.x+(Math.random()-0.5)*40,
+        y:corner.y+(Math.random()-0.5)*40,
+        vx:Math.cos(angle)*(1+Math.random()*3),
+        vy:Math.sin(angle)*(1+Math.random()*3)-1.5,
+        size:4+Math.random()*8,
+        alpha:0.8+Math.random()*0.2,
+        decay:0.012+Math.random()*0.01,
+        color:color[Math.floor(Math.random()*color.length)],
+        wobble:Math.random()*Math.PI*2,
+        wobbleSpeed:0.05+Math.random()*0.05,
+      });
+    }
+  });
+
+  let raf;
+  function tick(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    let alive=false;
+    for(const p of particles){
+      if(p.alpha<=0) continue;
+      alive=true;
+      p.wobble+=p.wobbleSpeed;
+      p.x+=p.vx+Math.sin(p.wobble)*0.5;
+      p.y+=p.vy;
+      p.vy-=0.03; // yükselme
+      p.alpha-=p.decay;
+      p.size+=0.1;
+
+      // Glow
+      const grd=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.size*2);
+      grd.addColorStop(0,p.color);
+      grd.addColorStop(1,'transparent');
+      ctx.globalAlpha=p.alpha*0.3;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.size*2,0,Math.PI*2);
+      ctx.fillStyle=grd;ctx.fill();
+
+      // Merkez
+      ctx.globalAlpha=p.alpha;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.size*0.6,0,Math.PI*2);
+      ctx.fillStyle=p.color;ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    if(alive) raf=requestAnimationFrame(tick);
+    else { cancelAnimationFrame(raf); canvas.remove(); }
+  }
+  raf=requestAnimationFrame(tick);
+  // Max 4 saniye
+  setTimeout(()=>{ cancelAnimationFrame(raf); canvas.remove(); }, 4000);
 }
 
 /* ── HALK ── */
@@ -3653,12 +4022,22 @@ function buyItem(id){
   G.gold-=item.price;
   if(item.qty!==undefined&&item.qty<=98) item.qty--;
 
-  // Tohum ise prodInv'e ekle, envantere değil
+  // Tohum ise prodInv'e ekle
   if(item.isSeed && item.seedKey){
     G.prodInv[item.seedKey]=(G.prodInv[item.seedKey]||0)+1;
     gainXP(5);
     toast(`${item.name} tohum deposuna eklendi! -${item.price}🪙`);
     updateHUD();updateInvStrip();renderMarket();
+    if(currentUser) sbSave();
+    return;
+  }
+
+  // Geliştirme materyali ise matInv'e ekle
+  if(item.isMat && item.matKey){
+    G.matInv[item.matKey]=(G.matInv[item.matKey]||0)+1;
+    gainXP(3);
+    toast(`${item.name} materyal deposuna eklendi! -${item.price}🪙`);
+    updateHUD();renderMarket();
     if(currentUser) sbSave();
     return;
   }
@@ -3912,6 +4291,7 @@ async function sbLoadGuildMembers(){
 const BOSSES = [
   {
     id:'devsef', name:'Dev Sef', img:'devsef',
+    matDrop:{key:'dev_disi', name:'Dev Dişi', icon:'🦷'}, // zaferle kesin düşer
     drop:{name:"Sef'in Kılıcı", img:'sefinkilici', icon:'⚔', chance:0.10,
       item:{type:'Kılıç',grade:'orange',stats:{atk:75,str:20,crit:15},
         desc:"Dev Sef'i yenen efsanevi savaşçılara düşer.",
@@ -3919,6 +4299,7 @@ const BOSSES = [
   },
   {
     id:'throswing', name:'Thros Wing', img:'devthros',
+    matDrop:{key:'thros_kanadi', name:'Thros Kanadı', icon:'🪶'}, // zaferle kesin düşer
     drop:{name:"Thros'un Yayı", img:'throsyay', icon:'🏹', chance:0.10,
       item:{type:'Yay',grade:'orange',stats:{rng:80,atk:55,agi:15},
         desc:"Thros Wing'i yenen efsanevi avcılara düşer.",
@@ -4242,7 +4623,13 @@ async function showBossResult(boss){
     G.inventory.push(dropItem);
     renderKarakter();
   }
-  if(won){ G.gold+=500; updateHUD(); }
+  if(won){
+    G.gold+=500; updateHUD();
+    // Zaferle kesin materyal dropu
+    if(boss.matDrop){
+      G.matInv[boss.matDrop.key]=(G.matInv[boss.matDrop.key]||0)+1;
+    }
+  }
   if(currentUser) sbSave();
 
   // Broadcast: diğer katılımcılara yayınla
@@ -5164,6 +5551,7 @@ async function sbLoadProfile() {
   if(p.prod_kitchen !== undefined) PROD_BUILDINGS.kitchen.level = p.prod_kitchen;
   // Üretim envanteri
   if(p.prod_inv && Object.keys(p.prod_inv).length) G.prodInv = p.prod_inv;
+  if(p.mat_inv && typeof p.mat_inv==='object') G.matInv = {...G.matInv, ...p.mat_inv};
   // Oyuncu envanteri ve kuşanılan eşyalar
   if(p.inventory && Array.isArray(p.inventory)) G.inventory = p.inventory;
   if(p.equipped  && typeof p.equipped==='object') G.equipped  = {...G.equipped, ...p.equipped};
@@ -5209,6 +5597,7 @@ async function sbSave() {
     prod_ranch:   PROD_BUILDINGS.ranch.level,
     prod_kitchen: PROD_BUILDINGS.kitchen.level,
     prod_inv:     G.prodInv,
+    mat_inv:      G.matInv,
     inventory:    G.inventory,
     equipped:     G.equipped,
     zd_tickets:   G.zdTickets,
@@ -5303,7 +5692,7 @@ async function doLogin() {
     document.getElementById('p-game').classList.add('active');
     document.getElementById('bottom-nav').style.display='flex';
     updateHUD();
-    renderGame('karakter');renderGame('kale');renderGame('ordu');renderGame('halk');renderGame('harita');renderGame('arena');renderGame('zindan');
+    renderGame('karakter');renderGame('kale');renderGame('gelistirme');renderGame('halk');renderGame('harita');renderGame('arena');renderGame('zindan');
     renderQuest(G.questTab);renderMarket();renderGuild(G.guildTab);renderProd(G.prodTab);renderProfile(G.profileTab);
     updateInvStrip();
     toast(`Hoş geldin, ${G.heroName}! ☁`);
@@ -5337,7 +5726,7 @@ const nd=document.getElementById('notif-dot');if(nd) nd.style.display='block';
       document.getElementById('p-game').classList.add('active');
       document.getElementById('bottom-nav').style.display='flex';
       updateHUD();
-      renderGame('karakter');renderGame('kale');renderGame('ordu');renderGame('halk');renderGame('harita');renderGame('arena');renderGame('zindan');
+      renderGame('karakter');renderGame('kale');renderGame('gelistirme');renderGame('halk');renderGame('harita');renderGame('arena');renderGame('zindan');
       renderQuest(G.questTab);renderMarket();renderGuild(G.guildTab);renderProd(G.prodTab);renderProfile(G.profileTab);
       updateInvStrip();
       toast(`Hoş geldin, ${G.heroName}! ☁`);
