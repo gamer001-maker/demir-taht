@@ -2614,7 +2614,7 @@ function endTurn(){
   G.morale=Math.min(100,G.morale+(G.folk.happiness>60?2:-3));
   G.castle.hp=Math.min(G.castle.maxhp,G.castle.hp+5);
   if(G.gold<0) G.gold=0;
-  G.stats.hp=Math.min(G.stats.maxhp,G.stats.hp+10);
+  G.stats.hp=Math.min(getEffectiveStats().maxhp, G.stats.hp+10);
   gainXP(15);
 
   /* ── GÖREV TAKİBİ ── */
@@ -3242,8 +3242,9 @@ function zdEnterRoom(idx){
     updateHUD(); renderZindan();
   }
   else if(room.type==='rest'){
-    const healAmt=Math.floor(G.stats.maxhp*0.3);
-    G.stats.hp=Math.min(G.stats.maxhp, G.stats.hp+healAmt);
+    const effMaxHp=getEffectiveStats().maxhp;
+    const healAmt=Math.floor(effMaxHp*0.3);
+    G.stats.hp=Math.min(effMaxHp, G.stats.hp+healAmt);
     room.cleared=true;
     toast(`Dinlendin! +${healAmt} can ❤`);
     updateHUD(); renderZindan();
@@ -3382,7 +3383,7 @@ function zdAnimateHit(target){
 function zdDeath(){
   ZD.active=false;
   ZD.battle=null;
-  G.stats.hp=Math.max(1,Math.floor(G.stats.maxhp*0.3));
+  G.stats.hp=Math.max(1,Math.floor(getEffectiveStats().maxhp*0.3));
   updateHUD();
   if(currentUser) sbSave();
   showGModal(`
