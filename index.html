@@ -4573,9 +4573,16 @@ function _subscribeBossResult(){
       bossResultShown = true;
       const boss = getCurrentBoss();
       const won = payload.payload.won;
-      // Diğer katılımcılar da ödülü alsın
+      // Katılımcılar ödülü alsın
       if(bossJoined){
-        if(won){ G.gold+=500; updateHUD(); }
+        if(won){
+          G.gold+=500; updateHUD();
+          // Materyal dropu
+          if(boss.matDrop){
+            G.matInv[boss.matDrop.key]=(G.matInv[boss.matDrop.key]||0)+1;
+            toast(`${boss.matDrop.icon} ${boss.matDrop.name} kazandın!`);
+          }
+        }
         if(currentUser) sbSave();
       }
       showBossResultNotif(boss, won, false);
@@ -4587,27 +4594,27 @@ function _unsubscribeBossResult(){
 }
 
 async function showBossResult(boss){
-  // Sonucu Supabase'de kontrol et — bu cycle'da zaten yazılmış mı?
   const cycle = Math.floor(Date.now()/600000);
-  const {data:existing} = await supa.from('guild_boss_history')
-    .select('won').eq('guild_id',G.guildId).eq('cycle',cycle).single();
-
   let won;
-  if(existing){
-    // Zaten yazılmış — aynı sonucu al
-    won = existing.won;
-  } else {
-    // İlk kişi — sonucu belirle ve yaz
+
+  // guild_boss_history tablosu varsa kullan, yoksa local random
+  try {
+    const {data:existing} = await supa.from('guild_boss_history')
+      .select('won').eq('guild_id',G.guildId).eq('cycle',cycle).single();
+
+    if(existing){
+      won = existing.won;
+    } else {
+      won = Math.random() > 0.3;
+      await supa.from('guild_boss_history').insert({
+        guild_id: G.guildId, boss_id: boss.id, boss_name: boss.name,
+        cycle, won, participants: bossHunters.length,
+        created_at: new Date().toISOString(),
+      });
+    }
+  } catch(e){
+    // Tablo yoksa veya hata varsa local random
     won = Math.random() > 0.3;
-    await supa.from('guild_boss_history').insert({
-      guild_id: G.guildId,
-      boss_id: boss.id,
-      boss_name: boss.name,
-      cycle,
-      won,
-      participants: bossHunters.length,
-      created_at: new Date().toISOString(),
-    }).then(()=>{});
   }
 
   const dropped = won && Math.random() < boss.drop.chance;
@@ -4623,20 +4630,22 @@ async function showBossResult(boss){
     G.inventory.push(dropItem);
     renderKarakter();
   }
+
   if(won){
     G.gold+=500; updateHUD();
     // Zaferle kesin materyal dropu
     if(boss.matDrop){
       G.matInv[boss.matDrop.key]=(G.matInv[boss.matDrop.key]||0)+1;
+      toast(`${boss.matDrop.icon} ${boss.matDrop.name} kazandın!`);
     }
   }
   if(currentUser) sbSave();
 
-  // Broadcast: diğer katılımcılara yayınla
+  // Broadcast: diğer katılımcılara won + matDrop bilgisini de gönder
   if(currentUser && G.guildId && _bossResultChannel){
     supa.channel('boss_result_'+G.guildId).send({
       type:'broadcast', event:'boss_result',
-      payload:{ won, cycle }
+      payload:{ won, cycle, bossId: boss.id }
     });
   }
 
