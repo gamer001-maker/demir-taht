@@ -2067,7 +2067,11 @@ async function startGame(){
   if(G._regEmail && G._regPass && G.username !== 'Misafir'){
     toast('Hesap oluşturuluyor...');
     const ok = await sbRegister(G._regEmail, G._regPass, G.username);
-    if(!ok) return; // kayıt başarısız, devam etme
+    if(!ok){
+      toast('Kayıt başarısız! E-posta zaten kullanımda olabilir.');
+      return;
+    }
+    toast('Hesap oluşturuldu! Oyuna giriliyor...');
   }
   document.getElementById('p-onboard').classList.remove('active');
   document.getElementById('p-game').classList.add('active');
@@ -4685,29 +4689,58 @@ async function sbCreateProfile(username) {
   if (!currentUser) return;
   const cls = CLASSES.find(c => c.id === G.classId) || CLASSES[0];
   const { error } = await supa.from('profiles').insert({
-    id: currentUser.id,
+    id:          currentUser.id,
     username,
-    hero_name: G.heroName,
-    class_id: G.classId,
-    avatar_idx: G.avatarIdx,
+    hero_name:   G.heroName,
+    class_id:    G.classId,
+    avatar_idx:  G.avatarIdx,
     armor_color: G.armorColor,
     cloak_color: G.cloakColor,
-    gold: 500,
-    level: 1,
-    xp: 0,
-    skill_points: 3,
-    stat_str: cls.base.str,
-    stat_def: cls.base.def,
-    stat_agi: cls.base.agi,
-    stat_wis: cls.base.wis,
-    stat_cha: cls.base.cha,
-    hp: cls.base.hp,
-    max_hp: cls.base.maxhp,
+    gold:        500,
+    food:        80,
+    wood:        40,
+    level:       1,
+    xp:          0,
+    skill_points:3,
+    stat_str:    cls.base.str,
+    stat_def:    cls.base.def,
+    stat_agi:    cls.base.agi,
+    stat_wis:    cls.base.wis,
+    stat_cha:    cls.base.cha,
+    hp:          cls.base.hp,
+    max_hp:      cls.base.maxhp,
+    morale:      72,
+    turn:        1,
+    season:      0,
+    arena_score: 0,
+    arena_wins:  0,
+    arena_losses:0,
+    prod_farm:   1,
+    prod_mill:   0,
+    prod_ranch:  0,
+    prod_kitchen:0,
+    prod_inv:    G.prodInv,
+    inventory:   [],
+    equipped:    {},
+    zd_tickets:  20,
+    zd_ticket_date: '',
+    guild_id:    null,
+    guild_name:  null,
   });
-  if (error) { console.error('Profil oluşturma hatası:', error); return; }
+  if (error) {
+    console.error('Profil oluşturma hatası:', error);
+    toast('Profil hatası: ' + error.message);
+    return;
+  }
 
   // Kale
-  await supa.from('castles').insert({ profile_id: currentUser.id });
+  const castleRes = await supa.from('castles').insert({
+    profile_id: currentUser.id,
+    hp: 100, max_hp: 100, defense: 40, attack: 25,
+    walls: 1, towers: 1, barracks: 1, farm: 1, market: 1
+  });
+  if(castleRes.error) console.error('Kale hatası:', castleRes.error);
+
   // Ordu
   await supa.from('armies').insert([
     { profile_id: currentUser.id, unit_type: 'infantry', count: 20 },
@@ -4715,7 +4748,10 @@ async function sbCreateProfile(username) {
     { profile_id: currentUser.id, unit_type: 'cavalry',  count: 2  },
   ]);
   // Halk
-  await supa.from('folk').insert({ profile_id: currentUser.id });
+  await supa.from('folk').insert({
+    profile_id: currentUser.id,
+    population: 100, happiness: 68, tax: 10
+  });
   // Başlangıç keşfedilen hücreler
   const cells = [14,15,20,21,22,27,28].map(i => ({ profile_id: currentUser.id, cell_index: i }));
   await supa.from('explored_cells').insert(cells);
