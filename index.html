@@ -1821,21 +1821,29 @@ const MARKET_ITEMS=[
      AKSESUAR
   ══════════════════════════════════════ */
   {id:301,name:'Bakır Yüzük',     icon:'💍',cat:'accessory',grade:'gray',  price:50,  qty:99,seller:'npc',sellerName:'Mücevherci',  type:'Yüzük',reqLv:1, material:null,desc:'Sıradan bakır yüzük.',                stats:{mgc:3,wis:2},   img:null,classBonus:null},
-  {id:302,name:'Kaderin Yüzüğü',  icon:'💍',cat:'accessory',grade:'orange',price:15000,qty:1,seller:'player',sellerName:'FateMaster',type:'Yüzük',reqLv:25,material:null,desc:'Ölümden kurtarır.',                  stats:{hp:150,luck:50},img:null,classBonus:null},
 
   /* ══════════════════════════════════════
      TÜKETİLEBİLİR
   ══════════════════════════════════════ */
   {id:401,name:'Küçük Can İksiri',icon:'🧪',cat:'consumable',grade:'gray',  price:30, qty:99,seller:'npc',sellerName:'Eczacı',      type:'İksir',reqLv:1, material:null,desc:'30 can yeniler.',                    stats:{hp_restore:30}, img:null,classBonus:null},
   {id:402,name:'Güç Runesi',      icon:'🔶',cat:'consumable',grade:'green', price:120,qty:20,seller:'npc',sellerName:'Rune Ustası', type:'Rune', reqLv:5, material:null,desc:'Saldırı +%50.',                     stats:{atk_boost:50},  img:null,classBonus:null},
-  {id:403,name:'Ejderha Kanı',    icon:'🧪',cat:'consumable',grade:'purple',price:600,qty:5, seller:'player',sellerName:'AlchemyKing',type:'İksir',reqLv:15,material:null,desc:'200 can yeniler.',                 stats:{hp_restore:200},img:null,classBonus:null},
 
   /* ══════════════════════════════════════
      KAYNAK
   ══════════════════════════════════════ */
-  {id:501,name:'Ham Demir',       icon:'⛏',cat:'resource',grade:'gray',  price:15, qty:999,seller:'npc',sellerName:'Maden Ocağı', type:'Kaynak',reqLv:1,material:null,desc:'Demir hammaddesi.',                   stats:{craft_iron:1},  img:null,classBonus:null},
-  {id:502,name:'Meşe Odunu',      icon:'🪵',cat:'resource',grade:'gray',  price:10, qty:999,seller:'npc',sellerName:'Kereste',     type:'Kaynak',reqLv:1,material:null,desc:'İnşaat malzemesi.',                  stats:{craft_wood:1},  img:null,classBonus:null},
-  {id:503,name:'Ejderha Pulu',    icon:'🐉',cat:'resource',grade:'purple',price:1200,qty:8, seller:'player',sellerName:'DragonHunter',type:'Kaynak',reqLv:20,material:null,desc:'Efsanevi yapım maddesi.',        stats:{craft_legendary:1},img:null,classBonus:null},
+  {id:501,name:'Ham Demir',       icon:'⛏',cat:'resource',grade:'gray',  price:15, qty:999,seller:'npc',sellerName:'Maden Ocağı', type:'Kaynak',reqLv:1,material:null,desc:'Demir hammaddesi.',   stats:{craft_iron:1}, img:null,classBonus:null},
+  {id:502,name:'Meşe Odunu',      icon:'🪵',cat:'resource',grade:'gray',  price:10, qty:999,seller:'npc',sellerName:'Kereste',     type:'Kaynak',reqLv:1,material:null,desc:'İnşaat malzemesi.',  stats:{craft_wood:1}, img:null,classBonus:null},
+
+  /* ══════════════════════════════════════
+     TOHUMLAR (NPC)
+  ══════════════════════════════════════ */
+  {id:601,name:'Buğday',          icon:'🌾',cat:'resource',grade:'gray',  price:10, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:1, material:null,desc:'Tarlada ekilebilir. Kendisi de tohum.',          stats:{},img:null,classBonus:null,isSeed:true,seedKey:'bugday'},
+  {id:602,name:'Arpa',            icon:'🌱',cat:'resource',grade:'gray',  price:15, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:2, material:null,desc:'Tarlada ekilebilir. Kendisi de tohum.',          stats:{},img:null,classBonus:null,isSeed:true,seedKey:'arpa'},
+  {id:603,name:'Patates Tohumu',  icon:'🌱',cat:'resource',grade:'gray',  price:20, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:3, material:null,desc:'Patates yetiştirmek için tohum.',               stats:{},img:null,classBonus:null,isSeed:true,seedKey:'patates_tohum'},
+  {id:604,name:'Çiçek Tohumu',    icon:'🌱',cat:'resource',grade:'green', price:25, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:5, material:null,desc:'Arı kovanı için çiçek yetiştirir.',             stats:{},img:null,classBonus:null,isSeed:true,seedKey:'cicek_tohum'},
+  {id:605,name:'Domates Tohumu',  icon:'🌱',cat:'resource',grade:'green', price:30, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:6, material:null,desc:'Domates yetiştirmek için tohum.',               stats:{},img:null,classBonus:null,isSeed:true,seedKey:'domates_tohum'},
+  {id:606,name:'Yonca Tohumu',    icon:'🌱',cat:'resource',grade:'green', price:35, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:7, material:null,desc:'Yonca yetiştirmek için. Bol saman verir.',       stats:{},img:null,classBonus:null,isSeed:true,seedKey:'yonca_tohum'},
+  {id:607,name:'Çilek Tohumu',    icon:'🌱',cat:'resource',grade:'green', price:40, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:8, material:null,desc:'Çilek yetiştirmek için. Aşevinde kullanılır.',   stats:{},img:null,classBonus:null,isSeed:true,seedKey:'cilek_tohum'},
 ];
 const QUEST_DATA={
   story:[
@@ -2098,6 +2106,7 @@ async function startGame(){
   updateHUD();renderGame('karakter');renderGame('kale');renderGame('ordu');renderGame('halk');renderGame('harita');renderGame('arena');renderGame('zindan');
   renderQuest(G.questTab);renderMarket();renderGuild(G.guildTab);renderProd(G.prodTab);renderProfile(G.profileTab);
   updateInvStrip();
+  loadPlayerMarketItems().then(()=>renderMarket());
   if(G.gold>=100) trackQuest('goldReached100');
   const initArmy=G.units.reduce((a,u)=>a+u.count,0);
   if(initArmy>=30) trackQuest('armyCount30');
@@ -2215,7 +2224,7 @@ function showPage(p){
   document.querySelectorAll('.bnav-btn').forEach(el=>el.classList.remove('active'));
   document.getElementById('bn-'+p).classList.add('active');
   if(p==='quest') renderQuest(G.questTab);
-  if(p==='market') renderMarket();
+  if(p==='market'){ loadPlayerMarketItems().then(()=>renderMarket()); }
   if(p==='guild') renderGuild(G.guildTab);
   if(p==='prod'){updateInvStrip();renderProd(G.prodTab);}
   if(p==='profile') renderProfile(G.profileTab);
@@ -2539,24 +2548,38 @@ function openSellModal(itemId){
   showGModal(html);
 }
 
-function confirmSellItem(itemId){
+async function confirmSellItem(itemId){
   const item=G.inventory.find(x=>x.id===itemId);if(!item)return;
   const price=parseInt(document.getElementById('sell-price-inp')?.value)||1;
   if(price<1){toast('Geçersiz fiyat!');return;}
-  // Pazar listesine ekle
-  const newId=Math.max(...MARKET_ITEMS.map(x=>x.id),100)+Math.floor(Math.random()*1000);
-  MARKET_ITEMS.push({
-    id:newId, name:item.name, icon:item.icon,
-    cat: getCatFromType(item.type),
-    grade:item.grade||'gray', price,
-    qty:1, seller:'player',
-    sellerName:G.heroName||G.username,
-    type:item.type, desc:item.desc, stats:item.stats
-  });
+  if(!currentUser){toast('Satış için giriş yapmalısın!');return;}
+
+  // Supabase marketplace tablosuna ekle
+  const {data,error}=await supa.from('marketplace').insert({
+    seller_id:   currentUser.id,
+    seller_name: G.heroName||G.username,
+    item_name:   item.name,
+    item_icon:   item.icon,
+    item_type:   item.type,
+    item_grade:  item.grade||'gray',
+    item_stats:  item.stats||{},
+    item_desc:   item.desc||'',
+    item_img:    item.img||null,
+    item_req_lv: item.reqLv||1,
+    item_material: item.material||null,
+    item_class_bonus: item.classBonus||null,
+    price,
+    created_at: new Date().toISOString(),
+  }).select().single();
+
+  if(error){ toast('Listeleme hatası: '+error.message); return; }
+
   G.inventory=G.inventory.filter(x=>x.id!==itemId);
   closeGModal();
   toast(`${item.name} ${price}🪙 fiyatıyla pazara listelendi!`);
-  renderKarakter();renderMarket();
+  renderKarakter();
+  await loadPlayerMarketItems();
+  renderMarket();
   if(currentUser) sbSave();
 }
 
@@ -3504,14 +3527,58 @@ function renderQuest(t){
 ══════════════════════════════════════ */
 function setSrc(s){G.marketSrc=s;document.querySelectorAll('.src-btn').forEach(el=>{const active=el.id==='src-'+s;el.style.color=active?'var(--gold)':'var(--ink3)';el.style.borderBottom=active?'2px solid var(--gold)':'2px solid transparent';});renderMarket();}
 function setCat(c){G.marketCat=c;document.querySelectorAll('.cat-tab').forEach(el=>{const active=el.id==='cat-'+c;el.style.color=active?'var(--gold2)':'var(--ink3)';el.style.borderBottom=active?'2px solid var(--gold2)':'2px solid transparent';});renderMarket();}
+// Supabase'den gelen gerçek player ilanları (belleğe cache)
+let G_PLAYER_LISTINGS = [];
+
+async function loadPlayerMarketItems(){
+  if(!currentUser) return;
+  const {data,error} = await supa.from('marketplace')
+    .select('*')
+    .order('created_at',{ascending:false})
+    .limit(100);
+  if(error||!data) return;
+  G_PLAYER_LISTINGS = data.map(row=>({
+    id: 'mp_'+row.id,
+    dbId: row.id,
+    name: row.item_name,
+    icon: row.item_icon||'📦',
+    cat:  getCatFromType(row.item_type),
+    grade: row.item_grade||'gray',
+    price: row.price,
+    qty: 1,
+    seller: 'player',
+    sellerName: row.seller_name||'Oyuncu',
+    sellerId: row.seller_id,
+    type: row.item_type,
+    desc: row.item_desc||'',
+    stats: row.item_stats||{},
+    img: row.item_img||null,
+    reqLv: row.item_req_lv||1,
+    material: row.item_material||null,
+    classBonus: row.item_class_bonus||null,
+    isMarketplace: true,
+  }));
+}
+
 function renderMarket(){
   const q=(document.getElementById('market-search')?.value||'').toLowerCase();
   const sort=document.getElementById('market-sort')?.value||'price_asc';
   const go={gray:0,green:1,blue:2,purple:3,orange:4};
-  let items=MARKET_ITEMS.filter(i=>{
+
+  // NPC + gerçek player ilanları birleştir (sahte player ilanı yok)
+  const allItems = [
+    ...MARKET_ITEMS.filter(i=>i.seller==='npc'||i.seller==='boss'),
+    ...G_PLAYER_LISTINGS,
+  ];
+
+  let items=allItems.filter(i=>{
     if(G.marketSrc==='player'&&i.seller!=='player') return false;
     if(G.marketSrc==='npc'&&i.seller!=='npc') return false;
-    if(G.marketCat!=='all'&&i.cat!==G.marketCat) return false;
+    if(G.marketCat!=='all'&&i.cat!==i.cat) return false; // cat filtresi
+    if(G.marketCat!=='all'){
+      // tohum için 'resource' kategori
+      if(i.cat!==G.marketCat) return false;
+    }
     if(q&&!i.name.toLowerCase().includes(q)) return false;
     return true;
   });
@@ -3520,28 +3587,32 @@ function renderMarket(){
   if(sort==='grade_desc') items.sort((a,b)=>go[b.grade]-go[a.grade]);
   const cnt=document.getElementById('market-count');if(cnt) cnt.textContent=items.length+' ilan';
   document.getElementById('market-content').innerHTML=items.map(item=>{
-    const statsP=Object.entries(item.stats).slice(0,2).map(([k,v])=>`<span style="font-size:8px;padding:1px 4px;border-radius:3px;background:var(--panel);color:var(--perg2);border:1px solid var(--border);">+${v} ${STAT_LABELS[k]||k}</span>`).join('');
-    const canBuy=item.seller!=='boss'&&G.gold>=item.price;
+    const statsP=Object.entries(item.stats||{}).slice(0,2).map(([k,v])=>`<span style="font-size:8px;padding:1px 4px;border-radius:3px;background:var(--panel);color:var(--perg2);border:1px solid var(--border);">+${v} ${STAT_LABELS[k]||k}</span>`).join('');
+    const canBuy=item.seller!=='boss'&&G.gold>=item.price&&item.sellerId!==currentUser?.id;
     const isBoss=item.seller==='boss';
+    const isOwnListing=item.sellerId===currentUser?.id;
     const canEquipLv=G.level>=(item.reqLv||1);
     const lvBadge=item.reqLv>1?`<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:var(--panel);border:1px solid ${canEquipLv?'var(--gold)':'#8b1e1e'};color:${canEquipLv?'var(--gold2)':'#c87070'};">Sv.${item.reqLv}</span>`:'';
     const iconContent=item.img
       ?`<img src="images/${item.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:30px;height:30px;object-fit:contain;"/><span style="display:none">${item.icon}</span>`
       :`<span>${item.icon}</span>`;
-    return `<div class="listing-card ${item.grade}" onclick="buyItem(${item.id})">
-      <div class="item-icon ${item.grade}">${iconContent}<div class="grade-pip gp-${item.grade}">${GRADES[item.grade].name}</div></div>
+    return `<div class="listing-card ${item.grade}" onclick="buyMarketItem('${item.id}')">
+      <div class="item-icon ${item.grade}">${iconContent}<div class="grade-pip gp-${item.grade}">${GRADES[item.grade]?.name||''}</div></div>
       <div style="flex:1;min-width:0;">
         <div class="item-name ${item.grade}" style="font-family:var(--font-head);font-size:11px;">${item.name}</div>
         <div style="display:flex;gap:4px;align-items:center;margin:2px 0;">${lvBadge}<span style="font-size:9px;color:var(--ink3);">${item.type}</span></div>
         <div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:2px;">${statsP}</div>
-        <div style="font-size:9px;color:var(--ink3);margin-top:2px;">${isBoss?'⚔':item.seller==='npc'?'🤖':'👤'} ${item.sellerName}</div>
+        <div style="font-size:9px;color:var(--ink3);margin-top:2px;">${isBoss?'⚔':item.seller==='npc'?'🤖':'👤'} ${item.sellerName}${isOwnListing?' <span style="color:var(--gold);">(Sen)</span>':''}</div>
       </div>
       <div style="text-align:right;flex-shrink:0;">
         ${isBoss
           ?`<div style="font-family:var(--font-head);font-size:10px;color:var(--g-orange);line-height:1.3;">Boss<br>Drop</div>`
           :`<div style="font-family:var(--font-head);font-size:12px;color:var(--gold);">${item.price.toLocaleString('tr')}🪙</div>
            <div style="font-size:8px;color:var(--ink3);">${item.qty>98?'∞':item.qty} adet</div>
-           <button class="buy-btn-sm" style="margin-top:5px;" onclick="event.stopPropagation();buyItem(${item.id})" ${!canBuy?'disabled':''}>Al</button>`
+           ${isOwnListing
+             ?`<button class="buy-btn-sm" style="margin-top:5px;border-color:var(--hp);color:#c87070;" onclick="event.stopPropagation();cancelListing('${item.id}')">Geri Al</button>`
+             :`<button class="buy-btn-sm" style="margin-top:5px;" onclick="event.stopPropagation();buyMarketItem('${item.id}')" ${!canBuy?'disabled':''}>Al</button>`
+           }`
         }
       </div>
     </div>`;
@@ -3549,13 +3620,24 @@ function renderMarket(){
   if(!items.length) document.getElementById('market-content').innerHTML=`<div style="text-align:center;padding:30px;font-size:12px;color:var(--ink3);font-style:italic;">İlan bulunamadı.</div>`;
 }
 function buyItem(id){
-  const item=MARKET_ITEMS.find(x=>x.id===id)||G.inventory.find(x=>x.id===id);
+  const item=MARKET_ITEMS.find(x=>x.id===id);
   if(!item)return;
   if(item.seller==='boss'){toast("Bu eşya sadece Boss savaşından düşer!");return;}
   if(G.gold<item.price){toast('Yeterli altın yok!');return;}
-  if(G.inventory.length>=50){toast('Envanter dolu! Önce bir eşya sat.');return;}
   G.gold-=item.price;
   if(item.qty!==undefined&&item.qty<=98) item.qty--;
+
+  // Tohum ise prodInv'e ekle, envantere değil
+  if(item.isSeed && item.seedKey){
+    G.prodInv[item.seedKey]=(G.prodInv[item.seedKey]||0)+1;
+    gainXP(5);
+    toast(`${item.name} tohum deposuna eklendi! -${item.price}🪙`);
+    updateHUD();updateInvStrip();renderMarket();
+    if(currentUser) sbSave();
+    return;
+  }
+
+  if(G.inventory.length>=50){toast('Envanter dolu! Önce bir eşya sat.');G.gold+=item.price;return;}
   const invItem={
     id: Date.now(),
     name: item.name, icon: item.icon,
@@ -3576,9 +3658,68 @@ function buyItem(id){
   if(currentUser) sbSave();
 }
 
-/* ══════════════════════════════════════
-   GUILD
-══════════════════════════════════════ */
+async function buyMarketItem(id){
+  // NPC item mi yoksa gerçek listing mi?
+  const npcItem = MARKET_ITEMS.find(x=>x.id==id||(typeof id==='string'&&x.id==id));
+  if(npcItem){ buyItem(npcItem.id); return; }
+
+  const listing = G_PLAYER_LISTINGS.find(x=>x.id===id);
+  if(!listing) return;
+  if(listing.sellerId===currentUser?.id){ toast('Kendi ilanını satın alamazsın!'); return; }
+  if(G.gold<listing.price){ toast('Yeterli altın yok!'); return; }
+  if(G.inventory.length>=50){ toast('Envanter dolu!'); return; }
+
+  // Supabase'den sil
+  const {error} = await supa.from('marketplace').delete().eq('id', listing.dbId);
+  if(error){ toast('Satın alma hatası: '+error.message); return; }
+
+  G.gold -= listing.price;
+  const invItem = {
+    id: Date.now(),
+    name: listing.name, icon: listing.icon,
+    type: listing.type, grade: listing.grade,
+    price: listing.price, stats: listing.stats||{},
+    desc: listing.desc||'', seller:'player',
+    sellerName: G.heroName||G.username,
+    img: listing.img||null, reqLv: listing.reqLv||1,
+    material: listing.material||null, classBonus: listing.classBonus||null,
+  };
+  G.inventory.push(invItem);
+  gainXP(10);
+  toast(`${listing.name} envantere eklendi! -${listing.price}🪙`);
+  trackQuest('marketBuy1');
+  updateHUD(); renderKarakter();
+  await loadPlayerMarketItems();
+  renderMarket();
+  if(currentUser) sbSave();
+}
+
+async function cancelListing(id){
+  const listing = G_PLAYER_LISTINGS.find(x=>x.id===id);
+  if(!listing||listing.sellerId!==currentUser?.id) return;
+
+  const {error} = await supa.from('marketplace').delete().eq('id', listing.dbId);
+  if(error){ toast('Hata: '+error.message); return; }
+
+  // Eşyayı envantere geri al
+  if(G.inventory.length<50){
+    G.inventory.push({
+      id: Date.now(),
+      name: listing.name, icon: listing.icon,
+      type: listing.type, grade: listing.grade,
+      price: listing.price, stats: listing.stats||{},
+      desc: listing.desc||'', seller:'player',
+      sellerName: G.heroName||G.username,
+      img: listing.img||null, reqLv: listing.reqLv||1,
+      material: listing.material||null, classBonus: listing.classBonus||null,
+    });
+    renderKarakter();
+  }
+  toast(`${listing.name} pazardan geri alındı.`);
+  await loadPlayerMarketItems();
+  renderMarket();
+  if(currentUser) sbSave();
+}
 function glgo(t){G.guildTab=t;['home','members','war','chat','search'].forEach(x=>{document.getElementById('glt-'+x).classList.toggle('active',x===t);});renderGuild(t);}
 function renderGuild(t){
   document.getElementById('guild-hdr-sub').textContent=G.guildName;
