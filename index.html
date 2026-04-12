@@ -2415,15 +2415,12 @@ function equipItem(itemId, slot){
   if(currentUser) sbSave();
 }
 
-/* Eşya takınca/çıkarınca maxhp'yi effective ile senkronize et */
+/* Eşya takınca/çıkarınca HP'yi effective maxhp'ye göre kliple — G.stats.maxhp'ye YAZMA */
 function syncHpWithEffective(){
   const eff = getEffectiveStats();
-  const oldMax = G.stats.maxhp;
-  G.stats.maxhp = eff.maxhp;
-  if(eff.maxhp !== oldMax && oldMax > 0){
-    G.stats.hp = Math.max(1, Math.round(G.stats.hp * (eff.maxhp / oldMax)));
-  }
-  G.stats.hp = Math.min(G.stats.hp, G.stats.maxhp);
+  // G.stats.hp, effective maxhp'yi geçemesin
+  G.stats.hp = Math.min(G.stats.hp, eff.maxhp);
+  G.stats.hp = Math.max(1, G.stats.hp);
   updateHUD();
 }
 
@@ -2515,10 +2512,15 @@ function getCatFromType(type){
 }
 function addStat(k){
   if(!G.skillPoints) return;
-  G.stats[k]=(G.stats[k]||0)+1;G.skillPoints--;
-  if(k==='def') G.castle.def+=2;
+  G.stats[k]=(G.stats[k]||0)+1;
+  G.skillPoints--;
+  if(k==='def'){
+    G.castle.def+=2;
+    G.stats.maxhp+=8; // def puanı base maxhp'ye +8 ekler
+  }
   if(k==='str') G.castle.atk+=1;
   renderKarakter();renderKale();
+  if(currentUser) sbSave();
 }
 
 /* ── KALE ── */
@@ -2785,33 +2787,41 @@ const ZD_MAX_TICKETS = 20;
    Her combat ve UI bu fonksiyonu kullanır
 ══════════════════════════════════════ */
 function getEffectiveStats(){
+  // BASE: sadece oyuncunun harcadığı stat puanları + sınıf başlangıç değerleri
+  // G.stats.maxhp = sınıf base hp + seviye bonusu (item bonusu HİÇ eklenmez)
   const s = {
     str: G.stats.str||0, def: G.stats.def||0,
     agi: G.stats.agi||0, wis: G.stats.wis||0,
-    cha: G.stats.cha||0, hp:  G.stats.hp||1,
-    maxhp: G.stats.maxhp||100,
+    cha: G.stats.cha||0,
+    hp:  G.stats.hp||1,
+    maxhp: G.stats.maxhp||100, // sadece base
     atk:0, mgc:0, rng:0, crit:0, luck:0,
   };
-  // Kuşanılan eşya statları
+
+  // Kuşanılan eşya statlarını SADECE burada ekle — G.stats'a YAZMA
   Object.values(G.equipped).forEach(item=>{
     if(!item?.stats) return;
     const st=item.stats;
     ['atk','def','str','agi','wis','cha','mgc','rng','crit','luck'].forEach(k=>{ if(st[k]) s[k]+=st[k]; });
-    if(st.hp) s.maxhp += st.hp;
+    if(st.hp) s.maxhp += st.hp; // maxhp'yi burada local s'e ekle, G.stats'a değil
     // Sınıf bonusu +%10
     const bk=item.classBonus?.[G.classId];
     if(bk) s[bk]=Math.floor((s[bk]||0)*1.10);
   });
+
   // Set bonusu
   const sb=getActiveBonusStats();
   if(sb){ s.def+=(sb.def||0); s.agi+=(sb.agi||0); s.wis+=(sb.wis||0); s.maxhp+=(sb.def||0)*5; }
-  // Savunma → maxhp + hasar azaltma
-  s.maxhp += s.def*8;
+
+  // Savunma → hasar azaltma (maxhp artışı addStat'ta base'e ekleniyor, burada sadece combat hesabı)
   s.damageReduction = Math.min(0.60, s.def*0.015);
+
   // Çeviklik → kaçınma
   s.dodgeChance = Math.min(0.40, s.agi*0.008);
+
   // Karizma → kritik şansı
   s.critChance = Math.min(0.50, s.cha*0.012 + s.crit*0.005);
+
   // Sınıf bazlı fiziksel hasar
   const cid=G.classId;
   if(cid==='warrior'||cid==='paladin')
@@ -2824,7 +2834,10 @@ function getEffectiveStats(){
     s.physDmg = Math.floor(s.wis*2.5 + s.mgc);
   else
     s.physDmg = Math.floor(s.str*2.0 + s.atk);
+
   s.magicDmg = Math.floor(s.wis*2.0 + s.mgc);
+
+  // hp, maxhp'yi geçemesin
   s.hp = Math.min(s.hp, s.maxhp);
   return s;
 }
@@ -3029,7 +3042,7 @@ function zdFloorHTML(){
 
     <!-- Stat şeridi -->
     <div class="zd-stat-strip">
-      <div class="zd-stat-item"><span class="zd-stat-val" style="color:#f87171;">❤ ${G.stats.hp}/${G.stats.maxhp}</span>Can</div>
+      <div class="zd-stat-item"><span class="zd-stat-val" style="color:#f87171;">❤ ${G.stats.hp}/${getEffectiveStats().maxhp}</span>Can</div>
       <div class="zd-stat-item"><span class="zd-stat-val" style="color:var(--gold2);">+${ZD.totalGold}🪙</span>Kazanılan</div>
       <div class="zd-stat-item"><span class="zd-stat-val" style="color:#7aaa5a;">+${ZD.totalXP}XP</span>Deneyim</div>
       <div class="zd-stat-item"><span class="zd-stat-val" style="color:var(--ink2);">Sv.${ZD.floor}</span>Kat</div>
@@ -4427,7 +4440,21 @@ async function sbLoadProfile() {
   G.arenaScore= p.arena_score;
   G.arenaWins = p.arena_wins;
   G.arenaLosses = p.arena_losses;
-  G.stats = { str:p.stat_str, def:p.stat_def, agi:p.stat_agi, wis:p.stat_wis, cha:p.stat_cha, hp:p.hp, maxhp:p.max_hp };
+  // Stats yükle — maxhp'yi sınıf base'inden hesapla, DB'deki bozuk değeri kullanma
+  const loadedStats = { str:p.stat_str||0, def:p.stat_def||0, agi:p.stat_agi||0, wis:p.stat_wis||0, cha:p.stat_cha||0, hp:p.hp||1, maxhp:p.max_hp||100 };
+  // Sınıf base maxhp'sini bul
+  const loadedCls = CLASSES.find(c=>c.id===p.class_id)||CLASSES[0];
+  const baseMaxHp = loadedCls.base.maxhp || 100;
+  // Base maxhp = sınıf değeri + def puanına bağlı artış (item bonusu YOK)
+  // Eğer kaydedilen max_hp, base'den makul oranda büyükse (item bonusları varmış) düzelt
+  const expectedMaxFromDef = baseMaxHp + (loadedStats.def||0)*8;
+  // Kaydedilen değer beklenen değerin 3 katını geçiyorsa bozuk — düzelt
+  const sanitizedMaxHp = (loadedStats.maxhp > expectedMaxFromDef * 3)
+    ? expectedMaxFromDef
+    : Math.max(loadedStats.maxhp, expectedMaxFromDef);
+  loadedStats.maxhp = sanitizedMaxHp;
+  loadedStats.hp = Math.min(loadedStats.hp, sanitizedMaxHp);
+  G.stats = loadedStats;
 
   // Lonca
   if (p.guild_id) {
@@ -4476,13 +4503,10 @@ async function sbLoadProfile() {
   if(p.zd_tickets !== undefined) G.zdTickets = p.zd_tickets;
   if(p.zd_ticket_date) G.zdTicketDate = p.zd_ticket_date;
 
-  // Eşya bonuslarıyla gerçek maxhp'yi güncelle
-  // (G.stats.maxhp sadece base stat içerir, effective hesapla)
+  // G.stats.hp'yi effective maxhp'ye göre kliple (G.stats.maxhp değişmez)
   const effAfterLoad = getEffectiveStats();
-  G.stats.maxhp = effAfterLoad.maxhp;
-  // Mevcut HP oranını koru
-  if(G.stats.hp < G.stats.maxhp * 0.1) G.stats.hp = Math.floor(G.stats.maxhp * 0.3);
-  G.stats.hp = Math.min(G.stats.hp, G.stats.maxhp);
+  G.stats.hp = Math.min(G.stats.hp, effAfterLoad.maxhp);
+  if(G.stats.hp < 1) G.stats.hp = Math.floor(effAfterLoad.maxhp * 0.3);
 
   return true;
 }
@@ -4510,8 +4534,8 @@ async function sbSave() {
     stat_agi:     G.stats.agi,
     stat_wis:     G.stats.wis,
     stat_cha:     G.stats.cha,
-    hp:           G.stats.hp,
-    max_hp:       G.stats.maxhp,
+    hp:           Math.min(G.stats.hp, G.stats.maxhp), // base maxhp ile sınırla
+    max_hp:       G.stats.maxhp, // sadece base (item bonusu eklenmemiş)
     updated_at:   new Date().toISOString(),
     prod_farm:    PROD_BUILDINGS.farm.level,
     prod_mill:    PROD_BUILDINGS.mill.level,
