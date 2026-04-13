@@ -1982,19 +1982,25 @@ const PROD_RECIPES={
     {id:'domates_puresi',name:'Domates Püresi', icon:'🍅→🫙', minLv:6,  dur:100, inputs:{domates:1}, outputs:{domates_puresi:{base:1}}},
   ],
   ranch:[
-    {id:'tavuk',name:'Tavuk Besle',icon:'🐔',minLv:1,dur:120,inputs:{saman:1},outputs:{tuy:{base:2,chance:.25,mult:2},yumurta:{base:2,chance:.4,mult:3}}},
-    {id:'koyun',name:'Koyun Besle',icon:'🐑',minLv:1,dur:150,inputs:{saman:1},outputs:{sut:{base:2,chance:.3,mult:2},yun:{base:1,chance:.25,mult:2}}},
-    {id:'inek', name:'İnek Besle', icon:'🐄',minLv:2,dur:180,inputs:{saman:2},outputs:{sut:{base:3,chance:.35,mult:3}}},
+    {id:'tavuk', name:'Tavuk Besle',  icon:'🐔', minLv:1, dur:120, inputs:{arpa:1,saman:2}, outputs:{tuy:{base:1},yumurta:{base:1}}},
+    {id:'koyun', name:'Koyun Besle',  icon:'🐑', minLv:3, dur:150, inputs:{arpa:1,saman:2}, outputs:{sut:{base:1},yun:{base:1}}},
+    {id:'inek',  name:'İnek Besle',   icon:'🐄', minLv:5, dur:180, inputs:{arpa:1,saman:2}, outputs:{sut:{base:2}}},
+    {id:'ari',   name:'Arı Kovanı',   icon:'🍯', minLv:6, dur:120, inputs:{cicek:2},        outputs:{bal:{base:1}}},
   ],
   kitchen:[
-    {id:'ekmek',name:'Ekmek Pişir',icon:'🍞',minLv:1,dur:120,inputs:{un:2},          outputs:{ekmek:{base:2,chance:.3,mult:2}}},
-    {id:'corba',name:'Çorba Kaynat',icon:'🥣',minLv:1,dur:150,inputs:{sebze:2,sut:1},outputs:{corba:{base:2,chance:.25,mult:2}}},
-    {id:'kek',  name:'Kek Pişir',  icon:'🎂',minLv:2,dur:180,inputs:{un:2,yumurta:2},outputs:{kek:{base:1,chance:.35,mult:2}}},
+    {id:'domates_corbasi', name:'Domates Çorbası', icon:'🥣', minLv:1, dur:120, inputs:{domates:2,arpa:1},              outputs:{domates_corbasi:{base:1}}},
+    {id:'patates_corbasi', name:'Patates Çorbası', icon:'🥣', minLv:2, dur:120, inputs:{patates:2,bugday:1},            outputs:{patates_corbasi:{base:1}}},
+    {id:'ekmek',           name:'Ekmek Pişir',     icon:'🍞', minLv:3, dur:120, inputs:{bugday_unu:2},                  outputs:{ekmek:{base:1}}},
+    {id:'salcali_ekmek',   name:'Salçalı Ekmek',   icon:'🍞', minLv:4, dur:150, inputs:{domates_puresi:1,bugday_unu:2}, outputs:{salcali_ekmek:{base:1}}},
+    {id:'borek',           name:'Börek',            icon:'🥐', minLv:5, dur:150, inputs:{patates_puresi:1,arpa_unu:2},  outputs:{borek:{base:1}}},
+    {id:'cilekli_turta',   name:'Çilekli Turta',    icon:'🍓', minLv:6, dur:180, inputs:{cilek:2,bugday_unu:2},         outputs:{cilekli_turta:{base:1}}},
+    {id:'balli_kaymak',    name:'Ballı Kaymak',     icon:'🍯', minLv:7, dur:150, inputs:{kaymak:1,bal:1},               outputs:{balli_kaymak:{base:1}}},
   ],
 };
-const FOOD_VALUE={bugday:1,arpa:1,sebze:2,saman:0,un:0,arpa_unu:0,tuy:0,yumurta:2,yun:0,sut:2,ekmek:10,corba:12,kek:15,patates:1,domates:2,cicek:0,yonca:0,cilek:3,bugday_unu:0,patates_puresi:3,kaymak:4,cilek_puresi:4,domates_puresi:3};
-const ITEM_LABELS={bugday:'Buğday',saman:'Saman',arpa:'Arpa',sebze:'Sebze',un:'Un',arpa_unu:'Arpa Unu',tuy:'Tüy',yumurta:'Yumurta',yun:'Yün',sut:'Süt',ekmek:'Ekmek',corba:'Çorba',kek:'Kek',patates:'Patates',domates:'Domates',cicek:'Çiçek',yonca:'Yonca',cilek:'Çilek',patates_tohum:'Patates Tohumu',domates_tohum:'Domates Tohumu',cicek_tohum:'Çiçek Tohumu',yonca_tohum:'Yonca Tohumu',cilek_tohum:'Çilek Tohumu',bugday_unu:'Buğday Unu',patates_puresi:'Patates Püresi',kaymak:'Kaymak',cilek_puresi:'Çilek Püresi',domates_puresi:'Domates Püresi'};
-const ITEM_ICONS={bugday:'🌾',saman:'🌿',arpa:'🌱',sebze:'🥦',un:'🥛',arpa_unu:'🥛',tuy:'🪶',yumurta:'🥚',yun:'🧶',sut:'🥛',ekmek:'🍞',corba:'🥣',kek:'🎂',patates:'🥔',domates:'🍅',cicek:'🌸',yonca:'🍀',cilek:'🍓',patates_tohum:'🌱',domates_tohum:'🌱',cicek_tohum:'🌱',yonca_tohum:'🌱',cilek_tohum:'🌱',bugday_unu:'🫙',patates_puresi:'🫙',kaymak:'🫙',cilek_puresi:'🫙',domates_puresi:'🫙'};
+const FOOD_VALUE={bugday:1,arpa:1,sebze:2,saman:0,un:0,arpa_unu:0,tuy:0,yumurta:2,yun:0,sut:2,ekmek:0,corba:0,kek:0,patates:1,domates:2,cicek:0,yonca:0,cilek:3,bugday_unu:0,patates_puresi:3,kaymak:4,cilek_puresi:4,domates_puresi:3,bal:2,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0};
+const KITCHEN_FOOD_VALUES={domates_corbasi:10,patates_corbasi:12,ekmek:12,salcali_ekmek:15,borek:18,cilekli_turta:20,balli_kaymak:25};
+const ITEM_LABELS={bugday:'Buğday',saman:'Saman',arpa:'Arpa',sebze:'Sebze',un:'Un',arpa_unu:'Arpa Unu',tuy:'Tüy',yumurta:'Yumurta',yun:'Yün',sut:'Süt',ekmek:'Ekmek',corba:'Çorba',kek:'Kek',patates:'Patates',domates:'Domates',cicek:'Çiçek',yonca:'Yonca',cilek:'Çilek',patates_tohum:'Patates Tohumu',domates_tohum:'Domates Tohumu',cicek_tohum:'Çiçek Tohumu',yonca_tohum:'Yonca Tohumu',cilek_tohum:'Çilek Tohumu',bugday_unu:'Buğday Unu',patates_puresi:'Patates Püresi',kaymak:'Kaymak',cilek_puresi:'Çilek Püresi',domates_puresi:'Domates Püresi',bal:'Bal',domates_corbasi:'Domates Çorbası',patates_corbasi:'Patates Çorbası',salcali_ekmek:'Salçalı Ekmek',borek:'Börek',cilekli_turta:'Çilekli Turta',balli_kaymak:'Ballı Kaymak'};
+const ITEM_ICONS={bugday:'🌾',saman:'🌿',arpa:'🌱',sebze:'🥦',un:'🥛',arpa_unu:'🥛',tuy:'🪶',yumurta:'🥚',yun:'🧶',sut:'🥛',ekmek:'🍞',corba:'🥣',kek:'🎂',patates:'🥔',domates:'🍅',cicek:'🌸',yonca:'🍀',cilek:'🍓',patates_tohum:'🌱',domates_tohum:'🌱',cicek_tohum:'🌱',yonca_tohum:'🌱',cilek_tohum:'🌱',bugday_unu:'🫙',patates_puresi:'🫙',kaymak:'🫙',cilek_puresi:'🫙',domates_puresi:'🫙',bal:'🍯',domates_corbasi:'🥣',patates_corbasi:'🥣',salcali_ekmek:'🍞',borek:'🥐',cilekli_turta:'🍓',balli_kaymak:'🍯'};
 const GRADES={gray:{name:'Ortak'},green:{name:'Nadir'},blue:{name:'Değerli'},purple:{name:'Epik'},orange:{name:'Efsanevi'}};
 const STAT_LABELS={atk:'Saldırı',def:'Savunma',mgc:'Büyü',wis:'Bilgelik',spd:'Hız',crit:'Kritik',rng:'Menzil',str:'Güç',hp:'Can',hp_restore:'Can Yenile',atk_boost:'Saldırı Artış',craft_iron:'Demir',craft_wood:'Odun',craft_legendary:'Efsanevi Crafting',luck:'Şans'};
 const NOTIFS=[];
@@ -2030,7 +2036,7 @@ const G={
   explored:new Set([14,15,20,21,22,27,28]),
   selectedCell:null,
   prodTimers:[],prodTimerId:1,
-  prodInv:{bugday:5,saman:3,arpa:0,sebze:0,un:2,arpa_unu:0,tuy:1,yumurta:3,yun:1,sut:4,ekmek:1,corba:0,kek:0,patates:0,domates:0,cicek:0,yonca:0,cilek:0,patates_tohum:0,domates_tohum:0,cicek_tohum:0,yonca_tohum:0,cilek_tohum:0,bugday_unu:0,patates_puresi:0,kaymak:0,cilek_puresi:0,domates_puresi:0},
+  prodInv:{bugday:5,saman:3,arpa:0,sebze:0,un:2,arpa_unu:0,tuy:1,yumurta:3,yun:1,sut:4,ekmek:0,corba:0,kek:0,patates:0,domates:0,cicek:0,yonca:0,cilek:0,patates_tohum:0,domates_tohum:0,cicek_tohum:0,yonca_tohum:0,cilek_tohum:0,bugday_unu:0,patates_puresi:0,kaymak:0,cilek_puresi:0,domates_puresi:0,bal:0,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0},
   matInv:{ham_demir:0, guc_runesi:0, ejderha_pulu:0, thros_kanadi:0, dev_disi:0},
   guildName:'',
   guildId:null,
@@ -2696,6 +2702,14 @@ function upgBld(key,cost){
 function endTurn(){
   G.turn++;G.season=(G.season+1)%4;
 
+  /* ── MUTFAK YEMEKLERİ TÜKETİMİ ── */
+  let kitchenFood=0;
+  Object.entries(KITCHEN_FOOD_VALUES).forEach(([k,fv])=>{
+    const amt=G.prodInv[k]||0;
+    if(amt>0){kitchenFood+=amt*fv;G.prodInv[k]=0;}
+  });
+  if(kitchenFood>0){G.food+=kitchenFood;}
+
   /* ── ALTIN GELİRİ ── */
   const taxIncome=Math.floor(G.folk.population*G.folk.tax/100);
   G.gold+=20+G.castle.market*15+taxIncome;
@@ -2742,7 +2756,8 @@ function endTurn(){
   if(G.folk.happiness>=60) trackQuest('happiness60');
 
   const seasons=['Bahar','Yaz','Sonbahar','Kış'];
-  const log=`${seasons[G.season]} geldi! Nüfus: ${G.folk.population} | Yemek: ${Math.floor(G.food)} | Vergi geliri: ${taxIncome}🪙`;
+  const kitchenNote=kitchenFood>0?` | 🍽 Mutfak +${kitchenFood}🍖`:'';
+  const log=`${seasons[G.season]} geldi! Nüfus: ${G.folk.population} | Yemek: ${Math.floor(G.food)}${kitchenNote} | Vergi: ${taxIncome}🪙`;
   toast(log);
   updateHUD();renderGame('kale');renderHalk();
 }
@@ -4816,6 +4831,8 @@ function renderProd(t){
   if(t==='depot'){renderDepot();return;}
   if(t==='farm'){renderFarm();return;}
   if(t==='mill'){renderMill();return;}
+  if(t==='ranch'){renderRanch();return;}
+  if(t==='kitchen'){renderKitchen();return;}
   const bld=PROD_BUILDINGS[t];
   if(!bld){el.innerHTML='';return;}
 
@@ -5089,6 +5106,342 @@ async function startMillProd(rId){
   G.prodTimers.push({id:G.prodTimerId++,dbId,building:'mill',recipe:rId,remaining:r.dur,total:r.dur,outputs});
   trackQuest('prodStart1');
   updateInvStrip();renderMill();toast(`${r.name} başlatıldı!`);
+}
+
+/* ══════════════════════════════════════
+   ÇİFTLİK SİSTEMİ (10 Seviye)
+══════════════════════════════════════ */
+function ranchGetBonus(lv){
+  const table=[
+    {chance:.05,mult:2},{chance:.10,mult:2},{chance:.10,mult:2},
+    {chance:.15,mult:3},{chance:.20,mult:3},{chance:.20,mult:3},
+    {chance:.25,mult:3},{chance:.25,mult:4},{chance:.30,mult:4},{chance:.50,mult:4},
+  ];
+  return table[Math.min(lv,10)-1]||{chance:.05,mult:2};
+}
+function ranchMaxProd(lv){return 4+lv;}
+
+function renderRanch(){
+  const el=document.getElementById('prod-content');
+  const bld=PROD_BUILDINGS.ranch;
+  const lv=bld.level;
+  const fmtT=s=>{const m=Math.floor(s/60),sc=s%60;return `${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;};
+
+  if(lv===0){
+    el.innerHTML=`<div style="text-align:center;padding:40px 16px;">
+      <div style="font-size:52px;margin-bottom:12px;">🐄</div>
+      <div style="font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--perg2);margin-bottom:6px;">Çiftlik</div>
+      <div style="font-size:12px;color:var(--ink3);margin-bottom:16px;">Henüz inşa edilmedi</div>
+      <button class="btn" onclick="buildProd('ranch')" ${G.gold>=bld.cost?'':'disabled'}>İnşa Et — ${bld.cost}🪙</button>
+      ${G.gold<bld.cost?`<div style="font-size:10px;color:var(--hp);margin-top:6px;">Yetersiz altın (${Math.floor(G.gold)}/${bld.cost}🪙)</div>`:''}
+    </div>`;
+    return;
+  }
+
+  const {chance,mult}=ranchGetBonus(lv);
+  const maxProd=ranchMaxProd(lv);
+  const activeTimers=G.prodTimers.filter(x=>x.building==='ranch');
+  const usedSlots=activeTimers.length;
+  const recipes=PROD_RECIPES.ranch;
+
+  const lvInfoHtml=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+      <div style="width:42px;height:42px;border-radius:9px;background:var(--panel);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:22px;">🐄</div>
+      <div style="flex:1;">
+        <div style="font-family:var(--font-head);font-size:13px;color:var(--perg);">Çiftlik <span class="tag tag-gold" style="font-size:8px;margin-left:4px;">Sv.${lv}/${bld.max}</span></div>
+        <div style="font-size:9px;color:var(--ink3);margin-top:2px;">Aktif: ${usedSlots}/${maxProd} · Bonus: %${Math.round(chance*100)} ×${mult}</div>
+      </div>
+    </div>`;
+
+  let upgHtml='';
+  if(lv<bld.max){
+    const uc=Math.floor(bld.cost*Math.pow(1.6,lv));
+    const nextLv=lv+1;
+    const nextBonus=ranchGetBonus(nextLv);
+    const nextMax=ranchMaxProd(nextLv);
+    const newRecipe=recipes.find(r=>r.minLv===nextLv);
+    upgHtml=`
+      <div class="sec">GELİŞTİR</div>
+      <div class="card row-between" style="margin-bottom:12px;">
+        <div>
+          <div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">Sv.${lv} → Sv.${nextLv}</div>
+          <div style="font-size:9px;color:var(--ink3);margin-top:3px;line-height:1.6;">
+            ${newRecipe?`${newRecipe.icon} <b style="color:var(--perg2);">${newRecipe.name}</b> açılır<br>`:''}
+            📦 Max üretim ${maxProd} → ${nextMax}<br>
+            ✨ Bonus %${Math.round(chance*100)} ×${mult} → %${Math.round(nextBonus.chance*100)} ×${nextBonus.mult}
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <button class="btn btn-sm" onclick="upgProd('ranch',${uc})" ${G.gold>=uc?'':'disabled'}>${uc}🪙</button>
+        </div>
+      </div>`;
+  }
+
+  let recipesHtml=`<div class="sec" style="margin-top:0;">TARİFLER</div>`;
+  recipes.forEach(r=>{
+    const locked=r.minLv>lv;
+    const full=!locked&&usedSlots>=maxProd;
+    const canAfford=!locked&&!full&&Object.entries(r.inputs).every(([k,v])=>(G.prodInv[k]||0)>=v);
+    const inChips=Object.entries(r.inputs).map(([k,v])=>{
+      const has=(G.prodInv[k]||0)>=v;
+      return `<span class="mat-chip${!has?' missing':''}"><span style="font-size:10px;">${ITEM_ICONS[k]||'📦'}</span>${ITEM_LABELS[k]||k} ×${v}</span>`;
+    }).join('');
+    const outChips=Object.entries(r.outputs).map(([k,o])=>`<span class="mat-chip output"><span style="font-size:10px;">${ITEM_ICONS[k]||'📦'}</span>${ITEM_LABELS[k]||k} ×${o.base} <span style="font-size:7px;color:var(--g-purple);">%${Math.round(chance*100)} ×${mult}✨</span></span>`).join('');
+    let btnLabel='▶ Başlat',btnDisabled=false;
+    if(locked){btnDisabled=true;btnLabel=`🔒 Sv.${r.minLv}`;}
+    else if(full){btnDisabled=true;btnLabel='Kapasite Dolu';}
+    else if(!canAfford){btnDisabled=true;btnLabel='Malzeme Eksik';}
+    recipesHtml+=`<div class="recipe" style="${locked?'opacity:.45;':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-family:var(--font-head);font-size:12px;font-weight:600;color:var(--perg2);">${r.icon} ${r.name}</span>
+        <span style="font-size:10px;color:var(--ink3);">${locked?`🔒 Sv.${r.minLv}`:fmtT(r.dur)}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:6px;">
+        ${inChips}<span style="color:var(--ink3);font-size:13px;margin:0 2px;">→</span>${outChips}
+      </div>
+      <button class="btn btn-xs" style="width:100%;" onclick="startRanchProd('${r.id}')" ${btnDisabled?'disabled':''}>${btnLabel}</button>
+    </div>`;
+  });
+
+  let rightHtml=`<div class="sec" style="margin-top:0;">AKTİF ÜRETİM (${usedSlots}/${maxProd})</div>`;
+  if(activeTimers.length){
+    rightHtml+=activeTimers.map(x=>ranchTimerCardHTML(x)).join('');
+  } else {
+    rightHtml+=`<div style="text-align:center;padding:32px 16px;border:1px dashed var(--border);border-radius:10px;color:var(--ink3);">
+      <div style="font-size:32px;margin-bottom:8px;">🐄</div>
+      <div style="font-size:12px;">Çiftlik boşta</div>
+      <div style="font-size:10px;margin-top:4px;">Sol taraftan bir tarif başlat</div>
+    </div>`;
+  }
+
+  el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+    <div>${lvInfoHtml}${upgHtml}${recipesHtml}</div>
+    <div>${rightHtml}</div>
+  </div>
+  <style>@media(max-width:700px){#prod-content>div[style*="grid-template-columns"]{grid-template-columns:1fr !important;}}</style>`;
+}
+
+function ranchTimerCardHTML(t){
+  const r=(PROD_RECIPES.ranch||[]).find(x=>x.id===t.recipe);if(!r)return'';
+  const isDone=t.remaining<=0;
+  const pct=Math.round((1-t.remaining/t.total)*100);
+  const fmtT=s=>{const m=Math.floor(s/60),sc=s%60;return `${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;};
+  const outChips=Object.entries(t.outputs).map(([k,v])=>`<span class="mat-chip ${v.bonus?'':'output'}" style="${v.bonus?'border-color:var(--g-purple);color:var(--g-purple);':''}">${ITEM_ICONS[k]||'📦'} ${ITEM_LABELS[k]||k} ×${v.amount}${v.bonus?' ✨':''}</span>`).join('');
+  return `<div class="timer-card${isDone?' t-done':''}" id="tc-${t.id}">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+      <span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${r.icon} ${r.name}</span>
+      <div style="display:flex;align-items:center;gap:5px;">
+        <span style="font-family:var(--font-head);font-size:12px;color:${isDone?'var(--g-green)':'var(--gold)'};" id="tsecs-${t.id}">${isDone?'✓ Hazır':fmtT(t.remaining)}</span>
+        ${!isDone?`<button class="btn btn-xs btn-ghost" onclick="cancelProd(${t.id})" style="font-size:8px;padding:2px 5px;">✕</button>`:''}
+      </div>
+    </div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px;">${outChips}</div>
+    ${isDone?`<button class="collect-btn" onclick="collectProd(${t.id})">🎁 Topla</button>`:''}
+    <div class="timer-prog-bg"><div class="timer-prog-fill" id="tprog-${t.id}" style="width:${pct}%;"></div></div>
+  </div>`;
+}
+
+async function startRanchProd(rId){
+  const bld=PROD_BUILDINGS.ranch;
+  const lv=bld.level;
+  const r=(PROD_RECIPES.ranch||[]).find(x=>x.id===rId);if(!r)return;
+  const maxProd=ranchMaxProd(lv);
+  const usedSlots=G.prodTimers.filter(x=>x.building==='ranch').length;
+  if(usedSlots>=maxProd){toast('Kapasite dolu! Önce mevcut ürünleri topla.');return;}
+  if(!Object.entries(r.inputs).every(([k,v])=>(G.prodInv[k]||0)>=v)){toast('Malzeme eksik!');return;}
+  Object.entries(r.inputs).forEach(([k,v])=>{G.prodInv[k]-=v;});
+  const {chance,mult}=ranchGetBonus(lv);
+  const outputs={};
+  Object.entries(r.outputs).forEach(([k,o])=>{
+    const bonus=Math.random()<chance;
+    const amount=bonus?(o.base*mult):o.base;
+    outputs[k]={amount,bonus};
+  });
+  let dbId=null;
+  if(currentUser){
+    const {data,error}=await supa.from('production_timers').insert({
+      profile_id:currentUser.id,building:'ranch',recipe_id:rId,duration_secs:r.dur,outputs
+    }).select().single();
+    if(!error&&data) dbId=data.id;
+  }
+  G.prodTimers.push({id:G.prodTimerId++,dbId,building:'ranch',recipe:rId,remaining:r.dur,total:r.dur,outputs});
+  trackQuest('prodStart1');
+  updateInvStrip();renderRanch();toast(`${r.name} başlatıldı!`);
+}
+
+/* ══════════════════════════════════════
+   AŞEVİ SİSTEMİ (10 Seviye)
+══════════════════════════════════════ */
+function kitchenGetBonus(lv){
+  const table=[
+    {chance:.05,mult:2},{chance:.10,mult:2},{chance:.10,mult:2},
+    {chance:.15,mult:3},{chance:.20,mult:3},{chance:.20,mult:3},
+    {chance:.25,mult:3},{chance:.25,mult:4},{chance:.30,mult:4},{chance:.50,mult:4},
+  ];
+  return table[Math.min(lv,10)-1]||{chance:.05,mult:2};
+}
+function kitchenMaxProd(lv){return 4+lv;}
+
+function renderKitchen(){
+  const el=document.getElementById('prod-content');
+  const bld=PROD_BUILDINGS.kitchen;
+  const lv=bld.level;
+  const fmtT=s=>{const m=Math.floor(s/60),sc=s%60;return `${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;};
+
+  if(lv===0){
+    el.innerHTML=`<div style="text-align:center;padding:40px 16px;">
+      <div style="font-size:52px;margin-bottom:12px;">🍳</div>
+      <div style="font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--perg2);margin-bottom:6px;">Aşevi</div>
+      <div style="font-size:12px;color:var(--ink3);margin-bottom:16px;">Henüz inşa edilmedi</div>
+      <button class="btn" onclick="buildProd('kitchen')" ${G.gold>=bld.cost?'':'disabled'}>İnşa Et — ${bld.cost}🪙</button>
+      ${G.gold<bld.cost?`<div style="font-size:10px;color:var(--hp);margin-top:6px;">Yetersiz altın (${Math.floor(G.gold)}/${bld.cost}🪙)</div>`:''}
+    </div>`;
+    return;
+  }
+
+  const {chance,mult}=kitchenGetBonus(lv);
+  const maxProd=kitchenMaxProd(lv);
+  const activeTimers=G.prodTimers.filter(x=>x.building==='kitchen');
+  const usedSlots=activeTimers.length;
+  const recipes=PROD_RECIPES.kitchen;
+
+  const lvInfoHtml=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+      <div style="width:42px;height:42px;border-radius:9px;background:var(--panel);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:22px;">🍳</div>
+      <div style="flex:1;">
+        <div style="font-family:var(--font-head);font-size:13px;color:var(--perg);">Aşevi <span class="tag tag-gold" style="font-size:8px;margin-left:4px;">Sv.${lv}/${bld.max}</span></div>
+        <div style="font-size:9px;color:var(--ink3);margin-top:2px;">Aktif: ${usedSlots}/${maxProd} · Bonus: %${Math.round(chance*100)} ×${mult} · Tur sonu tüketilir 🍖</div>
+      </div>
+    </div>`;
+
+  let upgHtml='';
+  if(lv<bld.max){
+    const uc=Math.floor(bld.cost*Math.pow(1.6,lv));
+    const nextLv=lv+1;
+    const nextBonus=kitchenGetBonus(nextLv);
+    const nextMax=kitchenMaxProd(nextLv);
+    const newRecipe=recipes.find(r=>r.minLv===nextLv);
+    upgHtml=`
+      <div class="sec">GELİŞTİR</div>
+      <div class="card row-between" style="margin-bottom:12px;">
+        <div>
+          <div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">Sv.${lv} → Sv.${nextLv}</div>
+          <div style="font-size:9px;color:var(--ink3);margin-top:3px;line-height:1.6;">
+            ${newRecipe?`${newRecipe.icon} <b style="color:var(--perg2);">${newRecipe.name}</b> açılır<br>`:''}
+            📦 Max üretim ${maxProd} → ${nextMax}<br>
+            ✨ Bonus %${Math.round(chance*100)} ×${mult} → %${Math.round(nextBonus.chance*100)} ×${nextBonus.mult}
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <button class="btn btn-sm" onclick="upgProd('kitchen',${uc})" ${G.gold>=uc?'':'disabled'}>${uc}🪙</button>
+        </div>
+      </div>`;
+  }
+
+  // Depodaki yemek stoku
+  const stockItems=Object.entries(KITCHEN_FOOD_VALUES).filter(([k])=>(G.prodInv[k]||0)>0);
+  let stockHtml='';
+  if(stockItems.length){
+    stockHtml=`<div class="sec">DEPODAKI YİYECEKLER (tur sonunda tüketilir)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
+        ${stockItems.map(([k,fv])=>`<span class="mat-chip output"><span style="font-size:10px;">${ITEM_ICONS[k]}</span>${ITEM_LABELS[k]} ×${G.prodInv[k]} <span style="font-size:7px;color:var(--g-green);">+${fv}🍖</span></span>`).join('')}
+      </div>`;
+  }
+
+  let recipesHtml=`<div class="sec" style="margin-top:0;">TARİFLER</div>`;
+  recipes.forEach(r=>{
+    const locked=r.minLv>lv;
+    const full=!locked&&usedSlots>=maxProd;
+    const canAfford=!locked&&!full&&Object.entries(r.inputs).every(([k,v])=>(G.prodInv[k]||0)>=v);
+    const fv=KITCHEN_FOOD_VALUES[Object.keys(r.outputs)[0]]||0;
+    const inChips=Object.entries(r.inputs).map(([k,v])=>{
+      const has=(G.prodInv[k]||0)>=v;
+      return `<span class="mat-chip${!has?' missing':''}"><span style="font-size:10px;">${ITEM_ICONS[k]||'📦'}</span>${ITEM_LABELS[k]||k} ×${v}</span>`;
+    }).join('');
+    const outChips=Object.entries(r.outputs).map(([k,o])=>`<span class="mat-chip output"><span style="font-size:10px;">${ITEM_ICONS[k]||'📦'}</span>${ITEM_LABELS[k]||k} ×${o.base} <span style="font-size:7px;color:var(--g-green);">+${fv}🍖</span> <span style="font-size:7px;color:var(--g-purple);">%${Math.round(chance*100)} ×${mult}✨</span></span>`).join('');
+    let btnLabel='▶ Başlat',btnDisabled=false;
+    if(locked){btnDisabled=true;btnLabel=`🔒 Sv.${r.minLv}`;}
+    else if(full){btnDisabled=true;btnLabel='Kapasite Dolu';}
+    else if(!canAfford){btnDisabled=true;btnLabel='Malzeme Eksik';}
+    recipesHtml+=`<div class="recipe" style="${locked?'opacity:.45;':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-family:var(--font-head);font-size:12px;font-weight:600;color:var(--perg2);">${r.icon} ${r.name}</span>
+        <span style="font-size:10px;color:var(--ink3);">${locked?`🔒 Sv.${r.minLv}`:fmtT(r.dur)}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:6px;">
+        ${inChips}<span style="color:var(--ink3);font-size:13px;margin:0 2px;">→</span>${outChips}
+      </div>
+      <button class="btn btn-xs" style="width:100%;" onclick="startKitchenProd('${r.id}')" ${btnDisabled?'disabled':''}>${btnLabel}</button>
+    </div>`;
+  });
+
+  let rightHtml=`<div class="sec" style="margin-top:0;">AKTİF ÜRETİM (${usedSlots}/${maxProd})</div>`;
+  if(activeTimers.length){
+    rightHtml+=activeTimers.map(x=>kitchenTimerCardHTML(x)).join('');
+  } else {
+    rightHtml+=`<div style="text-align:center;padding:32px 16px;border:1px dashed var(--border);border-radius:10px;color:var(--ink3);">
+      <div style="font-size:32px;margin-bottom:8px;">🍳</div>
+      <div style="font-size:12px;">Aşevi boşta</div>
+      <div style="font-size:10px;margin-top:4px;">Sol taraftan bir tarif başlat</div>
+    </div>`;
+  }
+
+  el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+    <div>${lvInfoHtml}${upgHtml}${stockHtml}${recipesHtml}</div>
+    <div>${rightHtml}</div>
+  </div>
+  <style>@media(max-width:700px){#prod-content>div[style*="grid-template-columns"]{grid-template-columns:1fr !important;}}</style>`;
+}
+
+function kitchenTimerCardHTML(t){
+  const r=(PROD_RECIPES.kitchen||[]).find(x=>x.id===t.recipe);if(!r)return'';
+  const isDone=t.remaining<=0;
+  const pct=Math.round((1-t.remaining/t.total)*100);
+  const fmtT=s=>{const m=Math.floor(s/60),sc=s%60;return `${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;};
+  const outChips=Object.entries(t.outputs).map(([k,v])=>{
+    const fv=KITCHEN_FOOD_VALUES[k]||0;
+    return `<span class="mat-chip ${v.bonus?'':'output'}" style="${v.bonus?'border-color:var(--g-purple);color:var(--g-purple);':''}">${ITEM_ICONS[k]||'📦'} ${ITEM_LABELS[k]||k} ×${v.amount}${v.bonus?' ✨':''} <span style="font-size:7px;color:var(--g-green);">+${fv*v.amount}🍖</span></span>`;
+  }).join('');
+  return `<div class="timer-card${isDone?' t-done':''}" id="tc-${t.id}">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+      <span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${r.icon} ${r.name}</span>
+      <div style="display:flex;align-items:center;gap:5px;">
+        <span style="font-family:var(--font-head);font-size:12px;color:${isDone?'var(--g-green)':'var(--gold)'};" id="tsecs-${t.id}">${isDone?'✓ Hazır':fmtT(t.remaining)}</span>
+        ${!isDone?`<button class="btn btn-xs btn-ghost" onclick="cancelProd(${t.id})" style="font-size:8px;padding:2px 5px;">✕</button>`:''}
+      </div>
+    </div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px;">${outChips}</div>
+    ${isDone?`<button class="collect-btn" onclick="collectProd(${t.id})">🎁 Topla → Depoya</button>`:''}
+    <div class="timer-prog-bg"><div class="timer-prog-fill" id="tprog-${t.id}" style="width:${pct}%;"></div></div>
+  </div>`;
+}
+
+async function startKitchenProd(rId){
+  const bld=PROD_BUILDINGS.kitchen;
+  const lv=bld.level;
+  const r=(PROD_RECIPES.kitchen||[]).find(x=>x.id===rId);if(!r)return;
+  const maxProd=kitchenMaxProd(lv);
+  const usedSlots=G.prodTimers.filter(x=>x.building==='kitchen').length;
+  if(usedSlots>=maxProd){toast('Kapasite dolu! Önce mevcut ürünleri topla.');return;}
+  if(!Object.entries(r.inputs).every(([k,v])=>(G.prodInv[k]||0)>=v)){toast('Malzeme eksik!');return;}
+  Object.entries(r.inputs).forEach(([k,v])=>{G.prodInv[k]-=v;});
+  const {chance,mult}=kitchenGetBonus(lv);
+  const outputs={};
+  Object.entries(r.outputs).forEach(([k,o])=>{
+    const bonus=Math.random()<chance;
+    const amount=bonus?(o.base*mult):o.base;
+    outputs[k]={amount,bonus};
+  });
+  let dbId=null;
+  if(currentUser){
+    const {data,error}=await supa.from('production_timers').insert({
+      profile_id:currentUser.id,building:'kitchen',recipe_id:rId,duration_secs:r.dur,outputs
+    }).select().single();
+    if(!error&&data) dbId=data.id;
+  }
+  G.prodTimers.push({id:G.prodTimerId++,dbId,building:'kitchen',recipe:rId,remaining:r.dur,total:r.dur,outputs});
+  trackQuest('prodStart1');
+  updateInvStrip();renderKitchen();toast(`${r.name} başlatıldı!`);
 }
 
 /* ══════════════════════════════════════
@@ -5378,7 +5731,7 @@ async function collectProd(id){
   Object.entries(t.outputs).forEach(([k,v])=>{
     G.prodInv[k]=(G.prodInv[k]||0)+v.amount;
     if(v.bonus) bonusItems.push(`${ITEM_ICONS[k]} ${ITEM_LABELS[k]||k} ×${v.amount}`);
-    const fv=(FOOD_VALUE[k]||0)*v.amount;
+    const fv=t.building!=='kitchen'?(FOOD_VALUE[k]||0)*v.amount:0;
     if(fv>0){G.food+=fv;foodGained+=fv;}
   });
   // Supabase'den sil
@@ -5432,8 +5785,8 @@ function renderDepot(){
   const groups=[
     {lbl:'🌾 Tarla', keys:['bugday','arpa','patates','domates','cicek','yonca','cilek','saman']},
     {lbl:'⚙ Değirmen', keys:['bugday_unu','arpa_unu','patates_puresi','kaymak','cilek_puresi','domates_puresi']},
-    {lbl:'🐄 Çiftlik', keys:['tuy','yumurta','yun','sut']},
-    {lbl:'🍳 Aşevi', keys:['ekmek','corba','kek']},
+    {lbl:'🐄 Çiftlik', keys:['tuy','yumurta','sut','yun','bal']},
+    {lbl:'🍳 Aşevi', keys:['domates_corbasi','patates_corbasi','ekmek','salcali_ekmek','borek','cilekli_turta','balli_kaymak']},
   ];
   let html='';
   groups.forEach(g=>{
