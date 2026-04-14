@@ -4635,16 +4635,23 @@ async function showBossResult(boss){
   try{
     const {data:existing}=await supa.from('guild_boss_history')
       .select('won').eq('guild_id',G.guildId).eq('cycle',cycle).single();
-    if(existing){ won=existing.won; }
-    else{
+    if(existing){
+      won=existing.won;
+    } else {
       won=Math.random()>0.3;
-      await supa.from('guild_boss_history').insert({
+      const {error:insErr}=await supa.from('guild_boss_history').insert({
         guild_id:G.guildId,boss_id:boss.id,boss_name:boss.name,
         cycle,won,participants:bossHunters.length,
         created_at:new Date().toISOString(),
       });
+      if(insErr) console.warn('Boss history insert hatası:',insErr.message);
+      // Kayıt yapıldıysa geçmiş paneli yenile
+      if(!insErr) setTimeout(()=>loadBossHistory(), 800);
     }
-  }catch(e){ won=Math.random()>0.3; }
+  }catch(e){
+    console.warn('Boss result hatası:',e);
+    won=Math.random()>0.3;
+  }
 
   const dropped=won&&Math.random()<boss.drop.chance;
   let dropItem=null;
@@ -4705,7 +4712,7 @@ function showBossResultNotif(boss,won,isLocal,dropped=false,dropItem=null,matDro
       <div style="font-size:13px;color:var(--perg2);margin-bottom:4px;">${boss.name}</div>
       <div style="font-size:11px;color:var(--ink3);">${won?'Harika savaştın!':boss.name+' bu sefer çok güçlüydü.'}</div>
       ${rewardsHtml}
-      <button class="btn" style="width:100%;margin-top:14px;" onclick="document.getElementById('boss-notif-overlay').remove()">Tamam</button>
+      <button class="btn" style="width:100%;margin-top:14px;" onclick="document.getElementById('boss-notif-overlay').remove();loadBossHistory();">Tamam</button>
     </div>`;
   document.body.appendChild(overlay);
   setTimeout(()=>overlay?.remove(),18000);
