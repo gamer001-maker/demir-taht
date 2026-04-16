@@ -4083,39 +4083,32 @@ function buyItem(id){
 }
 
 async function buyMarketItem(id){
-  // NPC item mi?
+  // NPC item mi kontrolü (Burası aynı kalıyor)
   const npcItem = MARKET_ITEMS.find(x=>String(x.id)===String(id));
   if(npcItem){ buyItem(npcItem.id); return; }
 
   const listing = G_PLAYER_LISTINGS.find(x=>x.id===id);
-  if(!listing){ toast('İlan bulunamadı, liste yenileniyor...'); await loadPlayerMarketItems(); renderMarket(); return; }
+  if(!listing){ toast('İlan bulunamadı!'); return; }
   if(listing.sellerId===currentUser?.id){ toast('Kendi ilanını satın alamazsın!'); return; }
-  if(G.gold<listing.price){ toast('Yeterli altın yok!'); return; }
-  if(G.inventory.length>=50){ toast('Envanter dolu!'); return; }
+  if(G.gold < listing.price){ toast('Yeterli altın yok!'); return; }
+  if(G.inventory.length >= 50){ toast('Envanter dolu!'); return; }
 
-  // Önce local cache'den çıkar — kullanıcı anında görsün
-  G_PLAYER_LISTINGS = G_PLAYER_LISTINGS.filter(x=>x.id!==id);
-  renderMarket();
+  // --- GÜVENLİ VERİTABANI İŞLEMİ (RPC) ---
+  const { error } = await supa.rpc('buy_market_item', {
+    buyer_id: currentUser.id,
+    item_db_id: listing.dbId,
+    item_price: listing.price
+  });
 
-  // Supabase'den sil
-  const {error:delErr} = await supa.from('marketplace').delete().eq('id', listing.dbId);
-  if(delErr){
-    // Sil başarısız — geri ekle
-    G_PLAYER_LISTINGS.unshift(listing);
-    toast('Bu ilan artık mevcut değil!');
+  if (error) {
+    toast('İşlem başarısız: ' + error.message);
+    // Hata varsa listeyi yenileyip duruyoruz
+    await loadPlayerMarketItems();
     renderMarket();
     return;
   }
 
-  // Satıcıya altın gönder
-  const {data:sellerData} = await supa.from('profiles').select('gold').eq('id', listing.sellerId).single();
-  if(sellerData){
-    await supa.from('profiles').update({
-      gold: (sellerData.gold||0) + listing.price
-    }).eq('id', listing.sellerId);
-  }
-
-  // Alıcının altınını düş, envantere ekle
+  // İşlem başarılıysa yerel verileri (Client-side) güncelle
   G.gold -= listing.price;
   const invItem = {
     id: Date.now(),
@@ -4128,14 +4121,20 @@ async function buyMarketItem(id){
     material: listing.material||null, classBonus: listing.classBonus||null,
   };
   G.inventory.push(invItem);
+  
   gainXP(10);
-  toast(`${listing.name} satın alındı! -${listing.price}🪙`);
+  toast(`${listing.name} satın alındı! 🪙`);
   trackQuest('marketBuy1');
-  updateHUD(); renderKarakter();
+  
+  updateHUD();
+  renderKarakter();
+  
+  // Market listesini sunucudan tekrar çek ve render et
+  await loadPlayerMarketItems();
+  renderMarket();
+  
+  // Profil verilerini buluta yedekle
   if(currentUser) sbSave();
-
-  // 2 saniye sonra sunucudan tazele (Supabase'in güncellenmesi için zaman tanı)
-  setTimeout(async()=>{ await loadPlayerMarketItems(); renderMarket(); }, 2000);
 }
 
 async function cancelListing(id){
