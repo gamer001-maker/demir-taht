@@ -664,6 +664,46 @@ html,body{
 /* Duman efekti canvas */
 #enh-smoke-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9000;}
 
+/* ── BOSS ANIMASYON & HAZIRLIK ── */
+@keyframes bossBreath {
+  0%   { transform: scale(1);    filter: drop-shadow(0 0 10px rgba(255,80,0,0.25)); }
+  50%  { transform: scale(1.06); filter: drop-shadow(0 0 35px rgba(255,80,0,0.65)); }
+  100% { transform: scale(1);    filter: drop-shadow(0 0 10px rgba(255,80,0,0.25)); }
+}
+.boss-img-animated {
+  animation: bossBreath 4s ease-in-out infinite;
+  max-width: 180px;
+  width: 100%;
+  margin: 0 auto;
+  display: block;
+}
+/* Hazırlık aksiyon butonları */
+.prep-btn {
+  background: rgba(30,16,4,0.85);
+  border: 1.5px solid var(--border2);
+  color: var(--perg2);
+  font-family: var(--font-head);
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s, color .15s;
+  flex: 1;
+}
+.prep-btn:hover  { border-color: var(--gold); color: var(--gold); background: rgba(50,30,4,0.9); }
+.prep-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(50,30,4,0.95); box-shadow: 0 0 12px rgba(200,160,40,0.3); }
+/* Katılımcı satırında aksiyon rozeti */
+.prep-badge {
+  font-size: 14px;
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(30,16,4,0.8);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
 /* ── BOSS BİLDİRİM POPUP ── */
 .boss-notif-overlay{
   position:fixed;top:0;left:0;right:0;bottom:0;
@@ -4349,6 +4389,7 @@ let bossJoined  = false;
 let bossRenderInterval = null;
 let bossResultShown = false;
 let _bossLobbyChannel = null;
+let myPrepAction = null; // 'sharpen' | 'fortify' | null
 
 function renderGuildWar(){
   if(!G.guildId){
@@ -4359,7 +4400,7 @@ function renderGuildWar(){
   const cycle = Math.floor(Date.now()/600000);
   if((window._lastBossCycle||0) !== cycle){
     window._lastBossCycle = cycle;
-    bossJoined = false; bossHunters = []; bossResultShown = false;
+    bossJoined=false; bossHunters=[]; bossResultShown=false; myPrepAction=null;
   }
   const boss = getCurrentBoss();
   const gc = document.getElementById('guild-content');
@@ -4375,8 +4416,10 @@ function renderGuildWar(){
     </style>
     <div style="min-height:480px;display:flex;flex-direction:column;background:linear-gradient(to bottom,rgba(0,0,0,0.15) 0%,rgba(0,0,0,0.05) 25%,rgba(15,8,4,0.82) 60%,rgba(15,8,4,1) 100%);">
 
-      <!-- Üst: Boss adı -->
+      <!-- Üst: Boss görseli + adı -->
       <div style="text-align:center;padding:28px 16px 0;flex-shrink:0;">
+        <img src="images/${boss.img}.webp" class="boss-img-animated"
+          onerror="this.src='images/${boss.img}.jpg';this.onerror=()=>this.style.display='none'"/>
         <div style="font-family:var(--font-head);font-size:9px;letter-spacing:4px;color:rgba(232,220,192,0.55);margin-bottom:4px;">SIRADAKİ BOSS</div>
         <div style="font-family:var(--font-head);font-size:28px;font-weight:900;color:#fff;letter-spacing:3px;text-shadow:0 0 40px rgba(180,80,40,0.9),0 2px 8px rgba(0,0,0,0.8);">${boss.name.toUpperCase()}</div>
       </div>
@@ -4426,7 +4469,7 @@ function renderGuildWar(){
     const c = Math.floor(Date.now()/600000);
     if((window._lastBossCycle||0) !== c){
       window._lastBossCycle = c;
-      bossJoined=false; bossHunters=[]; bossResultShown=false;
+      bossJoined=false; bossHunters=[]; bossResultShown=false; myPrepAction=null;
       renderGuildWar(); return;
     }
     _updateBossHUD();
@@ -4456,6 +4499,12 @@ function _updateBossHUD(){
         ? `<div style="background:rgba(14,26,8,0.9);border:2px solid #5a8a4a;border-radius:10px;padding:14px 18px;text-align:center;backdrop-filter:blur(4px);">
             <div style="font-size:22px;margin-bottom:4px;">✅</div>
             <div style="font-family:var(--font-head);font-size:10px;color:#7aaa5a;letter-spacing:1px;">LOBİYE KATILDIN</div>
+            <div style="font-family:var(--font-head);font-size:9px;color:var(--ink3);margin:8px 0 6px;letter-spacing:1px;">HAZIRLIK</div>
+            <div style="display:flex;gap:6px;">
+              <button class="prep-btn${myPrepAction==='sharpen'?' active':''}" onclick="prepAction('sharpen')">⚔<br>Bile</button>
+              <button class="prep-btn${myPrepAction==='fortify'?' active':''}" onclick="prepAction('fortify')">🛡<br>Tahkim</button>
+            </div>
+            ${myPrepAction?`<div style="font-size:9px;color:var(--gold);margin-top:6px;">${myPrepAction==='sharpen'?'⚔ Saldırı hazırlığı':'🛡 Savunma hazırlığı'} aktif</div>`:''}
             <button style="font-size:9px;padding:4px 12px;margin-top:8px;border-radius:4px;background:transparent;border:1px solid var(--border2);color:var(--ink3);cursor:pointer;" onclick="leaveBossHunt()">Çık</button>
            </div>`
         : `<button onclick="joinBossHunt()" style="background:#8b1e1e;border:2px solid #c0392b;color:#fff;font-family:var(--font-head);font-size:12px;letter-spacing:1px;padding:16px 18px;border-radius:10px;cursor:pointer;line-height:1.5;backdrop-filter:blur(4px);">BOSS AVİNA<br>KATIL</button>`;
@@ -4501,16 +4550,23 @@ function _updateBossParticipants(){
     el.innerHTML=`<div style="font-size:10px;color:var(--ink3);font-style:italic;padding:4px 0;">Henüz kimse katılmadı.</div>`;
     return;
   }
-  el.innerHTML=bossHunters.map((h,i)=>`
+  el.innerHTML=bossHunters.map((h,i)=>{
+    const prepIcon = h.prepAction==='sharpen'?'⚔':h.prepAction==='fortify'?'🛡':'';
+    const prepBadge = prepIcon
+      ? `<div class="prep-badge" title="${h.prepAction==='sharpen'?'Saldırı hazırlığı':'Savunma hazırlığı'}">${prepIcon}</div>`
+      : `<div class="prep-badge" style="opacity:0.2;">?</div>`;
+    return `
     <div class="boss-hunter-row" style="display:flex;align-items:center;gap:8px;animation-delay:${i*0.06}s;">
       <div style="width:36px;height:36px;border-radius:50%;border:2px solid ${h.isMe?'var(--gold)':'var(--border2)'};background:var(--panel2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;overflow:hidden;">
         ${h.avatarHtml||`<span>${h.classIcon}</span>`}
       </div>
-      <div>
+      <div style="flex:1;">
         <div style="font-family:var(--font-head);font-size:12px;color:${h.isMe?'var(--gold)':'var(--perg)'};">${h.name}${h.isMe?' <span style="font-size:9px;color:var(--gold2);">(Sen)</span>':''}</div>
         <div style="font-size:9px;color:var(--ink3);">${h.className||''}</div>
       </div>
-    </div>`).join('');
+      ${prepBadge}
+    </div>`;
+  }).join('');
 }
 
 async function loadBossHistory(){
@@ -4577,17 +4633,46 @@ function leaveBossHunt(){
   _updateBossParticipants();
 }
 
+async function prepAction(type){
+  if(!bossJoined||!currentUser||!G.guildId) return;
+  // Aynı seçimi tekrar basarsa iptal et
+  if(myPrepAction===type){ myPrepAction=null; type=null; }
+  else myPrepAction=type;
+
+  // Supabase'e kaydet
+  await supa.from('guild_boss_sessions').update({prep_action: myPrepAction})
+    .eq('guild_id',G.guildId)
+    .eq('profile_id',currentUser.id)
+    .eq('cycle',Math.floor(Date.now()/600000));
+
+  // Kendi hunter kaydını güncelle
+  const me=bossHunters.find(h=>h.isMe);
+  if(me) me.prepAction=myPrepAction;
+
+  // Joined kutu + katılımcı listesini yenile
+  const joinCol=document.getElementById('boss-join-col');
+  if(joinCol) joinCol.dataset.state=''; // force re-render
+  _updateBossHUD();
+  _updateBossParticipants();
+
+  if(myPrepAction==='sharpen') toast('⚔ Kılıcını biledi! Saldırı gücü arttı.');
+  else if(myPrepAction==='fortify') toast('🛡 Tahkim yaptı! Savunma güçlendi.');
+  else toast('Hazırlık iptal edildi.');
+}
+
 async function _loadBossHunters(){
   if(!G.guildId) return;
   const cycle=Math.floor(Date.now()/600000);
   const {data}=await supa.from('guild_boss_sessions')
-    .select('profile_id').eq('guild_id',G.guildId).eq('cycle',cycle);
+    .select('profile_id,prep_action').eq('guild_id',G.guildId).eq('cycle',cycle);
   if(!data) return;
   const ids=data.map(d=>d.profile_id);
   if(!ids.length){bossHunters=[];_updateBossParticipants();return;}
   const {data:profs}=await supa.from('profiles')
     .select('id,hero_name,username,class_id,avatar_idx').in('id',ids);
   const profMap={};(profs||[]).forEach(p=>profMap[p.id]=p);
+  // prep_action map
+  const prepMap={};data.forEach(d=>prepMap[d.profile_id]=d.prep_action||null);
   bossHunters=data.map(d=>{
     const p=profMap[d.profile_id]||{};
     const cls=CLASSES.find(c=>c.id===p.class_id);
@@ -4596,7 +4681,8 @@ async function _loadBossHunters(){
     const avatarHtml=avSrc
       ?`<img src="${avSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none'"/>`
       :`<span>${cls?.icon||'⚔'}</span>`;
-    return {name:p.hero_name||p.username||'Avcı',classIcon:cls?.icon||'⚔',className:cls?.name||'',avatarHtml,isMe};
+    return {name:p.hero_name||p.username||'Avcı',classIcon:cls?.icon||'⚔',className:cls?.name||'',avatarHtml,isMe,
+      prepAction: isMe ? myPrepAction : prepMap[d.profile_id]};
   });
   _updateBossParticipants();
 }
@@ -4647,19 +4733,30 @@ async function showBossResult(boss){
     if(existing){
       won=existing.won;
     } else {
-      won=Math.random()>0.3;
+      // Başarı şansı hesapla:
+      // Baz: %40
+      // +%5 her katılımcı (max +%25)
+      // +%5 her "sharpen" seçimi (saldırı)
+      // +%5 her "fortify" seçimi (savunma)
+      // Max toplam: %85
+      const participantBonus = Math.min(bossHunters.length * 0.05, 0.25);
+      const sharpenCount = bossHunters.filter(h=>h.prepAction==='sharpen').length;
+      const fortifyCount = bossHunters.filter(h=>h.prepAction==='fortify').length;
+      const prepBonus = (sharpenCount + fortifyCount) * 0.05;
+      const winChance = Math.min(0.40 + participantBonus + prepBonus, 0.85);
+      won = Math.random() < winChance;
+
       const {error:insErr}=await supa.from('guild_boss_history').insert({
         guild_id:G.guildId,boss_id:boss.id,boss_name:boss.name,
         cycle,won,participants:bossHunters.length,
         created_at:new Date().toISOString(),
       });
       if(insErr) console.warn('Boss history insert hatası:',insErr.message);
-      // Kayıt yapıldıysa geçmiş paneli yenile
       if(!insErr) setTimeout(()=>loadBossHistory(), 800);
     }
   }catch(e){
     console.warn('Boss result hatası:',e);
-    won=Math.random()>0.3;
+    won=Math.random()>0.5;
   }
 
   const dropped=won&&Math.random()<boss.drop.chance;
