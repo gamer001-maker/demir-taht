@@ -2637,33 +2637,44 @@ async function confirmSellItem(itemId){
   if(price<1){toast('Geçersiz fiyat!');return;}
   if(!currentUser){toast('Satış için giriş yapmalısın!');return;}
 
-  // Supabase marketplace tablosuna ekle
-  const {data,error}=await supa.from('marketplace').insert({
-    seller_id:   currentUser.id,
-    seller_name: G.heroName||G.username,
-    item_name:   item.name,
-    item_icon:   item.icon,
-    item_type:   item.type,
-    item_grade:  item.grade||'gray',
-    item_stats:  item.stats||{},
-    item_desc:   item.desc||'',
-    item_img:    item.img||null,
-    item_req_lv: item.reqLv||1,
-    item_material: item.material||null,
-    item_class_bonus: item.classBonus||null,
-    price,
-    created_at: new Date().toISOString(),
-  }).select().single();
-
-  if(error){ toast('Listeleme hatası: '+error.message); return; }
-
+  // Eşyayı ÖNCE envanterden çıkar — kullanıcı anında görsün
   G.inventory=G.inventory.filter(x=>x.id!==itemId);
   closeGModal();
-  toast(`${item.name} ${price}🪙 fiyatıyla pazara listelendi!`);
   renderKarakter();
+  if(currentUser) sbSave();
+
+  // Supabase marketplace tablosuna ekle — enhPlus dahil
+  const {error}=await supa.from('marketplace').insert({
+    seller_id:        currentUser.id,
+    seller_name:      G.heroName||G.username,
+    item_name:        item.name,
+    item_icon:        item.icon,
+    item_type:        item.type,
+    item_grade:       item.grade||'gray',
+    item_stats:       item.stats||{},
+    item_desc:        item.desc||'',
+    item_img:         item.img||null,
+    item_req_lv:      item.reqLv||1,
+    item_material:    item.material||null,
+    item_class_bonus: item.classBonus||null,
+    item_enh_plus:    item.enhPlus||0,
+    price,
+    created_at: new Date().toISOString(),
+  });
+
+  if(error){
+    // Hata olursa eşyayı geri ver
+    G.inventory.push(item);
+    renderKarakter();
+    if(currentUser) sbSave();
+    toast('Listeleme hatası: '+error.message);
+    return;
+  }
+
+  const enhLabel=item.enhPlus?` +${item.enhPlus}`:'';
+  toast(`${item.name}${enhLabel} — ${price}🪙 fiyatıyla pazara listelendi!`);
   await loadPlayerMarketItems();
   renderMarket();
-  if(currentUser) sbSave();
 }
 
 function getCatFromType(type){
@@ -3970,6 +3981,7 @@ async function loadPlayerMarketItems(){
     reqLv: row.item_req_lv||1,
     material: row.item_material||null,
     classBonus: row.item_class_bonus||null,
+    enhPlus: row.item_enh_plus||0,
     isMarketplace: true,
   }));
 }
@@ -4010,10 +4022,11 @@ function renderMarket(){
     const iconContent=item.img
       ?`<img src="images/${item.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:30px;height:30px;object-fit:contain;"/><span style="display:none">${item.icon}</span>`
       :`<span>${item.icon}</span>`;
+    const enhBadge=item.enhPlus>0?`<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:#1a1200;border:1px solid var(--gold);color:var(--gold);font-family:var(--font-head);">+${item.enhPlus}</span>`:'';
     return `<div class="listing-card ${item.grade}" onclick="buyMarketItem('${item.id}')">
       <div class="item-icon ${item.grade}">${iconContent}<div class="grade-pip gp-${item.grade}">${GRADES[item.grade]?.name||''}</div></div>
       <div style="flex:1;min-width:0;">
-        <div class="item-name ${item.grade}" style="font-family:var(--font-head);font-size:11px;">${item.name}</div>
+        <div class="item-name ${item.grade}" style="font-family:var(--font-head);font-size:11px;">${item.name} ${enhBadge}</div>
         <div style="display:flex;gap:4px;align-items:center;margin:2px 0;">${lvBadge}<span style="font-size:9px;color:var(--ink3);">${item.type}</span></div>
         <div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:2px;">${statsP}</div>
         <div style="font-size:9px;color:var(--ink3);margin-top:2px;">${isBoss?'⚔':item.seller==='npc'?'🤖':'👤'} ${item.sellerName}${isOwnListing?' <span style="color:var(--gold);">(Sen)</span>':''}</div>
@@ -4024,7 +4037,7 @@ function renderMarket(){
           :`<div style="font-family:var(--font-head);font-size:12px;color:var(--gold);">${item.price.toLocaleString('tr')}🪙</div>
            <div style="font-size:8px;color:var(--ink3);">${item.qty>98?'∞':item.qty} adet</div>
            ${isOwnListing
-             ?`<button class="buy-btn-sm" style="margin-top:5px;border-color:var(--hp);color:#c87070;" onclick="event.stopPropagation();cancelListing('${item.id}')">Geri Al</button>`
+             ?`<div style="font-size:8px;color:var(--ink3);margin-top:5px;">Satışta</div>`
              :`<button class="buy-btn-sm" style="margin-top:5px;" onclick="event.stopPropagation();buyMarketItem('${item.id}')" ${!canBuy?'disabled':''}>Al</button>`
            }`
         }
@@ -4108,8 +4121,11 @@ async function buyMarketItem(id){
     return;
   }
 
-  // İşlem başarılıysa yerel verileri (Client-side) güncelle
+  // İşlem başarılıysa yerel verileri güncelle
   G.gold -= listing.price;
+  // Cache'den anında çıkar — sunucudan yeniden çekene kadar tekrar görünmesin
+  G_PLAYER_LISTINGS = G_PLAYER_LISTINGS.filter(x=>x.id!==id);
+
   const invItem = {
     id: Date.now(),
     name: listing.name, icon: listing.icon,
@@ -4119,48 +4135,19 @@ async function buyMarketItem(id){
     sellerName: listing.sellerName,
     img: listing.img||null, reqLv: listing.reqLv||1,
     material: listing.material||null, classBonus: listing.classBonus||null,
+    enhPlus: listing.enhPlus||0,
   };
   G.inventory.push(invItem);
   
   gainXP(10);
-  toast(`${listing.name} satın alındı! 🪙`);
+  const enhLabel=listing.enhPlus>0?` +${listing.enhPlus}`:'';
+  toast(`${listing.name}${enhLabel} satın alındı! -${listing.price}🪙`);
   trackQuest('marketBuy1');
-  
   updateHUD();
   renderKarakter();
-  
-  // Market listesini sunucudan tekrar çek ve render et
-  await loadPlayerMarketItems();
-  renderMarket();
-  
-  // Profil verilerini buluta yedekle
-  if(currentUser) sbSave();
-}
-
-async function cancelListing(id){
-  const listing = G_PLAYER_LISTINGS.find(x=>x.id===id);
-  if(!listing||listing.sellerId!==currentUser?.id) return;
-
-  const {error} = await supa.from('marketplace').delete().eq('id', listing.dbId);
-  if(error){ toast('Hata: '+error.message); return; }
-
-  // Eşyayı envantere geri al
-  if(G.inventory.length<50){
-    G.inventory.push({
-      id: Date.now(),
-      name: listing.name, icon: listing.icon,
-      type: listing.type, grade: listing.grade,
-      price: listing.price, stats: listing.stats||{},
-      desc: listing.desc||'', seller:'player',
-      sellerName: G.heroName||G.username,
-      img: listing.img||null, reqLv: listing.reqLv||1,
-      material: listing.material||null, classBonus: listing.classBonus||null,
-    });
-    renderKarakter();
-  }
-  toast(`${listing.name} pazardan geri alındı.`);
-  await loadPlayerMarketItems();
-  renderMarket();
+  renderMarket(); // cache'den çıktı, hemen göster
+  // 2sn sonra sunucudan tazele
+  setTimeout(async()=>{ await loadPlayerMarketItems(); renderMarket(); }, 2000);
   if(currentUser) sbSave();
 }
 function glgo(t){G.guildTab=t;['home','members','war','chat','search'].forEach(x=>{document.getElementById('glt-'+x).classList.toggle('active',x===t);});renderGuild(t);}
