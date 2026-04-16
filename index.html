@@ -4121,43 +4121,66 @@ async function buyMarketItem(id){
     return;
   }
 
-  // İşlem başarılıysa yerel verileri güncelle
+ // İşlem başarılıysa yerel verileri güncelle
   G.gold -= listing.price;
+  
   // Cache'den anında çıkar — sunucudan yeniden çekene kadar tekrar görünmesin
-  G_PLAYER_LISTINGS = G_PLAYER_LISTINGS.filter(x=>x.id!==id);
+  G_PLAYER_LISTINGS = G_PLAYER_LISTINGS.filter(x => x.id !== id);
 
   const invItem = {
     id: Date.now(),
-    name: listing.name, icon: listing.icon,
-    type: listing.type, grade: listing.grade,
-    price: listing.price, stats: listing.stats||{},
-    desc: listing.desc||'', seller:'player',
+    name: listing.name, 
+    icon: listing.icon,
+    type: listing.type, 
+    grade: listing.grade,
+    price: listing.price, 
+    stats: listing.stats || {},
+    desc: listing.desc || '', 
+    seller: 'player',
     sellerName: listing.sellerName,
-    img: listing.img||null, reqLv: listing.reqLv||1,
-    material: listing.material||null, classBonus: listing.classBonus||null,
-    enhPlus: listing.enhPlus||0,
+    img: listing.img || null, 
+    reqLv: listing.reqLv || 1,
+    material: listing.material || null, 
+    classBonus: listing.classBonus || null,
+    // Eşyanın artı değerini (+4 gibi) koruyoruz
+    enhPlus: listing.enhPlus || 0 
   };
+  
   G.inventory.push(invItem);
   
   gainXP(10);
-  const enhLabel=listing.enhPlus>0?` +${listing.enhPlus}`:'';
+  const enhLabel = (listing.enhPlus > 0) ? ` +${listing.enhPlus}` : '';
   toast(`${listing.name}${enhLabel} satın alındı! -${listing.price}🪙`);
+  
   trackQuest('marketBuy1');
   updateHUD();
   renderKarakter();
-  renderMarket(); // cache'den çıktı, hemen göster
-  // 2sn sonra sunucudan tazele
-  setTimeout(async()=>{ await loadPlayerMarketItems(); renderMarket(); }, 2000);
-  if(currentUser) sbSave();
+  renderMarket(); // Cache temizlendiği için item anında kaybolur
+  
+  // 2 saniye sonra sunucudan güncel listeyi çek
+  setTimeout(async () => { 
+    await loadPlayerMarketItems(); 
+    renderMarket(); 
+  }, 2000);
+  
+  if (currentUser) sbSave();
 }
-function glgo(t){G.guildTab=t;['home','members','war','chat','search'].forEach(x=>{document.getElementById('glt-'+x).classList.toggle('active',x===t);});renderGuild(t);}
-function renderGuild(t){
-  document.getElementById('guild-hdr-sub').textContent=G.guildName;
-  document.getElementById('guild-role-badge').textContent='Subay';
-  if(t==='home') renderGuildHome();
-  else if(t==='members') renderGuildMembers();
-  else if(t==='war') renderGuildWar();
-  else if(t==='chat') renderGuildChat();
+
+function glgo(t) {
+  G.guildTab = t;
+  ['home', 'members', 'war', 'chat', 'search'].forEach(x => {
+    document.getElementById('glt-' + x).classList.toggle('active', x === t);
+  });
+  renderGuild(t);
+}
+
+function renderGuild(t) {
+  document.getElementById('guild-hdr-sub').textContent = G.guildName || 'Lonca seçilmedi';
+  document.getElementById('guild-role-badge').textContent = 'Üye'; // Dinamik rol sistemi eklenebilir
+  if (t === 'home') renderGuildHome();
+  else if (t === 'members') renderGuildMembers();
+  else if (t === 'war') renderGuildWar();
+  else if (t === 'chat') renderGuildChat();
   else renderGuildSearch();
 }
 function renderGuildHome(){
