@@ -2096,6 +2096,44 @@ const MARKET_ITEMS=[
   {id:606,name:'Yonca Tohumu',    icon:'🌱',cat:'resource',grade:'green', price:35, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:7, material:null,desc:'Yonca yetiştirmek için. Bol saman verir.',       stats:{},img:null,classBonus:null,isSeed:true,seedKey:'yonca_tohum'},
   {id:607,name:'Çilek Tohumu',    icon:'🌱',cat:'resource',grade:'green', price:40, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:8, material:null,desc:'Çilek yetiştirmek için. Aşevinde kullanılır.',   stats:{},img:null,classBonus:null,isSeed:true,seedKey:'cilek_tohum'},
 ];
+
+/* ══════════════════════════════════════
+   NPC SATIŞ FİYATLARI
+   MARKET_ITEMS'teki tplId→price eşleşmesi
+   + Güneş silahları (boss drop, market'ta yok)
+══════════════════════════════════════ */
+const NPC_SELL_PRICES = (() => {
+  const map = {};
+  MARKET_ITEMS.forEach(m => { if(m.tplId && m.price > 0) map[m.tplId] = m.price; });
+  // Güneş silahları — boss drop, market listesinde fiyat yok
+  map.gunesasa    = 12000;
+  map.gunesbicak  = 12000;
+  map.guneskilic  = 12000;
+  map.gunesyay    = 12000;
+  // Lonca boss silahları
+  map.sefinkilici = 15000;
+  map.throsyay    = 15000;
+  map.yadigarhancer = 9000;
+  return map;
+})();
+
+function getNPCSellPrice(item){
+  let base = 0;
+  if(item.tplId && NPC_SELL_PRICES[item.tplId]){
+    base = NPC_SELL_PRICES[item.tplId];
+  } else if(item.price > 0){
+    base = item.price;
+  } else {
+    // Grade'e göre yedek fiyat
+    const gb = {gray:60, green:250, blue:1000, purple:3500, orange:8000};
+    base = gb[item.grade||'gray'] || 60;
+  }
+  // Geliştirme bonusu: her + için %25 eklenir
+  const plus = item.enhPlus || 0;
+  if(plus > 0) base = Math.floor(base * (1 + plus * 0.25));
+  return base;
+}
+
 const QUEST_DATA={
   story:[
     {id:'s1',type:'story',num:'Bölüm 1',title:'Tahtın Uyanışı',desc:'Krallığını uyandır, ilk adımlarını at.',icon:'👑',status:'active',objectives:[{text:'Ordu ekranını ziyaret et',key:'visitArmy',cur:0,max:1},{text:'100 altın topla',key:'goldReached100',cur:0,max:1}],rewards:[{t:'gold',v:200},{t:'xp',v:150}]},
@@ -2742,6 +2780,7 @@ function openInvModal(itemId, eqSlotKey=null){
     ${targetSlot&&canEquip?`<button class="btn" style="width:100%;margin-bottom:8px;" onclick="equipItem(${item.id},'${targetSlot}')">⚔ Kuşan</button>`:''}
     ${targetSlot&&!canEquip?`<button class="btn" disabled style="width:100%;margin-bottom:8px;">🔒 Seviye ${item.reqLv} Gerekli</button>`:''}
     ${item.type==='İksir'?`<button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#0a2a1a,#051408);border-color:var(--g-green);color:#7aaa5a;" onclick="useConsumable(${item.id})">⚗ Kullan</button>`:''}
+    <button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:#3a6a18;color:#7aaa5a;" onclick="sellToNPC(${item.id})">🏪 NPC'ye Sat (${getNPCSellPrice(item).toLocaleString('tr-TR')}🪙)</button>
     <button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="openSellModal(${item.id})">🪙 Pazara Sat</button>
     <button class="btn btn-danger" style="width:100%;" onclick="dropItem(${item.id})">🗑 At</button>`;
   showGModal(html);
@@ -2847,6 +2886,44 @@ function unequipItem(slot){
 function dropItem(itemId){
   G.inventory=G.inventory.filter(x=>x.id!==itemId);
   closeGModal();toast('Eşya atıldı.');renderKarakter();
+}
+
+function sellToNPC(itemId){
+  const item = G.inventory.find(x=>x.id===itemId);
+  if(!item){ closeGModal(); return; }
+  const price = getNPCSellPrice(item);
+  const plusText = item.enhPlus>0 ? ` +${item.enhPlus}` : '';
+  const gradeColors = {orange:'#c9a646',purple:'#9a6aaa',blue:'#5a8aaa',green:'#5a8a4a',gray:'#8a7268'};
+  const col = gradeColors[item.grade||'gray'];
+  // Onay modalı
+  closeGModal();
+  showGModal(`
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="font-size:42px;margin-bottom:8px;">${item.icon}</div>
+      <div style="font-family:var(--font-head);font-size:14px;color:${col};">${item.name}${plusText}</div>
+      <div style="font-size:11px;color:var(--ink3);margin-top:4px;">${item.type}</div>
+      <div style="margin-top:12px;font-size:15px;color:var(--gold2);font-family:var(--font-head);">
+        NPC Alış Fiyatı: ${price.toLocaleString('tr-TR')}🪙
+      </div>
+      ${item.enhPlus>0?`<div style="font-size:10px;color:var(--ink3);margin-top:4px;">Geliştirme +${item.enhPlus} dahil</div>`:''}
+    </div>
+    <button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;font-size:14px;"
+      onclick="confirmSellToNPC(${itemId})">✅ Sat (+${price.toLocaleString('tr-TR')}🪙)</button>
+    <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal();openInvModal(${itemId})">Geri Dön</button>
+  `);
+}
+
+function confirmSellToNPC(itemId){
+  const item = G.inventory.find(x=>x.id===itemId);
+  if(!item){ closeGModal(); return; }
+  const price = getNPCSellPrice(item);
+  const plusText = item.enhPlus>0 ? ` +${item.enhPlus}` : '';
+  G.gold += price;
+  G.inventory = G.inventory.filter(x=>x.id!==itemId);
+  closeGModal();
+  toast(`🏪 ${item.name}${plusText} NPC'ye satıldı! +${price.toLocaleString('tr-TR')}🪙`);
+  updateHUD(); renderKarakter();
+  if(currentUser) sbSave();
 }
 
 function openSellModal(itemId){
