@@ -179,6 +179,7 @@ html,body{
   .scroll{max-width:1300px;}
   .nav-img{width:56px;height:56px;}
   .bnav-lbl{font-size:13px !important;}
+  #game-content,#gs-karakter{max-width:none!important;margin:0!important;}
 }
 
 /* ── PAGES ── */
@@ -1206,10 +1207,20 @@ html,body{
 @media(min-width:900px){
   .char-shield-wrap{width:130px;height:130px;}
   .char-shield{width:130px;height:130px;}
-  .inv-grid{grid-template-columns:repeat(10,1fr);}
-  .char-sheet{max-width:700px;margin:0 auto;}
-  .eq-slots-row{grid-template-columns:repeat(3,1fr);}
-  .inv-grid{grid-template-columns:repeat(5,1fr)!important;}
+  .char-sheet{
+    grid-template-columns:420px 1fr;
+    gap:24px;
+    padding:24px;
+    max-width:none;
+    margin:0;
+  }
+  #game-content,#gs-karakter{max-width:none!important;margin:0!important;}
+  .eq-slots-row{grid-template-columns:repeat(6,1fr);}
+  .inv-grid{grid-template-columns:repeat(8,1fr)!important;}
+}
+@media(min-width:1400px){
+  .char-sheet{grid-template-columns:480px 1fr;gap:32px;padding:32px;}
+  .inv-grid{grid-template-columns:repeat(10,1fr)!important;}
 }
 
 /* Equipped slotlar */
