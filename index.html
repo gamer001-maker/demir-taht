@@ -504,6 +504,9 @@ html,body{
 }
 .zd-enemy-icon{font-size:52px;display:block;margin-bottom:4px;
   animation:zd-enemy-idle 2s ease-in-out infinite;}
+.zd-enemy-img{width:110px;height:110px;object-fit:contain;display:block;margin:0 auto 6px;
+  filter:drop-shadow(0 0 12px #c9a64660);
+  animation:zd-enemy-idle 2s ease-in-out infinite;}
 @keyframes zd-enemy-idle{
   0%,100%{transform:translateY(0);}
   50%{transform:translateY(-6px);}
@@ -1935,6 +1938,11 @@ const WEAPON_TEMPLATES={
   elementyay:     {name:'Element Yay',   icon:'🏹',type:'Yay',   grade:'blue',  reqLv:20, img:'elementyay',    classes:['ranger'],                         statRanges:{atk:[25,35], acc:[28,38],agi:[6,10]}},
   karanlikyay:    {name:'Karanlık Yay',  icon:'🏹',type:'Yay',   grade:'purple',reqLv:23, img:'karanlikyay',   classes:['ranger'],                         statRanges:{atk:[40,55], acc:[45,60],agi:[10,16]}},
   throsyay:       {name:"Thros'un Yayı", icon:'🏹',type:'Yay',   grade:'orange',reqLv:25, img:'throsyay',      classes:['ranger'],                         statRanges:{atk:[55,70], acc:[55,72],agi:[14,20]}},
+  /* ── GÜNEŞ SİLAHLARI — Altın Şövalye boss dropu ── */
+  gunesasa:       {name:'Güneş Asası',   icon:'🌟',type:'Asa',   grade:'orange',reqLv:25, img:'gunesasa',      classes:['mage','paladin'],                  statRanges:{mgc:[65,85], wis:[22,32],crit:[12,20]}},
+  gunesbicak:     {name:'Güneş Bıçağı',  icon:'✨',type:'Bıçak', grade:'orange',reqLv:25, img:'gunesbicak',    classes:['rogue'],                           statRanges:{atk:[60,78], crit:[36,50],agi:[14,22]}},
+  guneskilic:     {name:'Güneş Kılıcı',  icon:'☀', type:'Kılıç', grade:'orange',reqLv:25, img:'guneskilic',    classes:['warrior','paladin'],               statRanges:{atk:[72,92], str:[20,28], def:[12,18]}},
+  gunesyay:       {name:'Güneş Yayı',    icon:'🏹',type:'Yay',   grade:'orange',reqLv:25, img:'gunesyay',      classes:['ranger'],                         statRanges:{atk:[58,74], acc:[60,78], agi:[15,22]}},
 };
 
 /* Şablondan rastgele stat üretir — her edinimde çağrılır */
@@ -3626,6 +3634,7 @@ const ZD_ENEMIES = [
   {id:'vampire',name:'Vampir',       icon:'🧛', hp:90,  atk:22, def:10, xp:55, gold:50, floor:4},
   {id:'demon',  name:'Şeytan',       icon:'😈', hp:130, atk:26, def:12, xp:70, gold:65, floor:4},
   {id:'dragon', name:'Mini Ejderha', icon:'🐲', hp:200, atk:35, def:20, xp:120,gold:120,floor:5},
+  {id:'altinsovalye', name:'Altın Şövalye', icon:'⚔', img:'altinsovalye', hp:750, atk:70, def:45, xp:500, gold:400, floor:5, isBoss:true},
 ];
 
 const ZD_ROOM_TYPES = {
@@ -3694,20 +3703,27 @@ function zdGenFloor(floorNum){
   // Düşman ata
   rooms.forEach(r=>{
     if(r.type==='fight'||r.type==='boss'){
-      const eligible = ZD_ENEMIES.filter(e=>e.floor<=floorNum);
-      const pool = r.type==='boss'
-        ? eligible.filter(e=>e.floor===Math.min(floorNum, ZD_FLOORS))
-        : eligible;
-      const base = pool[Math.floor(Math.random()*pool.length)] || ZD_ENEMIES[0];
       const mult = 1 + (floorNum-1)*0.4;
-      r.enemy = {
-        ...base,
-        hp:   Math.floor(base.hp   * mult),
-        atk:  Math.floor(base.atk  * mult),
-        def:  Math.floor(base.def  * mult),
-        gold: Math.floor(base.gold * mult),
-        xp:   Math.floor(base.xp   * mult),
-      };
+      // 5. kat boss odası: her zaman Altın Şövalye
+      if(r.type==='boss' && floorNum===ZD_FLOORS){
+        const altin = ZD_ENEMIES.find(e=>e.id==='altinsovalye');
+        r.enemy = {...altin};
+      } else {
+        // Normal düşman havuzu (isBoss=true olanları hariç tut)
+        const eligible = ZD_ENEMIES.filter(e=>e.floor<=floorNum && !e.isBoss);
+        const pool = r.type==='boss'
+          ? eligible.filter(e=>e.floor===Math.min(floorNum, ZD_FLOORS))
+          : eligible;
+        const base = (pool.length>0?pool:eligible)[Math.floor(Math.random()*(pool.length||eligible.length))] || ZD_ENEMIES[0];
+        r.enemy = {
+          ...base,
+          hp:   Math.floor(base.hp   * mult),
+          atk:  Math.floor(base.atk  * mult),
+          def:  Math.floor(base.def  * mult),
+          gold: Math.floor(base.gold * mult),
+          xp:   Math.floor(base.xp   * mult),
+        };
+      }
     }
   });
   return rooms;
@@ -3765,7 +3781,8 @@ function zdEntranceHTML(){
         🏚 <b style="color:var(--perg2);">5 kat</b>, her katta rastgele odalar<br>
         ⚔ Tur bazlı savaş — <b style="color:var(--perg2);">Saldır / Savun / Büyü / Kaç</b><br>
         📦 Hazine sandıkları, tuzaklar, dinlenme noktaları<br>
-        👿 Her katın sonunda <b style="color:#f87171;">BOSS</b> seni bekliyor<br>
+        🗡 1-4. kat boss'ları <b style="color:var(--perg2);">rastgele silah</b> düşürür<br>
+        👿 5. katta <b style="color:#c9a646;">Altın Şövalye</b> seni bekliyor — <b style="color:#c9a646;">Güneş Silahı</b> düşürür!<br>
         💀 Ölürsen zindandan çıkarsın, haklar azalmaz
       </div>
     </div>
@@ -3827,9 +3844,10 @@ function zdFloorHTML(){
     <!-- İlerleme / Çıkış -->
     ${canAdvance?`<button class="btn" style="width:100%;margin-bottom:8px;" onclick="zdNextFloor()">
       ⬇ ${ZD.floor+1}. Kata İn</button>`:''}
-    ${isComplete?`<div style="text-align:center;padding:12px;background:#0e1a08;border:1px solid var(--g-green);border-radius:8px;margin-bottom:8px;">
-      <div style="font-family:var(--font-head);font-size:14px;color:#7aaa5a;margin-bottom:4px;">🏆 ZİNDAN TAMAMLANDI!</div>
-      <div style="font-size:11px;color:var(--ink3);">+${ZD.totalGold}🪙 · +${ZD.totalXP}XP kazandın</div>
+    ${isComplete?`<div style="text-align:center;padding:12px;background:linear-gradient(135deg,#1a0e02,#0e1a08);border:1px solid var(--gold);border-radius:8px;margin-bottom:8px;">
+      <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);margin-bottom:6px;">🏆 ZİNDAN TAMAMLANDI!</div>
+      <div style="font-size:11px;color:var(--perg2);margin-bottom:4px;">+${ZD.totalGold}🪙 · +${ZD.totalXP}XP kazandın</div>
+      <div style="font-size:10px;color:var(--ink3);">⚔ 4 silah (1-4. kat boss) + <span style="color:#c9a646;">☀ 1 Güneş Silahı</span> (Altın Şövalye) kazandın!</div>
     </div>`:''}
     <button class="btn btn-ghost" style="width:100%;" onclick="zdExit()">🚪 Zindandan Çık</button>
   `;
@@ -3852,7 +3870,9 @@ function zdBattleHTML(){
     <div class="zd-battle">
       <!-- Düşman -->
       <div class="zd-enemy-card" id="zd-enemy-card">
-        <span class="zd-enemy-icon" id="zd-enemy-icon">${b.enemy.icon}</span>
+        ${b.enemy.img
+          ? `<img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/${b.enemy.img}.webp" class="zd-enemy-img" id="zd-enemy-icon" alt="${b.enemy.name}">`
+          : `<span class="zd-enemy-icon" id="zd-enemy-icon">${b.enemy.icon}</span>`}
         <div class="zd-enemy-name">${b.enemy.name}</div>
         <div class="zd-hp-bar-wrap">
           <span class="zd-hp-label">HP</span>
@@ -4004,12 +4024,12 @@ function zdAction(action){
     const zdCritMult=1+Math.max(0.5,zdCritStat/100);
     if(Math.random()<eff.critChance){
       playerDmg=Math.floor(playerDmg*zdCritMult);
-      log(`💥 Kritik! ${playerDmg} hasar verdin.`,'good');
+      log(`💥 Kritik! ${b.enemy.name}'a ${playerDmg} hasar verdin.`,'good');
     } else if(G.classId==='ranger'&&Math.random()<(eff.trueDmgChance||0)){
       playerDmg=Math.floor(playerDmg*1.30);
-      log(`🎯 Gerçek Hasar! ${playerDmg} hasar verdin.`,'good');
+      log(`🎯 Gerçek Hasar! ${b.enemy.name}'a ${playerDmg} vurdun.`,'good');
     } else {
-      log(`⚔ ${playerDmg} hasar verdin.`,'good');
+      log(`⚔ ${b.enemy.name}'a ${playerDmg} hasar verdin.`,'good');
     }
   }
   else if(action==='defend'){
@@ -4018,7 +4038,7 @@ function zdAction(action){
   }
   else if(action==='magic'){
     playerDmg=Math.max(1, Math.floor(eff.magicDmg*(0.9+Math.random()*0.4)));
-    log(`✨ Büyü! ${playerDmg} büyü hasarı verdin.`,'good');
+    log(`✨ Büyü! ${b.enemy.name}'a ${playerDmg} büyü hasarı verdin.`,'good');
   }
   else if(action==='flee'){
     const fleeChance=0.4+(eff.agi*0.01);
@@ -4047,8 +4067,13 @@ function zdAction(action){
     gainXP(b.enemy.xp);   ZD.totalXP+=b.enemy.xp;
     G.stats.hp=Math.max(1,b.playerHp);
     log(`🏆 ${b.enemy.name} yenildi! +${b.enemy.gold}🪙 +${b.enemy.xp}XP`,'gold');
+    // Boss oda ise silah düşür
+    if(room.type==='boss'){
+      zdBossWeaponDrop(b.enemy, ZD.floor);
+    }
     updateHUD(); ZD.battle=null;
-    toast(`${b.enemy.name} yenildi! 🏆`);
+    const dmgText = playerDmg>0 ? ` (${playerDmg} hasar)` : '';
+    toast(`⚔ ${b.enemy.name} yenildi!${dmgText} 🏆`);
     if(currentUser) sbSave();
     renderZindan();
     return;
@@ -4142,6 +4167,46 @@ function zdDeath(){
   `);
   renderZindan();
 }
+
+/* ── BOSS SILAH DROPU ── */
+const ZD_SUN_WEAPONS = ['gunesasa','gunesbicak','guneskilic','gunesyay'];
+
+function zdBossWeaponDrop(enemy, floor){
+  if(G.inventory.length>=50){ toast('⚠ Envanter dolu, silah düşmedi!'); return; }
+  let tplId;
+  if(enemy.id==='altinsovalye'){
+    // 5. kat boss → rastgele Güneş silahı
+    tplId = ZD_SUN_WEAPONS[Math.floor(Math.random()*ZD_SUN_WEAPONS.length)];
+  } else {
+    // 1-4. kat boss → Güneş silahı hariç rastgele silah
+    const regularIds = Object.keys(WEAPON_TEMPLATES).filter(k=>!ZD_SUN_WEAPONS.includes(k));
+    tplId = regularIds[Math.floor(Math.random()*regularIds.length)];
+  }
+  const tpl = WEAPON_TEMPLATES[tplId];
+  if(!tpl) return;
+  const rolledStats = rollWeaponStats(tplId);
+  const weapon = {
+    id: Date.now()+Math.floor(Math.random()*10000),
+    cat:'weapon', tplId,
+    name:tpl.name, icon:tpl.icon,
+    type:tpl.type, grade:tpl.grade,
+    reqLv:tpl.reqLv, classes:tpl.classes,
+    img:tpl.img,
+    stats:rolledStats, baseStats:rolledStats,
+    _migrated:true, enhPlus:0,
+    price:0, seller:'player',
+    sellerName:G.heroName||G.username,
+  };
+  G.inventory.push(weapon);
+  const gradeColors={orange:'#c9a646',purple:'#9a6aaa',blue:'#5a8aaa',green:'#5a8a4a',gray:'#7a7268'};
+  const col = gradeColors[tpl.grade]||'var(--gold)';
+  // Kısa gecikme ile drop mesajı (kill toast'tan sonra görünsün)
+  setTimeout(()=>{
+    toast(`🗡 Boss dropu: <span style="color:${col};">${tpl.name}</span> düştü!`);
+  }, 600);
+  renderKarakter();
+}
+
 let questTimer=67327;
 setInterval(()=>{
   if(questTimer>0) questTimer--;
