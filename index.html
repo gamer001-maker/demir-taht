@@ -614,52 +614,55 @@ html,body{
 }
 .zd-room-anim{animation:zd-room-enter .35s ease;}
 /* ════════════════════════════════
-   GELİŞTİRME SİSTEMİ
+   GELİŞTİRME SİSTEMİ — PC optimized
 ════════════════════════════════ */
-.enh-layout{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:12px;height:100%;}
-@media(max-width:700px){.enh-layout{grid-template-columns:1fr;}}
+.enh-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:16px;height:100%;box-sizing:border-box;}
+@media(max-width:900px){.enh-layout{grid-template-columns:1fr;}}
 
-/* Sol: eşya listesi */
-.enh-item-list{display:flex;flex-direction:column;gap:6px;}
+/* Sol: 2-sütun eşya listesi */
+.enh-item-list{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:900px){.enh-item-list{grid-template-columns:1fr;}}
 .enh-item-card{
   background:var(--panel2);border:1px solid var(--border2);
-  border-radius:8px;padding:10px 12px;
-  display:flex;align-items:center;gap:10px;
+  border-radius:10px;padding:12px 14px;
+  display:flex;align-items:center;gap:12px;
   cursor:pointer;transition:border-color .15s,background .15s;
 }
 .enh-item-card:hover{border-color:var(--gold);background:#2a1e0c;}
-.enh-item-card.selected{border-color:var(--gold);background:#2a1e0c;box-shadow:0 0 0 1px var(--gold);}
-.enh-item-icon{width:40px;height:40px;border-radius:6px;background:var(--panel);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.enh-item-card.selected{border-color:var(--gold);background:#2a1e0c;box-shadow:0 0 0 2px var(--gold);}
+.enh-item-icon{width:52px;height:52px;border-radius:8px;background:var(--panel);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;overflow:hidden;}
+.enh-item-icon img{width:48px;height:48px;object-fit:contain;}
 .enh-item-info{flex:1;min-width:0;}
-.enh-item-name{font-family:var(--font-head);font-size:11px;color:var(--perg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.enh-item-level{font-size:9px;color:var(--gold);margin-top:2px;}
+.enh-item-name{font-family:var(--font-head);font-size:14px;color:var(--perg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.enh-item-level{font-size:11px;color:var(--gold);margin-top:3px;}
 
 /* Sağ: önizleme + aksiyon */
-.enh-preview{display:flex;flex-direction:column;gap:10px;}
-.enh-compare{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;}
-.enh-stat-box{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;}
+.enh-preview{display:flex;flex-direction:column;gap:14px;}
+.enh-compare{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;}
+.enh-stat-box{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:18px 14px;text-align:center;}
 .enh-stat-box.after{border-color:var(--gold);background:#1e1608;}
-.enh-stat-title{font-family:var(--font-head);font-size:9px;color:var(--ink3);letter-spacing:1px;margin-bottom:6px;}
-.enh-stat-icon{font-size:32px;margin-bottom:4px;display:block;}
-.enh-stat-name{font-family:var(--font-head);font-size:10px;color:var(--perg2);margin-bottom:4px;}
-.enh-stat-vals{font-size:9px;color:var(--ink3);line-height:1.7;}
-.enh-stat-vals span{color:var(--gold2);}
-.enh-arrow{font-size:20px;color:var(--gold);text-align:center;}
+.enh-stat-title{font-family:var(--font-head);font-size:11px;color:var(--ink3);letter-spacing:2px;margin-bottom:10px;}
+.enh-stat-icon{width:72px;height:72px;border-radius:10px;background:var(--panel);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:38px;margin:0 auto 8px;}
+.enh-stat-icon img{width:68px;height:68px;object-fit:contain;}
+.enh-stat-name{font-family:var(--font-head);font-size:14px;color:var(--perg2);margin-bottom:8px;}
+.enh-stat-vals{font-size:13px;color:var(--ink3);line-height:2.0;}
+.enh-stat-vals span{color:var(--gold2);font-weight:600;}
+.enh-arrow{font-size:28px;color:var(--gold);text-align:center;}
 
 /* Materyal gereksinimleri */
-.enh-mats{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:8px;background:var(--panel2);border:1px solid var(--border2);border-radius:8px;}
-.enh-mat{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:48px;}
-.enh-mat-icon{font-size:22px;}
-.enh-mat-name{font-size:8px;color:var(--ink3);font-family:var(--font-head);text-align:center;}
-.enh-mat-count{font-size:9px;font-family:var(--font-head);}
+.enh-mats{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;padding:14px;background:var(--panel2);border:1px solid var(--border2);border-radius:10px;}
+.enh-mat{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:64px;}
+.enh-mat-icon{font-size:30px;}
+.enh-mat-name{font-size:11px;color:var(--ink3);font-family:var(--font-head);text-align:center;}
+.enh-mat-count{font-size:12px;font-family:var(--font-head);}
 .enh-mat.ok .enh-mat-count{color:#7aaa5a;}
 .enh-mat.missing .enh-mat-count{color:#f87171;}
 
 /* Progress bar */
-.enh-progress-wrap{position:relative;height:14px;background:var(--panel3);border:1px solid var(--border2);border-radius:7px;overflow:hidden;}
-.enh-progress-fill{height:100%;width:0%;border-radius:7px;transition:none;background:linear-gradient(90deg,var(--gold),#fff8a0);}
+.enh-progress-wrap{position:relative;height:18px;background:var(--panel3);border:1px solid var(--border2);border-radius:9px;overflow:hidden;}
+.enh-progress-fill{height:100%;width:0%;border-radius:9px;transition:none;background:linear-gradient(90deg,var(--gold),#fff8a0);}
 .enh-progress-fill.running{transition:width 5s linear;}
-.enh-progress-glow{position:absolute;top:0;right:0;width:20px;height:100%;background:linear-gradient(90deg,transparent,#ffffffa0);filter:blur(3px);}
+.enh-progress-glow{position:absolute;top:0;right:0;width:24px;height:100%;background:linear-gradient(90deg,transparent,#ffffffa0);filter:blur(3px);}
 
 /* Duman efekti canvas */
 #enh-smoke-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9000;}
@@ -2016,10 +2019,10 @@ const MARKET_ITEMS=[
   {id:502,name:'Meşe Odunu',      icon:'🪵',cat:'resource',grade:'gray',  price:1, qty:999,seller:'npc',sellerName:'Kereste',     type:'Materyal',reqLv:1,material:null,desc:'İnşaat malzemesi.',               stats:{craft_wood:1}, img:null,classBonus:null},
   {id:504,name:'Güç Rünesi',      icon:'🔶',cat:'resource',grade:'green', price:1, qty:999,seller:'npc',sellerName:'Rune Ustası', type:'Materyal',reqLv:1,material:null,desc:'+2 geliştirme için gerekli.',      stats:{}, img:null,classBonus:null,isMat:true,matKey:'guc_runesi'},
   {id:505,name:'Ejderha Pulu',    icon:'🐉',cat:'resource',grade:'blue',  price:1, qty:999,seller:'npc',sellerName:'Ejderha Avcı',type:'Materyal',reqLv:1,material:null,desc:'+3–+5 geliştirme için gerekli.',  stats:{}, img:null,classBonus:null,isMat:true,matKey:'ejderha_pulu'},
-  {id:506,name:'Anka Külü',       icon:'🔥',cat:'resource',grade:'purple',price:1, qty:1,  seller:'player',sellerName:'Pazar',   type:'Materyal',reqLv:1,material:null,desc:'+6 geliştirme için. Boss ödülü.', stats:{}, img:null,classBonus:null,isMat:true,matKey:'anka_kulu'},
-  {id:507,name:'Ruh Kristali',    icon:'💎',cat:'resource',grade:'purple',price:1, qty:1,  seller:'player',sellerName:'Pazar',   type:'Materyal',reqLv:1,material:null,desc:'+7 geliştirme için. Boss ödülü.', stats:{}, img:null,classBonus:null,isMat:true,matKey:'ruh_kristali'},
-  {id:508,name:'İblis Kanı',      icon:'🩸',cat:'resource',grade:'purple',price:1, qty:1,  seller:'player',sellerName:'Pazar',   type:'Materyal',reqLv:1,material:null,desc:'+8 geliştirme için. Boss ödülü.', stats:{}, img:null,classBonus:null,isMat:true,matKey:'iblis_kani'},
-  {id:509,name:'Semavi Öz',       icon:'✨',cat:'resource',grade:'orange',price:1, qty:1,  seller:'player',sellerName:'Pazar',   type:'Materyal',reqLv:1,material:null,desc:'+9 geliştirme için. Nadir ödül.',  stats:{}, img:null,classBonus:null,isMat:true,matKey:'semavi_oz'},
+  {id:506,name:'Anka Külü',       icon:'🔥',cat:'resource',grade:'purple',price:1, qty:99, seller:'npc',sellerName:'Mistik Ocak', type:'Materyal',reqLv:1,material:null,desc:'+6 geliştirme için gerekli.', stats:{}, img:null,classBonus:null,isMat:true,matKey:'anka_kulu'},
+  {id:507,name:'Ruh Kristali',    icon:'💎',cat:'resource',grade:'purple',price:1, qty:99, seller:'npc',sellerName:'Mistik Ocak', type:'Materyal',reqLv:1,material:null,desc:'+7 geliştirme için gerekli.', stats:{}, img:null,classBonus:null,isMat:true,matKey:'ruh_kristali'},
+  {id:508,name:'İblis Kanı',      icon:'🩸',cat:'resource',grade:'purple',price:1, qty:99, seller:'npc',sellerName:'Mistik Ocak', type:'Materyal',reqLv:1,material:null,desc:'+8 geliştirme için gerekli.', stats:{}, img:null,classBonus:null,isMat:true,matKey:'iblis_kani'},
+  {id:509,name:'Semavi Öz',       icon:'✨',cat:'resource',grade:'orange',price:1, qty:99, seller:'npc',sellerName:'Mistik Ocak', type:'Materyal',reqLv:1,material:null,desc:'+9 geliştirme için gerekli.', stats:{}, img:null,classBonus:null,isMat:true,matKey:'semavi_oz'},
 
   /* ══════════════════════════════════════
      TOHUMLAR (NPC)
@@ -3003,23 +3006,20 @@ function renderGelistirme(){
   const el=document.getElementById('gs-gelistirme');
   if(!el) return;
 
-  // Geliştirilebilir eşyalar: envanter + equipped'den silah ve zırhlar
-  const equippedItems=Object.values(G.equipped).filter(x=>x&&['weapon','chest','helmet','gloves','boots'].includes(
-    Object.keys(G.equipped).find(k=>G.equipped[k]===x)
-  ));
+  const UPGRADEABLE_TYPES=['Kılıç','Asa','Hançer','Yay','Bıçak','Sopa','Göğüslük','Zırh','Kask','Eldiven','Bot'];
   const allItems=[
     ...Object.entries(G.equipped)
       .filter(([k,v])=>v && k!=='ring')
       .map(([k,v])=>({...v, _slot:k, _source:'equipped'})),
-    ...G.inventory.filter(i=>['Kılıç','Asa','Hançer','Yay','Bıçak','Göğüslük','Zırh','Kask','Eldiven','Bot'].includes(i.type))
+    ...G.inventory.filter(i=>UPGRADEABLE_TYPES.includes(i.type))
       .map(i=>({...i, _source:'inventory'}))
   ];
 
   if(!allItems.length){
-    el.innerHTML=`<div style="text-align:center;padding:40px 16px;">
-      <div style="font-size:48px;margin-bottom:10px;">⚒</div>
-      <div style="font-family:var(--font-head);font-size:14px;color:var(--perg2);margin-bottom:6px;">Geliştirme Ocağı</div>
-      <div style="font-size:11px;color:var(--ink3);">Geliştirilebilecek eşyan yok.<br>Pazar'dan silah veya zırh satın al.</div>
+    el.innerHTML=`<div style="text-align:center;padding:60px 16px;">
+      <div style="font-size:64px;margin-bottom:14px;">⚒</div>
+      <div style="font-family:var(--font-head);font-size:18px;color:var(--perg2);margin-bottom:8px;">Geliştirme Ocağı</div>
+      <div style="font-size:14px;color:var(--ink3);">Geliştirilebilecek eşyan yok.<br>Pazar'dan silah veya zırh satın al.</div>
     </div>`;
     return;
   }
@@ -3029,57 +3029,74 @@ function renderGelistirme(){
     enhSelectedId = allItems[0].id;
   }
   const selected = allItems.find(x=>x.id===enhSelectedId)||allItems[0];
-  const curPlus = selected.enhPlus||0;
-  const nextLevel = ENH_LEVELS[curPlus];
+  const curPlus  = selected.enhPlus||0;
+  const nextLevel= ENH_LEVELS[curPlus];
 
-  // Sol: eşya listesi
+  /* ── İkon HTML yardımcısı ── */
+  function itemImgHtml(item, size){
+    return item.img
+      ?`<img src="images/${item.img}.webp" style="width:${size}px;height:${size}px;object-fit:contain;"
+          onerror="this.style.display='none';this.nextSibling&&(this.nextSibling.style.display='flex')" />
+        <span style="display:none;font-size:${Math.round(size*0.6)}px;">${item.icon}</span>`
+      :`<span style="font-size:${Math.round(size*0.6)}px;">${item.icon}</span>`;
+  }
+
+  /* ── Sol: 2-sütun eşya listesi ── */
   const listHtml = allItems.map(item=>{
     const plus = item.enhPlus||0;
     const plusLabel = plus>0?`<span style="color:var(--gold);">+${plus}</span>`:'';
-    const imgHtml = item.img
-      ?`<img src="images/${item.img}.webp" style="width:28px;height:28px;object-fit:contain;" onerror="this.style.display='none'"/>`
-      :`<span style="font-size:18px;">${item.icon}</span>`;
-    return `<div class="enh-item-card${item.id===enhSelectedId?' selected':''}" onclick="enhSelect(${item.id})">
-      <div class="enh-item-icon">${imgHtml}</div>
+    const grade=item.grade||'gray';
+    const gradeBorder={gray:'var(--border2)',green:'#3a6a2a',blue:'#1a3a6a',purple:'#4a1a6a',orange:'#7a3a0a'}[grade]||'var(--border2)';
+    return `<div class="enh-item-card${item.id===enhSelectedId?' selected':''}" onclick="enhSelect(${item.id})"
+       style="${item.id===enhSelectedId?'':'border-color:'+gradeBorder+';'}">
+      <div class="enh-item-icon">${itemImgHtml(item,48)}</div>
       <div class="enh-item-info">
         <div class="enh-item-name">${item.name}</div>
-        <div class="enh-item-level">${item.type} ${plusLabel} ${item._source==='equipped'?'<span style="color:var(--ink3);font-size:8px;">(Kuşanılmış)</span>':''}</div>
+        <div class="enh-item-level">${item.type} ${plusLabel}${item._source==='equipped'?'&nbsp;<span style="color:var(--gold2);font-size:9px;">(Kuşanılmış)</span>':''}</div>
       </div>
     </div>`;
   }).join('');
 
-  // Sağ: önizleme
-  const curStats = selected.stats||{};
+  /* ── Sağ: önizleme stat kutuları ── */
+  const curStats  = selected.stats||{};
   const nextStats = nextLevel ? getEnhancedStats(selected, curPlus+1) : null;
-  const combatKeys=['atk','def','str','agi','wis','cha','mgc','acc','hp','crit'];
+  const combatKeys= ['atk','def','str','agi','wis','cha','mgc','acc','hp','crit'];
 
-  const statRows=(stats,highlight=false)=>Object.entries(stats)
+  const statRows=(stats, compare=null)=>Object.entries(stats)
     .filter(([k])=>combatKeys.includes(k))
-    .map(([k,v])=>`<div>${STAT_LABELS[k]||k}: ${highlight?`<span>+${v}</span>`:v}</div>`)
-    .join('');
+    .map(([k,v])=>{
+      const after=compare?.[k];
+      const diff=after!=null?after-v:null;
+      return `<div style="display:flex;justify-content:space-between;gap:10px;">
+        <span style="color:var(--ink3);">${STAT_LABELS[k]||k}</span>
+        <span style="color:var(--perg2);">${v}${diff!=null&&diff>0?` <span style="color:var(--gold2);font-size:11px;">▲${diff}</span>`:''}</span>
+      </div>`;
+    }).join('');
 
-  const curBox=`
-    <div class="enh-stat-box">
-      <div class="enh-stat-title">ŞU AN</div>
-      <span class="enh-stat-icon">${selected.icon}</span>
-      <div class="enh-stat-name">${selected.name}${curPlus>0?` <span style="color:var(--gold);">+${curPlus}</span>`:''}</div>
-      <div class="enh-stat-vals">${statRows(curStats)}</div>
+  // Görsel kutu oluşturucu
+  function statBox(item, plus, stats, isAfter=false, diffBase=null){
+    const title=isAfter
+      ?`<div class="enh-stat-title" style="color:var(--gold);letter-spacing:2px;">+${plus} SONRASI</div>`
+      :`<div class="enh-stat-title">ŞU AN</div>`;
+    const nameLabel=`${item.name}${plus>0?` <span style="color:var(--gold);">+${plus}</span>`:''}`;
+    return `<div class="enh-stat-box${isAfter?' after':''}">
+      ${title}
+      <div class="enh-stat-icon">${itemImgHtml(item,68)}</div>
+      <div class="enh-stat-name" style="${isAfter?'color:var(--gold2);':''}">${nameLabel}</div>
+      <div class="enh-stat-vals">${statRows(stats, diffBase)}</div>
     </div>`;
+  }
 
-  const afterBox = nextLevel ? `
-    <div class="enh-stat-box after">
-      <div class="enh-stat-title" style="color:var(--gold);">+${curPlus+1} SONRASI</div>
-      <span class="enh-stat-icon">${selected.icon}</span>
-      <div class="enh-stat-name" style="color:var(--gold2);">${selected.name} <span style="color:var(--gold);">+${curPlus+1}</span></div>
-      <div class="enh-stat-vals">${statRows(nextStats,true)}</div>
-    </div>` : `
-    <div class="enh-stat-box after" style="opacity:.5;">
-      <div class="enh-stat-title">MAKSİMUM</div>
-      <span class="enh-stat-icon">⭐</span>
-      <div class="enh-stat-name" style="color:var(--gold2);">+5 Maksimum Seviye</div>
-    </div>`;
+  const curBox  = statBox(selected, curPlus, curStats);
+  const afterBox= nextLevel
+    ? statBox(selected, curPlus+1, nextStats, true, curStats)
+    : `<div class="enh-stat-box after" style="opacity:.5;">
+        <div class="enh-stat-title">MAKSİMUM</div>
+        <div class="enh-stat-icon" style="font-size:42px;">⭐</div>
+        <div class="enh-stat-name" style="color:var(--gold2);">+9 Zirve</div>
+      </div>`;
 
-  // Materyal kutusu
+  /* ── Materyal + başarı kutusu ── */
   let matsHtml='', canEnhance=false;
   if(nextLevel){
     const mat=nextLevel.mat;
@@ -3100,31 +3117,31 @@ function renderGelistirme(){
           <span class="enh-mat-count">${Math.floor(G.gold)}/${nextLevel.goldCost}</span>
         </div>
       </div>
-      <div style="font-size:9px;color:var(--ink3);text-align:center;margin-top:4px;">
-        Başarı şansı: <span style="color:var(--gold2);font-family:var(--font-head);">%${Math.round(nextLevel.chance*100)}</span>
+      <div style="font-size:12px;color:var(--ink3);text-align:center;margin-top:6px;">
+        Başarı şansı: <span style="color:var(--gold2);font-family:var(--font-head);font-size:14px;">%${Math.round(nextLevel.chance*100)}</span>
       </div>`;
   }
 
-  // Progress bar + buton
+  /* ── Buton + progress ── */
   const actionHtml = nextLevel ? `
-    <div class="enh-progress-wrap" id="enh-progress-wrap" style="margin-bottom:8px;${enhRunning?'':'display:none'}">
+    <div class="enh-progress-wrap" id="enh-progress-wrap" style="margin-bottom:10px;${enhRunning?'':'display:none'}">
       <div class="enh-progress-fill" id="enh-progress-fill"></div>
     </div>
-    <button class="btn" style="width:100%;font-size:13px;padding:12px;${!canEnhance&&!enhRunning?'opacity:.5;cursor:not-allowed;':''}"
+    <button class="btn" style="width:100%;font-size:15px;padding:14px;${!canEnhance&&!enhRunning?'opacity:.5;cursor:not-allowed;':''}"
       onclick="${canEnhance&&!enhRunning?`startEnhancement(${selected.id})`:'void(0)'}"
       id="enh-btn">
       ${enhRunning?'⚒ Geliştiriliyor...':'⚒ Geliştir'}
     </button>` : '';
 
-  // Materyal envanteri özeti
+  /* ── Materyal deposu özeti ── */
   const matSummaryHtml=`
-    <div style="background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:8px;margin-top:6px;">
-      <div style="font-family:var(--font-head);font-size:9px;color:var(--ink3);letter-spacing:1px;margin-bottom:6px;">MATERYAL DEPOSU</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <div style="background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:8px;">
+      <div style="font-family:var(--font-head);font-size:11px;color:var(--ink3);letter-spacing:1px;margin-bottom:8px;">MATERYAL DEPOSU</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;">
         ${Object.entries(G.matInv).map(([k,v])=>`
-          <div style="display:flex;align-items:center;gap:4px;font-size:10px;">
+          <div style="display:flex;align-items:center;gap:5px;font-size:12px;">
             <span>${MAT_ICONS[k]||'📦'}</span>
-            <span style="color:var(--perg2);">${v}</span>
+            <span style="color:var(--perg2);font-family:var(--font-head);">${v}</span>
           </div>`).join('')}
       </div>
     </div>`;
@@ -3132,12 +3149,12 @@ function renderGelistirme(){
   el.innerHTML=`
     <div class="enh-layout">
       <div>
-        <div class="sec" style="margin-top:0;">GELİŞTİRİLEBİLİR EŞYALAR</div>
+        <div class="sec" style="margin-top:0;font-size:14px;letter-spacing:2px;">GELİŞTİRİLEBİLİR EŞYALAR</div>
         <div class="enh-item-list">${listHtml}</div>
         ${matSummaryHtml}
       </div>
       <div class="enh-preview">
-        <div class="sec" style="margin-top:0;">ÖNİZLEME</div>
+        <div class="sec" style="margin-top:0;font-size:14px;letter-spacing:2px;">ÖNİZLEME</div>
         <div class="enh-compare">
           ${curBox}
           <div class="enh-arrow">→</div>
@@ -3148,7 +3165,6 @@ function renderGelistirme(){
       </div>
     </div>`;
 
-  // Progress bar devam ediyorsa
   if(enhRunning){
     const fill=document.getElementById('enh-progress-fill');
     if(fill){ fill.style.width='0%'; requestAnimationFrame(()=>{ fill.classList.add('running'); fill.style.width='100%'; }); }
@@ -3164,7 +3180,7 @@ function startEnhancement(itemId){
   if(enhRunning) return;
   const allItems=[
     ...Object.entries(G.equipped).filter(([k,v])=>v&&k!=='ring').map(([k,v])=>({...v,_slot:k,_source:'equipped'})),
-    ...G.inventory.filter(i=>['Kılıç','Asa','Hançer','Yay','Bıçak','Göğüslük','Zırh','Kask','Eldiven','Bot'].includes(i.type)).map(i=>({...i,_source:'inventory'}))
+    ...G.inventory.filter(i=>['Kılıç','Asa','Hançer','Yay','Bıçak','Sopa','Göğüslük','Zırh','Kask','Eldiven','Bot'].includes(i.type)).map(i=>({...i,_source:'inventory'}))
   ];
   const item=allItems.find(x=>x.id===itemId);
   if(!item) return;
