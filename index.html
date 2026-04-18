@@ -1900,24 +1900,22 @@ function getWeaponTemplateId(item){
   return item.tplId||item.img||null;
 }
 
-/* Mevcut silahı yeni sisteme göre re-roll et (migration) */
+/* Mevcut silahı yeni sisteme göre re-roll et (migration)
+   baseStats = ham roll değerleri (hiç değişmez)
+   stats     = baseStats × mevcut plus bonusu (görüntü için) */
 function migrateWeapon(item){
   if(!item||item.cat!=='weapon') return item;
   if(item._migrated) return item;
   const tplId=getWeaponTemplateId(item);
   const tpl=WEAPON_TEMPLATES[tplId];
   if(!tpl) return item; // bilinmeyen silah, dokunma
-  const newStats=rollWeaponStats(tplId);
-  // Upgrade bonuslarını yeni sisteme göre uygula
+  const baseStats=rollWeaponStats(tplId);
   const plus=item.enhPlus||0;
-  if(plus>0){
-    const multi=Math.pow(1.15,plus);
-    const combatKeys=['atk','def','str','agi','wis','cha','mgc','acc','crit','hp'];
-    Object.keys(newStats).forEach(k=>{
-      if(combatKeys.includes(k)) newStats[k]=Math.round(newStats[k]*multi);
-    });
-  }
-  return {...item, stats:newStats, tplId, _migrated:true,
+  // stats = baseStats üzerinden hesapla — item.stats'a dokunma
+  const enhanced=plus>0
+    ? getEnhancedStats({baseStats, stats:baseStats}, plus)
+    : {...baseStats};
+  return {...item, baseStats, stats:enhanced, tplId, _migrated:true,
     classes:tpl.classes, grade:tpl.grade, reqLv:tpl.reqLv};
 }
 
@@ -2989,13 +2987,17 @@ function getItemEnhLevel(item){
   return item.enhPlus||0;
 }
 
-/* Geliştirme ile artan statlar — %bonus oranında artış */
+/* Geliştirme ile artan statlar — DAIMA baseStats üzerinden hesapla
+   item.stats upgradedan sonra overwrite edilir, bu yüzden baseStats
+   her zaman ilk roll değerlerini tutar. Böylece zincirleme çarpım olmaz. */
 function getEnhancedStats(item, targetPlus){
-  if(!item?.stats) return {};
+  // baseStats yoksa stats'ı baz al (eski kayıtlar için fallback)
+  const src = item.baseStats || item.stats;
+  if(!src) return {};
   const totalBonus = ENH_LEVELS.slice(0, targetPlus).reduce((acc,l)=>acc+l.statBonus, 0);
   const result={};
   const combatKeys=['atk','def','str','agi','wis','cha','mgc','acc','crit','hp'];
-  Object.entries(item.stats).forEach(([k,v])=>{
+  Object.entries(src).forEach(([k,v])=>{
     if(combatKeys.includes(k)) result[k]=Math.round(v*(1+totalBonus));
     else result[k]=v;
   });
@@ -3213,11 +3215,16 @@ function startEnhancement(itemId){
       const newPlus=curPlus+1;
       const enhStats=getEnhancedStats(item, newPlus);
       if(item._source==='equipped'){
-        G.equipped[item._slot]={...G.equipped[item._slot], enhPlus:newPlus, stats:enhStats};
+        // baseStats ASLA değişmez — yalnızca stats ve enhPlus güncellenir
+        const bs=item.baseStats||item.stats;
+        G.equipped[item._slot]={...G.equipped[item._slot], enhPlus:newPlus, stats:enhStats, baseStats:bs};
         syncHpWithEffective();
       } else {
         const idx=G.inventory.findIndex(x=>x.id===itemId);
-        if(idx>=0) G.inventory[idx]={...G.inventory[idx], enhPlus:newPlus, stats:enhStats};
+        if(idx>=0){
+          const bs=item.baseStats||G.inventory[idx].stats;
+          G.inventory[idx]={...G.inventory[idx], enhPlus:newPlus, stats:enhStats, baseStats:bs};
+        }
       }
       showEnhSmoke('success');
       toast(`✨ ${item.name} +${newPlus} geliştirme başarılı!`);
@@ -4911,7 +4918,7 @@ async function showBossResult(boss){
     const bTplId=boss.drop.item.tplId;
     const bRolledStats=bTplId?rollWeaponStats(bTplId):(boss.drop.item.stats||{});
     dropItem={id:Date.now(),name:boss.drop.name,icon:boss.drop.icon,...boss.drop.item,
-      stats:bRolledStats, cat:'weapon', tplId:bTplId, _migrated:true,
+      stats:bRolledStats, baseStats:bRolledStats, cat:'weapon', tplId:bTplId, _migrated:true,
       price:0,seller:'player',sellerName:G.heroName||G.username,img:boss.drop.img};
     G.inventory.push(dropItem);
     renderKarakter();
