@@ -3186,6 +3186,8 @@ const MAT_ICONS ={ham_demir:'⛏',guc_runesi:'🔶',ejderha_pulu:'🐉',anka_kul
 
 let enhSelectedId = null; // seçili item id
 let enhRunning = false;
+let enhFilter = 'all';   // all | equipped | unequipped | armor | weapon
+let enhSort   = 'plus-desc'; // plus-desc | plus-asc | level-desc | level-asc | type
 
 function getItemEnhLevel(item){
   return item.enhPlus||0;
@@ -3213,13 +3215,36 @@ function renderGelistirme(){
   if(!el) return;
 
   const UPGRADEABLE_TYPES=['Kılıç','Asa','Hançer','Yay','Bıçak','Sopa','Göğüslük','Zırh','Kask','Eldiven','Bot'];
+  const WEAPON_TYPES=['Kılıç','Asa','Hançer','Yay','Bıçak','Sopa'];
+  const ARMOR_TYPES=['Göğüslük','Zırh','Kask','Eldiven','Bot'];
+  const equippedIds=new Set(Object.values(G.equipped).filter(Boolean).map(v=>v.id));
   const allItems=[
     ...Object.entries(G.equipped)
       .filter(([k,v])=>v && k!=='ring')
       .map(([k,v])=>({...v, _slot:k, _source:'equipped'})),
-    ...G.inventory.filter(i=>UPGRADEABLE_TYPES.includes(i.type))
+    ...G.inventory.filter(i=>UPGRADEABLE_TYPES.includes(i.type)&&!equippedIds.has(i.id))
       .map(i=>({...i, _source:'inventory'}))
   ];
+
+  // Filtre
+  const filteredItems = allItems.filter(i=>{
+    if(enhFilter==='equipped')   return i._source==='equipped';
+    if(enhFilter==='unequipped') return i._source==='inventory';
+    if(enhFilter==='weapon')     return WEAPON_TYPES.includes(i.type);
+    if(enhFilter==='armor')      return ARMOR_TYPES.includes(i.type);
+    return true;
+  });
+
+  // Sıralama
+  const TYPE_ORDER=[...WEAPON_TYPES,...ARMOR_TYPES];
+  filteredItems.sort((a,b)=>{
+    if(enhSort==='plus-desc')  return (b.enhPlus||0)-(a.enhPlus||0);
+    if(enhSort==='plus-asc')   return (a.enhPlus||0)-(b.enhPlus||0);
+    if(enhSort==='level-desc') return (b.reqLv||0)-(a.reqLv||0);
+    if(enhSort==='level-asc')  return (a.reqLv||0)-(b.reqLv||0);
+    if(enhSort==='type')       return TYPE_ORDER.indexOf(a.type)-TYPE_ORDER.indexOf(b.type);
+    return 0;
+  });
 
   if(!allItems.length){
     el.innerHTML=`<div style="text-align:center;padding:60px 16px;">
@@ -3231,10 +3256,11 @@ function renderGelistirme(){
   }
 
   // Seçili item yoksa ilkini seç
-  if(!enhSelectedId || !allItems.find(x=>x.id===enhSelectedId)){
-    enhSelectedId = allItems[0].id;
+  if(!enhSelectedId || !filteredItems.find(x=>x.id===enhSelectedId)){
+    enhSelectedId = filteredItems[0]?.id ?? (allItems[0]?.id ?? null);
   }
-  const selected = allItems.find(x=>x.id===enhSelectedId)||allItems[0];
+  const selected = filteredItems.find(x=>x.id===enhSelectedId) || filteredItems[0] || allItems[0];
+  if(!selected){ el.innerHTML='<div style="text-align:center;padding:60px;color:var(--ink3);">Geliştirilebilecek eşya yok.</div>'; return; }
   const curPlus  = selected.enhPlus||0;
   const nextLevel= ENH_LEVELS[curPlus];
 
@@ -3248,7 +3274,7 @@ function renderGelistirme(){
   }
 
   /* ── Sol: 2-sütun eşya listesi ── */
-  const listHtml = allItems.map(item=>{
+  const listHtml = filteredItems.map(item=>{
     const plus = item.enhPlus||0;
     const plusLabel = plus>0?`<span style="color:var(--gold);">+${plus}</span>`:'';
     const grade=item.grade||'gray';
@@ -3353,10 +3379,48 @@ function renderGelistirme(){
       </div>
     </div>`;
 
+  // Filtre + sıralama bar HTML'i
+  const filterDefs=[
+    {k:'all',lbl:'Tümü'},
+    {k:'equipped',lbl:'Kuşanılan'},
+    {k:'unequipped',lbl:'Kuşanılmayan'},
+    {k:'weapon',lbl:'Silahlar'},
+    {k:'armor',lbl:'Zırhlar'},
+  ];
+  const sortDefs=[
+    {k:'plus-desc',lbl:'+ Azalan'},
+    {k:'plus-asc', lbl:'+ Artan'},
+    {k:'level-desc',lbl:'Sv. Azalan'},
+    {k:'level-asc', lbl:'Sv. Artan'},
+    {k:'type',      lbl:'Tür'},
+  ];
+  const filterBarHtml=`
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">
+      ${filterDefs.map(f=>`<button onclick="setEnhFilter('${f.k}')"
+        style="padding:4px 9px;border-radius:4px;border:1px solid ${enhFilter===f.k?'var(--gold)':'var(--border2)'};
+        background:${enhFilter===f.k?'#2a1e08':'var(--panel)'};
+        color:${enhFilter===f.k?'var(--gold2)':'var(--ink3)'};
+        font-family:var(--font-head);font-size:9px;cursor:pointer;">${f.lbl}</button>`).join('')}
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;align-items:center;">
+      <span style="font-family:var(--font-head);font-size:8px;color:var(--ink3);letter-spacing:1px;">SIRALA:</span>
+      ${sortDefs.map(s=>`<button onclick="setEnhSort('${s.k}')"
+        style="padding:3px 8px;border-radius:4px;border:1px solid ${enhSort===s.k?'var(--gold)':'var(--border)'};
+        background:${enhSort===s.k?'#2a1e08':'transparent'};
+        color:${enhSort===s.k?'var(--gold2)':'var(--ink3)'};
+        font-family:var(--font-head);font-size:8px;cursor:pointer;">${s.lbl}</button>`).join('')}
+    </div>`;
+
+  const emptyMsg = filteredItems.length===0
+    ? `<div style="text-align:center;padding:20px;color:var(--ink3);font-size:12px;">Bu filtreye uyan eşya yok.</div>`
+    : '';
+
   el.innerHTML=`
     <div class="enh-layout">
       <div>
         <div class="sec" style="margin-top:0;font-size:14px;letter-spacing:2px;">GELİŞTİRİLEBİLİR EŞYALAR</div>
+        ${filterBarHtml}
+        ${emptyMsg}
         <div class="enh-item-list">${listHtml}</div>
         ${matSummaryHtml}
       </div>
@@ -3380,6 +3444,15 @@ function renderGelistirme(){
 
 function enhSelect(id){
   enhSelectedId=id;
+  renderGelistirme();
+}
+function setEnhFilter(f){
+  enhFilter=f;
+  enhSelectedId=null;
+  renderGelistirme();
+}
+function setEnhSort(s){
+  enhSort=s;
   renderGelistirme();
 }
 
