@@ -1905,6 +1905,7 @@ async function startExplore(idx){
   }
   exploreTimers.push({id:dbId,cellIdx:idx,remaining:120,total:120});
   toast('Keşif başladı! 2 dakika sonra sonuç belli olacak. 🗺');
+  sbSave();
   renderHarita();
 }
 
@@ -1919,8 +1920,12 @@ async function finishExplore(idx,dbId){
   gainXP(10);updateHUD();
   // Supabase'den timer'ı sil
   if(dbId&&currentUser) await supa.from('explore_timers').delete().eq('id',dbId);
-  // Keşfedilen hücreyi kaydet
-  if(currentUser) await supa.from('explored_cells').upsert({profile_id:currentUser.id,cell_index:idx}).onConflict('profile_id,cell_index');
+  // Keşfedilen hücreyi kaydet (v2 sözdizimi)
+  if(currentUser) await supa.from('explored_cells').upsert(
+    {profile_id:currentUser.id,cell_index:idx},
+    {onConflict:'profile_id,cell_index'}
+  );
+  sbSave();
   renderHarita();
 }
 
@@ -2050,7 +2055,7 @@ function caveAction(action){
     // Ödül: rastgele nekro item
     const nekroIds=[800,801,802,803,804];
     const rewardId=nekroIds[Math.floor(Math.random()*nekroIds.length)];
-    const reward=ITEMS.find(x=>x.id===rewardId);
+    const reward=MARKET_ITEMS.find(x=>x.id===rewardId);
     if(reward){
       const item={...reward,id:Date.now(),enhPlus:0,baseStats:{...reward.stats}};
       G.inventory.push(item);
