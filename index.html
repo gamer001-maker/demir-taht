@@ -3526,6 +3526,8 @@ function renderGelistirme(){
     const hasGold=G.gold>=nextLevel.goldCost;
     const hasMat=has>=mat.qty;
     canEnhance=hasGold&&hasMat&&!enhRunning;
+    const isNekro=selected.img?.startsWith('necro');
+    const displayChance=isNekro?90:Math.round(nextLevel.chance*100);
     matsHtml=`
       <div class="enh-mats">
         <div class="enh-mat ${hasMat?'ok':'missing'}">
@@ -3540,8 +3542,11 @@ function renderGelistirme(){
         </div>
       </div>
       <div style="font-size:12px;color:var(--ink3);text-align:center;margin-top:6px;">
-        Başarı şansı: <span style="color:var(--gold2);font-family:var(--font-head);font-size:14px;">%${Math.round(nextLevel.chance*100)}</span>
-        ${curPlus>0?`<span style="color:#f87171;font-size:10px;display:block;margin-top:3px;">⚠ Başarısız olursa +${curPlus} → +${curPlus-1} düşer</span>`:''}
+        Başarı şansı: <span style="color:var(--gold2);font-family:var(--font-head);font-size:14px;">%${displayChance}</span>
+        ${isNekro
+          ?`<span style="color:#f87171;font-size:10px;display:block;margin-top:3px;">💀 Başarısız olursa eşya <b>yok edilir!</b></span>`
+          :curPlus>0?`<span style="color:#f87171;font-size:10px;display:block;margin-top:3px;">⚠ Başarısız olursa +${curPlus} → +${curPlus-1} düşer</span>`:''
+        }
       </div>`;
   }
 
@@ -3676,7 +3681,8 @@ function startEnhancement(itemId){
   // 5 saniye sonra sonuç
   setTimeout(()=>{
     enhRunning=false;
-    const success=Math.random()<level.chance;
+    const isNekro=item.img?.startsWith('necro');
+    const success=Math.random()<(isNekro?0.9:level.chance);
 
     if(success){
       // Eşyayı güncelle
@@ -3697,27 +3703,41 @@ function startEnhancement(itemId){
       showEnhSmoke('success');
       toast(`✨ ${item.name} +${newPlus} geliştirme başarılı!`);
     } else {
-      // Başarısız → bir kademe geri düş (0'ın altına inmez)
-      const failPlus = Math.max(0, curPlus - 1);
-      const failStats = failPlus > 0
-        ? getEnhancedStats(item, failPlus)
-        : {...(item.baseStats || item.stats)};
-      if(item._source==='equipped'){
-        const bs = item.baseStats || item.stats;
-        G.equipped[item._slot] = {...G.equipped[item._slot], enhPlus:failPlus, stats:failStats, baseStats:bs};
-        syncHpWithEffective();
-      } else {
-        const idx = G.inventory.findIndex(x=>x.id===itemId);
-        if(idx>=0){
-          const bs = item.baseStats || G.inventory[idx].stats;
-          G.inventory[idx] = {...G.inventory[idx], enhPlus:failPlus, stats:failStats, baseStats:bs};
+      if(isNekro){
+        // Nekro eşya: başarısız olursa tamamen yok edilir
+        if(item._source==='equipped'){
+          G.equipped[item._slot]=null;
+          syncHpWithEffective();
+        } else {
+          const idx=G.inventory.findIndex(x=>x.id===itemId);
+          if(idx>=0) G.inventory.splice(idx,1);
         }
-      }
-      showEnhSmoke('fail');
-      if(failPlus < curPlus){
-        toast(`💔 Geliştirme başarısız! +${curPlus} → +${failPlus} düştü!`);
+        enhSelectedId=null;
+        showEnhSmoke('fail');
+        toast(`💀 ${item.name} geliştirme başarısız! Eşya yok edildi!`);
       } else {
-        toast(`💔 Geliştirme başarısız! +0 kaldı.`);
+        // Normal eşya → bir kademe geri düş (0'ın altına inmez)
+        const failPlus = Math.max(0, curPlus - 1);
+        const failStats = failPlus > 0
+          ? getEnhancedStats(item, failPlus)
+          : {...(item.baseStats || item.stats)};
+        if(item._source==='equipped'){
+          const bs = item.baseStats || item.stats;
+          G.equipped[item._slot] = {...G.equipped[item._slot], enhPlus:failPlus, stats:failStats, baseStats:bs};
+          syncHpWithEffective();
+        } else {
+          const idx = G.inventory.findIndex(x=>x.id===itemId);
+          if(idx>=0){
+            const bs = item.baseStats || G.inventory[idx].stats;
+            G.inventory[idx] = {...G.inventory[idx], enhPlus:failPlus, stats:failStats, baseStats:bs};
+          }
+        }
+        showEnhSmoke('fail');
+        if(failPlus < curPlus){
+          toast(`💔 Geliştirme başarısız! +${curPlus} → +${failPlus} düştü!`);
+        } else {
+          toast(`💔 Geliştirme başarısız! +0 kaldı.`);
+        }
       }
     }
     renderGelistirme();
