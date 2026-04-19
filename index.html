@@ -1842,8 +1842,8 @@ function generateMap(seed){
   // Ağırlıklı rastgele terrain seçimi
   const pool=TERRAIN_TYPES.filter(t=>t.t!=='castle');
   const totalW=pool.reduce((a,t)=>a+t.weight,0);
-  for(let i=0;i<35;i++){
-    if(i===15){cells.push({...TERRAIN_TYPES[0],idx:i});continue;} // Kale sabit ortada
+  for(let i=0;i<36;i++){
+    if(i===14){cells.push({...TERRAIN_TYPES[0],idx:i});continue;} // Kale sabit ortada (6x6: satır 2, sütun 2)
     let r=rng()*totalW,cum=0;
     for(const tt of pool){cum+=tt.weight;if(r<cum){cells.push({...tt,idx:i});break;}}
   }
@@ -1868,7 +1868,7 @@ async function initPlayerMap(){
     G_MAP=data.cells;
   } else {
     G_MAP=generateMap(userSeed(currentUser.id));
-    await supa.from('player_maps').upsert({profile_id:currentUser.id,cells:G_MAP});
+    await supa.from('player_maps').upsert({profile_id:currentUser.id,cells:G_MAP},{onConflict:'profile_id'});
   }
   await loadExporeTimers();
   renderHarita();
@@ -1932,7 +1932,7 @@ async function finishExplore(idx,dbId){
 /* ── HARİTA SIFIRLAMA ── */
 async function resetMap(){
   if(!confirm('Tüm haritayı sıfırlayıp yeni araziler mi keşfedeceksin?')) return;
-  G.explored=new Set([15]); // Kale her zaman keşfedilmiş
+  G.explored=new Set([14]); // Kale her zaman keşfedilmiş
   G.selectedCell=null;
   // Yeni harita üret
   const newSeed=Date.now()&0xffffffff;
@@ -1940,8 +1940,8 @@ async function resetMap(){
   // Supabase: tüm keşfedilen hücreleri sil, kaleyi yeniden ekle
   if(currentUser){
     await supa.from('explored_cells').delete().eq('profile_id',currentUser.id);
-    await supa.from('explored_cells').insert({profile_id:currentUser.id,cell_index:15});
-    await supa.from('player_maps').upsert({profile_id:currentUser.id,cells:G_MAP});
+    await supa.from('explored_cells').insert({profile_id:currentUser.id,cell_index:14});
+    await supa.from('player_maps').upsert({profile_id:currentUser.id,cells:G_MAP},{onConflict:'profile_id'});
   }
   document.getElementById('map-info-card').style.display='none';
   toast('Yeni topraklar keşfe açıldı! 🗺');
@@ -2017,7 +2017,7 @@ function renderCaveBattle(){
     </div>`;
 }
 
-function caveAction(action){
+async function caveAction(action){
   if(!caveState||caveState.over) return;
   const eff=getEffectiveStats();
   const log=caveState.log;
@@ -2065,7 +2065,7 @@ function caveAction(action){
     // Mağarayı temizlenmiş olarak işaretle — bir daha girilemesin
     if(caveState.cellIdx!=null && G_MAP[caveState.cellIdx]){
       G_MAP[caveState.cellIdx].cleared=true;
-      if(currentUser) supa.from('player_maps').upsert({profile_id:currentUser.id,cells:G_MAP});
+      if(currentUser) await supa.from('player_maps').upsert({profile_id:currentUser.id,cells:G_MAP},{onConflict:'profile_id'});
     }
     sbSave();
     renderCaveBattle();
