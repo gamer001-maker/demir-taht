@@ -2062,6 +2062,11 @@ function caveAction(action){
       log.push({t:`🎁 ${reward.name} kazandın!`,c:'var(--gold2)'});
       toast(`🎉 ${reward.name} envantere eklendi!`);
     }
+    // Mağarayı temizlenmiş olarak işaretle — bir daha girilemesin
+    if(caveState.cellIdx!=null && G_MAP[caveState.cellIdx]){
+      G_MAP[caveState.cellIdx].cleared=true;
+      if(currentUser) supa.from('player_maps').upsert({profile_id:currentUser.id,cells:G_MAP});
+    }
     sbSave();
     renderCaveBattle();
     return;
@@ -3883,7 +3888,11 @@ function cellClick(idx,cell){
   if(G.selectedCell!==null){
     info.style.display='block';
     if(cell.t==='cave'){
-      info.innerHTML=`<div class="row-between" style="margin-bottom:8px;"><span style="font-family:var(--font-head);font-size:13px;color:#c084fc;">🕳 ${cell.n}</span><span class="tag" style="background:#1a0e2a;border-color:#7a4a8a;color:#c084fc;">Tehlikeli</span></div><div style="font-size:11px;color:var(--ink3);margin-bottom:10px;">${cell.info}</div><button class="btn" style="width:100%;border-color:#7a4a8a;color:#c084fc;" onclick="startCaveBattle(${idx})">💀 Mağara'ya Gir</button>`;
+      if(cell.cleared){
+        info.innerHTML=`<div class="row-between" style="margin-bottom:8px;"><span style="font-family:var(--font-head);font-size:13px;color:var(--ink3);">🕳 ${cell.n}</span><span class="tag tag-gold">✓ Temizlendi</span></div><div style="font-size:11px;color:var(--ink3);">3 Başlı Yılan bu mağarada artık yok.</div>`;
+      } else {
+        info.innerHTML=`<div class="row-between" style="margin-bottom:8px;"><span style="font-family:var(--font-head);font-size:13px;color:#c084fc;">🕳 ${cell.n}</span><span class="tag" style="background:#1a0e2a;border-color:#7a4a8a;color:#c084fc;">Tehlikeli</span></div><div style="font-size:11px;color:var(--ink3);margin-bottom:10px;">${cell.info}</div><button class="btn" style="width:100%;border-color:#7a4a8a;color:#c084fc;" onclick="startCaveBattle(${idx})">💀 Mağara'ya Gir</button>`;
+      }
     } else {
       info.innerHTML=`<div class="row-between"><span style="font-family:var(--font-head);font-size:13px;color:var(--gold);">${cell.n}</span><span class="tag tag-gold">✓ Keşfedildi</span></div><div style="font-size:11px;color:var(--ink3);margin-top:4px;">${cell.info}</div>`;
     }
