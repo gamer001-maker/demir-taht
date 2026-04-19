@@ -111,8 +111,9 @@ html,body{
   .hdr-sub{font-size:14px !important;}
 
   /* Tabs */
-  .tab{font-size:13px !important;padding:14px 6px;}
-  .tab-icon{font-size:22px !important;}
+  .tab{font-size:14px !important;padding:14px 8px;}
+  .tab-icon{font-size:26px !important;}
+  .tab-img{width:36px;height:36px;}
 
   /* Pad */
   .pad{padding:20px 28px !important;}
@@ -196,7 +197,8 @@ html,body{
 .tabs{display:flex;background:var(--panel2);border-bottom:1px solid var(--border);flex-shrink:0;}
 .tab{flex:1;padding:8px 2px;text-align:center;font-family:var(--font-head);font-size:clamp(8px,1vw,10px);font-weight:600;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;}
 .tab.active{color:var(--gold);border-bottom-color:var(--gold);}
-.tab-icon{display:block;font-size:clamp(13px,1.8vw,18px);margin-bottom:2px;}
+.tab-icon{display:block;font-size:clamp(15px,2vw,20px);margin-bottom:2px;}
+.tab-img{display:block;width:clamp(28px,3vw,36px);height:clamp(28px,3vw,36px);margin:0 auto 3px;object-fit:contain;}
 .scroll{flex:1;overflow-y:auto;overflow-x:hidden;}
 .pad{padding:12px;}
 .sec{font-family:var(--font-head);font-size:clamp(9px,1vw,11px);font-weight:700;color:var(--gold);letter-spacing:2px;margin:10px 0 6px;display:flex;align-items:center;gap:6px;text-shadow:0 1px 3px #00000060;}
@@ -1377,13 +1379,13 @@ html,body{
 
     <!-- SUB-NAV TABS -->
     <div class="tabs" id="game-tabs">
-      <div class="tab active" id="gt-karakter" onclick="ggo('karakter')"><span class="tab-icon">👑</span>Karakter</div>
-      <div class="tab" id="gt-kale" onclick="ggo('kale')"><span class="tab-icon">🏰</span>Kale</div>
-      <div class="tab" id="gt-gelistirme" onclick="ggo('gelistirme')"><span class="tab-icon">⚒</span>Geliştir</div>
-      <div class="tab" id="gt-halk" onclick="ggo('halk')"><span class="tab-icon">🏘</span>Halk</div>
-      <div class="tab" id="gt-harita" onclick="ggo('harita')"><span class="tab-icon">🗺</span>Harita</div>
-      <div class="tab" id="gt-arena" onclick="ggo('arena')"><span class="tab-icon">🛡</span>Arena</div>
-      <div class="tab" id="gt-zindan" onclick="ggo('zindan')"><span class="tab-icon">🏚</span>Zindan</div>
+      <div class="tab active" id="gt-karakter" onclick="ggo('karakter')"><img src="images/karakter.webp" class="tab-img" alt="Karakter"/>Karakter</div>
+      <div class="tab" id="gt-kale" onclick="ggo('kale')"><img src="images/kale.webp" class="tab-img" alt="Kale"/>Kale</div>
+      <div class="tab" id="gt-gelistirme" onclick="ggo('gelistirme')"><img src="images/gelistir.webp" class="tab-img" alt="Geliştir"/>Geliştir</div>
+      <div class="tab" id="gt-halk" onclick="ggo('halk')"><img src="images/halk.webp" class="tab-img" alt="Halk"/>Halk</div>
+      <div class="tab" id="gt-harita" onclick="ggo('harita')"><img src="images/harita.webp" class="tab-img" alt="Harita"/>Harita</div>
+      <div class="tab" id="gt-arena" onclick="ggo('arena')"><img src="images/arena.webp" class="tab-img" alt="Arena"/>Arena</div>
+      <div class="tab" id="gt-zindan" onclick="ggo('zindan')"><img src="images/zindan.webp" class="tab-img" alt="Zindan"/>Zindan</div>
     </div>
 
     <div class="scroll" id="game-content">
