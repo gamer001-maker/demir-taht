@@ -5663,7 +5663,7 @@ async function startMillProd(rId){
   }
   G.prodTimers.push({id:G.prodTimerId++,dbId,building:'mill',recipe:rId,remaining:r.dur,total:r.dur,outputs});
   trackQuest('prodStart1');
-  updateInvStrip();renderMill();toast(`${r.name} başlatıldı!`);
+  updateInvStrip();renderMill();toast(`${r.name} başlatıldı!`);sbSave();
 }
 
 /* ══════════════════════════════════════
@@ -5824,7 +5824,7 @@ async function startRanchProd(rId){
   }
   G.prodTimers.push({id:G.prodTimerId++,dbId,building:'ranch',recipe:rId,remaining:r.dur,total:r.dur,outputs});
   trackQuest('prodStart1');
-  updateInvStrip();renderRanch();toast(`${r.name} başlatıldı!`);
+  updateInvStrip();renderRanch();toast(`${r.name} başlatıldı!`);sbSave();
 }
 
 /* ══════════════════════════════════════
@@ -5999,7 +5999,7 @@ async function startKitchenProd(rId){
   }
   G.prodTimers.push({id:G.prodTimerId++,dbId,building:'kitchen',recipe:rId,remaining:r.dur,total:r.dur,outputs});
   trackQuest('prodStart1');
-  updateInvStrip();renderKitchen();toast(`${r.name} başlatıldı!`);
+  updateInvStrip();renderKitchen();toast(`${r.name} başlatıldı!`);sbSave();
 }
 
 /* ══════════════════════════════════════
@@ -6176,7 +6176,7 @@ function completeFarmUpgrade(){
   if(currentUser) sbSave();
 }
 
-function startFarmCrop(cropId){
+async function startFarmCrop(cropId){
   const bld=PROD_BUILDINGS.farm;
   const lv=bld.level;
   const maxSlots=farmMaxSlots(lv);
@@ -6232,10 +6232,17 @@ function startFarmCrop(cropId){
     }
   }
 
-  const tid=G.prodTimerId++;
+  let farmDbId=null;
+  if(currentUser){
+    const dur=crop.dur||120;
+    const {data,error}=await supa.from('production_timers').insert({
+      profile_id:currentUser.id,building:'farm',recipe_id:cropId,duration_secs:dur,outputs
+    }).select().single();
+    if(!error&&data) farmDbId=data.id;
+  }
   G.prodTimers.push({
-    id:tid, dbId:null, building:'farm', recipe:cropId,
-    remaining:120, total:120, outputs
+    id:G.prodTimerId++, dbId:farmDbId, building:'farm', recipe:cropId,
+    remaining:crop.dur||120, total:crop.dur||120, outputs
   });
   trackQuest('prodStart1');
   updateInvStrip(); renderProd('farm');
@@ -6280,7 +6287,7 @@ async function startProd(bKey,rId){
   // Yerel timer (remaining = sunucu zamanından hesaplanır)
   G.prodTimers.push({id:G.prodTimerId++,dbId,building:bKey,recipe:rId,remaining:r.dur,total:r.dur,outputs});
   trackQuest('prodStart1');
-  updateInvStrip();renderProd(bKey);toast(`${r.name} başlatıldı!`);
+  updateInvStrip();renderProd(bKey);toast(`${r.name} başlatıldı!`);sbSave();
 }
 
 async function collectProd(id){
@@ -6296,7 +6303,7 @@ async function collectProd(id){
   if(currentUser&&t.dbId){
     await supa.from('production_timers').delete().eq('id',t.dbId);
   }
-  G.prodTimers.splice(idx,1);updateInvStrip();renderProd(t.building);updateHUD();
+  G.prodTimers.splice(idx,1);updateInvStrip();renderProd(t.building);updateHUD();sbSave();
   if(bonusItems.length){
     const el=document.createElement('div');el.className='bonus-flash';
     el.innerHTML=`<span style="font-size:28px;display:block;margin-bottom:4px;">✨</span><div style="font-family:var(--font-head);font-size:13px;color:var(--g-purple);">BONUS ÜRETİM!</div><div style="font-size:11px;color:var(--perg2);margin-top:3px;">${bonusItems.join('<br>')}${foodGained>0?'<br>🍖 +'+foodGained+' yemek':''}</div>`;
@@ -6312,7 +6319,7 @@ async function cancelProd(id){
   if(currentUser&&t.dbId){
     await supa.from('production_timers').delete().eq('id',t.dbId);
   }
-  G.prodTimers.splice(idx,1);updateInvStrip();renderProd(t.building);toast('İptal edildi. Malzemenin yarısı iade edildi.');
+  G.prodTimers.splice(idx,1);updateInvStrip();renderProd(t.building);toast('İptal edildi. Malzemenin yarısı iade edildi.');sbSave();
 }
 
 /* Supabase'den aktif üretimleri yükle — sayfa açılınca çağrılır */
