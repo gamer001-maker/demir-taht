@@ -1244,6 +1244,42 @@ html,body{
 .eq-empty .eq-slot-lbl{bottom:8px;}
 
 #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#2a1e0c;border:1px solid var(--border2);border-top:1px solid var(--gold);color:var(--perg);font-family:var(--font-head);font-size:11px;padding:8px 18px;border-radius:6px;z-index:500;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:320px;text-align:center;box-shadow:0 4px 16px #00000080;}
+
+/* ═══════════════════════════════════════════
+   ONLINE PVP ARENA
+═══════════════════════════════════════════ */
+.pvp-enter-btn{width:100%;margin-bottom:10px;background:linear-gradient(180deg,#1a0a2e,#0a0518);border:1px solid #6a3aaa;color:#c084fc;font-size:13px;letter-spacing:1px;}
+.pvp-enter-btn:hover{border-color:#9a6ae0;box-shadow:0 0 10px #6a3aaa60;}
+.pvp-lobby{background:var(--panel2);border:1px solid var(--border2);border-radius:10px;padding:16px;animation:fadein .3s ease;}
+.pvp-pick-row{display:flex;gap:10px;margin-bottom:14px;}
+.pvp-pick-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:16px 8px;background:var(--panel);border:2px solid var(--border2);border-radius:10px;cursor:pointer;font-family:var(--font-head);font-size:12px;color:var(--perg2);transition:all .15s;}
+.pvp-pick-btn:hover{border-color:var(--gold);transform:translateY(-2px);}
+.pvp-pick-btn.active{border-color:var(--gold2);background:#2a1e08;color:var(--gold2);box-shadow:0 0 12px #b08d5740;}
+.pvp-waiting-anim{text-align:center;font-size:11px;color:var(--ink3);padding:10px;animation:pulse 1.8s ease-in-out infinite;}
+.pvp-presence-card{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:4px;font-size:11px;}
+.pvp-arena-bg{border-radius:10px;overflow:hidden;background:url('images/arena.webp') center/cover no-repeat,var(--panel2);border:1px solid var(--border2);animation:fadein .4s ease;display:flex;flex-direction:column;}
+.pvp-fighters-row{display:flex;align-items:flex-start;gap:6px;padding:14px 12px 10px;background:linear-gradient(180deg,#00000090 0%,#00000040 100%);flex-shrink:0;}
+.pvp-fighter{flex:1;min-width:0;}
+.pvp-fighter.my-side{text-align:left;}
+.pvp-fighter.opp-side{text-align:right;}
+.pvp-fighter-name{font-family:var(--font-head);font-size:12px;color:var(--gold2);text-shadow:0 1px 4px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pvp-fighter-sub{font-size:9px;color:var(--perg2);margin-bottom:5px;}
+.pvp-hp-bg{height:8px;background:#00000060;border-radius:4px;overflow:hidden;border:1px solid #ffffff20;margin-bottom:3px;}
+.pvp-hp-fill{height:100%;border-radius:4px;transition:width .5s ease;}
+.pvp-hp-val{font-size:9px;color:var(--perg2);font-family:var(--font-head);}
+.pvp-vs{font-family:var(--font-head);font-size:22px;color:var(--gold2);text-shadow:0 0 12px #c9a64690;flex-shrink:0;align-self:center;padding:0 6px;}
+.pvp-turn-bar{text-align:center;font-family:var(--font-head);font-size:10px;color:var(--perg2);background:#00000070;padding:6px;letter-spacing:1px;flex-shrink:0;}
+.pvp-turn-bar.my-turn{color:var(--gold2);animation:pulse .9s ease-in-out infinite;}
+.pvp-log-box{background:#00000085;padding:8px 10px;max-height:90px;overflow-y:auto;flex-shrink:0;font-size:10px;line-height:1.7;}
+.pvp-log-line{padding:1px 0;}
+.pvp-ll-good{color:#7aaa5a;}.pvp-ll-bad{color:#f87171;}.pvp-ll-info{color:var(--perg2);}.pvp-ll-gold{color:var(--gold2);font-weight:700;}
+.pvp-actions{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;padding:8px;background:#00000075;flex-shrink:0;}
+.pvp-act{background:var(--panel);border:1px solid var(--border2);border-radius:8px;padding:8px 4px;cursor:pointer;font-family:var(--font-head);font-size:9px;color:var(--gold);text-align:center;line-height:1.5;transition:all .15s;}
+.pvp-act:hover{border-color:var(--gold);background:#2a1e08;transform:translateY(-1px);}
+.pvp-act.disabled{opacity:.35;cursor:not-allowed;pointer-events:none;}
+.pvp-act-icon{display:block;font-size:20px;margin-bottom:2px;}
+.pvp-act.pa-attack{border-color:#8b1e1e;}.pvp-act.pa-defend{border-color:#2a4a6a;}.pvp-act.pa-magic{border-color:#7a4a8a;}.pvp-act.pa-flee{border-color:#4a3a18;}
+.pvp-result{text-align:center;padding:14px;background:#00000080;flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -1470,6 +1506,10 @@ html,body{
       <div class="pad" id="gs-arena" style="display:none;">
         <div class="card-sm row-between" style="margin-bottom:4px;"><span style="font-size:12px;color:var(--perg2);">Arena Puanı</span><span style="font-family:var(--font-head);font-size:16px;color:var(--gold);" id="arena-pts">0</span></div>
         <div class="card-sm row-between" style="margin-bottom:10px;"><span style="font-size:11px;color:var(--ink3);" id="arena-record">0G / 0M</span></div>
+        <!-- Online PvP Girişi -->
+        <button class="btn pvp-enter-btn" id="pvp-enter-btn" onclick="pvpEnter()">⚔ Online Arena'ya Gir</button>
+        <!-- PvP Savaş Alanı -->
+        <div id="pvp-arena-wrap" style="display:none;"></div>
         <div id="battle-log-wrap" style="display:none;"></div>
         <div id="opponent-list"></div>
       </div>
@@ -6792,7 +6832,421 @@ async function doLogin() {
 
 /* ── LOGOUT FONKSİYONU ── */
 async function logout() {
+  if(PVP.state!=='idle') pvpLeave();
   await sbLogout();
+}
+
+/* ══════════════════════════════════════════════════════
+   ONLINE PVP SİSTEMİ  ─  Supabase Realtime Presence
+══════════════════════════════════════════════════════ */
+const PVP_CH = 'pvp_arena_v1';
+
+let PVP = {
+  channel:     null,
+  state:       'idle',   // idle | picking | waiting | fighting | ended
+  pick:        null,     // 'yazi' | 'tura'
+  matchId:     null,
+  oppData:     null,     // rakibin presence kaydı
+  // Hesaplanmış savaş statları
+  myS:  null,
+  oppS: null,
+  // HP
+  myHp:0, oppHp:0, myMaxHp:0, oppMaxHp:0,
+  myTurn:      false,
+  oppDefending:false,
+  log:         [],
+};
+
+/* ── Stat hesaplama (benim veya rakibin) ────────────── */
+function pvpBuildStats(pData){
+  const e = pData.effStats;            // getEffectiveStats() çıktısı
+  const wpn = pData.weapon || null;
+  const wpnPlus = wpn?.enhPlus || 0;
+
+  /* Temel değerler (spec kuralları) */
+  const baseHp  = (e.maxhp||100) + (e.str||0) + (e.def||0);   // STR+DEF ayrıca HP verir
+  const baseAtk = (e.atk||0)     + (e.str||0);                  // Silah ATK + STR
+  const defFlat = e.def||0;                                      // 1 DEF = 1 flat hasar azaltma
+
+  const critChance = Math.min(0.90, 0.10 + wpnPlus*0.10);       // %10 base + silah+ katkısı
+  const critMult   = 1 + ((e.crit||0) + (e.agi||0)) / 100;      // %100 + crit_puan + AGI
+
+  const dodge          = Math.min(0.50, (e.agi||0)*0.01);        // AGI dodge
+  const wisMagicMult   = 1 + (e.wis||0)*0.01;                   // Büyü hasarı çarpanı
+  const wisCritReduce  = Math.min(0.50, (e.wis||0)*0.01);       // Gelen krit şansını azalt
+  const chaHpReduce    = Math.min(0.30, (e.cha||0)*0.01);       // Rakip başlangıç HP'si
+  const chaCritReduce  = Math.min(0.75, (e.cha||0)*0.05);       // Rakip krit şansını azalt
+  const accIgnoreDef   = Math.min(0.80, (e.acc||0)*0.01);       // Savunmayı yok sayma şansı
+
+  return {
+    baseHp, baseAtk, defFlat,
+    critChance, critMult,
+    dodge, wisMagicMult, wisCritReduce,
+    chaHpReduce, chaCritReduce, accIgnoreDef,
+    heroName: pData.heroName, classId: pData.classId, level: pData.level,
+  };
+}
+
+/* ── Vuruş hesapla (saldıran yapar, sonucu broadcast'ler) */
+function pvpComputeHit(atk, def, isMagic){
+  const baseDmg = isMagic
+    ? Math.floor(atk.baseAtk * atk.wisMagicMult * (0.85+Math.random()*0.30))
+    : Math.floor(atk.baseAtk * (0.85+Math.random()*0.30));
+
+  // Kritik şansı: rakibin wis + cha azaltması uygulanır
+  const effCrit = Math.max(0, atk.critChance - def.wisCritReduce - def.chaCritReduce);
+  const isCrit  = Math.random() < effCrit;
+  let dmg = isCrit ? Math.floor(baseDmg * atk.critMult) : baseDmg;
+
+  // İsabet: savunmayı yok sayma
+  const ignoreDef = Math.random() < atk.accIgnoreDef;
+  if(!ignoreDef) dmg = Math.max(1, dmg - def.defFlat);
+  else           dmg = Math.max(1, dmg);
+
+  // Kaçınma (AGI)
+  const isDodge = Math.random() < def.dodge;
+  if(isDodge) dmg = 0;
+
+  return {dmg, isCrit, ignoreDef, isDodge};
+}
+
+/* ── UI Render ─────────────────────────────────────── */
+function pvpRender(){
+  const el = document.getElementById('pvp-arena-wrap');
+  if(!el) return;
+
+  if(PVP.state==='idle'){ el.innerHTML=''; return; }
+
+  /* ── Lobi / Seçim ekranı */
+  if(PVP.state==='picking' || PVP.state==='waiting'){
+    const hasPick = !!PVP.pick;
+    el.innerHTML=`
+      <div class="pvp-lobby">
+        <div style="text-align:center;margin-bottom:14px;">
+          <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);margin-bottom:4px;">⚔ ONLİNE ARENA</div>
+          <div style="font-size:10px;color:var(--ink3);">Tarafını seç — eşit seçenekli rakip bulununca maç başlar</div>
+        </div>
+        <div class="pvp-pick-row">
+          <button class="pvp-pick-btn ${PVP.pick==='yazi'?'active':''}" onclick="pvpPick('yazi')">
+            <span style="font-size:30px;">🪙</span>
+            <span style="color:var(--gold);">YAZI</span>
+            <span style="font-size:9px;color:var(--ink3);">İlk saldırı hakkı</span>
+          </button>
+          <button class="pvp-pick-btn ${PVP.pick==='tura'?'active':''}" onclick="pvpPick('tura')">
+            <span style="font-size:30px;">🛡</span>
+            <span style="color:var(--gold);">TURA</span>
+            <span style="font-size:9px;color:var(--ink3);">Rakip açar, sen yanıt verirsin</span>
+          </button>
+        </div>
+        ${hasPick?`<div class="pvp-waiting-anim">⏳ Rakip bekleniyor...</div>`:''}
+        <div style="margin-top:8px;" id="pvp-online-list"></div>
+        <button class="btn btn-ghost" style="width:100%;margin-top:10px;" onclick="pvpLeave()">← Geri</button>
+      </div>`;
+    pvpUpdateList();
+    return;
+  }
+
+  /* ── Savaş / Sonuç ekranı */
+  if(PVP.state==='fighting'||PVP.state==='ended'){
+    const myPct  = PVP.myMaxHp  ? Math.max(0,Math.round(PVP.myHp /PVP.myMaxHp *100)) : 0;
+    const oppPct = PVP.oppMaxHp ? Math.max(0,Math.round(PVP.oppHp/PVP.oppMaxHp*100)) : 0;
+    const hpCol  = p => p>50?'#7aaa5a':p>25?'#c9a646':'#f87171';
+    const cls    = id => CLASSES.find(c=>c.id===id)?.name||'';
+    const logHtml= PVP.log.slice(-5).map(l=>`<div class="pvp-log-line ${l.c}">${l.t}</div>`).join('');
+    const isEnded= PVP.state==='ended';
+    const turnTxt= PVP.myTurn ? '⚔ Senin Turun!' : `⏳ ${PVP.oppData?.heroName||'Rakip'}'in Turu...`;
+    const btnDis = (!PVP.myTurn||isEnded) ? 'disabled' : '';
+
+    el.innerHTML=`
+      <div class="pvp-arena-bg">
+        <div class="pvp-fighters-row">
+          <div class="pvp-fighter my-side">
+            <div class="pvp-fighter-name">${G.heroName}</div>
+            <div class="pvp-fighter-sub">Sv.${G.level} · ${cls(G.classId)}</div>
+            <div class="pvp-hp-bg"><div class="pvp-hp-fill" style="width:${myPct}%;background:linear-gradient(90deg,#1a4a1a,${hpCol(myPct)});"></div></div>
+            <div class="pvp-hp-val">${PVP.myHp} / ${PVP.myMaxHp}</div>
+          </div>
+          <div class="pvp-vs">VS</div>
+          <div class="pvp-fighter opp-side">
+            <div class="pvp-fighter-name">${PVP.oppData?.heroName||'?'}</div>
+            <div class="pvp-fighter-sub">Sv.${PVP.oppData?.level||'?'} · ${cls(PVP.oppData?.classId)}</div>
+            <div class="pvp-hp-bg"><div class="pvp-hp-fill" style="width:${oppPct}%;background:linear-gradient(90deg,#6b1a1a,${hpCol(oppPct)});"></div></div>
+            <div class="pvp-hp-val">${PVP.oppHp} / ${PVP.oppMaxHp}</div>
+          </div>
+        </div>
+
+        <div class="pvp-turn-bar ${(!isEnded&&PVP.myTurn)?'my-turn':''}">${isEnded?'⚔ Maç Bitti':turnTxt}</div>
+
+        <div class="pvp-log-box" id="pvp-log">${logHtml}</div>
+
+        ${isEnded?`
+          <div class="pvp-result">
+            <button class="btn" style="width:100%;" onclick="pvpLeave()">🚪 Arenayi Terk Et</button>
+          </div>`:`
+          <div class="pvp-actions">
+            <button class="pvp-act pa-attack ${btnDis}" onclick="${btnDis?'':'pvpAction(\"attack\")'}">
+              <span class="pvp-act-icon">⚔</span>Saldır
+            </button>
+            <button class="pvp-act pa-defend ${btnDis}" onclick="${btnDis?'':'pvpAction(\"defend\")'}">
+              <span class="pvp-act-icon">🛡</span>Savun
+            </button>
+            <button class="pvp-act pa-magic ${btnDis}" onclick="${btnDis?'':'pvpAction(\"magic\")'}">
+              <span class="pvp-act-icon">✨</span>Büyü
+            </button>
+            <button class="pvp-act pa-flee ${btnDis}" onclick="${btnDis?'':'pvpAction(\"flee\")'}">
+              <span class="pvp-act-icon">💨</span>Teslim
+            </button>
+          </div>`}
+      </div>`;
+  }
+}
+
+function pvpLog(text, cls='info'){
+  PVP.log.push({t:text, c:'pvp-ll-'+cls});
+  const el=document.getElementById('pvp-log');
+  if(el){
+    el.innerHTML=PVP.log.slice(-5).map(l=>`<div class="pvp-log-line ${l.c}">${l.t}</div>`).join('');
+    el.scrollTop=el.scrollHeight;
+  }
+}
+
+function pvpUpdateList(){
+  const el=document.getElementById('pvp-online-list');
+  if(!el||!PVP.channel) return;
+  const presences=Object.values(PVP.channel.presenceState()).flat()
+    .filter(p=>p.userId!==currentUser?.id);
+  if(!presences.length){
+    el.innerHTML='<div style="text-align:center;font-size:10px;color:var(--ink3);">Şu an başka kimse yok.</div>';
+    return;
+  }
+  el.innerHTML=`<div style="font-family:var(--font-head);font-size:10px;color:var(--ink3);margin-bottom:6px;letter-spacing:1px;">LOBIDE OLANLAR</div>`+
+    presences.map(p=>`<div class="pvp-presence-card">
+      <span>${p.pick==='yazi'?'🪙':p.pick==='tura'?'🛡':'⏸'}</span>
+      <span style="color:var(--perg2);">${p.heroName}</span>
+      <span style="color:var(--ink3);">Sv.${p.level}</span>
+      ${p.inMatch?'<span style="font-size:9px;color:#f87171;margin-left:auto;">Maçta</span>':''}
+    </div>`).join('');
+}
+
+/* ── Presence track yardımcısı */
+async function pvpTrack(extra={}){
+  if(!PVP.channel) return;
+  const eff = getEffectiveStats();
+  await PVP.channel.track({
+    userId:   currentUser.id,
+    heroName: G.heroName,
+    classId:  G.classId,
+    level:    G.level,
+    effStats: eff,
+    weapon:   G.equipped.weapon||null,
+    pick:     PVP.pick,
+    inMatch:  PVP.state==='fighting',
+    ...extra,
+  });
+}
+
+/* ── Kanala gir */
+function pvpEnter(){
+  if(!currentUser){toast('Giriş yapman gerekiyor!');return;}
+  document.getElementById('pvp-enter-btn').style.display='none';
+  document.getElementById('opponent-list').style.display='none';
+  document.getElementById('battle-log-wrap').style.display='none';
+  document.getElementById('pvp-arena-wrap').style.display='block';
+
+  PVP.state='picking'; PVP.pick=null; PVP.log=[];
+  PVP.matchId=null; PVP.oppData=null; PVP.oppDefending=false;
+  pvpRender();
+
+  if(PVP.channel){supa.removeChannel(PVP.channel);PVP.channel=null;}
+
+  PVP.channel = supa.channel(PVP_CH,{config:{presence:{key:currentUser.id}}})
+    .on('presence',{event:'sync'},()=>{
+      if(PVP.state==='waiting'||PVP.state==='picking') pvpCheckMatch();
+      if(PVP.state==='picking'||PVP.state==='waiting') pvpUpdateList();
+    })
+    .on('presence',{event:'join'},()=>{ if(PVP.state==='picking'||PVP.state==='waiting') pvpRender(); })
+    .on('presence',{event:'leave'},({key})=>{
+      if(PVP.state==='fighting'&&PVP.oppData?.userId===key){
+        pvpLog(`💨 ${PVP.oppData.heroName} arenayi terk etti. Kazandın!`,'gold');
+        pvpEnd('me');
+      } else if(PVP.state==='picking'||PVP.state==='waiting') pvpRender();
+    })
+    .on('broadcast',{event:'pvp_action'},({payload})=>pvpReceiveAction(payload))
+    .subscribe(async(status)=>{ if(status==='SUBSCRIBED') await pvpTrack(); });
+}
+
+/* ── Yazı / Tura seç */
+async function pvpPick(pick){
+  PVP.pick=pick; PVP.state='waiting';
+  await pvpTrack();
+  pvpRender();
+  pvpCheckMatch();
+}
+
+/* ── Eşleşme kontrolü */
+function pvpCheckMatch(){
+  if(!PVP.channel||PVP.state!=='waiting'||!PVP.pick) return;
+  const all=Object.values(PVP.channel.presenceState()).flat();
+  const yp=all.filter(p=>p.pick==='yazi'&&!p.inMatch);
+  const tp=all.filter(p=>p.pick==='tura'&&!p.inMatch);
+  if(!yp.length||!tp.length) return;
+
+  const yaziP=yp[0], turaP=tp[0];
+  const imInPair=(yaziP.userId===currentUser.id)||(turaP.userId===currentUser.id);
+  if(!imInPair) return;
+
+  const matchId=[yaziP.userId,turaP.userId].sort().join('_');
+  if(PVP.matchId===matchId) return; // zaten başladı
+  PVP.matchId=matchId;
+
+  pvpStartBattle(yaziP,turaP);
+}
+
+/* ── Maçı başlat */
+function pvpStartBattle(yaziP,turaP){
+  const imYazi = yaziP.userId===currentUser.id;
+  const myData  = imYazi ? yaziP : turaP;
+  const oppData = imYazi ? turaP : yaziP;
+
+  PVP.oppData = oppData;
+  PVP.myS     = pvpBuildStats(myData);
+  PVP.oppS    = pvpBuildStats(oppData);
+
+  // CHA: rakibin karizma benim HP'mi başlangıçta azaltır
+  PVP.myMaxHp  = Math.max(10, Math.floor(PVP.myS.baseHp  * (1-PVP.oppS.chaHpReduce)));
+  PVP.oppMaxHp = Math.max(10, Math.floor(PVP.oppS.baseHp * (1-PVP.myS.chaHpReduce)));
+  PVP.myHp  = PVP.myMaxHp;
+  PVP.oppHp = PVP.oppMaxHp;
+  PVP.myTurn = imYazi; // Yazı daima ilk oynar
+  PVP.state  = 'fighting';
+  PVP.oppDefending = false;
+
+  pvpTrack();
+  pvpLog(`⚔ MAÇ BAŞLADI!  ${yaziP.heroName} 🪙 vs 🛡 ${turaP.heroName}`,'gold');
+  if(PVP.myS.chaHpReduce>0)
+    pvpLog(`👑 Karizman rakibin HP'sini -%${Math.round(PVP.myS.chaHpReduce*100)} azalttı.`,'info');
+  pvpLog(`${imYazi?'🪙 Sen (Yazı)':'🛡 Rakip (Yazı)'} ilk saldırı hakkını kullanacak.`,'info');
+
+  pvpRender();
+  toast(`⚔ Maç bulundu! ${oppData.heroName} ile savaş başladı!`);
+}
+
+/* ── Aksiyon (benim turum) */
+async function pvpAction(type){
+  if(!PVP.myTurn||PVP.state!=='fighting') return;
+  PVP.myTurn=false; // çift tık engeli
+  pvpRender();       // butonları hemen devre dışı bırak
+
+  let payload={fromId:currentUser.id,toId:PVP.oppData.userId,matchId:PVP.matchId,type};
+
+  if(type==='attack'||type==='magic'){
+    const result=pvpComputeHit(PVP.myS, PVP.oppS, type==='magic');
+    let dmg=result.dmg;
+
+    // Rakip savunma pozisyondaysa hasar %40 azalır — ikisi de aynı değeri görür
+    if(PVP.oppDefending){ dmg=Math.floor(dmg*0.60); PVP.oppDefending=false; }
+    result.dmg=dmg;
+    payload={...payload,...result};
+
+    PVP.oppHp=Math.max(0,PVP.oppHp-dmg);
+    const critTxt  = result.isCrit  ? ' 💥KRİTİK!'         : '';
+    const ignTxt   = result.ignoreDef ? ' [DEF yoksayıldı]' : '';
+    const dodgeTxt = result.isDodge  ? ' (Kaçındı!)'        : '';
+    const dmgLabel = type==='magic' ? 'büyü' : 'fiziksel';
+    pvpLog(result.isDodge
+      ? `💨 ${PVP.oppData.heroName} saldırından kaçındı!`
+      : `${type==='magic'?'✨':'⚔'} ${PVP.oppData.heroName}'a ${dmg} ${dmgLabel} hasar verdin${critTxt}${ignTxt}`, 'good');
+
+    if(PVP.oppHp<=0){
+      payload.kill=true;
+      await PVP.channel.send({type:'broadcast',event:'pvp_action',payload});
+      pvpEnd('me'); return;
+    }
+
+  } else if(type==='defend'){
+    pvpLog('🛡 Savunma pozisyonu aldın. Gelen hasar -%40.','info');
+
+  } else if(type==='flee'){
+    payload.fled=true;
+    await PVP.channel.send({type:'broadcast',event:'pvp_action',payload});
+    pvpLog('💨 Teslim oldun!','bad');
+    pvpEnd('opp'); return;
+  }
+
+  await PVP.channel.send({type:'broadcast',event:'pvp_action',payload});
+  pvpRender();
+}
+
+/* ── Rakipten gelen aksiyon */
+function pvpReceiveAction(payload){
+  if(payload.toId!==currentUser.id)    return;
+  if(payload.matchId!==PVP.matchId)   return;
+  if(PVP.state!=='fighting')          return;
+
+  if(payload.fled){
+    pvpLog(`💨 ${PVP.oppData.heroName} teslim oldu! Kazandın!`,'gold');
+    pvpEnd('me'); return;
+  }
+  if(payload.kill){
+    PVP.myHp=0;
+    pvpLog(`💀 ${PVP.oppData.heroName} seni öldürdü!`,'bad');
+    pvpEnd('opp'); return;
+  }
+
+  if(payload.type==='defend'){
+    PVP.oppDefending=true;  // bir sonraki saldırıma uygulanır
+    pvpLog(`🛡 ${PVP.oppData.heroName} savunma pozisyonu aldı.`,'info');
+  } else if(payload.dmg!==undefined){
+    let dmg=payload.dmg;
+    // Benim savunmam aktifse
+    const myDef=false; // savunma zaten payload'da işlendi (her iki tarafta aynı değer)
+    PVP.myHp=Math.max(0,PVP.myHp-dmg);
+    const critTxt=payload.isCrit?' 💥KRİTİK!':'';
+    if(payload.isDodge){
+      pvpLog(`💨 ${PVP.oppData.heroName}'in saldırısından kaçındın!`,'good');
+    } else {
+      pvpLog(`${PVP.oppData.heroName}: ${dmg} hasar verdi${critTxt}`,'bad');
+    }
+    if(PVP.myHp<=0){ pvpEnd('opp'); return; }
+  }
+
+  PVP.myTurn=true;
+  pvpRender();
+}
+
+/* ── Maç sonu */
+function pvpEnd(winner){
+  PVP.state='ended';
+  const won=winner==='me';
+  if(won){
+    const reward=Math.floor(150+G.level*15);
+    G.gold+=reward; G.arenaScore+=50; G.arenaWins++;
+    gainXP(60);
+    pvpLog(`🏆 KAZANDIN! +${reward}🪙  +50 Arena Puanı  +60 XP`,'gold');
+    toast(`⚔ PvP Zafer! +${reward}🪙`);
+  } else {
+    G.arenaLosses++;
+    pvpLog('💀 YENİLDİN! Güçlen ve geri dön.','bad');
+    toast('💀 PvP Yenildin!');
+  }
+  pvpTrack();
+  if(currentUser) sbSave();
+  pvpRender();
+}
+
+/* ── Kanaldan çık */
+function pvpLeave(){
+  if(PVP.channel){
+    PVP.channel.untrack();
+    supa.removeChannel(PVP.channel);
+    PVP.channel=null;
+  }
+  PVP.state='idle'; PVP.pick=null; PVP.matchId=null; PVP.oppData=null;
+  const ew=document.getElementById('pvp-arena-wrap');
+  if(ew){ ew.style.display='none'; ew.innerHTML=''; }
+  document.getElementById('pvp-enter-btn').style.display='block';
+  document.getElementById('opponent-list').style.display='block';
+  renderArena();
 }
 
 /* ══════════════════════════════════════
