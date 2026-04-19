@@ -777,7 +777,8 @@ html,body{
 .map-cell.fog{background:#0f0b08 !important;filter:none;opacity:.5;}
 .map-cell .mlbl{font-size:6px;font-family:var(--font-head);color:#fff;text-shadow:0 1px 3px #000;}
 .t-plains{background:#1e2e12;}.t-forest{background:#122210;}.t-mountain{background:#2e241a;}
-.t-water{background:#0e1e28;}.t-castle{background:#2a1e10;}.t-village{background:#261e0a;}.t-ruins{background:#1a1610;}
+.t-water{background:#0e1e28;}.t-castle{background:#2a1e10;}.t-village{background:#261e0a;}.t-ruins{background:#1a1610;}.t-cave{background:#1a0e2a;}
+#map-info-card{position:sticky;bottom:0;z-index:5;}
 
 /* ═══════════════════════════════
    ARENA
@@ -1501,8 +1502,9 @@ html,body{
       <!-- HARİTA -->
       <div class="pad" id="gs-harita" style="display:none;">
         <div class="map-grid" id="map-grid" style="margin-bottom:10px;"></div>
+        <div style="font-size:10px;color:var(--ink3);text-align:center;margin-bottom:6px;">Keşfetmek: 10🪙 | Komşudan genişle</div>
+        <button id="new-map-btn" class="btn" style="width:100%;display:none;margin-bottom:8px;border-color:var(--gold2);" onclick="resetMap()">🗺 Yeni Yerler Keşfet</button>
         <div class="card" id="map-info-card" style="display:none;"></div>
-        <div style="font-size:10px;color:var(--ink3);text-align:center;">Keşfetmek: 10🪙 | Komşudan genişle</div>
       </div>
       <!-- ARENA -->
       <div class="pad" id="gs-arena" style="display:none;">
@@ -1825,6 +1827,7 @@ const TERRAIN_TYPES=[
   {t:'water',  n:'Deniz',    info:'Geçilemez',     img:'images/deniz.png',   weight:5},
   {t:'water',  n:'Nehir',    info:'Balık kaynağı', img:'images/nehir.png',   weight:3},
   {t:'water',  n:'Göl',      info:'Su kaynağı',    img:'images/gol.jpeg',    weight:2},
+  {t:'cave',   n:'Mağara Girişi', info:'Karanlık bir mağara... İçeride tehlikeli bir yaratık yuva kurmuş.', img:'images/magaragirisi.webp', weight:4},
 ];
 
 /* Harita üreteci — her oyuncu için rastgele 35 hücre */
@@ -1914,6 +1917,169 @@ async function finishExplore(idx,dbId){
   // Keşfedilen hücreyi kaydet
   if(currentUser) await supa.from('explored_cells').upsert({profile_id:currentUser.id,cell_index:idx}).onConflict('profile_id,cell_index');
   renderHarita();
+}
+
+/* ── HARİTA SIFIRLAMA ── */
+async function resetMap(){
+  if(!confirm('Tüm haritayı sıfırlayıp yeni araziler mi keşfedeceksin?')) return;
+  G.explored=new Set([15]); // Kale her zaman keşfedilmiş
+  G.selectedCell=null;
+  // Yeni harita üret
+  const newSeed=Date.now()&0xffffffff;
+  G_MAP=generateMap(newSeed);
+  // Supabase: tüm keşfedilen hücreleri sil, kaleyi yeniden ekle
+  if(currentUser){
+    await supa.from('explored_cells').delete().eq('profile_id',currentUser.id);
+    await supa.from('explored_cells').insert({profile_id:currentUser.id,cell_index:15});
+    await supa.from('player_maps').upsert({profile_id:currentUser.id,cells:G_MAP});
+  }
+  document.getElementById('map-info-card').style.display='none';
+  toast('Yeni topraklar keşfe açıldı! 🗺');
+  renderHarita();
+}
+
+/* ── MAĞARA SAVAŞI ── */
+const CAVE_ENEMY={id:'3yilan',name:'3 Başlı Yılan',img:'3yilan',hp:3000,maxHp:3000,atk:120,def:40};
+let caveState=null; // {enemyHp, defending, log[], cellIdx}
+
+function startCaveBattle(cellIdx){
+  caveState={
+    enemyHp:CAVE_ENEMY.hp,
+    defending:false,
+    log:[],
+    cellIdx,
+    over:false
+  };
+  renderCaveBattle();
+}
+
+function renderCaveBattle(){
+  const overlay=document.getElementById('cave-battle-overlay');
+  if(!overlay) return;
+  if(!caveState){overlay.style.display='none';return;}
+  const eff=getEffectiveStats();
+  const hpPct=Math.round(caveState.enemyHp/CAVE_ENEMY.maxHp*100);
+  const playerHpPct=Math.min(100,Math.round(G.stats.hp/eff.maxhp*100));
+  overlay.style.display='flex';
+  overlay.innerHTML=`
+    <div style="background:var(--panel2);border:2px solid #7a4a8a;border-radius:16px;padding:16px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;animation:fadein .25s ease;">
+      <div style="text-align:center;margin-bottom:10px;">
+        <div style="font-family:var(--font-head);font-size:16px;color:#c084fc;letter-spacing:2px;">🕳 MAĞARA SAVAŞI</div>
+      </div>
+      <!-- Düşman -->
+      <div style="background:linear-gradient(135deg,#1a0820 0%,#2a0a30 100%);border:1px solid #7a4a8a;border-radius:10px;padding:12px;text-align:center;margin-bottom:10px;">
+        <img src="images/3yilan.webp" style="width:100px;height:100px;object-fit:contain;display:block;margin:0 auto 6px;filter:drop-shadow(0 0 12px #c084fc60);" onerror="this.style.display='none'"/>
+        <div style="font-family:var(--font-head);font-size:14px;color:#c084fc;">${CAVE_ENEMY.name}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+          <span style="font-size:9px;color:var(--ink3);min-width:20px;">CAN</span>
+          <div style="flex:1;height:8px;background:var(--panel3);border-radius:4px;overflow:hidden;border:1px solid var(--border);">
+            <div style="width:${hpPct}%;height:100%;background:linear-gradient(90deg,#7a4a8a,#c084fc);border-radius:4px;transition:width .4s;"></div>
+          </div>
+          <span style="font-size:9px;color:var(--perg2);min-width:50px;text-align:right;">${caveState.enemyHp}/${CAVE_ENEMY.maxHp}</span>
+        </div>
+      </div>
+      <!-- Oyuncu -->
+      <div style="background:var(--panel3);border:1px solid var(--border2);border-radius:8px;padding:8px 10px;margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:20px;">🧙</span>
+        <div style="flex:1;">
+          <div style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${G.heroName||'Kahraman'}</div>
+          <div style="display:flex;align-items:center;gap:5px;margin-top:3px;">
+            <div style="flex:1;height:6px;background:var(--panel3);border-radius:3px;overflow:hidden;border:1px solid var(--border);">
+              <div style="width:${playerHpPct}%;height:100%;background:linear-gradient(90deg,#2a6a2a,#7aaa5a);border-radius:3px;transition:width .4s;"></div>
+            </div>
+            <span style="font-size:9px;color:var(--perg2);">${G.stats.hp}/${eff.maxhp}</span>
+          </div>
+        </div>
+      </div>
+      <!-- Savaş logu -->
+      <div style="max-height:90px;overflow-y:auto;background:var(--panel3);border:1px solid var(--border);border-radius:6px;padding:7px;margin-bottom:10px;font-size:10px;line-height:1.7;">
+        ${caveState.log.length?caveState.log.slice(-5).map(l=>`<div style="color:${l.c||'var(--perg2)'};">${l.t}</div>`).join(''):'<div style="color:var(--ink3);">Savaş başlıyor...</div>'}
+      </div>
+      <!-- Aksiyonlar -->
+      ${caveState.over?'':`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <button class="btn" style="border-color:#8b1e1e;color:#f87171;" onclick="caveAction('attack')">⚔ Saldır</button>
+        <button class="btn" style="border-color:#2a4a6a;color:#6a9abf;" onclick="caveAction('defend')">🛡 Savun</button>
+        <button class="btn" style="border-color:#7a4a8a;color:#c084fc;" onclick="caveAction('magic')">✨ Büyü</button>
+        <button class="btn btn-ghost" onclick="caveAction('flee')">🏃 Kaç</button>
+      </div>`}
+      ${caveState.over?`<button class="btn" style="width:100%;margin-top:8px;" onclick="closeCaveBattle()">Kapat</button>`:''}
+    </div>`;
+}
+
+function caveAction(action){
+  if(!caveState||caveState.over) return;
+  const eff=getEffectiveStats();
+  const log=caveState.log;
+
+  if(action==='flee'){
+    log.push({t:'Mağaradan kaçtın!',c:'var(--ink3)'});
+    caveState.over=true;
+    caveState=null;
+    renderCaveBattle();
+    document.getElementById('cave-battle-overlay').style.display='none';
+    return;
+  }
+
+  // Oyuncu saldırı
+  let playerDmg=0;
+  if(action==='attack'){
+    playerDmg=Math.max(1,Math.floor(eff.physDmg*(0.85+Math.random()*0.3)));
+    const isCrit=Math.random()<(eff.critChance||0.05);
+    if(isCrit){playerDmg=Math.floor(playerDmg*1.8);log.push({t:`⚔ Kritik! ${playerDmg} hasar verdin!`,c:'#f87171'});}
+    else log.push({t:`⚔ ${playerDmg} hasar verdin.`,c:'#f87171'});
+    caveState.enemyHp=Math.max(0,caveState.enemyHp-playerDmg);
+  } else if(action==='defend'){
+    caveState.defending=true;
+    log.push({t:'🛡 Savunma pozisyonu aldın.',c:'#6a9abf'});
+  } else if(action==='magic'){
+    const wisDmg=Math.max(1,Math.floor((eff.wis||5)*4*(0.9+Math.random()*0.2)));
+    caveState.enemyHp=Math.max(0,caveState.enemyHp-wisDmg);
+    log.push({t:`✨ ${wisDmg} büyü hasarı verdin!`,c:'#c084fc'});
+  }
+
+  // Düşman yenildi mi?
+  if(caveState.enemyHp<=0){
+    caveState.over=true;
+    log.push({t:'💀 3 Başlı Yılan yenildi!',c:'var(--gold2)'});
+    // Ödül: rastgele nekro item
+    const nekroIds=[800,801,802,803,804];
+    const rewardId=nekroIds[Math.floor(Math.random()*nekroIds.length)];
+    const reward=ITEMS.find(x=>x.id===rewardId);
+    if(reward){
+      const item={...reward,id:Date.now(),enhPlus:0,baseStats:{...reward.stats}};
+      G.inventory.push(item);
+      log.push({t:`🎁 ${reward.name} kazandın!`,c:'var(--gold2)'});
+      toast(`🎉 ${reward.name} envantere eklendi!`);
+    }
+    sbSave();
+    renderCaveBattle();
+    return;
+  }
+
+  // Düşman saldırısı
+  const rawDmg=Math.max(1,Math.floor(CAVE_ENEMY.atk*(0.8+Math.random()*0.4)));
+  const blocked=caveState.defending?Math.floor(rawDmg*0.5):0;
+  const actualDmg=Math.max(0,rawDmg-blocked-(eff.def||0));
+  G.stats.hp=Math.max(0,G.stats.hp-actualDmg);
+  if(blocked>0) log.push({t:`🛡 Yılan ${rawDmg} vurdu, ${blocked} bloklandı. ${actualDmg} hasar aldın.`,c:'#f8c471'});
+  else log.push({t:`🐍 Yılan ${actualDmg} hasar verdi!`,c:'#f8c471'});
+  caveState.defending=false;
+
+  updateHUD();
+
+  if(G.stats.hp<=0){
+    G.stats.hp=1;
+    caveState.over=true;
+    log.push({t:'💀 Mağarada yenildin!',c:'#f87171'});
+  }
+  renderCaveBattle();
+}
+
+function closeCaveBattle(){
+  caveState=null;
+  const overlay=document.getElementById('cave-battle-overlay');
+  if(overlay) overlay.style.display='none';
 }
 
 /* Keşif sayacı interval */
@@ -2108,6 +2274,15 @@ const MARKET_ITEMS=[
      AKSESUAR
   ══════════════════════════════════════ */
   {id:301,name:'Bakır Yüzük',     icon:'💍',cat:'accessory',grade:'gray',  price:50,  qty:99,seller:'npc',sellerName:'Mücevherci',  type:'Yüzük',reqLv:1, material:null,desc:'Sıradan bakır yüzük.',                stats:{mgc:3,wis:2},   img:null,classBonus:null},
+
+  /* ══════════════════════════════════════
+     NEKRO SET (Mağara Girişi boss dropu)
+  ══════════════════════════════════════ */
+  {id:800,name:'Nekro Kılıç',   icon:'⚔', cat:'weapon',grade:'orange',price:0,qty:1,seller:'boss',sellerName:'Mağara',type:'Kılıç',  reqLv:50,tplId:'necrokilic',  material:null,desc:'3 Başlı Yılan\'ı yenenlere düşen efsanevi kılıç.',stats:{atk:150,str:40,crit:22},img:'necrokilic',  classBonus:{warrior:'str',paladin:'str'}},
+  {id:801,name:'Nekro Zırh',    icon:'🛡', cat:'armor', grade:'orange',price:0,qty:1,seller:'boss',sellerName:'Mağara',type:'Zırh',   reqLv:50,tplId:null,          material:null,desc:'Karanlık enerjilerle dolu, bedeni saran nekro zırh.',stats:{def:70,hp:200,str:25},img:'necrozirh',  classBonus:null},
+  {id:802,name:'Nekro Kask',    icon:'🪖', cat:'armor', grade:'orange',price:0,qty:1,seller:'boss',sellerName:'Mağara',type:'Kask',   reqLv:50,tplId:null,          material:null,desc:'Zihni karanlıkla örten, düşman sihirlerine direnen kask.',stats:{def:40,hp:120,wis:20},img:'necrokask',  classBonus:null},
+  {id:803,name:'Nekro Eldiven', icon:'🧤', cat:'armor', grade:'orange',price:0,qty:1,seller:'boss',sellerName:'Mağara',type:'Eldiven',reqLv:50,tplId:null,          material:null,desc:'Dokunduğu her şeyi soldurur.',stats:{def:30,agi:30,crit:20},img:'necroeldiven',classBonus:null},
+  {id:804,name:'Nekro Bot',     icon:'👢', cat:'armor', grade:'orange',price:0,qty:1,seller:'boss',sellerName:'Mağara',type:'Bot',    reqLv:50,tplId:null,          material:null,desc:'Karanlık topraklarda sessizce yürür.',stats:{def:30,agi:25,hp:100},img:'necrobot',  classBonus:null},
 
   /* ══════════════════════════════════════
      TÜKETİLEBİLİR
@@ -3651,6 +3826,10 @@ function folkChoice(id,ci){const ev=G.folkEvents.find(e=>e.id===id);if(!ev||ev.d
 function renderHarita(){
   const grid=document.getElementById('map-grid');grid.innerHTML='';
   if(!G_MAP.length){grid.innerHTML='<div style="padding:20px;color:var(--ink3);font-size:12px;text-align:center;">⏳ Harita yükleniyor...</div>';return;}
+  // Tüm hücreler keşfedildiyse "Yeni Yerler Keşfet" butonu göster
+  const allExplored=G_MAP.every((_,i)=>G.explored.has(i));
+  const newMapBtn=document.getElementById('new-map-btn');
+  if(newMapBtn) newMapBtn.style.display=allExplored?'block':'none';
   G_MAP.forEach((cell,idx)=>{
     const exp=G.explored.has(idx);
     const sel=G.selectedCell===idx;
@@ -3693,7 +3872,11 @@ function cellClick(idx,cell){
   G.selectedCell=G.selectedCell===idx?null:idx;
   if(G.selectedCell!==null){
     info.style.display='block';
-    info.innerHTML=`<div class="row-between"><span style="font-family:var(--font-head);font-size:13px;color:var(--gold);">${cell.n}</span><span class="tag tag-gold">✓ Keşfedildi</span></div><div style="font-size:11px;color:var(--ink3);margin-top:4px;">${cell.info}</div>`;
+    if(cell.t==='cave'){
+      info.innerHTML=`<div class="row-between" style="margin-bottom:8px;"><span style="font-family:var(--font-head);font-size:13px;color:#c084fc;">🕳 ${cell.n}</span><span class="tag" style="background:#1a0e2a;border-color:#7a4a8a;color:#c084fc;">Tehlikeli</span></div><div style="font-size:11px;color:var(--ink3);margin-bottom:10px;">${cell.info}</div><button class="btn" style="width:100%;border-color:#7a4a8a;color:#c084fc;" onclick="startCaveBattle(${idx})">💀 Mağara'ya Gir</button>`;
+    } else {
+      info.innerHTML=`<div class="row-between"><span style="font-family:var(--font-head);font-size:13px;color:var(--gold);">${cell.n}</span><span class="tag tag-gold">✓ Keşfedildi</span></div><div style="font-size:11px;color:var(--ink3);margin-top:4px;">${cell.info}</div>`;
+    }
   } else info.style.display='none';
   renderHarita();
 }
@@ -7356,5 +7539,7 @@ const nd=document.getElementById('notif-dot');if(nd) nd.style.display='block';
   showLoginScreen();
 })();
 </script>
+<!-- MAĞARA SAVAŞI OVERLAY -->
+<div id="cave-battle-overlay" style="display:none;position:fixed;inset:0;background:#000000cc;z-index:9500;align-items:center;justify-content:center;padding:16px;"></div>
 </body>
 </html>
