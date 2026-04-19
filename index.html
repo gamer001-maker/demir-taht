@@ -3840,7 +3840,7 @@ const ZD_ENEMIES = [
   {id:'vampire',name:'Vampir',       icon:'🧛', hp:90,  atk:22, def:10, xp:55, gold:50, floor:4},
   {id:'demon',  name:'Şeytan',       icon:'😈', hp:130, atk:26, def:12, xp:70, gold:65, floor:4},
   {id:'dragon', name:'Mini Ejderha', icon:'🐲', hp:200, atk:35, def:20, xp:120,gold:120,floor:5},
-  {id:'altinsovalye', name:'Altın Şövalye', icon:'⚔', img:'altinsovalye', hp:750, atk:70, def:45, xp:500, gold:400, floor:5, isBoss:true},
+  {id:'altinsovalye', name:'Altın Şövalye', icon:'⚔', img:'altinsovalye', hp:7500, atk:70, def:45, xp:500, gold:400, floor:5, isBoss:true},
 ];
 
 const ZD_ROOM_TYPES = {
@@ -3921,9 +3921,10 @@ function zdGenFloor(floorNum){
           ? eligible.filter(e=>e.floor===Math.min(floorNum, ZD_FLOORS))
           : eligible;
         const base = (pool.length>0?pool:eligible)[Math.floor(Math.random()*(pool.length||eligible.length))] || ZD_ENEMIES[0];
+        const bossHpMult = r.type==='boss' ? 10 : 1;
         r.enemy = {
           ...base,
-          hp:   Math.floor(base.hp   * mult),
+          hp:   Math.floor(base.hp   * mult * bossHpMult),
           atk:  Math.floor(base.atk  * mult),
           def:  Math.floor(base.def  * mult),
           gold: Math.floor(base.gold * mult),
