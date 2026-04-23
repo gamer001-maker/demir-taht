@@ -2486,13 +2486,13 @@ function getNPCSellPrice(item){
 
 const QUEST_DATA={
   story:[
-    {id:'s1',type:'story',num:'Bölüm 1',title:'Tahtın Uyanışı',desc:'Krallığını uyandır, ilk adımlarını at.',icon:'👑',status:'active',objectives:[{text:'Ordu ekranını ziyaret et',key:'visitArmy',cur:0,max:1},{text:'100 altın topla',key:'goldReached100',cur:0,max:1}],rewards:[{t:'gold',v:200},{t:'xp',v:150}]},
+    {id:'s1',type:'story',num:'Bölüm 1',title:'Tahtın Uyanışı',desc:'Krallığını uyandır, ilk adımlarını at.',icon:'👑',status:'active',objectives:[{text:'Zindan ekranını ziyaret et',key:'visitZindan',cur:0,max:1},{text:'100 altın topla',key:'goldReached100',cur:0,max:1}],rewards:[{t:'gold',v:200},{t:'xp',v:150}]},
     {id:'s2',type:'story',num:'Bölüm 2',title:'İlk Sınav',desc:'Orduyu topla ve sınırı koru.',icon:'⚔',status:'locked',lockReason:"Bölüm 1'i tamamla",objectives:[{text:'30 asker topla',key:'armyCount30',cur:0,max:1},{text:"Arena'da 1 dövüş yap",key:'arenaFight1',cur:0,max:1}],rewards:[{t:'gold',v:350},{t:'xp',v:250}]},
     {id:'s3',type:'story',num:'Bölüm 3',title:"Demir Kale'nin Sırrı",desc:'Doğudaki harabede gizli hazine var.',icon:'🏚',status:'locked',lockReason:"Bölüm 2'yi tamamla",objectives:[{text:'5 bölge keşfet',key:'explore5',cur:0,max:5},{text:'Harabe keşfet',key:'exploreRuin',cur:0,max:1}],rewards:[{t:'gold',v:500},{t:'xp',v:400}]},
     {id:'s4',type:'story',num:'Bölüm 4',title:'Kuzeyden Gelen Tehdit',desc:'Barbar kabileleri ilerliyor.',icon:'🌨',status:'locked',lockReason:"Bölüm 3'ü tamamla",objectives:[{text:"Surları Sv.2'ye yükselt",key:'wallsLv2',cur:0,max:1},{text:'Lonca kur veya katıl',key:'joinGuild',cur:0,max:1}],rewards:[{t:'gold',v:800},{t:'xp',v:600}]},
   ],
   daily:[
-    {id:'d1',type:'daily',title:'Savaş Hazırlığı',icon:'⚔',objectives:[{text:'Ordu ekranını ziyaret et',key:'visitArmy',cur:0,max:1}],rewards:[{t:'gold',v:50},{t:'xp',v:30}]},
+    {id:'d1',type:'daily',title:'Zindan Hazırlığı',icon:'⚔',objectives:[{text:'Zindan ekranını ziyaret et',key:'visitZindan',cur:0,max:1}],rewards:[{t:'gold',v:50},{t:'xp',v:30}]},
     {id:'d2',type:'daily',title:'Hazineyi Doldur',icon:'🪙',objectives:[{text:'100 altın topla',key:'goldReached100',cur:0,max:1}],rewards:[{t:'gold',v:80},{t:'xp',v:40}]},
     {id:'d3',type:'daily',title:'Arena Antrenmanı',icon:'🛡',objectives:[{text:"Arena'da 1 dövüş yap",key:'arenaFight1',cur:0,max:1}],rewards:[{t:'gold',v:60},{t:'xp',v:50}]},
     {id:'d4',type:'daily',title:'Halkı Mutlu Et',icon:'😊',objectives:[{text:"Halk mutluluğunu %60'a çıkar",key:'happiness60',cur:0,max:1}],rewards:[{t:'gold',v:100},{t:'xp',v:60}]},
@@ -2643,13 +2643,13 @@ const G={
   notifCount:0,
   arenaLog:[],
   qp:{
-    visitArmy:0,goldReached100:0,arenaFight1:0,arenaFight5:0,
+    visitZindan:0,goldReached100:0,arenaFight1:0,arenaFight5:0,
     arenaWin1:0,arenaWin5:0,explore5:0,exploreDaily:0,
     exploreRuin:0,exploreRuin2:0,exploreVillage3:0,
     armyCount30:0,happiness60:0,marketBuy1:0,prodStart1:0,
     wallsLv2:0,joinGuild:0,treasuryDeposit100:0,
   },
-  dailyQp:{visitArmy:0,goldReached100:0,arenaFight1:0,happiness60:0,exploreDaily:0,prodStart1:0},
+  dailyQp:{visitZindan:0,goldReached100:0,arenaFight1:0,happiness60:0,exploreDaily:0,prodStart1:0},
   completedQuests:new Set(),
   dailyCollected:new Set(),
   inventory:[], // max 50 slot — {id, name, icon, type, grade, price, stats, desc, seller:'player', sellerName}
@@ -2909,7 +2909,7 @@ function ggo(s){
   document.querySelectorAll('[id^="gt-"]').forEach(el=>el.classList.remove('active'));
   document.getElementById('gs-'+s).style.display='block';
   document.getElementById('gt-'+s).classList.add('active');
-  if(s==='gelistirme') trackQuest('visitArmy'); // eski quest key korundu
+  if(s==='zindan') trackQuest('visitZindan');
   renderGame(s);
 }
 function renderGame(s){
