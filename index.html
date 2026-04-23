@@ -2487,7 +2487,7 @@ function getNPCSellPrice(item){
 const QUEST_DATA={
   story:[
     {id:'s1',type:'story',num:'Bölüm 1',title:'Tahtın Uyanışı',desc:'Krallığını uyandır, ilk adımlarını at.',icon:'👑',status:'active',objectives:[{text:'Zindan ekranını ziyaret et',key:'visitZindan',cur:0,max:1},{text:'100 altın topla',key:'goldReached100',cur:0,max:1}],rewards:[{t:'gold',v:200},{t:'xp',v:150}]},
-    {id:'s2',type:'story',num:'Bölüm 2',title:'İlk Sınav',desc:'Orduyu topla ve sınırı koru.',icon:'⚔',status:'locked',lockReason:"Bölüm 1'i tamamla",objectives:[{text:'30 asker topla',key:'armyCount30',cur:0,max:1},{text:"Arena'da 1 dövüş yap",key:'arenaFight1',cur:0,max:1}],rewards:[{t:'gold',v:350},{t:'xp',v:250}]},
+    {id:'s2',type:'story',num:'Bölüm 2',title:'İlk Sınav',desc:'Üretimi öğren ve arenada savaş.',icon:'⚔',status:'locked',lockReason:"Bölüm 1'i tamamla",objectives:[{text:'10 buğday üret',key:'prodBugday10',cur:0,max:10},{text:"Arena'da 1 dövüş yap",key:'arenaFight1',cur:0,max:1}],rewards:[{t:'gold',v:350},{t:'xp',v:250}]},
     {id:'s3',type:'story',num:'Bölüm 3',title:"Demir Kale'nin Sırrı",desc:'Doğudaki harabede gizli hazine var.',icon:'🏚',status:'locked',lockReason:"Bölüm 2'yi tamamla",objectives:[{text:'5 bölge keşfet',key:'explore5',cur:0,max:5},{text:'Harabe keşfet',key:'exploreRuin',cur:0,max:1}],rewards:[{t:'gold',v:500},{t:'xp',v:400}]},
     {id:'s4',type:'story',num:'Bölüm 4',title:'Kuzeyden Gelen Tehdit',desc:'Barbar kabileleri ilerliyor.',icon:'🌨',status:'locked',lockReason:"Bölüm 3'ü tamamla",objectives:[{text:"Surları Sv.2'ye yükselt",key:'wallsLv2',cur:0,max:1},{text:'Lonca kur veya katıl',key:'joinGuild',cur:0,max:1}],rewards:[{t:'gold',v:800},{t:'xp',v:600}]},
   ],
@@ -2646,7 +2646,7 @@ const G={
     visitZindan:0,goldReached100:0,arenaFight1:0,arenaFight5:0,
     arenaWin1:0,arenaWin5:0,explore5:0,exploreDaily:0,
     exploreRuin:0,exploreRuin2:0,exploreVillage3:0,
-    armyCount30:0,happiness60:0,marketBuy1:0,prodStart1:0,
+    prodBugday10:0,happiness60:0,marketBuy1:0,prodStart1:0,
     wallsLv2:0,joinGuild:0,treasuryDeposit100:0,
   },
   dailyQp:{visitZindan:0,goldReached100:0,arenaFight1:0,happiness60:0,exploreDaily:0,prodStart1:0},
@@ -6889,6 +6889,11 @@ async function collectProd(id){
   // Supabase'den sil
   if(currentUser&&t.dbId){
     await supa.from('production_timers').delete().eq('id',t.dbId);
+  }
+  // Buğday görev takibi
+  if(t.building==='farm' && t.recipe==='bugday'){
+    const amt=t.outputs?.bugday?.amount||0;
+    if(amt>0) trackQuest('prodBugday10', Math.min(10,(G.qp.prodBugday10||0)+amt));
   }
   G.prodTimers.splice(idx,1);updateInvStrip();renderProd(t.building);updateHUD();sbSave();
   if(bonusItems.length){
