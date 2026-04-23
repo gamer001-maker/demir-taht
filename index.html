@@ -804,6 +804,13 @@ html,body{
 .bl-good{color:#7aaa5a;}
 .bl-bad{color:#c87070;}
 .bl-bold{color:var(--gold2);font-weight:600;}
+/* ── ARENA LİGA ── */
+.opp-disabled{opacity:.45;cursor:not-allowed;}
+.opp-disabled:hover{border-color:var(--border2)!important;box-shadow:none!important;transform:none!important;}
+.arena-ticket-pip{display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--gold);margin:0 1px;}
+.arena-ticket-pip.empty{background:var(--panel3);border:1px solid var(--border);}
+.league-bronz{color:#cd7f32;}.league-gumus{color:#c0c0c0;}.league-altin{color:#ffd700;}
+.league-platin{color:#6ab7ff;}.league-efsane{color:#da70d6;}
 
 /* ═══════════════════════════════
    QUEST
@@ -1549,13 +1556,41 @@ html,body{
       </div>
       <!-- ARENA -->
       <div class="pad" id="gs-arena" style="display:none;">
-        <div class="card-sm row-between" style="margin-bottom:4px;"><span style="font-size:12px;color:var(--perg2);">Arena Puanı</span><span style="font-family:var(--font-head);font-size:16px;color:var(--gold);" id="arena-pts">0</span></div>
-        <div class="card-sm row-between" style="margin-bottom:10px;"><span style="font-size:11px;color:var(--ink3);" id="arena-record">0G / 0M</span></div>
+        <!-- Liga & Puan Kartı -->
+        <div class="card" style="margin-bottom:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div>
+              <div id="arena-league-badge" style="font-family:var(--font-head);font-size:15px;">🥉 <span class="league-bronz">Bronz</span></div>
+              <div style="font-size:9px;color:var(--ink3);margin-top:2px;" id="arena-record">0G / 0M</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:var(--font-head);font-size:22px;color:var(--gold);" id="arena-pts">0</div>
+              <div style="font-size:9px;color:var(--ink3);">puan</div>
+            </div>
+          </div>
+          <!-- İlerleme barı -->
+          <div style="height:5px;background:var(--panel3);border:1px solid var(--border);border-radius:3px;overflow:hidden;margin-bottom:3px;">
+            <div id="arena-league-bar" style="height:100%;width:0%;transition:width .5s;border-radius:2px;background:#cd7f32;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--ink3);margin-bottom:10px;">
+            <span id="arena-league-cur">0 puan</span>
+            <span id="arena-league-next">500 → Gümüş</span>
+          </div>
+          <!-- Günlük Bilet -->
+          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--panel3);border:1px solid var(--border);border-radius:5px;padding:7px 10px;">
+            <div style="font-size:10px;color:var(--ink3);">⚡ Günlük Hak</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div id="arena-ticket-pips"></div>
+              <div style="font-family:var(--font-head);font-size:12px;color:var(--gold);"><span id="arena-ticket-count">10</span><span style="font-size:9px;color:var(--ink3);">/10</span></div>
+            </div>
+          </div>
+        </div>
         <!-- Online PvP Girişi -->
-        <button class="btn pvp-enter-btn" id="pvp-enter-btn" onclick="pvpEnter()">⚔ Online Arena'ya Gir</button>
+        <button class="btn pvp-enter-btn" id="pvp-enter-btn" onclick="pvpEnter()">⚔ Online PvP'ye Gir</button>
         <!-- PvP Savaş Alanı -->
         <div id="pvp-arena-wrap" style="display:none;"></div>
         <div id="battle-log-wrap" style="display:none;"></div>
+        <!-- NPC Rakipler -->
         <div id="opponent-list"></div>
       </div>
 
@@ -2151,13 +2186,55 @@ setInterval(async()=>{
   }
 },1000);
 
-const OPPONENTS=[
-  {name:'Demir Yumruk Krag',cls:'Savaşçı',icon:'⚔',power:120,reward:30,pts:15,win:'Krag yenildi!',lose:'Krag seni geri püskürttü.'},
-  {name:'Büyücü Selara',cls:'Büyücü',icon:'🔮',power:95,reward:25,pts:12,win:'Selara büyüleri söndü!',lose:'Büyüler seni yendi.'},
-  {name:'Gölge Mirko',cls:'Haydut',icon:'🗡',power:80,reward:20,pts:10,win:'Mirko kaçtı!',lose:'Mirko seni yaraladı.'},
-  {name:'Şövalye Aldaran',cls:'Şövalye',icon:'🛡',power:150,reward:50,pts:25,win:'Aldaran diz çöktü!',lose:'Kalkanı seni durdurdu.'},
-  {name:'Avcı Lyra',cls:'Avcı',icon:'🏹',power:110,reward:35,pts:18,win:"Lyra'nın okları tükendi!",lose:'Lyra okunu sana sapladı.'},
+const ARENA_LEAGUES=[
+  {id:'bronz', name:'Bronz',  icon:'🥉',color:'#cd7f32',min:0,   max:499,  next:'Gümüş'},
+  {id:'gumus', name:'Gümüş',  icon:'🥈',color:'#c0c0c0',min:500, max:1499, next:'Altın'},
+  {id:'altin', name:'Altın',  icon:'🥇',color:'#ffd700',min:1500,max:2999, next:'Platin'},
+  {id:'platin',name:'Platin', icon:'💎',color:'#6ab7ff',min:3000,max:4999, next:'Efsane'},
+  {id:'efsane',name:'Efsane', icon:'👑',color:'#da70d6',min:5000,max:Infinity,next:null},
 ];
+const ARENA_OPPONENTS={
+  bronz:[
+    {name:'Demir Yumruk Krag',cls:'Savaşçı',icon:'⚔', power:80, reward:25,pts:10,win:'Krag yenildi!',lose:'Krag seni geri püskürttü.'},
+    {name:'Büyücü Selara',    cls:'Büyücü', icon:'🔮',power:65, reward:20,pts:8, win:'Selara büyüleri söndü!',lose:'Selara\'nın büyüleri seni yendi.'},
+    {name:'Gölge Mirko',      cls:'Haydut', icon:'🗡', power:55, reward:18,pts:7, win:'Mirko kaçtı!',lose:'Mirko seni yaraladı.'},
+    {name:'Avcı Tirla',       cls:'Avcı',   icon:'🏹',power:70, reward:22,pts:9, win:'Tirla geri çekildi!',lose:'Tirla\'nın okları seni devirdi.'},
+    {name:'Sağlam Torak',     cls:'Savaşçı',icon:'🛡', power:95, reward:30,pts:12,win:'Torak çöküşe geçti!',lose:'Torak\'ın kalkanı seni ezdi.'},
+  ],
+  gumus:[
+    {name:'Kan Şövalyesi Drak', cls:'Savaşçı',icon:'⚔', power:180,reward:50, pts:20,win:'Drak devrildi!',lose:'Drak\'ın kılıcı seni yendi.'},
+    {name:'Kara Büyücü Zorn',   cls:'Büyücü', icon:'🔮',power:160,reward:45, pts:18,win:'Zorn\'un büyüleri dağıldı!',lose:'Zorn seni büyüyle yendi.'},
+    {name:'Hızlı Bıçak Lena',   cls:'Haydut', icon:'🗡', power:145,reward:40, pts:16,win:'Lena pusudan kaçtı!',lose:'Lena\'nın bıçakları seni bitirdi.'},
+    {name:'Ejderha Avcısı Vorn',cls:'Avcı',   icon:'🏹',power:170,reward:48, pts:19,win:'Vorn\'un hedefi bozuldu!',lose:'Vorn\'un okları seni devirdi.'},
+    {name:'Taş Yürek Gorm',     cls:'Savaşçı',icon:'🛡', power:205,reward:58, pts:23,win:'Gorm\'un kalesi çöktü!',lose:'Gorm\'un savunması yenilmezdi.'},
+  ],
+  altin:[
+    {name:'Ölüm Ustası Corvak',   cls:'Haydut', icon:'☠', power:320,reward:90, pts:35,win:'Corvak\'ın karanlığı söndü!',lose:'Corvak seni gölgede bıraktı.'},
+    {name:'Ateş Büyücüsü Igna',   cls:'Büyücü', icon:'🔥',power:300,reward:85, pts:33,win:'Igna\'nın alevi söndü!',lose:'Igna\'nın alevleri seni yaktı.'},
+    {name:'Gümüş Kılıç Aeron',    cls:'Savaşçı',icon:'⚔', power:345,reward:95, pts:37,win:'Aeron yenilgisini kabullendi!',lose:'Aeron\'un kılıcı seni yendi.'},
+    {name:'Fırtına Avcısı Rael',  cls:'Avcı',   icon:'🏹',power:280,reward:80, pts:30,win:'Rael\'in yayı kırıldı!',lose:'Rael\'in okları seni devirdi.'},
+    {name:'Demir Kral Borgak',    cls:'Savaşçı',icon:'👑',power:385,reward:110,pts:42,win:'Borgak tahtından indirildi!',lose:'Borgak\'ın hükümranlığı sürdü.'},
+  ],
+  platin:[
+    {name:'Kaos Lordu Vexar',       cls:'Büyücü', icon:'💀',power:600,reward:180,pts:65,win:'Vexar\'ın kaos gücü dağıldı!',lose:'Vexar seni kaosa sürükledi.'},
+    {name:'Gece Suikastçısı Shadra',cls:'Haydut', icon:'🌑',power:560,reward:165,pts:60,win:'Shadra gölgelere geri çekildi!',lose:'Shadra\'nın saldırısı seni durdurdu.'},
+    {name:'Ejderha Şövalyesi Aldric',cls:'Savaşçı',icon:'🐉',power:650,reward:195,pts:70,win:'Aldric\'in ejderhası yenildi!',lose:'Aldric\'in ejderhası seni yakıp geçti.'},
+    {name:'Rüzgar Avcısı Sylvara',  cls:'Avcı',   icon:'💨',power:520,reward:155,pts:55,win:'Sylvara\'nın rüzgarı dinledi!',lose:'Sylvara\'nın okları seni devirdi.'},
+    {name:'Sonsuz Muhafız Aethon',  cls:'Savaşçı',icon:'⚡',power:710,reward:215,pts:76,win:'Aethon\'un gücü tükendi!',lose:'Aethon\'un sonsuz kalkanı seni ezdi.'},
+  ],
+  efsane:[
+    {name:'Tanrı Katili Malachar',  cls:'Savaşçı',icon:'☄', power:1200,reward:400,pts:130,win:'Malachar\'ın efsanesi sona erdi!',lose:'Malachar\'ın gücü seni parçaladı.'},
+    {name:'Zaman Büyücüsü Chronax', cls:'Büyücü', icon:'⏳',power:1100,reward:370,pts:120,win:'Chronax\'ın zamanı durdu!',lose:'Chronax zamanı tersine çevirdi.'},
+    {name:'Karanlık Elf Sereya',    cls:'Haydut', icon:'🌙',power:1000,reward:350,pts:115,win:'Sereya\'nın gölgesi dağıldı!',lose:'Sereya\'nın karanlığı seni yuttu.'},
+    {name:'Fırtına Tanrısı Thorek', cls:'Savaşçı',icon:'⚡',power:1300,reward:450,pts:145,win:'Thorek\'in şimşeği söndü!',lose:'Thorek\'in fırtınası seni ezdi.'},
+    {name:'Yenilmez Golath',        cls:'Efsanevi',icon:'💫',power:1500,reward:500,pts:160,win:'Efsane yenildi — rekor kırdın!',lose:'Golath yenilmezliğini ispat etti.'},
+  ],
+};
+const ARENA_MAX_TICKETS=10;
+function arenaTicketKey(){const d=new Date();return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;}
+function arenaGetTickets(){const s=JSON.parse(localStorage.getItem('arena_state')||'{}');return s.date===arenaTicketKey()?s.tickets??ARENA_MAX_TICKETS:ARENA_MAX_TICKETS;}
+function arenaSaveTickets(n){localStorage.setItem('arena_state',JSON.stringify({date:arenaTicketKey(),tickets:n}));}
+let ARENA_TICKETS=arenaGetTickets();
 /* ══════════════════════════════════════
    SİLAH ŞABLONLARİ — min/max aralıklı random stat sistemi
 ══════════════════════════════════════ */
@@ -3975,23 +4052,75 @@ function cellClick(idx,cell){
 }
 
 /* ── ARENA ── */
+function arenaGetLeague(){
+  const s=G.arenaScore||0;
+  return ARENA_LEAGUES.find(l=>s>=l.min&&s<=l.max)||ARENA_LEAGUES[0];
+}
 function renderArena(){
-  document.getElementById('arena-pts').textContent=G.arenaScore;
-  document.getElementById('arena-record').textContent=G.arenaWins+'G / '+G.arenaLosses+'M';
+  const pts=G.arenaScore||0;
+  const lg=arenaGetLeague();
+  const pct=lg.max===Infinity?100:Math.min(100,Math.floor((pts-lg.min)/(lg.max-lg.min)*100));
+
+  const badge=document.getElementById('arena-league-badge');
+  if(badge) badge.innerHTML=`${lg.icon} <span class="league-${lg.id}">${lg.name}</span>`;
+
+  const bar=document.getElementById('arena-league-bar');
+  if(bar){bar.style.width=pct+'%';bar.style.background=lg.color;}
+
+  const cur=document.getElementById('arena-league-cur');
+  if(cur) cur.textContent=pts+' puan';
+
+  const nxt=document.getElementById('arena-league-next');
+  if(nxt) nxt.textContent=lg.next?`${lg.max} → ${lg.next}`:'⭐ Zirvedesin!';
+
+  const ptsEl=document.getElementById('arena-pts');
+  if(ptsEl) ptsEl.textContent=pts;
+
+  const rec=document.getElementById('arena-record');
+  if(rec) rec.textContent=`${G.arenaWins}G / ${G.arenaLosses}M`;
+
+  const tc=document.getElementById('arena-ticket-count');
+  if(tc) tc.textContent=ARENA_TICKETS;
+
+  const pips=document.getElementById('arena-ticket-pips');
+  if(pips){
+    pips.innerHTML=Array.from({length:ARENA_MAX_TICKETS},(_,i)=>
+      `<span class="arena-ticket-pip${i<ARENA_TICKETS?'':' empty'}"></span>`
+    ).join('');
+  }
+
   const myPow=calcPow();
-  document.getElementById('opponent-list').innerHTML=OPPONENTS.map(o=>{
-    const diff=o.power-myPow;
-    const dt=diff>30?'tag-red':diff<-20?'tag-green':'tag-gold';
-    const dl=diff>30?'Güçlü':diff<-20?'Zayıf':'Eşit';
-    return `<div class="opp-card" onclick="fight('${o.name}')"><span style="font-size:26px;">${o.icon}</span><div style="flex:1;"><div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">${o.name}</div><div style="font-size:10px;color:var(--ink3);">${o.cls} · Güç: ${o.power}</div><div style="margin-top:3px;"><span class="tag ${dt}">${dl}</span></div></div><div style="text-align:right;"><div style="font-family:var(--font-head);font-size:11px;color:var(--gold);">+${o.pts}pt</div><div style="font-size:10px;color:var(--ink3);">+${o.reward}🪙</div></div></div>`;
-  }).join('');
+  const opps=ARENA_OPPONENTS[lg.id]||ARENA_OPPONENTS.bronz;
+  const noTicket=ARENA_TICKETS<=0;
+  document.getElementById('opponent-list').innerHTML=
+    `<div class="sec" style="margin-top:8px;">${lg.icon} ${lg.name.toUpperCase()} LİGİ RAKİPLERİ</div>`+
+    opps.map(o=>{
+      const diff=o.power-myPow;
+      const dt=diff>30?'tag-red':diff<-20?'tag-green':'tag-gold';
+      const dl=diff>30?'Güçlü':diff<-20?'Zayıf':'Eşit';
+      return `<div class="opp-card${noTicket?' opp-disabled':''}" ${!noTicket?`onclick="fight('${o.name}')"`:''}>`+
+        `<span style="font-size:26px;">${o.icon}</span>`+
+        `<div style="flex:1;"><div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">${o.name}</div>`+
+        `<div style="font-size:10px;color:var(--ink3);">${o.cls} · Güç: ${o.power}</div>`+
+        `<div style="margin-top:3px;"><span class="tag ${dt}">${dl}</span></div></div>`+
+        `<div style="text-align:right;"><div style="font-family:var(--font-head);font-size:11px;color:${lg.color};">+${o.pts}pt</div>`+
+        `<div style="font-size:10px;color:var(--ink3);">+${o.reward}🪙</div></div></div>`;
+    }).join('')+
+    (noTicket?`<div style="text-align:center;padding:14px 0;font-size:11px;color:var(--ink3);">⚡ Günlük arena hakkın bitti. Yarın yenilenir.</div>`:'');
 }
 function calcPow(){
   const eff=getEffectiveStats();
   return eff.physDmg*3 + eff.maxhp*0.5 + eff.def*4 + G.level*10 + G.units.reduce((a,u)=>a+u.count,0)/2;
 }
 function fight(name){
-  const opp=OPPONENTS.find(o=>o.name===name);if(!opp)return;
+  if(ARENA_TICKETS<=0){toast('⚡ Arena hakkın yok! Yarın yenilenir.');return;}
+  const lg=arenaGetLeague();
+  const opps=ARENA_OPPONENTS[lg.id]||ARENA_OPPONENTS.bronz;
+  const opp=opps.find(o=>o.name===name);if(!opp)return;
+
+  ARENA_TICKETS=Math.max(0,ARENA_TICKETS-1);
+  arenaSaveTickets(ARENA_TICKETS);
+
   const eff=getEffectiveStats();
   const myPow=calcPow();
   const won=Math.random()<Math.min(.85,Math.max(.15,.5+(myPow-opp.power)/200));
@@ -3999,28 +4128,36 @@ function fight(name){
   let myHp=eff.maxhp, oppHp=opp.power;
   for(let r=1;r<=5&&myHp>0&&oppHp>0;r++){
     const md=Math.max(1,Math.floor(eff.physDmg*(0.8+Math.random()*0.4)));
-    // Kritik — yeni formül: hasar × (1 + crit_stat/100)
     const critStat=eff.crit||0;
-    const critMult = 1 + Math.max(0.5, critStat/100); // min ×1.5, max crit_stat/100
+    const critMult=1+Math.max(0.5,critStat/100);
     const isCrit=Math.random()<eff.critChance;
     let finalMd=isCrit?Math.floor(md*critMult):md;
-    // İsabet (Avcı) — gerçek hasar şansı
     let trueDmg=false;
     if(G.classId==='ranger'&&(eff.acc||0)>0){
       trueDmg=Math.random()<eff.trueDmgChance;
-      if(trueDmg) finalMd=Math.floor(finalMd*1.30); // savunmayı yok say + %30 bonus
+      if(trueDmg) finalMd=Math.floor(finalMd*1.30);
     }
-    // Kaçınma kontrol; İsabet düşürür miss olasılığını
-    const baseMiss=Math.random()>(1-(eff.missReduction||0));
-    const dodged=Math.random()<eff.dodgeChance && !trueDmg;
+    const dodged=Math.random()<eff.dodgeChance&&!trueDmg;
     const od=Math.max(1,Math.floor(opp.power/10+Math.random()*8)-(trueDmg?0:Math.floor(eff.damageReduction*opp.power/10)));
     oppHp-=finalMd;
     if(!dodged) myHp-=od;
     const tag=isCrit?' 💥':(trueDmg?' 🎯':'');
     lines.push({t:`Tur ${r}: ${finalMd}${tag} hasar verdin${dodged?' · Kaçındın 💨':`, ${od} hasar aldın`}.`,c:finalMd>od?'bl-good':'bl-bad'});
   }
-  if(won){G.gold+=opp.reward;G.arenaScore+=opp.pts;G.arenaWins++;gainXP(30);lines.push({t:`🏆 ZAFEr! ${opp.win} +${opp.reward}🪙 +30XP`,c:'bl-bold bl-good'});toast('Zafer! +'+opp.reward+'🪙');trackQuest('arenaFight1');trackQuest('arenaWin1');trackQuest('arenaFight5',Math.min(5,G.arenaWins+G.arenaLosses));trackQuest('arenaWin5',Math.min(5,G.arenaWins));}
-  else{G.stats.hp=Math.max(1,Math.floor(G.stats.hp*.8));G.arenaLosses++;lines.push({t:`💀 Yenildin. ${opp.lose}`,c:'bl-bold bl-bad'});toast('Yenildin! Güçlen.');trackQuest('arenaFight1');trackQuest('arenaFight5',Math.min(5,G.arenaWins+G.arenaLosses));}
+  if(won){
+    G.gold+=opp.reward;G.arenaScore+=opp.pts;G.arenaWins++;gainXP(30);
+    lines.push({t:`🏆 ZAFER! ${opp.win} +${opp.reward}🪙 +30XP +${opp.pts}pt`,c:'bl-bold bl-good'});
+    toast('Zafer! +'+opp.reward+'🪙');
+    trackQuest('arenaFight1');trackQuest('arenaWin1');
+    trackQuest('arenaFight5',Math.min(5,G.arenaWins+G.arenaLosses));
+    trackQuest('arenaWin5',Math.min(5,G.arenaWins));
+  } else {
+    G.stats.hp=Math.max(1,Math.floor(G.stats.hp*.8));G.arenaLosses++;
+    lines.push({t:`💀 Yenildin. ${opp.lose}`,c:'bl-bold bl-bad'});
+    toast('Yenildin! Güçlen.');
+    trackQuest('arenaFight1');
+    trackQuest('arenaFight5',Math.min(5,G.arenaWins+G.arenaLosses));
+  }
   const logWrap=document.getElementById('battle-log-wrap');
   logWrap.style.display='block';
   logWrap.innerHTML=`<div class="battle-log-box">${lines.map(l=>`<div class="bl-line ${l.c}">${l.t}</div>`).join('')}</div>`;
