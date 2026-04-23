@@ -2763,6 +2763,7 @@ async function startGame(){
   if(G.gold>=100) trackQuest('goldReached100');
   const initArmy=G.units.reduce((a,u)=>a+u.count,0);
   if(initArmy>=30) trackQuest('armyCount30');
+  if(G.folk.happiness>=60) trackQuest('happiness60');
   // Harita başlat
   initPlayerMap().then(()=>renderGame('harita'));
   toast(`Hoş geldin, ${G.heroName}! 🏰`);
@@ -7907,10 +7908,15 @@ const nd=document.getElementById('notif-dot');if(nd) nd.style.display='block';
       document.getElementById('p-onboard').classList.remove('active');
       document.getElementById('p-game').classList.add('active');
       document.getElementById('bottom-nav').style.display='flex';
+      questLoad();
       updateHUD();
       renderGame('karakter');renderGame('kale');renderGame('gelistirme');renderGame('halk');renderGame('harita');renderGame('arena');renderGame('zindan');
       renderQuest(G.questTab);renderMarket();renderGuild(G.guildTab);renderProd(G.prodTab);renderProfile(G.profileTab);
       updateInvStrip();
+      if(G.gold>=100) trackQuest('goldReached100');
+      const sa=G.units.reduce((a,u)=>a+u.count,0);
+      if(sa>=30) trackQuest('armyCount30');
+      if(G.folk.happiness>=60) trackQuest('happiness60');
       toast(`Hoş geldin, ${G.heroName}! ☁`);
       return;
     }
