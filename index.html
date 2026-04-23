@@ -2649,6 +2649,7 @@ const G={
     armyCount30:0,happiness60:0,marketBuy1:0,prodStart1:0,
     wallsLv2:0,joinGuild:0,treasuryDeposit100:0,
   },
+  dailyQp:{visitArmy:0,goldReached100:0,arenaFight1:0,happiness60:0,exploreDaily:0,prodStart1:0},
   completedQuests:new Set(),
   dailyCollected:new Set(),
   inventory:[], // max 50 slot — {id, name, icon, type, grade, price, stats, desc, seller:'player', sellerName}
@@ -2754,6 +2755,7 @@ async function startGame(){
   document.getElementById('p-onboard').classList.remove('active');
   document.getElementById('p-game').classList.add('active');
   document.getElementById('bottom-nav').style.display='flex';
+  questLoad();
   updateHUD();renderGame('karakter');renderGame('kale');renderGame('gelistirme');renderGame('halk');renderGame('harita');renderGame('arena');renderGame('zindan');
   renderQuest(G.questTab);renderMarket();renderGuild(G.guildTab);renderProd(G.prodTab);renderProfile(G.profileTab);
   updateInvStrip();
@@ -4835,18 +4837,57 @@ setInterval(()=>{
   if(el) el.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 },1000);
 
+function questDateKey(){const d=new Date();return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;}
+function questSave(){
+  try{
+    localStorage.setItem('quest_v1',JSON.stringify({
+      qp:G.qp,
+      dailyQp:G.dailyQp,
+      completedQuests:[...G.completedQuests],
+      dailyCollected:{date:questDateKey(),ids:[...G.dailyCollected]},
+    }));
+  }catch(e){}
+}
+function questLoad(){
+  try{
+    const raw=localStorage.getItem('quest_v1');
+    if(!raw) return;
+    const s=JSON.parse(raw);
+    const today=questDateKey();
+    if(s.qp) Object.keys(G.qp).forEach(k=>{if(s.qp[k]!==undefined) G.qp[k]=Math.max(G.qp[k]||0,s.qp[k]);});
+    if(s.completedQuests){
+      s.completedQuests.forEach(id=>G.completedQuests.add(id));
+      QUEST_DATA.story.forEach((q,idx)=>{
+        if(G.completedQuests.has(q.id)&&idx<QUEST_DATA.story.length-1) QUEST_DATA.story[idx+1].status='active';
+      });
+    }
+    if(s.dailyCollected&&s.dailyCollected.date===today){
+      s.dailyCollected.ids.forEach(id=>G.dailyCollected.add(id));
+      if(s.dailyQp) Object.keys(G.dailyQp).forEach(k=>{if(s.dailyQp[k]!==undefined) G.dailyQp[k]=Math.max(G.dailyQp[k]||0,s.dailyQp[k]);});
+    }
+    // Farklı gün → dailyQp ve dailyCollected sıfır kalır (otomatik reset)
+  }catch(e){}
+}
 function trackQuest(key,val=1){
   if(!(key in G.qp)) return;
   G.qp[key]=Math.max(G.qp[key],val);
+  if(key in G.dailyQp) G.dailyQp[key]=Math.max(G.dailyQp[key],val);
   checkQuestCompletion();
   if(G.questTab) renderQuest(G.questTab);
+  questSave();
 }
-function getQuestProgress(obj){return Math.min(G.qp[obj.key]||0,obj.max);}
+function getQuestProgress(obj,qtype='story'){
+  if(qtype==='daily'){
+    const dv=G.dailyQp[obj.key];
+    return Math.min(dv!==undefined?dv:G.qp[obj.key]||0,obj.max);
+  }
+  return Math.min(G.qp[obj.key]||0,obj.max);
+}
 function checkQuestCompletion(){
   ['story','side','guild'].forEach(type=>{
     QUEST_DATA[type].forEach(q=>{
       if(G.completedQuests.has(q.id)||q.status==='locked') return;
-      const allDone=q.objectives.every(o=>getQuestProgress(o)>=o.max);
+      const allDone=q.objectives.every(o=>getQuestProgress(o,type)>=o.max);
       if(allDone){
         giveQuestReward(q);
         G.completedQuests.add(q.id);
@@ -4854,6 +4895,7 @@ function checkQuestCompletion(){
           const idx=QUEST_DATA.story.indexOf(q);
           if(idx>=0&&idx<QUEST_DATA.story.length-1) QUEST_DATA.story[idx+1].status='active';
         }
+        questSave();
       }
     });
   });
@@ -4868,10 +4910,11 @@ function giveQuestReward(q){
 function collectDailyReward(qid){
   if(G.dailyCollected.has(qid)){toast('Bu ödülü zaten aldın!');return;}
   const q=QUEST_DATA.daily.find(x=>x.id===qid);if(!q)return;
-  const allDone=q.objectives.every(o=>getQuestProgress(o)>=o.max);
+  const allDone=q.objectives.every(o=>getQuestProgress(o,'daily')>=o.max);
   if(!allDone){toast('Görevi önce tamamla!');return;}
   giveQuestReward(q);
   G.dailyCollected.add(qid);
+  questSave();
   renderQuest('daily');
 }
 
@@ -4885,7 +4928,7 @@ function renderQuest(t){
     const isCompleted=G.completedQuests.has(q.id);
     const isLocked=q.status==='locked';
     const isDailyCollected=t==='daily'&&G.dailyCollected.has(q.id);
-    const objectives=q.objectives.map(o=>({...o,cur:Math.min(getQuestProgress(o),o.max)}));
+    const objectives=q.objectives.map(o=>({...o,cur:Math.min(getQuestProgress(o,t),o.max)}));
     const allDone=objectives.every(o=>o.cur>=o.max);
     const cardCls=isCompleted||isDailyCollected?'done-card':isLocked?'locked-card':t+'-card';
     const barCls=isCompleted||isDailyCollected?'done-bar':t+'-bar';
@@ -5234,6 +5277,7 @@ async function treasuryAction(type){
     G.gold-=amt; G.guildTreasury=(G.guildTreasury||0)+amt;
     await supa.from('guilds').update({treasury:G.guildTreasury}).eq('id',G.guildId);
     toast(amt.toLocaleString('tr')+'🪙 hazineye yatırıldı!');
+    if(amt>=100) trackQuest('treasuryDeposit100');
   } else {
     if((G.guildTreasury||0)<amt){toast('Hazinede yeterli altın yok!');return;}
     G.gold+=amt; G.guildTreasury=(G.guildTreasury||0)-amt;
@@ -5860,6 +5904,7 @@ async function joinGuild(id,name){
   G.guildId=id; G.guildName=name;
   await supa.from('profiles').update({guild_id:id, guild_name:name}).eq('id',currentUser.id);
   toast(name+' loncasına katıldın! 🛡');
+  trackQuest('joinGuild');
   glgo('home');
 }
 async function createGuild(){
@@ -5876,6 +5921,7 @@ async function createGuild(){
   await supa.from('profiles').update({guild_id:data.id, guild_name:name}).eq('id',currentUser.id);
   gainXP(50); updateHUD();
   toast('"'+name+'" loncası kuruldu! 🎉');
+  trackQuest('joinGuild');
   glgo('home');
 }
 
