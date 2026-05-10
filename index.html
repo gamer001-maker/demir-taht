@@ -6645,45 +6645,47 @@ function renderFarm(){
       </div>`;
   }
 
-  // Ürün slotları
+  // Tohum seçici (sol panel)
   const availCrops=FARM_CROPS.filter(c=>c.minLv<=lv);
-  let slotsHtml=`<div class="sec" style="margin-top:0;">EKİLİ TARLALAR (${usedSlots}/${maxSlots})</div>`;
-
-  // Aktif ekimler
-  if(activeTimers.length){
-    slotsHtml+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">`;
-    slotsHtml+=activeTimers.map(x=>farmTimerCardHTML(x,lv)).join('');
-    slotsHtml+=`</div>`;
+  let seedHtml=`<div class="sec" style="margin-top:0;">EKMEK İÇİN ÜRÜN SEÇ</div>`;
+  if(usedSlots<maxSlots){
+    seedHtml+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">
+      ${availCrops.map(c=>{
+        const seedKey=(c.id==='bugday'||c.id==='arpa')?c.id:c.id+'_tohum';
+        const seedCount=G.prodInv[seedKey]||0;
+        const hasSeed=seedCount>0;
+        const samanOut=c.saman+samanBonus;
+        const seedLabel=c.id==='bugday'||c.id==='arpa'?`${seedCount} adet`:`Tohum: ${seedCount}`;
+        return `<div class="card" style="text-align:center;padding:10px 6px;cursor:${hasSeed?'pointer':'not-allowed'};border-color:${hasSeed?'var(--border2)':'var(--border)'};opacity:${hasSeed?'1':'0.5'};" onclick="${hasSeed?`startFarmCrop('${c.id}')`:''}" title="${hasSeed?'':'Tohum yok!'}">
+          <div style="font-size:26px;margin-bottom:4px;">${c.icon}</div>
+          <div style="font-family:var(--font-head);font-size:10px;color:var(--perg2);">${c.name}</div>
+          <div style="font-size:8px;color:${hasSeed?'var(--gold)':'var(--hp)'};margin-top:2px;">${seedLabel}</div>
+          <div style="font-size:8px;color:var(--ink3);">${samanOut>0?`🌿${samanOut}`:(c.id==='cicek'?'🌸':(c.id==='cilek'?'🍓':''))}</div>
+          <div style="font-size:7px;color:var(--g-purple);">%${Math.round(chance*100)} ×${mult}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  } else {
+    seedHtml+=`<div style="text-align:center;padding:10px;font-size:10px;color:var(--ink3);">Tüm slotlar dolu (${maxSlots}/${maxSlots})</div>`;
   }
 
-  // Boş slot varsa ürün seçici
-  if(usedSlots<maxSlots){
-    const emptyCount=maxSlots-usedSlots;
-    slotsHtml+=`
-      <div class="sec">EKMEK İÇİN ÜRÜN SEÇ</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">
-        ${availCrops.map(c=>{
-          const seedKey=(c.id==='bugday'||c.id==='arpa')?c.id:c.id+'_tohum';
-          const seedCount=G.prodInv[seedKey]||0;
-          const hasSeed=seedCount>0;
-          const samanOut=c.saman+samanBonus;
-          const seedLabel=c.id==='bugday'||c.id==='arpa'?`${seedCount} adet`:`Tohum: ${seedCount}`;
-          return `<div class="card" style="text-align:center;padding:10px 6px;cursor:${hasSeed?'pointer':'not-allowed'};border-color:${hasSeed?'var(--border2)':'var(--border)'};opacity:${hasSeed?'1':'0.5'};" onclick="${hasSeed?`startFarmCrop('${c.id}')`:''}" title="${hasSeed?'':'Tohum yok!'}">
-            <div style="font-size:26px;margin-bottom:4px;">${c.icon}</div>
-            <div style="font-family:var(--font-head);font-size:10px;color:var(--perg2);">${c.name}</div>
-            <div style="font-size:8px;color:${hasSeed?'var(--gold)':'var(--hp)'};margin-top:2px;">${seedLabel}</div>
-            <div style="font-size:8px;color:var(--ink3);">${samanOut>0?`🌿${samanOut}`:(c.id==='cicek'?'🌸':(c.id==='cilek'?'🍓':''))}</div>
-            <div style="font-size:7px;color:var(--g-purple);">%${Math.round(chance*100)} ×${mult}</div>
-          </div>`;
-        }).join('')}
-      </div>`;
+  // Aktif ekimler (sağ panel)
+  let rightHtml=`<div class="sec" style="margin-top:0;">AKTİF EKİM (${usedSlots}/${maxSlots})</div>`;
+  if(activeTimers.length){
+    rightHtml+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">`;
+    rightHtml+=activeTimers.map(x=>farmTimerCardHTML(x,lv)).join('');
+    rightHtml+=`</div>`;
   } else {
-    slotsHtml+=`<div style="text-align:center;padding:10px;font-size:10px;color:var(--ink3);">Tüm slotlar dolu (${maxSlots}/${maxSlots})</div>`;
+    rightHtml+=`<div style="text-align:center;padding:32px 16px;border:1px dashed var(--border);border-radius:10px;color:var(--ink3);">
+      <div style="font-size:32px;margin-bottom:8px;">🌾</div>
+      <div style="font-size:12px;">Tarla boşta</div>
+      <div style="font-size:10px;margin-top:4px;">Sol taraftan bir ürün ek</div>
+    </div>`;
   }
 
   el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
-    <div>${lvInfoHtml}${upgHtml}</div>
-    <div>${slotsHtml}</div>
+    <div>${lvInfoHtml}${upgHtml}${seedHtml}</div>
+    <div>${rightHtml}</div>
   </div>
   <style>@media(max-width:700px){#prod-content>div[style*="grid-template-columns"]{grid-template-columns:1fr !important;}}</style>`;
 }
