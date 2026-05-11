@@ -2285,7 +2285,6 @@ const WEAPON_TEMPLATES={
   demirkilic:     {name:'Demir Kılıç',   icon:'⚔', type:'Kılıç', grade:'gray',  reqLv:1,  img:'demirkilic',    classes:['warrior','paladin'],              statRanges:{atk:[7,11],  str:[3,6]}},
   bakirkilic:     {name:'Bakır Kılıç',   icon:'⚔', type:'Kılıç', grade:'green', reqLv:8,  img:'bakirkilic',    classes:['warrior','paladin'],              statRanges:{atk:[13,18], str:[5,9]}},
   elementkilic:   {name:'Element Kılıcı',icon:'⚔', type:'Kılıç', grade:'blue',  reqLv:20, img:'elementkilic',  classes:['warrior','paladin'],              statRanges:{atk:[35,48], str:[9,14]}},
-  guneskilici:    {name:'Güneş Kılıcı',  icon:'⚔', type:'Kılıç', grade:'purple',reqLv:23, img:'guneskilici',   classes:['warrior','paladin'],              statRanges:{atk:[58,75], str:[15,22],crit:[10,18]}},
   sefinkilici:    {name:"Sef'in Kılıcı", icon:'⚔', type:'Kılıç', grade:'orange',reqLv:25, img:'sefinkilici',   classes:['warrior','paladin'],              statRanges:{atk:[70,90], str:[18,26],crit:[13,20]}},
   /* ── ASA ── */
   duzsopa:        {name:'Düz Sopa',      icon:'🪄',type:'Asa',   grade:'gray',  reqLv:1,  img:'duzsopa',       classes:['mage'],                           statRanges:{mgc:[5,8],   wis:[2,4]}},
@@ -2375,7 +2374,6 @@ const MARKET_ITEMS=[
   {id:123,name:'Demir Kılıç',      icon:'⚔', cat:'weapon',grade:'gray',  price:120,  qty:1,seller:'player',sellerName:'Pazar',type:'Kılıç',  reqLv:1,  tplId:'demirkilic',    material:null,desc:'Sıradan demir kılıç.',                    stats:{atk:9,str:4},     img:'demirkilic',    classBonus:{warrior:'str',paladin:'str'}},
   {id:124,name:'Bakır Kılıç',      icon:'⚔', cat:'weapon',grade:'green', price:350,  qty:1,seller:'player',sellerName:'Pazar',type:'Kılıç',  reqLv:8,  tplId:'bakirkilic',    material:null,desc:'Bakır işlemeli güçlü kılıç.',             stats:{atk:15,str:7},    img:'bakirkilic',    classBonus:{warrior:'str',paladin:'str'}},
   {id:121,name:'Element Kılıcı',   icon:'⚔', cat:'weapon',grade:'blue',  price:1800, qty:1,seller:'player',sellerName:'Pazar',type:'Kılıç',  reqLv:20, tplId:'elementkilic',  material:null,desc:'Element gücü yüklü kılıç.',               stats:{atk:41,str:11},   img:'elementkilic',  classBonus:{warrior:'str',paladin:'str'}},
-  {id:125,name:'Güneş Kılıcı',     icon:'⚔', cat:'weapon',grade:'purple',price:5500, qty:1,seller:'player',sellerName:'Pazar',type:'Kılıç',  reqLv:23, tplId:'guneskilici',   material:null,desc:'Güneşin gücünü barındıran mistik kılıç.', stats:{atk:66,str:18,crit:14},img:'guneskilici', classBonus:{warrior:'str',paladin:'str'}},
   {id:105,name:"Sef'in Kılıcı",    icon:'⚔', cat:'weapon',grade:'orange',price:0,    qty:1,seller:'boss', sellerName:"Lonca Ödülü",type:'Kılıç',reqLv:25,tplId:'sefinkilici',  material:null,desc:"Sef'i yenen efsanevi savaşçılara düşer.", stats:{atk:80,str:22,crit:16},img:'sefinkilici', classBonus:{warrior:'str',paladin:'str'}},
 
   /* ══════════════════════════════════════
@@ -2475,6 +2473,7 @@ const MARKET_ITEMS=[
   {id:700,name:'Tavuk',icon:'🐔',cat:'livestock',grade:'gray', price:30, qty:99,seller:'npc',sellerName:'Çiftçi',type:'Hayvan',reqLv:1,material:null,desc:'Yumurta ve tüy verir. Çiftliğe eklenir.',stats:{},img:null,classBonus:null,isAnimal:true,animalKey:'tavuk'},
   {id:701,name:'Koyun',icon:'🐑',cat:'livestock',grade:'gray', price:80, qty:99,seller:'npc',sellerName:'Çiftçi',type:'Hayvan',reqLv:3,material:null,desc:'Yün ve süt verir. Çiftliğe eklenir.',     stats:{},img:null,classBonus:null,isAnimal:true,animalKey:'koyun'},
   {id:702,name:'İnek', icon:'🐄',cat:'livestock',grade:'green',price:150,qty:99,seller:'npc',sellerName:'Çiftçi',type:'Hayvan',reqLv:5,material:null,desc:'Bol süt verir. Çiftliğe eklenir.',         stats:{},img:null,classBonus:null,isAnimal:true,animalKey:'inek'},
+  {id:703,name:'Arı Kovanı',icon:'🐝',cat:'livestock',grade:'green',price:200,qty:99,seller:'npc',sellerName:'Çiftçi',type:'Hayvan',reqLv:6,material:null,desc:'Bal üretir. Çiftliğe eklenir.',             stats:{},img:null,classBonus:null,isAnimal:true,animalKey:'ari'},
 ];
 
 /* ══════════════════════════════════════
@@ -2656,7 +2655,7 @@ const G={
   ],
   arenaScore:0,arenaWins:0,arenaLosses:0,
   zdTickets:3, zdTicketDate:'',
-  animals:{tavuk:1,koyun:1,inek:1},
+  animals:{tavuk:1,koyun:1,inek:1,ari:1},
   explored:new Set([21,22,27,28,14,15,20]),
   selectedCell:null,
   prodTimers:[],prodTimerId:1,
@@ -5257,7 +5256,7 @@ function buyItem(id){
 
   // Hayvan ise G.animals'a ekle
   if(item.isAnimal && item.animalKey){
-    if(!G.animals) G.animals={tavuk:0,koyun:0,inek:0};
+    if(!G.animals) G.animals={tavuk:0,koyun:0,inek:0,ari:0};
     G.animals[item.animalKey]=(G.animals[item.animalKey]||0)+1;
     gainXP(5);
     toast(`${item.name} çiftliğine eklendi! -${item.price}🪙`);
@@ -5360,7 +5359,7 @@ async function buyMarketItem(id){
   
   // Hayvan ise envanter yerine G.animals'a ekle
   if(listing.type==='Hayvan' && listing.stats?.animalKey){
-    if(!G.animals) G.animals={tavuk:0,koyun:0,inek:0};
+    if(!G.animals) G.animals={tavuk:0,koyun:0,inek:0,ari:0};
     G.animals[listing.stats.animalKey]=(G.animals[listing.stats.animalKey]||0)+1;
     gainXP(5);
     toast(`${listing.name} çiftliğine eklendi! -${listing.price}🪙`);
@@ -6513,16 +6512,18 @@ function renderRanch(){
   });
 
   // Hayvan sayıları paneli
-  const animals=G.animals||{tavuk:1,koyun:1,inek:1};
+  const animals=G.animals||{tavuk:1,koyun:1,inek:1,ari:1};
   const animalDefs=[
-    {key:'tavuk',icon:'🐔',name:'Tavuk',npcPrice:20},
-    {key:'koyun',icon:'🐑',name:'Koyun',npcPrice:55},
-    {key:'inek', icon:'🐄',name:'İnek', npcPrice:100},
+    {key:'tavuk',icon:'🐔',name:'Tavuk',      npcPrice:20,  img:'tavuk'},
+    {key:'koyun',icon:'🐑',name:'Koyun',      npcPrice:55,  img:'koyun'},
+    {key:'inek', icon:'🐄',name:'İnek',       npcPrice:100, img:'inek'},
+    {key:'ari',  icon:'🐝',name:'Arı Kovanı', npcPrice:60,  img:'ar%C4%B1'},
   ];
   const animalPanel=`<div class="sec" style="margin-top:0;">HAYVANLAR</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px;">
-  ${animalDefs.map(a=>{const cnt=animals[a.key]||1;return `<div class="card" style="text-align:center;padding:8px 4px;">
-    <div style="font-size:22px;">${a.icon}</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+  ${animalDefs.map(a=>{const cnt=animals[a.key]||1;return `<div class="card" style="text-align:center;padding:10px 6px;">
+    <img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/${a.img}.webp" style="width:100%;height:90px;object-fit:contain;border-radius:6px;margin-bottom:6px;" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <div style="font-size:36px;display:none;">${a.icon}</div>
     <div style="font-family:var(--font-head);font-size:10px;color:var(--perg);">${a.name}</div>
     <div style="font-size:14px;font-family:var(--font-head);color:var(--gold);margin:3px 0;">${cnt}</div>
     <div style="display:flex;gap:3px;justify-content:center;">
@@ -7075,11 +7076,11 @@ async function collectProd(id){
   });
   // Çiftlik: %5 yavru doğumu
   if(t.building==='ranch' && t.recipe){
-    if(!G.animals) G.animals={tavuk:1,koyun:1,inek:1};
+    if(!G.animals) G.animals={tavuk:1,koyun:1,inek:1,ari:1};
     if(Math.random()<0.05){
       G.animals[t.recipe]=(G.animals[t.recipe]||1)+1;
-      const aIcon={tavuk:'🐔',koyun:'🐑',inek:'🐄'}[t.recipe]||'🐾';
-      const aName={tavuk:'Tavuk',koyun:'Koyun',inek:'İnek'}[t.recipe]||t.recipe;
+      const aIcon={tavuk:'🐔',koyun:'🐑',inek:'🐄',ari:'🐝'}[t.recipe]||'🐾';
+      const aName={tavuk:'Tavuk',koyun:'Koyun',inek:'İnek',ari:'Arı Kovanı'}[t.recipe]||t.recipe;
       const el=document.createElement('div');el.className='bonus-flash';
       el.innerHTML=`<span style="font-size:32px;display:block;margin-bottom:4px;">${aIcon}</span><div style="font-family:var(--font-head);font-size:13px;color:var(--g-green);">YENİ YAVRU!</div><div style="font-size:11px;color:var(--perg2);margin-top:3px;">${aName} sayısı: ${G.animals[t.recipe]}</div>`;
       document.body.appendChild(el);setTimeout(()=>el.remove(),2500);
@@ -7103,22 +7104,22 @@ async function collectProd(id){
 }
 
 function sellAnimalNpc(key,price){
-  const animals=G.animals||{tavuk:1,koyun:1,inek:1};
+  const animals=G.animals||{tavuk:1,koyun:1,inek:1,ari:1};
   if((animals[key]||1)<=1){toast('En az 1 hayvan kalmalı!');return;}
-  const name={tavuk:'Tavuk',koyun:'Koyun',inek:'İnek'}[key]||key;
+  const name={tavuk:'Tavuk',koyun:'Koyun',inek:'İnek',ari:'Arı Kovanı'}[key]||key;
   animals[key]--;G.gold+=price;
   toast(`${name} NPC'ye ${price}🪙'a satıldı!`);
   updateHUD();renderRanch();if(currentUser) sbSave();
 }
 
 function openSellAnimalModal(key){
-  const animals=G.animals||{tavuk:1,koyun:1,inek:1};
+  const animals=G.animals||{tavuk:1,koyun:1,inek:1,ari:1};
   const cnt=animals[key]||1;
   if(cnt<=1){toast('En az 1 hayvan kalmalı!');return;}
   if(!currentUser){toast('Satış için giriş yapmalısın!');return;}
-  const icon={tavuk:'🐔',koyun:'🐑',inek:'🐄'}[key]||'🐾';
-  const name={tavuk:'Tavuk',koyun:'Koyun',inek:'İnek'}[key]||key;
-  const suggested={tavuk:40,koyun:100,inek:180}[key]||50;
+  const icon={tavuk:'🐔',koyun:'🐑',inek:'🐄',ari:'🐝'}[key]||'🐾';
+  const name={tavuk:'Tavuk',koyun:'Koyun',inek:'İnek',ari:'Arı Kovanı'}[key]||key;
+  const suggested={tavuk:40,koyun:100,inek:180,ari:220}[key]||50;
   showGModal(`
     <div style="text-align:center;margin-bottom:12px;">
       <div style="font-size:36px;">${icon}</div>
@@ -7131,12 +7132,12 @@ function openSellAnimalModal(key){
 }
 
 async function confirmSellAnimal(key){
-  const animals=G.animals||{tavuk:1,koyun:1,inek:1};
+  const animals=G.animals||{tavuk:1,koyun:1,inek:1,ari:1};
   if((animals[key]||1)<=1){toast('En az 1 hayvan kalmalı!');closeGModal();return;}
   const price=parseInt(document.getElementById('sell-animal-price')?.value)||1;
   if(price<1){toast('Geçersiz fiyat!');return;}
-  const icon={tavuk:'🐔',koyun:'🐑',inek:'🐄'}[key]||'🐾';
-  const name={tavuk:'Tavuk',koyun:'Koyun',inek:'İnek'}[key]||key;
+  const icon={tavuk:'🐔',koyun:'🐑',inek:'🐄',ari:'🐝'}[key]||'🐾';
+  const name={tavuk:'Tavuk',koyun:'Koyun',inek:'İnek',ari:'Arı Kovanı'}[key]||key;
   animals[key]--;
   closeGModal();renderRanch();if(currentUser) sbSave();
   const {error}=await supa.from('marketplace').insert({
