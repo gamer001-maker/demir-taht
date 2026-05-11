@@ -539,6 +539,11 @@ html,body{
 }
 .zd-overlay-btn:active{background:rgba(8,5,2,0.95);border-color:var(--gold);}
 .zd-ob-disabled{opacity:0.35;cursor:not-allowed;}
+.zd-split-area{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:end;margin-bottom:10px;}
+.zd-split-player,.zd-split-enemy{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;}
+.zd-split-char{height:clamp(130px,32vh,220px);width:100%;object-fit:contain;object-position:bottom center;display:block;animation:zd-enemy-idle 2s ease-in-out infinite;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.8));}
+.zd-split-btns{display:flex;flex-direction:column;gap:6px;align-self:center;}
+@media(max-width:480px){.zd-split-char{height:clamp(100px,22vh,150px);}.zd-split-area{gap:6px;}}
 @keyframes zd-enemy-idle{
   0%,100%{transform:translateY(0);}
   50%{transform:translateY(-6px);}
@@ -4669,40 +4674,46 @@ function zdBattleHTML(){
     `<div class="zd-log-line ${l.type}">${l.text}</div>`
   ).join('');
 
+  const defendActive = b.defending;
   return `
     <div class="zd-battle">
+      <div class="zd-split-area">
 
-      <!-- Düşman kartı: görsel + sol butonlar + alt gradient -->
-      <div class="zd-enemy-card" id="zd-enemy-card">
+        <!-- Sol: Oyuncu -->
+        <div class="zd-split-player">
+          <img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/okcu1.webp"
+               class="zd-split-char" id="zd-player-spr-zd"
+               onerror="this.style.opacity='0'"/>
+          <div style="font-family:var(--font-head);font-size:9px;color:var(--perg2);margin-bottom:2px;">${G.heroName||cls.icon}</div>
+          <div class="zd-hp-bar-wrap" style="margin:0;width:100%;">
+            <span class="zd-hp-label" style="color:var(--gold);">${cls.icon}</span>
+            <div class="zd-hp-bg"><div class="zd-hp-fill player" id="zd-player-hp-bar" style="width:${pHpPct}%;background:linear-gradient(90deg,#8b1e1e,${hpColor});"></div></div>
+            <span class="zd-hp-val" id="zd-player-hp-val">${b.playerHp}/${b.playerMaxHp||G.stats.maxhp}</span>
+          </div>
+        </div>
 
-        ${b.enemy.img
-          ? `<img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/${b.enemy.img}.webp" class="zd-enemy-img" id="zd-enemy-icon" alt="${b.enemy.name}" onerror="this.style.display='none'">`
-          : `<span class="zd-enemy-icon" id="zd-enemy-icon">${b.enemy.icon}</span>`}
-
-        <!-- Sol butonlar (görsel üzerine overlay) -->
-        <div style="position:absolute;left:8px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:2;">
+        <!-- Orta: Butonlar -->
+        <div class="zd-split-btns">
           <button class="zd-overlay-btn" onclick="zdAction('attack')" style="border-color:#5a1a1a;">⚔<br>Saldır</button>
-          <button class="zd-overlay-btn" onclick="zdAction('defend')" style="border-color:#1a3a5a;${b.defending?'background:rgba(26,58,90,0.85);color:#6a9abf;':''}"}>🛡<br>Savun</button>
+          <button class="zd-overlay-btn" onclick="zdAction('defend')" style="border-color:#1a3a5a;${defendActive?'background:rgba(26,58,90,0.55);color:#6a9abf;':''}">🛡<br>Savun</button>
           <button class="zd-overlay-btn${!hasMagic?' zd-ob-disabled':''}" onclick="${hasMagic?`zdAction('magic')`:'void(0)'}" style="border-color:#4a2a5a;">✨<br>Büyü</button>
           <button class="zd-overlay-btn" onclick="zdAction('flee')" style="border-color:#3a2a10;">💨<br>Kaç</button>
         </div>
 
-        <!-- Alt gradient: düşman adı + HP bar -->
-        <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.92) 0%,rgba(0,0,0,0.55) 65%,transparent 100%);padding:22px 10px 10px;z-index:1;">
-          <div class="zd-enemy-name" style="margin-bottom:5px;">${b.enemy.name}${b.defending?'<span style="font-size:8px;color:#6a9abf;margin-left:6px;">🛡 savunuyor</span>':''}</div>
-          <div class="zd-hp-bar-wrap" style="margin:0;">
+        <!-- Sağ: Düşman -->
+        <div class="zd-split-enemy" id="zd-enemy-card">
+          ${b.enemy.img
+            ? `<img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/${b.enemy.img}.webp"
+                    class="zd-split-char" id="zd-enemy-icon" alt="${b.enemy.name}"
+                    onerror="this.style.opacity='0'">`
+            : `<span class="zd-enemy-icon" id="zd-enemy-icon">${b.enemy.icon}</span>`}
+          <div class="zd-enemy-name" style="margin-bottom:2px;">${b.enemy.name}</div>
+          <div class="zd-hp-bar-wrap" style="margin:0;width:100%;">
             <span class="zd-hp-label">HP</span>
             <div class="zd-hp-bg"><div class="zd-hp-fill enemy" id="zd-enemy-hp-bar" style="width:${eHpPct}%;"></div></div>
             <span class="zd-hp-val" id="zd-enemy-hp-val">${b.enemyHp}/${b.enemy.hp}</span>
           </div>
         </div>
-      </div>
-
-      <!-- Oyuncu HP -->
-      <div class="zd-hp-bar-wrap" style="margin-bottom:6px;">
-        <span class="zd-hp-label" style="color:var(--gold);">${cls.icon}</span>
-        <div class="zd-hp-bg"><div class="zd-hp-fill player" id="zd-player-hp-bar" style="width:${pHpPct}%;background:linear-gradient(90deg,#8b1e1e,${hpColor});"></div></div>
-        <span class="zd-hp-val" id="zd-player-hp-val">${b.playerHp}/${b.playerMaxHp||G.stats.maxhp}</span>
       </div>
 
       <!-- Savaş günlüğü -->
