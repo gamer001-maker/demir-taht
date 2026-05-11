@@ -509,17 +509,36 @@ html,body{
   from{transform:translateX(60px) scale(.9);opacity:0;}
   to{transform:translateX(0) scale(1);opacity:1;}
 }
-.zd-enemy-icon{font-size:52px;display:block;padding:16px 0 8px;
+.zd-enemy-icon{font-size:72px;display:flex;align-items:center;justify-content:center;
+  height:clamp(200px,45vh,300px);
   animation:zd-enemy-idle 2s ease-in-out infinite;}
 .zd-enemy-img{
   width:100%;
-  height:clamp(160px,38vh,230px);
+  height:clamp(200px,45vh,300px);
   object-fit:cover;
   object-position:center top;
   display:block;
   margin:0;
   animation:zd-enemy-idle 2s ease-in-out infinite;
 }
+.zd-overlay-btn{
+  background:rgba(8,5,2,0.78);
+  border:1px solid rgba(255,255,255,0.16);
+  border-radius:8px;
+  color:var(--perg);
+  font-family:var(--font-head);
+  font-size:8px;
+  padding:8px 7px;
+  cursor:pointer;
+  text-align:center;
+  min-width:46px;
+  line-height:1.6;
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  transition:background .15s,border-color .15s;
+}
+.zd-overlay-btn:active{background:rgba(8,5,2,0.95);border-color:var(--gold);}
+.zd-ob-disabled{opacity:0.35;cursor:not-allowed;}
 @keyframes zd-enemy-idle{
   0%,100%{transform:translateY(0);}
   50%{transform:translateY(-6px);}
@@ -4652,14 +4671,26 @@ function zdBattleHTML(){
 
   return `
     <div class="zd-battle">
-      <!-- Düşman -->
+
+      <!-- Düşman kartı: görsel + sol butonlar + alt gradient -->
       <div class="zd-enemy-card" id="zd-enemy-card">
+
         ${b.enemy.img
           ? `<img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/${b.enemy.img}.webp" class="zd-enemy-img" id="zd-enemy-icon" alt="${b.enemy.name}" onerror="this.style.display='none'">`
           : `<span class="zd-enemy-icon" id="zd-enemy-icon">${b.enemy.icon}</span>`}
-        <div style="padding:6px 10px 10px;">
-          <div class="zd-enemy-name">${b.enemy.name}</div>
-          <div class="zd-hp-bar-wrap">
+
+        <!-- Sol butonlar (görsel üzerine overlay) -->
+        <div style="position:absolute;left:8px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:2;">
+          <button class="zd-overlay-btn" onclick="zdAction('attack')" style="border-color:#5a1a1a;">⚔<br>Saldır</button>
+          <button class="zd-overlay-btn" onclick="zdAction('defend')" style="border-color:#1a3a5a;${b.defending?'background:rgba(26,58,90,0.85);color:#6a9abf;':''}"}>🛡<br>Savun</button>
+          <button class="zd-overlay-btn${!hasMagic?' zd-ob-disabled':''}" onclick="${hasMagic?`zdAction('magic')`:'void(0)'}" style="border-color:#4a2a5a;">✨<br>Büyü</button>
+          <button class="zd-overlay-btn" onclick="zdAction('flee')" style="border-color:#3a2a10;">💨<br>Kaç</button>
+        </div>
+
+        <!-- Alt gradient: düşman adı + HP bar -->
+        <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.92) 0%,rgba(0,0,0,0.55) 65%,transparent 100%);padding:22px 10px 10px;z-index:1;">
+          <div class="zd-enemy-name" style="margin-bottom:5px;">${b.enemy.name}${b.defending?'<span style="font-size:8px;color:#6a9abf;margin-left:6px;">🛡 savunuyor</span>':''}</div>
+          <div class="zd-hp-bar-wrap" style="margin:0;">
             <span class="zd-hp-label">HP</span>
             <div class="zd-hp-bg"><div class="zd-hp-fill enemy" id="zd-enemy-hp-bar" style="width:${eHpPct}%;"></div></div>
             <span class="zd-hp-val" id="zd-enemy-hp-val">${b.enemyHp}/${b.enemy.hp}</span>
@@ -4668,35 +4699,10 @@ function zdBattleHTML(){
       </div>
 
       <!-- Oyuncu HP -->
-      <div class="zd-hp-bar-wrap" style="margin-bottom:4px;">
+      <div class="zd-hp-bar-wrap" style="margin-bottom:6px;">
         <span class="zd-hp-label" style="color:var(--gold);">${cls.icon}</span>
         <div class="zd-hp-bg"><div class="zd-hp-fill player" id="zd-player-hp-bar" style="width:${pHpPct}%;background:linear-gradient(90deg,#8b1e1e,${hpColor});"></div></div>
         <span class="zd-hp-val" id="zd-player-hp-val">${b.playerHp}/${b.playerMaxHp||G.stats.maxhp}</span>
-      </div>
-      ${b.defending?`<div style="font-size:9px;color:#6a9abf;text-align:center;margin-bottom:4px;">🛡 Savunma duruşu aktif</div>`:''}
-
-      <!-- Aksiyon Butonları -->
-      <div class="zd-actions">
-        <div class="zd-action attack" onclick="zdAction('attack')">
-          <span class="zd-action-icon">⚔</span>
-          <span class="zd-action-name">Saldır</span>
-          <span class="zd-action-desc">Normal saldırı</span>
-        </div>
-        <div class="zd-action defend" onclick="zdAction('defend')">
-          <span class="zd-action-icon">🛡</span>
-          <span class="zd-action-name">Savun</span>
-          <span class="zd-action-desc">Hasarı -%40 al</span>
-        </div>
-        <div class="zd-action magic${!hasMagic?' disabled':''}" onclick="${hasMagic?`zdAction('magic')`:'void(0)'}">
-          <span class="zd-action-icon">✨</span>
-          <span class="zd-action-name">Büyü</span>
-          <span class="zd-action-desc">${hasMagic?'Güçlü saldırı':'Sınıf gerekli'}</span>
-        </div>
-        <div class="zd-action flee" onclick="zdAction('flee')">
-          <span class="zd-action-icon">💨</span>
-          <span class="zd-action-name">Kaç</span>
-          <span class="zd-action-desc">%50 başarı şansı</span>
-        </div>
       </div>
 
       <!-- Savaş günlüğü -->
