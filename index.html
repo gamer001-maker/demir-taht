@@ -4130,7 +4130,7 @@ function renderArena(){
       const diff=o.power-myPow;
       const dt=diff>30?'tag-red':diff<-20?'tag-green':'tag-gold';
       const dl=diff>30?'Güçlü':diff<-20?'Zayıf':'Eşit';
-      const _oclk=o.name==='Yenilmez Golath'?'openGoliathBattle()':`fight('${o.name}')`;
+      const _oclk=o.name==='Yenilmez Golath'?'openGoliathBattle()':`openArenaBattle('${o.name}')`;
       return `<div class="opp-card${noTicket?' opp-disabled':''}" ${!noTicket?`onclick="${_oclk}"`:''}>` +
         `<span style="font-size:26px;">${o.icon}</span>`+
         `<div style="flex:1;"><div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">${o.name}</div>`+
@@ -4199,6 +4199,18 @@ function fight(name){
 }
 
 /* ══════════════════════════════════════
+   OYUNCU SPRITE YARDIMCILARI
+══════════════════════════════════════ */
+function _playerSpr1(){
+  const cl=G.classId||'ranger';const av=G.avatarIdx??0;
+  return `${cl}_${av}_1`;
+}
+function _playerSprFrames(){
+  const cl=G.classId||'ranger';const av=G.avatarIdx??0;
+  return [`${cl}_${av}_1`,`${cl}_${av}_2`,`${cl}_${av}_3`,`${cl}_${av}_1`];
+}
+
+/* ══════════════════════════════════════
    YENİLMEZ GOLATH BOSS SAVAŞI
 ══════════════════════════════════════ */
 let _GB=null;
@@ -4237,7 +4249,7 @@ function openGoliathBattle(){
 
   <div style="flex:1;display:flex;align-items:flex-end;justify-content:space-between;padding:0 8px;min-height:0;overflow:hidden;">
     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-      <img id="gb-player-spr" src="images/okcu1.webp" style="height:clamp(100px,22vh,180px);object-fit:contain;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.9));" onerror="this.style.opacity='0'"/>
+      <img id="gb-player-spr" src="images/${_playerSpr1()}.webp" style="height:clamp(100px,22vh,180px);object-fit:contain;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.9));" onerror="this.style.opacity='0'"/>
       <div style="font-family:var(--font-head);font-size:9px;color:var(--perg2);">${G.heroName||'Kahraman'}</div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
@@ -4278,7 +4290,7 @@ function _gbHUD(){
 
 function _gbAnim(cb){
   const img=document.getElementById('gb-player-spr');if(!img){cb&&cb();return;}
-  const fr=['okcu1','okcu2','okcu3','okcu1'];let i=0;
+  const fr=_playerSprFrames();let i=0;
   const s=()=>{img.src='images/'+fr[i]+'.webp';i++;if(i<fr.length)setTimeout(s,500);else cb&&cb();};
   s();
 }
@@ -4350,6 +4362,155 @@ function closeGoliathBattle(){
   document.getElementById('goliath-ov')?.remove();
   document.getElementById('goliath-result')?.remove();
   _GB=null;
+}
+
+/* ══════════════════════════════════════
+   ARENA GÖRSEL SAVAŞ SİSTEMİ (TÜM RAKİPLER)
+══════════════════════════════════════ */
+let _AB=null;
+
+function openArenaBattle(oppName){
+  if(ARENA_TICKETS<=0){toast('⚡ Arena hakkın yok! Yarın yenilenir.');return;}
+  const lg=arenaGetLeague();
+  const opps=ARENA_OPPONENTS[lg.id]||ARENA_OPPONENTS.bronz;
+  const opp=opps.find(o=>o.name===oppName);if(!opp)return;
+  ARENA_TICKETS=Math.max(0,ARENA_TICKETS-1);
+  arenaSaveTickets(ARENA_TICKETS);
+  const eff=getEffectiveStats();
+  const oppMaxHp=Math.max(50,opp.power*2);
+  _AB={playerHp:eff.maxhp,playerMaxHp:eff.maxhp,oppHp:oppMaxHp,oppMaxHp,opp,eff,busy:false};
+  const spr=_playerSpr1();
+  const ov=document.createElement('div');
+  ov.id='arena-battle-ov';
+  ov.style.cssText="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;display:flex;flex-direction:column;background:url('images/arena2.webp') center/cover no-repeat;";
+  ov.innerHTML=`
+<div style="position:absolute;inset:0;background:rgba(0,0,0,0.5);pointer-events:none;"></div>
+<div style="position:relative;z-index:1;flex:1;display:flex;flex-direction:column;padding:12px;gap:8px;max-width:580px;margin:0 auto;width:100%;box-sizing:border-box;min-height:0;">
+  <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;padding:10px;background:rgba(0,0,0,0.65);border-radius:10px;border:1px solid var(--border);">
+    <div>
+      <div style="font-size:9px;color:var(--perg2);margin-bottom:3px;font-family:var(--font-head);">${G.heroName||'Kahraman'}</div>
+      <div style="height:8px;background:var(--panel3);border-radius:4px;overflow:hidden;border:1px solid var(--border);"><div id="ab-player-bar" style="height:100%;width:100%;background:linear-gradient(90deg,#4a1010,#c0392b);border-radius:4px;transition:width .4s;"></div></div>
+      <div id="ab-player-txt" style="font-size:9px;color:var(--gold);margin-top:2px;"></div>
+    </div>
+    <div style="font-family:var(--font-head);font-size:12px;color:var(--perg3);padding:0 4px;">VS</div>
+    <div style="text-align:right;">
+      <div style="font-size:9px;color:var(--hp);margin-bottom:3px;font-family:var(--font-head);">${opp.name}</div>
+      <div style="height:8px;background:var(--panel3);border-radius:4px;overflow:hidden;border:1px solid var(--border);"><div id="ab-opp-bar" style="height:100%;width:100%;background:linear-gradient(90deg,#8b1e1e,#e74c3c);border-radius:4px;transition:width .4s;"></div></div>
+      <div id="ab-opp-txt" style="font-size:9px;color:var(--hp);margin-top:2px;text-align:right;"></div>
+    </div>
+  </div>
+  <div style="flex:1;display:flex;align-items:flex-end;justify-content:space-between;padding:0 8px;min-height:0;overflow:hidden;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <img id="ab-player-spr" src="images/${spr}.webp" style="height:clamp(100px,22vh,180px);object-fit:contain;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.9));" onerror="this.style.opacity='0'"/>
+      <div style="font-family:var(--font-head);font-size:9px;color:var(--perg2);">${G.heroName||'Kahraman'}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+      <div style="font-size:clamp(70px,16vh,120px);line-height:1;filter:drop-shadow(0 4px 24px rgba(139,30,30,0.9));animation:bossBreath 4s ease-in-out infinite;">${opp.icon}</div>
+      <div style="font-family:var(--font-head);font-size:9px;color:var(--hp);">${opp.cls} · ${opp.name}</div>
+    </div>
+  </div>
+  <div id="ab-log" style="height:clamp(60px,12vh,90px);overflow-y:auto;background:rgba(0,0,0,0.75);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-size:10px;display:flex;flex-direction:column;gap:2px;"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-bottom:env(safe-area-inset-bottom,0px);">
+    <button id="ab-atk" class="btn" onclick="arenaBattleAction('attack')" style="font-size:13px;padding:14px;letter-spacing:1px;">⚔ SALDIR</button>
+    <button id="ab-def" class="btn btn-ghost" onclick="arenaBattleAction('defend')" style="font-size:13px;padding:14px;letter-spacing:1px;">🛡 SAVUN</button>
+  </div>
+</div>`;
+  document.body.appendChild(ov);
+  _abHUD();
+  _abLog(`⚔ ${opp.name} ile savaş başladı!`,'#c9a646');
+}
+
+function _abLog(msg,col){
+  const el=document.getElementById('ab-log');if(!el)return;
+  const d=document.createElement('div');d.style.color=col||'var(--perg2)';d.textContent=msg;
+  el.appendChild(d);el.scrollTop=el.scrollHeight;
+}
+
+function _abHUD(){
+  const b=_AB;if(!b)return;
+  const pp=Math.max(0,b.playerHp/b.playerMaxHp*100);
+  const op=Math.max(0,b.oppHp/b.oppMaxHp*100);
+  const pB=document.getElementById('ab-player-bar'),oB=document.getElementById('ab-opp-bar');
+  const pT=document.getElementById('ab-player-txt'),oT=document.getElementById('ab-opp-txt');
+  if(pB)pB.style.width=pp+'%';if(oB)oB.style.width=op+'%';
+  if(pT)pT.textContent=Math.max(0,b.playerHp)+' / '+b.playerMaxHp;
+  if(oT)oT.textContent=Math.max(0,b.oppHp)+' / '+b.oppMaxHp;
+}
+
+function _abAnim(cb){
+  const img=document.getElementById('ab-player-spr');if(!img){cb&&cb();return;}
+  const fr=_playerSprFrames();let i=0;
+  const s=()=>{img.src='images/'+fr[i]+'.webp';i++;if(i<fr.length)setTimeout(s,500);else cb&&cb();};
+  s();
+}
+
+function arenaBattleAction(type){
+  if(!_AB||_AB.busy)return;
+  _AB.busy=true;
+  document.getElementById('ab-atk').disabled=true;
+  document.getElementById('ab-def').disabled=true;
+  _abAnim(()=>{
+    const b=_AB,eff=b.eff;
+    if(type==='attack'){
+      const md=Math.max(1,Math.floor(eff.physDmg*(0.8+Math.random()*0.4)));
+      const isCrit=Math.random()<(eff.critChance||0);
+      const critMult=1+Math.max(0.5,(eff.crit||0)/100);
+      let fd=isCrit?Math.floor(md*critMult):md;
+      if(G.classId==='ranger'&&(eff.acc||0)>0&&Math.random()<(eff.trueDmgChance||0))fd=Math.floor(fd*1.3);
+      b.oppHp-=fd;
+      _abLog('⚔ '+fd+(isCrit?' 💥':'')+' hasar verdin!','#c9a646');
+      const dodged=Math.random()<(eff.dodgeChance||0);
+      if(!dodged){
+        const od=Math.max(1,Math.floor(b.opp.power/10+Math.random()*8)-Math.floor((eff.damageReduction||0)*b.opp.power/10));
+        b.playerHp-=od;_abLog(`💀 ${b.opp.name} ${od} hasar verdi!`,'#f87171');
+      }else{_abLog('💨 Kaçındın!','#7aaa5a');}
+    }else{
+      const raw=Math.max(0,Math.floor(b.opp.power/10+Math.random()*8)-Math.floor((eff.damageReduction||0)*b.opp.power/10));
+      const od=Math.max(0,Math.floor(raw*0.4));
+      b.playerHp-=od;
+      _abLog('🛡 Savundun! '+od+' hasar aldın (azaltıldı).','#5a8aaa');
+    }
+    _abHUD();
+    if(b.oppHp<=0){setTimeout(()=>_abEnd(true),600);return;}
+    if(b.playerHp<=0){b.playerHp=0;_abHUD();setTimeout(()=>_abEnd(false),600);return;}
+    b.busy=false;
+    document.getElementById('ab-atk').disabled=false;
+    document.getElementById('ab-def').disabled=false;
+  });
+}
+
+function _abEnd(won){
+  const b=_AB,opp=b.opp;
+  if(won){
+    G.gold+=opp.reward;G.arenaScore+=opp.pts;G.arenaWins++;gainXP(30);
+    trackQuest('arenaFight1');trackQuest('arenaWin1');
+    trackQuest('arenaFight5',Math.min(5,G.arenaWins+G.arenaLosses));
+    trackQuest('arenaWin5',Math.min(5,G.arenaWins));
+    toast('🏆 Zafer! +'+opp.reward+'🪙');
+  }else{
+    G.stats.hp=Math.max(1,Math.floor(G.stats.hp*.8));G.arenaLosses++;
+    trackQuest('arenaFight1');
+    trackQuest('arenaFight5',Math.min(5,G.arenaWins+G.arenaLosses));
+    toast('💀 Yenildin! Güçlen.');
+  }
+  const res=document.createElement('div');
+  res.id='arena-battle-result';
+  res.style.cssText='position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;font-family:var(--font-head);';
+  res.innerHTML='<div style="text-align:center;padding:32px 24px;background:var(--panel);border:1px solid var(--border2);border-radius:16px;max-width:300px;width:90%;">'
+    +'<div style="font-size:52px;margin-bottom:12px;">'+(won?'🏆':'💀')+'</div>'
+    +'<div style="font-size:22px;color:'+(won?'var(--gold2)':'var(--hp)')+';margin-bottom:8px;">'+(won?'ZAFER!':'YENİLDİN')+'</div>'
+    +'<div style="font-size:12px;color:var(--perg2);margin-bottom:16px;">'+(won?opp.win:opp.lose)+'</div>'
+    +(won?'<div style="font-size:14px;color:var(--gold);margin-bottom:16px;">+'+opp.reward+'🪙 +30XP +'+opp.pts+'pt</div>':'')
+    +'<button class="btn" onclick="closeArenaBattle()" style="width:100%;">Tamam</button></div>';
+  document.body.appendChild(res);
+  updateHUD();renderArena();renderKarakter();
+  if(currentUser)sbSave();
+}
+
+function closeArenaBattle(){
+  document.getElementById('arena-battle-ov')?.remove();
+  document.getElementById('arena-battle-result')?.remove();
+  _AB=null;
 }
 
 /* ══════════════════════════════════════
@@ -4682,7 +4843,7 @@ function zdBattleHTML(){
 
         <!-- Sol: Oyuncu -->
         <div class="zd-split-player">
-          <img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/okcu1.webp"
+          <img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/${_playerSpr1()}.webp"
                class="zd-split-char" id="zd-player-spr-zd"
                onerror="this.style.opacity='0'"/>
           <div style="font-family:var(--font-head);font-size:9px;color:var(--perg2);margin-bottom:2px;">${G.heroName||cls.icon}</div>
