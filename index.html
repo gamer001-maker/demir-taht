@@ -7704,68 +7704,79 @@ async function sbLoadProfile() {
 /* ── VERİ KAYDET ── */
 async function sbSave() {
   if (!currentUser) return;
-  await supa.from('profiles').update({
-    hero_name:    G.heroName,
-    level:        G.level,
-    xp:           G.xp,
-    skill_points: G.skillPoints,
-    gold:         Math.floor(G.gold),
-    food:         Math.floor(G.food),
-    wood:         Math.floor(G.wood),
-    army:         G.units.reduce((a,u)=>a+u.count,0),
-    morale:       Math.floor(G.morale),
-    turn:         G.turn,
-    season:       G.season,
-    arena_score:  G.arenaScore,
-    arena_wins:   G.arenaWins,
-    arena_losses: G.arenaLosses,
-    stat_str:     G.stats.str,
-    stat_def:     G.stats.def,
-    stat_agi:     G.stats.agi,
-    stat_wis:     G.stats.wis,
-    stat_cha:     G.stats.cha,
-    hp:           Math.min(G.stats.hp, G.stats.maxhp), // base maxhp ile sınırla
-    max_hp:       G.stats.maxhp, // sadece base (item bonusu eklenmemiş)
-    updated_at:   new Date().toISOString(),
-    prod_farm:    PROD_BUILDINGS.farm.level,
-    prod_mill:    PROD_BUILDINGS.mill.level,
-    prod_ranch:   PROD_BUILDINGS.ranch.level,
-    prod_kitchen: PROD_BUILDINGS.kitchen.level,
-    prod_inv:     G.prodInv,
-    mat_inv:      G.matInv,
-    inventory:    G.inventory,
-    equipped:     G.equipped,
-    zd_tickets:   G.zdTickets,
-    zd_ticket_date: G.zdTicketDate,
-    animals:      G.animals,
-  }).eq('id', currentUser.id);
+  try {
+    const { error: e1 } = await supa.from('profiles').update({
+      hero_name:    G.heroName,
+      level:        G.level,
+      xp:           G.xp,
+      skill_points: G.skillPoints,
+      gold:         Math.floor(G.gold),
+      food:         Math.floor(G.food),
+      wood:         Math.floor(G.wood),
+      army:         G.units.reduce((a,u)=>a+u.count,0),
+      morale:       Math.floor(G.morale),
+      turn:         G.turn,
+      season:       G.season,
+      arena_score:  G.arenaScore,
+      arena_wins:   G.arenaWins,
+      arena_losses: G.arenaLosses,
+      stat_str:     G.stats.str,
+      stat_def:     G.stats.def,
+      stat_agi:     G.stats.agi,
+      stat_wis:     G.stats.wis,
+      stat_cha:     G.stats.cha,
+      hp:           Math.min(G.stats.hp, G.stats.maxhp),
+      max_hp:       G.stats.maxhp,
+      updated_at:   new Date().toISOString(),
+      prod_farm:    PROD_BUILDINGS.farm.level,
+      prod_mill:    PROD_BUILDINGS.mill.level,
+      prod_ranch:   PROD_BUILDINGS.ranch.level,
+      prod_kitchen: PROD_BUILDINGS.kitchen.level,
+      prod_inv:     G.prodInv,
+      mat_inv:      G.matInv,
+      inventory:    G.inventory,
+      equipped:     G.equipped,
+      zd_tickets:   G.zdTickets,
+      zd_ticket_date: G.zdTicketDate,
+      animals:      G.animals,
+    }).eq('id', currentUser.id);
+    if (e1) { console.error('sbSave profiles hatası:', e1); toast('⚠ Kayıt hatası: ' + e1.message); return; }
 
-  await supa.from('castles').update({
-    hp:       G.castle.hp,
-    defense:  G.castle.def,
-    attack:   G.castle.atk,
-    walls:    G.castle.walls,
-    towers:   G.castle.towers,
-    barracks: G.castle.barracks,
-    farm:     G.castle.farm,
-    market:   G.castle.market,
-  }).eq('profile_id', currentUser.id);
+    const { error: e2 } = await supa.from('castles').update({
+      hp:       G.castle.hp,
+      defense:  G.castle.def,
+      attack:   G.castle.atk,
+      walls:    G.castle.walls,
+      towers:   G.castle.towers,
+      barracks: G.castle.barracks,
+      farm:     G.castle.farm,
+      market:   G.castle.market,
+    }).eq('profile_id', currentUser.id);
+    if (e2) console.error('sbSave castles hatası:', e2);
 
-  for (const u of G.units) {
-    await supa.from('armies').update({ count: u.count }).eq('profile_id', currentUser.id).eq('unit_type', u.id);
+    for (const u of G.units) {
+      const { error: eu } = await supa.from('armies').update({ count: u.count }).eq('profile_id', currentUser.id).eq('unit_type', u.id);
+      if (eu) console.error('sbSave armies hatası:', eu);
+    }
+
+    const { error: e3 } = await supa.from('folk').update({
+      population: G.folk.population,
+      happiness:  G.folk.happiness,
+      tax:        G.folk.tax,
+    }).eq('profile_id', currentUser.id);
+    if (e3) console.error('sbSave folk hatası:', e3);
+
+    const existing = await supa.from('explored_cells').select('cell_index').eq('profile_id', currentUser.id);
+    const existingSet = new Set((existing.data||[]).map(c=>c.cell_index));
+    const newCells = [...G.explored].filter(i=>!existingSet.has(i)).map(i=>({ profile_id: currentUser.id, cell_index: i }));
+    if (newCells.length) {
+      const { error: e4 } = await supa.from('explored_cells').insert(newCells);
+      if (e4) console.error('sbSave explored_cells hatası:', e4);
+    }
+  } catch(e) {
+    console.error('sbSave exception:', e);
+    toast('⚠ Kayıt başarısız! Konsolu kontrol et.');
   }
-
-  await supa.from('folk').update({
-    population: G.folk.population,
-    happiness:  G.folk.happiness,
-    tax:        G.folk.tax,
-  }).eq('profile_id', currentUser.id);
-
-  // Yeni keşfedilen hücreler
-  const existing = await supa.from('explored_cells').select('cell_index').eq('profile_id', currentUser.id);
-  const existingSet = new Set((existing.data||[]).map(c=>c.cell_index));
-  const newCells = [...G.explored].filter(i=>!existingSet.has(i)).map(i=>({ profile_id: currentUser.id, cell_index: i }));
-  if (newCells.length) await supa.from('explored_cells').insert(newCells);
 }
 
 /* ── OTOMATİK KAYIT (her tur bitiminde) ── */
