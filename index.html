@@ -1585,6 +1585,27 @@ html,body{
         <div style="font-size:10px;color:var(--ink3);text-align:center;margin-bottom:6px;">Keşfetmek: 10🪙 | Komşudan genişle</div>
         <button id="new-map-btn" class="btn" style="width:100%;display:none;margin-bottom:8px;border-color:var(--gold2);" onclick="resetMap()">🗺 Yeni Yerler Keşfet</button>
         <div class="card" id="map-info-card" style="display:none;"></div>
+        <!-- Harita Kaynakları -->
+        <div class="card" style="margin-top:8px;">
+          <div class="sec" style="margin-bottom:8px;">📦 Harita Kaynakları</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;">
+            <div style="background:var(--panel3);border:1px solid var(--border2);border-radius:8px;padding:8px 4px;">
+              <div style="font-size:18px;">🪵</div>
+              <div style="font-family:var(--font-head);font-size:13px;color:var(--perg2);" id="res-meseLodunu">0</div>
+              <div style="font-size:9px;color:var(--ink3);">Meşe Odunu</div>
+            </div>
+            <div style="background:var(--panel3);border:1px solid var(--border2);border-radius:8px;padding:8px 4px;">
+              <div style="font-size:18px;">⛏</div>
+              <div style="font-family:var(--font-head);font-size:13px;color:var(--perg2);" id="res-demir">0</div>
+              <div style="font-size:9px;color:var(--ink3);">Demir</div>
+            </div>
+            <div style="background:var(--panel3);border:1px solid var(--border2);border-radius:8px;padding:8px 4px;">
+              <div style="font-size:18px;">🪣</div>
+              <div style="font-family:var(--font-head);font-size:13px;color:var(--perg2);" id="res-kil">0</div>
+              <div style="font-size:9px;color:var(--ink3);">Kil</div>
+            </div>
+          </div>
+        </div>
       </div>
       <!-- ARENA -->
       <div class="pad" id="gs-arena" style="display:none;">
@@ -1962,6 +1983,7 @@ function userSeed(uid){if(!uid)return 42;let h=0;for(let i=0;i<uid.length;i++){h
 /* ── PLAYER MAP ── */
 let G_MAP=[]; // Aktif harita
 let exploreTimers=[]; // Keşif sayaçları
+let gatherTimers=[]; // Kaynak toplama sayaçları
 
 async function initPlayerMap(){
   if(!currentUser){G_MAP=generateMap(42);renderHarita();return;}
@@ -2048,6 +2070,52 @@ async function resetMap(){
   document.getElementById('map-info-card').style.display='none';
   toast('Yeni topraklar keşfe açıldı! 🗺');
   renderHarita();
+}
+
+/* ── HARİTA KAYNAK TOPLAMA ── */
+function startGather(idx, type){
+  if(gatherTimers.find(t=>t.cellIdx===idx)){toast('Bu bölgede zaten bir eylem devam ediyor!');return;}
+  gatherTimers.push({cellIdx:idx,type,remaining:120,total:120});
+  toast('Başladı! 2 dakika sonra tamamlanacak. ⏳');
+  renderHarita();
+  // Info kartını güncelle
+  if(G.selectedCell===idx) cellClick(idx,G_MAP[idx]);
+}
+
+function finishGather(idx, type){
+  const cell=G_MAP[idx];if(!cell)return;
+  if(type==='lumber'){
+    const amt=Math.floor(Math.random()*6)+5;
+    G.prodInv.meseLodunu=(G.prodInv.meseLodunu||0)+amt;
+    toast(`🪵 ${amt} Meşe Odunu topladın!`);
+  } else if(type==='mine'){
+    const amt=Math.floor(Math.random()*5)+3;
+    G.prodInv.demir=(G.prodInv.demir||0)+amt;
+    toast(`⛏ ${amt} Demir topladın!`);
+  } else if(type==='clay'){
+    const amt=Math.floor(Math.random()*4)+3;
+    G.prodInv.kil=(G.prodInv.kil||0)+amt;
+    toast(`🪣 ${amt} Kil topladın!`);
+  } else if(type==='gold'){
+    const amt=Math.floor(Math.random()*16)+15;
+    G.gold+=amt;
+    toast(`💰 Kasabadan ${amt}🪙 topladın!`);
+  } else if(type==='loot'){
+    const equipPool=MARKET_ITEMS.filter(x=>['weapon','armor','accessory'].includes(x.cat)&&['gray','green','blue'].includes(x.grade)&&x.seller!=='boss');
+    if(equipPool.length&&G.inventory.length<50){
+      const base=equipPool[Math.floor(Math.random()*equipPool.length)];
+      const enh=Math.floor(Math.random()*4)+1;
+      const item={id:Date.now(),name:base.name,icon:base.icon,type:base.type||'Eşya',grade:base.grade||'gray',price:base.price,stats:{...base.stats},desc:base.desc||'',seller:'player',sellerName:'Harabeler',img:base.img||null,reqLv:base.reqLv||1,material:base.material||null,classBonus:base.classBonus||null,tplId:base.tplId||null,enhPlus:enh,baseStats:{...base.stats}};
+      G.inventory.push(item);
+      toast(`🎁 ${base.name} +${enh} bulundu!`);
+    } else if(G.inventory.length>=50){
+      const b=Math.floor(Math.random()*20)+10;G.gold+=b;toast(`Envanter dolu! Harabelerden ${b}🪙 buldun.`);
+    } else {
+      const b=Math.floor(Math.random()*20)+10;G.gold+=b;toast(`💰 Boş harabeler. ${b}🪙 kalıntı buldun.`);
+    }
+  }
+  gainXP(15);updateHUD();renderKarakter();
+  if(currentUser) sbSave();
 }
 
 /* ── MAĞARA SAVAŞI ── */
@@ -2199,18 +2267,30 @@ function closeCaveBattle(){
   if(overlay) overlay.style.display='none';
 }
 
-/* Keşif sayacı interval */
+/* Keşif & Toplama sayacı interval */
 setInterval(async()=>{
   let changed=false;
   for(const t of exploreTimers){
     if(t.remaining>0){
       t.remaining--;changed=true;
-      // Grid'deki sayacı güncelle
       const el=document.getElementById(`explore-timer-${t.cellIdx}`);
       if(el){const m=Math.floor(t.remaining/60),s=t.remaining%60;el.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
       if(t.remaining<=0){
         await finishExplore(t.cellIdx,t.id);
         exploreTimers=exploreTimers.filter(x=>x.cellIdx!==t.cellIdx);
+      }
+    }
+  }
+  for(const g of [...gatherTimers]){
+    if(g.remaining>0){
+      g.remaining--;changed=true;
+      const el=document.getElementById(`gather-timer-${g.cellIdx}`);
+      if(el){const m=Math.floor(g.remaining/60),s=g.remaining%60;el.textContent=`⏳${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
+      const ic=document.getElementById(`gather-info-timer`);
+      if(ic&&Number(ic.dataset.idx)===g.cellIdx){const m=Math.floor(g.remaining/60),s=g.remaining%60;ic.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
+      if(g.remaining<=0){
+        finishGather(g.cellIdx,g.type);
+        gatherTimers=gatherTimers.filter(x=>x.cellIdx!==g.cellIdx);
       }
     }
   }
@@ -2659,7 +2739,7 @@ const G={
   explored:new Set([21,22,27,28,14,15,20]),
   selectedCell:null,
   prodTimers:[],prodTimerId:1,
-  prodInv:{bugday:5,saman:3,arpa:0,sebze:0,un:2,arpa_unu:0,tuy:1,yumurta:3,yun:1,sut:4,ekmek:0,corba:0,kek:0,patates:0,domates:0,cicek:0,yonca:0,cilek:0,patates_tohum:0,domates_tohum:0,cicek_tohum:0,yonca_tohum:0,cilek_tohum:0,bugday_unu:0,patates_puresi:0,kaymak:0,cilek_puresi:0,domates_puresi:0,bal:0,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0},
+  prodInv:{bugday:5,saman:3,arpa:0,sebze:0,un:2,arpa_unu:0,tuy:1,yumurta:3,yun:1,sut:4,ekmek:0,corba:0,kek:0,patates:0,domates:0,cicek:0,yonca:0,cilek:0,patates_tohum:0,domates_tohum:0,cicek_tohum:0,yonca_tohum:0,cilek_tohum:0,bugday_unu:0,patates_puresi:0,kaymak:0,cilek_puresi:0,domates_puresi:0,bal:0,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0,meseLodunu:0,demir:0,kil:0},
   matInv:{ham_demir:0, guc_runesi:0, ejderha_pulu:0, thros_kanadi:0, dev_disi:0, anka_kulu:0, ruh_kristali:0, iblis_kani:0, semavi_oz:0},
   guildName:'',
   guildId:null,
@@ -3092,10 +3172,11 @@ function renderKarakter(){
     const iconHtml=item.img
       ?`<img src="images/${item.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:72%;height:72%;object-fit:contain;"/><span style="display:none;font-size:18px;">${item.icon}</span>`
       :`<span style="font-size:18px;">${item.icon}</span>`;
-    return `<div class="inv-slot has-item rarity-${item.grade||'gray'}" onclick="openInvModal(${item.id})">
-      ${iconHtml}
+    const qtyBadge=(item.qty&&item.qty>1)?`<div style="position:absolute;bottom:2px;right:2px;font-size:8px;font-weight:700;background:rgba(0,0,0,0.82);color:var(--gold);padding:0 3px;border-radius:3px;line-height:1.5;font-family:var(--font-head);">x${item.qty}</div>`:'';
+    return `<div class="inv-slot has-item rarity-${item.grade||'gray'}" onclick="openInvModal(${item.id})" style="position:relative;">
+      ${iconHtml}${qtyBadge}
       <div class="inv-tooltip">
-        <div class="tt-name">${item.icon} ${item.name}</div>
+        <div class="tt-name">${item.icon} ${item.name}${item.qty&&item.qty>1?' x'+item.qty:''}</div>
         <div class="tt-type">${item.type}${item.reqLv>1?' · Sv.'+item.reqLv:''}</div>
         <div class="tt-stat">${formatStats(item.stats)}</div>
         <div class="tt-flavor">${item.desc}</div>
@@ -3165,7 +3246,7 @@ function openInvModal(itemId, eqSlotKey=null){
   html=`
     <div style="text-align:center;margin-bottom:12px;">
       ${imgHtml}
-      <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);">${item.name}</div>
+      <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);">${item.name}${item.qty&&item.qty>1?` <span style="font-size:11px;color:var(--gold);">x${item.qty}</span>`:''}</div>
       <div style="font-size:10px;color:var(--ink3);margin-bottom:4px;">${item.type}${item.reqLv>1?` · <span style="color:${canEquip?'var(--gold2)':'#c87070'}">Sv.${item.reqLv}</span>`:''}</div>
       <div style="font-size:12px;color:var(--perg2);margin-bottom:4px;">${formatStats(item.stats)}</div>
       ${classBonusHtml}
@@ -3174,7 +3255,7 @@ function openInvModal(itemId, eqSlotKey=null){
     </div>
     ${targetSlot&&canEquip?`<button class="btn" style="width:100%;margin-bottom:8px;" onclick="equipItem(${item.id},'${targetSlot}')">⚔ Kuşan</button>`:''}
     ${targetSlot&&!canEquip?`<button class="btn" disabled style="width:100%;margin-bottom:8px;">🔒 Seviye ${item.reqLv} Gerekli</button>`:''}
-    ${item.type==='İksir'?`<button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#0a2a1a,#051408);border-color:var(--g-green);color:#7aaa5a;" onclick="useConsumable(${item.id})">⚗ Kullan</button>`:''}
+    ${item.cat==='consumable'||item.type==='İksir'||item.type==='Rune'?`<button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#0a2a1a,#051408);border-color:var(--g-green);color:#7aaa5a;" onclick="useConsumable(${item.id})">⚗ Kullan${item.qty&&item.qty>1?' ('+item.qty+' adet)':''}</button>`:''}
     <button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:#3a6a18;color:#7aaa5a;" onclick="sellToNPC(${item.id})">🏪 NPC'ye Sat (${getNPCSellPrice(item).toLocaleString('tr-TR')}🪙)</button>
     <button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="openSellModal(${item.id})">🪙 Pazara Sat</button>
     <button class="btn btn-danger" style="width:100%;" onclick="dropItem(${item.id})">🗑 At</button>`;
@@ -3199,7 +3280,12 @@ function useConsumable(itemId){
     msg=`${item.name} kullanıldı!`;
   }
 
-  G.inventory=G.inventory.filter(x=>x.id!==itemId);
+  // Yığılı iksir → qty azalt, son birini kaldır
+  if(item.qty&&item.qty>1){
+    item.qty--;
+  } else {
+    G.inventory=G.inventory.filter(x=>x.id!==itemId);
+  }
   closeGModal();
   toast(`${item.icon} ${msg}`);
   updateHUD();renderKarakter();
@@ -4035,17 +4121,23 @@ function renderHarita(){
   const allExplored=G_MAP.every((_,i)=>G.explored.has(i));
   const newMapBtn=document.getElementById('new-map-btn');
   if(newMapBtn) newMapBtn.style.display=allExplored?'block':'none';
+  // Kaynak sayaçları
+  const elW=document.getElementById('res-meseLodunu');if(elW) elW.textContent=G.prodInv.meseLodunu||0;
+  const elI=document.getElementById('res-demir');if(elI) elI.textContent=G.prodInv.demir||0;
+  const elC=document.getElementById('res-kil');if(elC) elC.textContent=G.prodInv.kil||0;
   G_MAP.forEach((cell,idx)=>{
     const exp=G.explored.has(idx);
     const sel=G.selectedCell===idx;
     const exploring=exploreTimers.find(t=>t.cellIdx===idx);
+    const gathering=gatherTimers.find(t=>t.cellIdx===idx);
     const d=document.createElement('div');
     d.className=`map-cell t-${cell.t}${!exp&&!exploring?' fog':''}${sel?' sel':''}`;
     if(exp){
       d.style.backgroundImage=`url('${cell.img}')`;
       d.style.backgroundSize='cover';
       d.style.backgroundPosition='center';
-      d.innerHTML=`<span class="mlbl" style="background:#00000066;padding:1px 4px;border-radius:3px;">${cell.n}</span>`;
+      const gatherBadge=gathering?`<span id="gather-timer-${idx}" style="position:absolute;bottom:2px;right:2px;font-size:7px;font-family:var(--font-head);background:#000000aa;color:var(--gold);padding:1px 3px;border-radius:3px;">⏳--:--</span>`:'';
+      d.innerHTML=`<span class="mlbl" style="background:#00000066;padding:1px 4px;border-radius:3px;">${cell.n}</span>${gatherBadge}`;
     } else if(exploring){
       d.style.background='#1a1040';
       d.innerHTML=`<span style="font-size:16px;">🔍</span><span class="mlbl" id="explore-timer-${idx}" style="color:var(--gold);">--:--</span>`;
@@ -4084,7 +4176,30 @@ function cellClick(idx,cell){
         info.innerHTML=`<div class="row-between" style="margin-bottom:8px;"><span style="font-family:var(--font-head);font-size:13px;color:#c084fc;">🕳 ${cell.n}</span><span class="tag" style="background:#1a0e2a;border-color:#7a4a8a;color:#c084fc;">Tehlikeli</span></div><div style="font-size:11px;color:var(--ink3);margin-bottom:10px;">${cell.info}</div><button class="btn" style="width:100%;border-color:#7a4a8a;color:#c084fc;" onclick="startCaveBattle(${idx})">💀 Mağara'ya Gir</button>`;
       }
     } else {
-      info.innerHTML=`<div class="row-between"><span style="font-family:var(--font-head);font-size:13px;color:var(--gold);">${cell.n}</span><span class="tag tag-gold">✓ Keşfedildi</span></div><div style="font-size:11px;color:var(--ink3);margin-top:4px;">${cell.info}</div>`;
+      // Kaynak toplama aksiyonları
+      const GATHER_ACTIONS={
+        forest: {icon:'🪓',label:'Ağaç Kes',type:'lumber',desc:'Meşe Odunu topla (2 dk → 5-10 adet)'},
+        mountain:{icon:'⛏',label:'Kazı Yap', type:'mine', desc:'Demir madeni çıkar (2 dk → 3-7 adet)'},
+        water:  {icon:'🪣',label:'Kil Topla',type:'clay',  desc:'Nehirden kil topla (2 dk → 3-6 adet)'},
+        village:{icon:'💰',label:'Vergi Topla',type:'gold',desc:'Köyden vergi topla (2 dk → 15-30🪙)'},
+        ruins:  {icon:'🔍',label:'Araştır',  type:'loot',  desc:'Harabeyi araştır (2 dk → rastgele ekipman)'},
+      };
+      const ga=GATHER_ACTIONS[cell.t];
+      const gathering=gatherTimers.find(t=>t.cellIdx===idx);
+      let btnHtml='';
+      if(ga){
+        if(gathering){
+          const m=Math.floor(gathering.remaining/60),s=gathering.remaining%60;
+          btnHtml=`<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;padding:8px;background:var(--panel3);border-radius:8px;border:1px solid var(--border2);">
+            <span style="font-size:14px;">⏳</span>
+            <span style="font-family:var(--font-head);font-size:16px;color:var(--gold);" id="gather-info-timer" data-idx="${idx}">${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</span>
+            <span style="font-size:11px;color:var(--ink3);">tamamlanıyor...</span>
+          </div>`;
+        } else {
+          btnHtml=`<button class="btn" style="width:100%;margin-top:8px;" onclick="startGather(${idx},'${ga.type}')">${ga.icon} ${ga.label}</button>`;
+        }
+      }
+      info.innerHTML=`<div class="row-between" style="margin-bottom:6px;"><span style="font-family:var(--font-head);font-size:13px;color:var(--gold);">${cell.n}</span><span class="tag tag-gold">✓ Keşfedildi</span></div><div style="font-size:11px;color:var(--ink3);">${ga?.desc||cell.info}</div>${btnHtml}`;
     }
   } else info.style.display='none';
   renderHarita();
@@ -5443,6 +5558,26 @@ function buyItem(id){
     gainXP(3);
     toast(`${item.name} materyal deposuna eklendi! -${item.price}🪙`);
     updateHUD();renderMarket();
+    if(currentUser) sbSave();
+    return;
+  }
+
+  // Tüketilebilir → envanterde yığ
+  if(item.cat==='consumable'){
+    const exist=G.inventory.find(x=>x.tplId===item.id&&x.cat==='consumable');
+    if(exist){
+      exist.qty=(exist.qty||1)+1;
+      gainXP(5);
+      toast(`${item.name} x${exist.qty} (yığıldı) -${item.price}🪙`);
+      updateHUD();renderMarket();renderKarakter();
+      if(currentUser) sbSave();
+      return;
+    }
+    if(G.inventory.length>=50){toast('Envanter dolu! Önce bir eşya sat.');G.gold+=item.price;return;}
+    const cInv={id:Date.now(),name:item.name,icon:item.icon,type:item.type||'İksir',grade:item.grade||'gray',price:item.price,stats:{...item.stats||{}},desc:item.desc||'',seller:'player',sellerName:G.heroName||G.username,img:item.img||null,reqLv:item.reqLv||1,material:null,classBonus:null,tplId:item.id,qty:1,cat:'consumable'};
+    G.inventory.push(cInv);
+    gainXP(10);toast(`${item.name} envantere eklendi! -${item.price}🪙`);trackQuest('marketBuy1');
+    updateHUD();renderMarket();renderKarakter();
     if(currentUser) sbSave();
     return;
   }
