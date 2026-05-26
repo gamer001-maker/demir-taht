@@ -1590,18 +1590,18 @@ html,body{
           <div class="sec" style="margin-bottom:8px;">📦 Harita Kaynakları</div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;">
             <div style="background:var(--panel3);border:1px solid var(--border2);border-radius:8px;padding:8px 4px;">
-              <div style="font-size:18px;">🪵</div>
-              <div style="font-family:var(--font-head);font-size:13px;color:var(--perg2);" id="res-meseLodunu">0</div>
+              <img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/odun.webp" style="width:40px;height:40px;object-fit:contain;" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="font-size:24px;display:none;">🪵</span>
+              <div style="font-family:var(--font-head);font-size:13px;color:var(--perg2);margin-top:4px;" id="res-meseLodunu">0</div>
               <div style="font-size:9px;color:var(--ink3);">Meşe Odunu</div>
             </div>
             <div style="background:var(--panel3);border:1px solid var(--border2);border-radius:8px;padding:8px 4px;">
-              <div style="font-size:18px;">⛏</div>
-              <div style="font-family:var(--font-head);font-size:13px;color:var(--perg2);" id="res-demir">0</div>
+              <img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/demir.webp" style="width:40px;height:40px;object-fit:contain;" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="font-size:24px;display:none;">⛏</span>
+              <div style="font-family:var(--font-head);font-size:13px;color:var(--perg2);margin-top:4px;" id="res-demir">0</div>
               <div style="font-size:9px;color:var(--ink3);">Demir</div>
             </div>
             <div style="background:var(--panel3);border:1px solid var(--border2);border-radius:8px;padding:8px 4px;">
-              <div style="font-size:18px;">🪣</div>
-              <div style="font-family:var(--font-head);font-size:13px;color:var(--perg2);" id="res-kil">0</div>
+              <img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/kil.webp" style="width:40px;height:40px;object-fit:contain;" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="font-size:24px;display:none;">🪣</span>
+              <div style="font-family:var(--font-head);font-size:13px;color:var(--perg2);margin-top:4px;" id="res-kil">0</div>
               <div style="font-size:9px;color:var(--ink3);">Kil</div>
             </div>
           </div>
@@ -2714,6 +2714,13 @@ const FOOD_VALUE={bugday:1,arpa:1,sebze:2,saman:0,un:0,arpa_unu:0,tuy:0,yumurta:
 const KITCHEN_FOOD_VALUES={domates_corbasi:10,patates_corbasi:12,ekmek:12,salcali_ekmek:15,borek:18,cilekli_turta:20,balli_kaymak:25};
 const ITEM_LABELS={bugday:'Buğday',saman:'Saman',arpa:'Arpa',sebze:'Sebze',un:'Un',arpa_unu:'Arpa Unu',tuy:'Tüy',yumurta:'Yumurta',yun:'Yün',sut:'Süt',ekmek:'Ekmek',corba:'Çorba',kek:'Kek',patates:'Patates',domates:'Domates',cicek:'Çiçek',yonca:'Yonca',cilek:'Çilek',patates_tohum:'Patates Tohumu',domates_tohum:'Domates Tohumu',cicek_tohum:'Çiçek Tohumu',yonca_tohum:'Yonca Tohumu',cilek_tohum:'Çilek Tohumu',bugday_unu:'Buğday Unu',patates_puresi:'Patates Püresi',kaymak:'Kaymak',cilek_puresi:'Çilek Püresi',domates_puresi:'Domates Püresi',bal:'Bal',domates_corbasi:'Domates Çorbası',patates_corbasi:'Patates Çorbası',salcali_ekmek:'Salçalı Ekmek',borek:'Börek',cilekli_turta:'Çilekli Turta',balli_kaymak:'Ballı Kaymak',meseLodunu:'Meşe Odunu',demir:'Demir',kil:'Kil',kereste:'Kereste',civi:'Çivi',tugla:'Tuğla'};
 const ITEM_ICONS={bugday:'🌾',saman:'🌿',arpa:'🌱',sebze:'🥦',un:'🥛',arpa_unu:'🥛',tuy:'🪶',yumurta:'🥚',yun:'🧶',sut:'🥛',ekmek:'🍞',corba:'🥣',kek:'🎂',patates:'🥔',domates:'🍅',cicek:'🌸',yonca:'🍀',cilek:'🍓',patates_tohum:'🌱',domates_tohum:'🌱',cicek_tohum:'🌱',yonca_tohum:'🌱',cilek_tohum:'🌱',bugday_unu:'🫙',patates_puresi:'🫙',kaymak:'🫙',cilek_puresi:'🫙',domates_puresi:'🫙',bal:'🍯',domates_corbasi:'🥣',patates_corbasi:'🥣',salcali_ekmek:'🍞',borek:'🥐',cilekli_turta:'🍓',balli_kaymak:'🍯',meseLodunu:'🪵',demir:'⛏',kil:'🪣',kereste:'🪵',civi:'🔩',tugla:'🧱'};
+// Görseli olan eşyaların dosya adı — key ile farklıysa buraya ekle
+const ITEM_IMGS={meseLodunu:'odun',demir:'demir',kil:'kil',kereste:'kereste',civi:'civi',tugla:'tugla'};
+const IMG_BASE='https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/';
+function itemImg(key,size='48px'){
+  const f=ITEM_IMGS[key];if(!f)return`<span style="font-size:${size};">${ITEM_ICONS[key]||'📦'}</span>`;
+  return`<img src="${IMG_BASE}${f}.webp" style="width:${size};height:${size};object-fit:contain;" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<span style=\\'font-size:${size};\\' >${ITEM_ICONS[key]||'📦'}</span>')">`;
+}
 const GRADES={gray:{name:'Ortak'},green:{name:'Nadir'},blue:{name:'Değerli'},purple:{name:'Epik'},orange:{name:'Efsanevi'}};
 const STAT_LABELS={atk:'Saldırı',def:'Savunma',mgc:'Büyü',wis:'Bilgelik',spd:'Hız',crit:'Kritik',acc:'İsabet',str:'Güç',hp:'Can',hp_restore:'Can Yenile',atk_boost:'Saldırı Artış',craft_iron:'Demir',craft_wood:'Odun',craft_legendary:'Efsanevi Crafting',luck:'Şans'};
 const NOTIFS=[];
@@ -7528,9 +7535,9 @@ function renderInsaa(){
         <span style="font-size:10px;color:var(--ink3);">${fmtT(dur)}</span>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px;flex-wrap:wrap;">
-        <span class="mat-chip${!hasInput?' missing':''}">${ITEM_ICONS[inputKey]||'📦'} ${ITEM_LABELS[inputKey]||inputKey} ×1 <span style="font-size:8px;color:var(--ink3);">(${G.prodInv[inputKey]||0})</span></span>
+        <span class="mat-chip${!hasInput?' missing':''}" style="display:flex;align-items:center;gap:4px;">${itemImg(inputKey,'20px')} ${ITEM_LABELS[inputKey]||inputKey} ×1 <span style="font-size:8px;color:var(--ink3);">(${G.prodInv[inputKey]||0})</span></span>
         <span style="color:var(--ink3);">→</span>
-        <span class="mat-chip output">${ITEM_ICONS[outputKey]||'📦'} ${ITEM_LABELS[outputKey]||outputKey} ×1</span>
+        <span class="mat-chip output" style="display:flex;align-items:center;gap:4px;">${itemImg(outputKey,'20px')} ${ITEM_LABELS[outputKey]||outputKey} ×1</span>
       </div>
       <button class="btn btn-xs" style="width:100%;" onclick="startInsaaProd('${r.id}')" ${canStart?'':'disabled'}>
         ${!hasInput?'Malzeme Eksik':!slotsAvail?'Slot Dolu':'▶ Başlat'}
@@ -7628,8 +7635,9 @@ function renderDepot(){
       const amt=G.prodInv[k]||0;
       const icon=ITEM_ICONS[k]||'📦';
       const label=ITEM_LABELS[k]||k;
+      const imgFile=ITEM_IMGS[k]||k;
       return `<div class="card" style="text-align:center;padding:10px 6px;position:relative;">
-        <img src="${BASE}${k}.webp" style="width:100%;height:72px;object-fit:contain;margin-bottom:5px;"
+        <img src="${BASE}${imgFile}.webp" style="width:100%;height:72px;object-fit:contain;margin-bottom:5px;"
              onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
         <div style="font-size:34px;display:none;margin-bottom:5px;">${icon}</div>
         <div style="font-family:var(--font-head);font-size:9px;color:var(--perg2);margin-bottom:3px;line-height:1.2;">${label}</div>
