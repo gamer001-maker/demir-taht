@@ -765,8 +765,9 @@ html,body{
 .gchat-hdr{background:var(--panel3);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0;}
 .gchat-msgs{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px;scroll-behavior:smooth;}
 .gchat-inp-row{padding:8px;border-top:1px solid var(--border);display:flex;gap:6px;flex-shrink:0;}
-.gchat-inp-row input{flex:1;background:var(--panel3);border:1px solid var(--border2);border-radius:6px;color:var(--perg2);font-size:12px;padding:6px 8px;font-family:var(--font-body);outline:none;}
+.gchat-inp-row input{flex:1;background:#e8e4de;border:1px solid var(--border2);border-radius:6px;color:#1a1008;font-size:13px;padding:6px 8px;font-family:system-ui,sans-serif;text-transform:none;outline:none;}
 .gchat-inp-row input:focus{border-color:var(--gold);}
+.gchat-inp-row input::placeholder{color:#7a6e60;}
 @media(min-width:600px){.gchat-fab{bottom:20px;right:20px;}.gchat-win{bottom:80px;right:20px;}}
 @media(max-width:599px){.gchat-win.open{top:0;left:0;right:0;bottom:0;width:100%;height:100%;border-radius:0;}}
 
@@ -6451,7 +6452,12 @@ async function sendGlobalChat(){
     class_icon:cls?.icon||'⚔',
     message:msg,
   });
-  if(error) toast('Mesaj gönderilemedi: '+error.message);
+  if(error){toast('Mesaj gönderilemedi: '+error.message);return;}
+  const {count}=await supa.from('global_chat').select('*',{count:'exact',head:true});
+  if(count>100){
+    const {data:oldest}=await supa.from('global_chat').select('id').order('created_at',{ascending:true}).limit(1).single();
+    if(oldest) await supa.from('global_chat').delete().eq('id',oldest.id);
+  }
 }
 
 function renderGuildChat(){
