@@ -1733,6 +1733,7 @@ html,body{
       <div class="tab"        id="pt-mill"    onclick="pgo('mill')">   <span class="tab-icon">⚙</span>Değirmen</div>
       <div class="tab"        id="pt-ranch"   onclick="pgo('ranch')">  <span class="tab-icon">🐄</span>Çiftlik</div>
       <div class="tab"        id="pt-kitchen" onclick="pgo('kitchen')"><span class="tab-icon">🍳</span>Aşevi</div>
+      <div class="tab"        id="pt-insaa"   onclick="pgo('insaa')">  <span class="tab-icon">🏗</span>İnşaa</div>
       <div class="tab"        id="pt-depot"   onclick="pgo('depot')">  <span class="tab-icon">📦</span>Depo</div>
     </div>
     <div class="scroll pad" id="prod-content"></div>
@@ -2074,6 +2075,7 @@ async function resetMap(){
 
 /* ── HARİTA KAYNAK TOPLAMA ── */
 function startGather(idx, type){
+  if(G_MAP[idx]?.harvested){toast('Bu bölgeden zaten kaynak toplandı.');return;}
   if(gatherTimers.find(t=>t.cellIdx===idx)){toast('Bu bölgede zaten bir eylem devam ediyor!');return;}
   gatherTimers.push({cellIdx:idx,type,remaining:120,total:120});
   toast('Başladı! 2 dakika sonra tamamlanacak. ⏳');
@@ -2114,6 +2116,9 @@ function finishGather(idx, type){
       const b=Math.floor(Math.random()*20)+10;G.gold+=b;toast(`💰 Boş harabeler. ${b}🪙 kalıntı buldun.`);
     }
   }
+  // Kareyi hasat edildi olarak işaretle ve kaydet
+  G_MAP[idx].harvested=true;
+  if(currentUser) supa.from('player_maps').upsert({profile_id:currentUser.id,cells:G_MAP},{onConflict:'profile_id'});
   gainXP(15);updateHUD();renderKarakter();
   if(currentUser) sbSave();
 }
@@ -2633,10 +2638,11 @@ const GUILD_LIST=[
   {id:4,name:'Doğa Çocukları',emblem:'🌿',motto:'Doğayla bir ol.',members:14,level:5,focus:'casual',type:'open',power:3100},
 ];
 const PROD_BUILDINGS={
-  farm:   {level:1, max:10, cost:150,  name:'Tarla',     icon:'🌾', upgradingSince:null},
-  mill:   {level:0, max:10, cost:200,  name:'Değirmen',  icon:'⚙',  upgradingSince:null},
-  ranch:  {level:0, max:10, cost:250,  name:'Çiftlik',   icon:'🐄', upgradingSince:null},
-  kitchen:{level:0, max:10, cost:300,  name:'Aşevi',     icon:'🍳', upgradingSince:null},
+  farm:   {level:1, max:10, cost:150,  name:'Tarla',      icon:'🌾', upgradingSince:null},
+  mill:   {level:0, max:10, cost:200,  name:'Değirmen',   icon:'⚙',  upgradingSince:null},
+  ranch:  {level:0, max:10, cost:250,  name:'Çiftlik',    icon:'🐄', upgradingSince:null},
+  kitchen:{level:0, max:10, cost:300,  name:'Aşevi',      icon:'🍳', upgradingSince:null},
+  insaa:  {level:1, max:10, cost:400,  name:'İnşaa Yeri', icon:'🏗', upgradingSince:null},
 };
 
 /* ── TARLA ÜRÜN TANIMLAMALARI ──
@@ -2698,11 +2704,16 @@ const PROD_RECIPES={
     {id:'cilekli_turta',   name:'Çilekli Turta',    icon:'🍓', minLv:6, dur:180, inputs:{cilek:2,bugday_unu:2},         outputs:{cilekli_turta:{base:1}}},
     {id:'balli_kaymak',    name:'Ballı Kaymak',     icon:'🍯', minLv:7, dur:150, inputs:{kaymak:1,bal:1},               outputs:{balli_kaymak:{base:1}}},
   ],
+  insaa:[
+    {id:'lumber', name:'Kereste Yap', icon:'🪵', minLv:1, dur:300, inputs:{meseLodunu:1}, outputs:{kereste:{base:1,chance:0}}},
+    {id:'smelt',  name:'Çivi Yap',    icon:'🔩', minLv:1, dur:300, inputs:{demir:1},      outputs:{civi:{base:1,chance:0}}},
+    {id:'bake',   name:'Tuğla Yap',   icon:'🧱', minLv:1, dur:300, inputs:{kil:1},        outputs:{tugla:{base:1,chance:0}}},
+  ],
 };
 const FOOD_VALUE={bugday:1,arpa:1,sebze:2,saman:0,un:0,arpa_unu:0,tuy:0,yumurta:2,yun:0,sut:2,ekmek:0,corba:0,kek:0,patates:1,domates:2,cicek:0,yonca:0,cilek:3,bugday_unu:0,patates_puresi:3,kaymak:4,cilek_puresi:4,domates_puresi:3,bal:2,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0};
 const KITCHEN_FOOD_VALUES={domates_corbasi:10,patates_corbasi:12,ekmek:12,salcali_ekmek:15,borek:18,cilekli_turta:20,balli_kaymak:25};
-const ITEM_LABELS={bugday:'Buğday',saman:'Saman',arpa:'Arpa',sebze:'Sebze',un:'Un',arpa_unu:'Arpa Unu',tuy:'Tüy',yumurta:'Yumurta',yun:'Yün',sut:'Süt',ekmek:'Ekmek',corba:'Çorba',kek:'Kek',patates:'Patates',domates:'Domates',cicek:'Çiçek',yonca:'Yonca',cilek:'Çilek',patates_tohum:'Patates Tohumu',domates_tohum:'Domates Tohumu',cicek_tohum:'Çiçek Tohumu',yonca_tohum:'Yonca Tohumu',cilek_tohum:'Çilek Tohumu',bugday_unu:'Buğday Unu',patates_puresi:'Patates Püresi',kaymak:'Kaymak',cilek_puresi:'Çilek Püresi',domates_puresi:'Domates Püresi',bal:'Bal',domates_corbasi:'Domates Çorbası',patates_corbasi:'Patates Çorbası',salcali_ekmek:'Salçalı Ekmek',borek:'Börek',cilekli_turta:'Çilekli Turta',balli_kaymak:'Ballı Kaymak'};
-const ITEM_ICONS={bugday:'🌾',saman:'🌿',arpa:'🌱',sebze:'🥦',un:'🥛',arpa_unu:'🥛',tuy:'🪶',yumurta:'🥚',yun:'🧶',sut:'🥛',ekmek:'🍞',corba:'🥣',kek:'🎂',patates:'🥔',domates:'🍅',cicek:'🌸',yonca:'🍀',cilek:'🍓',patates_tohum:'🌱',domates_tohum:'🌱',cicek_tohum:'🌱',yonca_tohum:'🌱',cilek_tohum:'🌱',bugday_unu:'🫙',patates_puresi:'🫙',kaymak:'🫙',cilek_puresi:'🫙',domates_puresi:'🫙',bal:'🍯',domates_corbasi:'🥣',patates_corbasi:'🥣',salcali_ekmek:'🍞',borek:'🥐',cilekli_turta:'🍓',balli_kaymak:'🍯'};
+const ITEM_LABELS={bugday:'Buğday',saman:'Saman',arpa:'Arpa',sebze:'Sebze',un:'Un',arpa_unu:'Arpa Unu',tuy:'Tüy',yumurta:'Yumurta',yun:'Yün',sut:'Süt',ekmek:'Ekmek',corba:'Çorba',kek:'Kek',patates:'Patates',domates:'Domates',cicek:'Çiçek',yonca:'Yonca',cilek:'Çilek',patates_tohum:'Patates Tohumu',domates_tohum:'Domates Tohumu',cicek_tohum:'Çiçek Tohumu',yonca_tohum:'Yonca Tohumu',cilek_tohum:'Çilek Tohumu',bugday_unu:'Buğday Unu',patates_puresi:'Patates Püresi',kaymak:'Kaymak',cilek_puresi:'Çilek Püresi',domates_puresi:'Domates Püresi',bal:'Bal',domates_corbasi:'Domates Çorbası',patates_corbasi:'Patates Çorbası',salcali_ekmek:'Salçalı Ekmek',borek:'Börek',cilekli_turta:'Çilekli Turta',balli_kaymak:'Ballı Kaymak',meseLodunu:'Meşe Odunu',demir:'Demir',kil:'Kil',kereste:'Kereste',civi:'Çivi',tugla:'Tuğla'};
+const ITEM_ICONS={bugday:'🌾',saman:'🌿',arpa:'🌱',sebze:'🥦',un:'🥛',arpa_unu:'🥛',tuy:'🪶',yumurta:'🥚',yun:'🧶',sut:'🥛',ekmek:'🍞',corba:'🥣',kek:'🎂',patates:'🥔',domates:'🍅',cicek:'🌸',yonca:'🍀',cilek:'🍓',patates_tohum:'🌱',domates_tohum:'🌱',cicek_tohum:'🌱',yonca_tohum:'🌱',cilek_tohum:'🌱',bugday_unu:'🫙',patates_puresi:'🫙',kaymak:'🫙',cilek_puresi:'🫙',domates_puresi:'🫙',bal:'🍯',domates_corbasi:'🥣',patates_corbasi:'🥣',salcali_ekmek:'🍞',borek:'🥐',cilekli_turta:'🍓',balli_kaymak:'🍯',meseLodunu:'🪵',demir:'⛏',kil:'🪣',kereste:'🪵',civi:'🔩',tugla:'🧱'};
 const GRADES={gray:{name:'Ortak'},green:{name:'Nadir'},blue:{name:'Değerli'},purple:{name:'Epik'},orange:{name:'Efsanevi'}};
 const STAT_LABELS={atk:'Saldırı',def:'Savunma',mgc:'Büyü',wis:'Bilgelik',spd:'Hız',crit:'Kritik',acc:'İsabet',str:'Güç',hp:'Can',hp_restore:'Can Yenile',atk_boost:'Saldırı Artış',craft_iron:'Demir',craft_wood:'Odun',craft_legendary:'Efsanevi Crafting',luck:'Şans'};
 const NOTIFS=[];
@@ -2739,7 +2750,7 @@ const G={
   explored:new Set([21,22,27,28,14,15,20]),
   selectedCell:null,
   prodTimers:[],prodTimerId:1,
-  prodInv:{bugday:5,saman:3,arpa:0,sebze:0,un:2,arpa_unu:0,tuy:1,yumurta:3,yun:1,sut:4,ekmek:0,corba:0,kek:0,patates:0,domates:0,cicek:0,yonca:0,cilek:0,patates_tohum:0,domates_tohum:0,cicek_tohum:0,yonca_tohum:0,cilek_tohum:0,bugday_unu:0,patates_puresi:0,kaymak:0,cilek_puresi:0,domates_puresi:0,bal:0,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0,meseLodunu:0,demir:0,kil:0},
+  prodInv:{bugday:5,saman:3,arpa:0,sebze:0,un:2,arpa_unu:0,tuy:1,yumurta:3,yun:1,sut:4,ekmek:0,corba:0,kek:0,patates:0,domates:0,cicek:0,yonca:0,cilek:0,patates_tohum:0,domates_tohum:0,cicek_tohum:0,yonca_tohum:0,cilek_tohum:0,bugday_unu:0,patates_puresi:0,kaymak:0,cilek_puresi:0,domates_puresi:0,bal:0,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0,meseLodunu:0,demir:0,kil:0,kereste:0,civi:0,tugla:0},
   matInv:{ham_demir:0, guc_runesi:0, ejderha_pulu:0, thros_kanadi:0, dev_disi:0, anka_kulu:0, ruh_kristali:0, iblis_kani:0, semavi_oz:0},
   guildName:'',
   guildId:null,
@@ -4136,7 +4147,9 @@ function renderHarita(){
       d.style.backgroundImage=`url('${cell.img}')`;
       d.style.backgroundSize='cover';
       d.style.backgroundPosition='center';
-      const gatherBadge=gathering?`<span id="gather-timer-${idx}" style="position:absolute;bottom:2px;right:2px;font-size:7px;font-family:var(--font-head);background:#000000aa;color:var(--gold);padding:1px 3px;border-radius:3px;">⏳--:--</span>`:'';
+      const gatherBadge=gathering
+        ?`<span id="gather-timer-${idx}" style="position:absolute;bottom:2px;right:2px;font-size:7px;font-family:var(--font-head);background:#000000aa;color:var(--gold);padding:1px 3px;border-radius:3px;">⏳--:--</span>`
+        :cell.harvested?`<span style="position:absolute;bottom:2px;right:2px;font-size:8px;background:#000000aa;color:#7aaa5a;padding:1px 3px;border-radius:3px;">✓</span>`:'';
       d.innerHTML=`<span class="mlbl" style="background:#00000066;padding:1px 4px;border-radius:3px;">${cell.n}</span>${gatherBadge}`;
     } else if(exploring){
       d.style.background='#1a1040';
@@ -4188,7 +4201,9 @@ function cellClick(idx,cell){
       const gathering=gatherTimers.find(t=>t.cellIdx===idx);
       let btnHtml='';
       if(ga){
-        if(gathering){
+        if(cell.harvested){
+          btnHtml=`<div style="margin-top:8px;padding:8px;background:var(--panel3);border-radius:8px;border:1px solid var(--border);text-align:center;font-size:11px;color:var(--ink3);">✓ Bu bölgeden kaynak toplandı. Harita yenilenince tekrar kullanılabilir.</div>`;
+        } else if(gathering){
           const m=Math.floor(gathering.remaining/60),s=gathering.remaining%60;
           btnHtml=`<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;padding:8px;background:var(--panel3);border-radius:8px;border:1px solid var(--border2);">
             <span style="font-size:14px;">⏳</span>
@@ -6424,7 +6439,7 @@ async function createGuild(){
 /* ══════════════════════════════════════
    ÜRETİM
 ══════════════════════════════════════ */
-function pgo(t){G.prodTab=t;['farm','mill','ranch','kitchen','depot'].forEach(x=>{document.getElementById('pt-'+x).classList.toggle('active',x===t);});updateInvStrip();renderProd(t);}
+function pgo(t){G.prodTab=t;['farm','mill','ranch','kitchen','insaa','depot'].forEach(x=>{document.getElementById('pt-'+x).classList.toggle('active',x===t);});updateInvStrip();renderProd(t);}
 function updateInvStrip(){
   const keys=['bugday','saman','arpa','sebze','un','arpa_unu','tuy','yumurta','yun','sut','ekmek','corba','kek','bugday_unu','patates_puresi','kaymak','cilek_puresi','domates_puresi'];
   const el=document.getElementById('inv-strip');if(!el)return;
@@ -6437,6 +6452,7 @@ function renderProd(t){
   if(t==='mill'){renderMill();return;}
   if(t==='ranch'){renderRanch();return;}
   if(t==='kitchen'){renderKitchen();return;}
+  if(t==='insaa'){renderInsaa();return;}
   const bld=PROD_BUILDINGS[t];
   if(!bld){el.innerHTML='';return;}
 
@@ -7484,17 +7500,128 @@ async function sbLoadProdTimers(){
   updateInvStrip();
 }
 
+/* ── İNŞAA YERİ ── */
+function insaaSlots(){return 3+(PROD_BUILDINGS.insaa.level-1);}
+function insaaDur(){return Math.floor(300*Math.pow(0.95,PROD_BUILDINGS.insaa.level-1));}
+
+function renderInsaa(){
+  const bld=PROD_BUILDINGS.insaa;
+  const lv=bld.level;
+  const slots=insaaSlots();
+  const dur=insaaDur();
+  const activeTimers=G.prodTimers.filter(x=>x.building==='insaa');
+  const usedSlots=activeTimers.length;
+  const fmtT=s=>{const m=Math.floor(s/60),sc=s%60;return `${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;};
+
+  const recipes=PROD_RECIPES.insaa;
+  let recipeHtml='';
+  recipes.forEach(r=>{
+    const inputKey=Object.keys(r.inputs)[0];
+    const outputKey=Object.keys(r.outputs)[0];
+    const hasInput=(G.prodInv[inputKey]||0)>=1;
+    const slotsAvail=usedSlots<slots;
+    const canStart=hasInput&&slotsAvail;
+    recipeHtml+=`
+    <div class="recipe" style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-family:var(--font-head);font-size:12px;color:var(--perg2);">${r.icon} ${r.name}</span>
+        <span style="font-size:10px;color:var(--ink3);">${fmtT(dur)}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px;flex-wrap:wrap;">
+        <span class="mat-chip${!hasInput?' missing':''}">${ITEM_ICONS[inputKey]||'📦'} ${ITEM_LABELS[inputKey]||inputKey} ×1 <span style="font-size:8px;color:var(--ink3);">(${G.prodInv[inputKey]||0})</span></span>
+        <span style="color:var(--ink3);">→</span>
+        <span class="mat-chip output">${ITEM_ICONS[outputKey]||'📦'} ${ITEM_LABELS[outputKey]||outputKey} ×1</span>
+      </div>
+      <button class="btn btn-xs" style="width:100%;" onclick="startInsaaProd('${r.id}')" ${canStart?'':'disabled'}>
+        ${!hasInput?'Malzeme Eksik':!slotsAvail?'Slot Dolu':'▶ Başlat'}
+      </button>
+    </div>`;
+  });
+
+  const upgCost=lv<bld.max?Math.floor(bld.cost*Math.pow(1.6,lv)):null;
+  let upgHtml='';
+  if(upgCost){
+    const nextSlots=slots+1;
+    const nextDur=Math.floor(300*Math.pow(0.95,lv));
+    upgHtml=`<div class="sec" style="margin-top:10px;">GELİŞTİR</div>
+    <div class="card row-between">
+      <div>
+        <div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">Sv.${lv} → Sv.${lv+1}</div>
+        <div style="font-size:10px;color:var(--ink3);margin-top:2px;">Slot: ${slots} → ${nextSlots} · Süre: ${fmtT(dur)} → ${fmtT(nextDur)}</div>
+      </div>
+      <button class="btn btn-sm" onclick="upgProd('insaa',${upgCost})" ${G.gold>=upgCost?'':'disabled'}>${upgCost}🪙</button>
+    </div>`;
+  }
+
+  let rightHtml=`<div class="sec" style="margin-top:0;">AKTİF ÜRETİM <span style="font-size:10px;color:var(--ink3);">(${usedSlots}/${slots})</span></div>`;
+  if(activeTimers.length){
+    rightHtml+=activeTimers.map(x=>timerCardHTML(x)).join('');
+  } else {
+    rightHtml+=`<div style="text-align:center;padding:24px 12px;border:1px dashed var(--border);border-radius:10px;color:var(--ink3);">
+      <div style="font-size:28px;margin-bottom:6px;">🏗</div>
+      <div style="font-size:12px;">Aktif dönüşüm yok</div>
+      <div style="font-size:10px;margin-top:3px;">Sol taraftan malzeme seç</div>
+    </div>`;
+  }
+
+  document.getElementById('prod-content').innerHTML=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+        <div style="width:42px;height:42px;border-radius:9px;background:var(--panel);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:22px;">🏗</div>
+        <div>
+          <div style="font-family:var(--font-head);font-size:13px;color:var(--perg);">İnşaa Yeri</div>
+          <span class="tag tag-gold" style="font-size:8px;">Sv.${lv}/${bld.max}</span>
+        </div>
+      </div>
+      <div class="sec" style="margin-top:0;">DÖNÜŞÜM TARİFLERİ</div>
+      ${recipeHtml}
+      ${upgHtml}
+    </div>
+    <div>${rightHtml}</div>
+  </div>
+  <style>@media(max-width:700px){#prod-content>div[style*="grid-template-columns"]{grid-template-columns:1fr!important;}}</style>`;
+}
+
+async function startInsaaProd(rId){
+  const bld=PROD_BUILDINGS.insaa;
+  const r=PROD_RECIPES.insaa.find(x=>x.id===rId);if(!r)return;
+  const slots=insaaSlots();
+  const dur=insaaDur();
+  const usedSlots=G.prodTimers.filter(x=>x.building==='insaa').length;
+  if(usedSlots>=slots){toast('Slot dolu! Önce mevcut ürünleri topla.');return;}
+  const inputKey=Object.keys(r.inputs)[0];
+  const outputKey=Object.keys(r.outputs)[0];
+  if((G.prodInv[inputKey]||0)<1){toast('Malzeme eksik!');return;}
+  G.prodInv[inputKey]--;
+  const outputs={[outputKey]:{amount:1,bonus:false}};
+  let dbId=null;
+  if(currentUser){
+    const {data,error}=await supa.from('production_timers').insert({
+      profile_id:currentUser.id,
+      building:'insaa',
+      recipe_id:rId,
+      duration_secs:dur,
+      outputs
+    }).select().single();
+    if(!error&&data) dbId=data.id;
+  }
+  G.prodTimers.push({id:G.prodTimerId++,dbId,building:'insaa',recipe:rId,remaining:dur,total:dur,outputs});
+  updateInvStrip();renderInsaa();toast(`${r.name} başlatıldı! (${Math.floor(dur/60)} dk)`);sbSave();
+}
+
 function renderDepot(){
   const groups=[
     {lbl:'🌾 Tarla',   keys:['bugday','arpa','patates','domates','cicek','yonca','cilek','saman']},
     {lbl:'⚙ Değirmen', keys:['bugday_unu','arpa_unu','patates_puresi','kaymak','cilek_puresi','domates_puresi']},
     {lbl:'🐄 Çiftlik', keys:['tuy','yumurta','sut','yun','bal']},
     {lbl:'🍳 Aşevi',   keys:['domates_corbasi','patates_corbasi','ekmek','salcali_ekmek','borek','cilekli_turta','balli_kaymak']},
+    {lbl:'🏗 İnşaa',   keys:['meseLodunu','demir','kil','kereste','civi','tugla'], always:true},
   ];
   const BASE='https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/';
   let html='';
   groups.forEach(g=>{
-    const items=g.keys.filter(k=>(G.prodInv[k]||0)>0||(k==='saman'));
+    const items=g.keys.filter(k=>g.always||(G.prodInv[k]||0)>0||(k==='saman'));
     if(!items.length) return;
     html+=`<div class="sec">${g.lbl}</div><div class="market-grid" style="margin-bottom:14px;">`;
     html+=items.map(k=>{
@@ -7810,8 +7937,9 @@ async function sbLoadProfile() {
   if(p.prod_mill !== undefined) PROD_BUILDINGS.mill.level = p.prod_mill;
   if(p.prod_ranch !== undefined) PROD_BUILDINGS.ranch.level = p.prod_ranch;
   if(p.prod_kitchen !== undefined) PROD_BUILDINGS.kitchen.level = p.prod_kitchen;
+  if(p.prod_insaa !== undefined) PROD_BUILDINGS.insaa.level = p.prod_insaa;
   // Üretim envanteri
-  if(p.prod_inv && Object.keys(p.prod_inv).length) G.prodInv = p.prod_inv;
+  if(p.prod_inv && Object.keys(p.prod_inv).length) G.prodInv = {...G.prodInv, ...p.prod_inv};
   if(p.mat_inv && typeof p.mat_inv==='object') G.matInv = {...G.matInv, ...p.mat_inv};
   // Oyuncu envanteri ve kuşanılan eşyalar
   if(p.inventory && Array.isArray(p.inventory)) G.inventory = p.inventory;
@@ -7875,6 +8003,7 @@ async function sbSave() {
       prod_mill:    PROD_BUILDINGS.mill.level,
       prod_ranch:   PROD_BUILDINGS.ranch.level,
       prod_kitchen: PROD_BUILDINGS.kitchen.level,
+      prod_insaa:   PROD_BUILDINGS.insaa.level,
       prod_inv:     G.prodInv,
       mat_inv:      G.matInv,
       inventory:    G.inventory,
