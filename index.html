@@ -757,6 +757,19 @@ html,body{
   flex-shrink: 0;
 }
 
+/* ── GLOBAL CHAT ── */
+.gchat-fab{position:fixed;bottom:70px;right:14px;z-index:1200;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#2a1e10,#1a1208);border:2px solid var(--gold);color:var(--gold);font-size:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 18px #00000090;transition:transform .15s;user-select:none;}
+.gchat-fab:hover{transform:scale(1.08);}
+.gchat-dot{position:absolute;top:-3px;right:-3px;width:13px;height:13px;background:var(--hp);border-radius:50%;border:2px solid var(--panel2);display:none;pointer-events:none;}
+.gchat-win{position:fixed;bottom:130px;right:14px;width:320px;height:430px;z-index:1199;background:var(--panel2);border:1px solid var(--border2);border-radius:12px;display:none;flex-direction:column;box-shadow:0 8px 32px #00000095;overflow:hidden;}
+.gchat-hdr{background:var(--panel3);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0;}
+.gchat-msgs{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px;scroll-behavior:smooth;}
+.gchat-inp-row{padding:8px;border-top:1px solid var(--border);display:flex;gap:6px;flex-shrink:0;}
+.gchat-inp-row input{flex:1;background:var(--panel3);border:1px solid var(--border2);border-radius:6px;color:var(--perg2);font-size:12px;padding:6px 8px;font-family:var(--font-body);outline:none;}
+.gchat-inp-row input:focus{border-color:var(--gold);}
+@media(min-width:600px){.gchat-fab{bottom:20px;right:20px;}.gchat-win{bottom:80px;right:20px;}}
+@media(max-width:599px){.gchat-win.open{top:0;left:0;right:0;bottom:0;width:100%;height:100%;border-radius:0;}}
+
 /* ── BOSS BİLDİRİM POPUP ── */
 .boss-notif-overlay{
   position:fixed;top:0;left:0;right:0;bottom:0;
@@ -1751,6 +1764,25 @@ html,body{
       <div class="tab"        id="pft-settings"onclick="pfgo('settings')"><span class="tab-icon">⚙</span>Ayarlar</div>
     </div>
     <div class="scroll pad" id="profile-content"></div>
+  </div>
+
+  <!-- GLOBAL CHAT FAB -->
+  <div class="gchat-fab" id="gchat-fab" style="display:none;" onclick="toggleGlobalChat()">
+    💬<div class="gchat-dot" id="gchat-dot"></div>
+  </div>
+  <!-- GLOBAL CHAT WINDOW -->
+  <div class="gchat-win" id="gchat-win">
+    <div class="gchat-hdr">
+      <span style="font-family:var(--font-head);font-size:13px;color:var(--gold);">💬 Dünya Sohbeti</span>
+      <button class="btn btn-xs btn-ghost" onclick="toggleGlobalChat()">✕</button>
+    </div>
+    <div class="gchat-msgs" id="gchat-msgs">
+      <div style="text-align:center;padding:20px;font-size:11px;color:var(--ink3);">Yükleniyor...</div>
+    </div>
+    <div class="gchat-inp-row">
+      <input type="text" id="gchat-inp" placeholder="Mesaj yaz... (Enter)" maxlength="200" onkeydown="if(event.key==='Enter')sendGlobalChat()">
+      <button class="btn btn-xs" onclick="sendGlobalChat()">➤</button>
+    </div>
   </div>
 
   <!-- BOTTOM NAV -->
@@ -2888,7 +2920,7 @@ async function startGame(){
   }
   document.getElementById('p-onboard').classList.remove('active');
   document.getElementById('p-game').classList.add('active');
-  document.getElementById('bottom-nav').style.display='flex';
+  document.getElementById('bottom-nav').style.display='flex';document.getElementById('gchat-fab').style.display='flex';
   questLoad();
   updateHUD();renderGame('karakter');renderGame('kale');renderGame('gelistirme');renderGame('halk');renderGame('harita');renderGame('arena');renderGame('zindan');
   renderQuest(G.questTab);renderMarket();renderGuild(G.guildTab);renderProd(G.prodTab);renderProfile(G.profileTab);
@@ -6327,6 +6359,101 @@ function showBossResultNotif(boss,won,isLocal,dropped=false,dropItem=null,matDro
   setTimeout(()=>overlay?.remove(),18000);
 }
 let chatChannel=null;
+
+/* ══════════════════════════════════════
+   GLOBAL CHAT
+══════════════════════════════════════ */
+let globalChatChannel=null;
+let globalMsgs=[];
+let gchatOpen=false;
+let gchatUnread=0;
+
+function toggleGlobalChat(){
+  gchatOpen=!gchatOpen;
+  const win=document.getElementById('gchat-win');
+  if(gchatOpen){
+    win.style.display='flex';
+    win.classList.add('open');
+    gchatUnread=0;
+    document.getElementById('gchat-dot').style.display='none';
+    if(!globalChatChannel) initGlobalChat();
+    else {renderGlobalMsgs();setTimeout(()=>document.getElementById('gchat-inp')?.focus(),100);}
+  } else {
+    win.style.display='none';
+    win.classList.remove('open');
+  }
+}
+
+async function initGlobalChat(){
+  await loadGlobalChatHistory();
+  subscribeGlobalChat();
+  setTimeout(()=>document.getElementById('gchat-inp')?.focus(),100);
+}
+
+async function loadGlobalChatHistory(){
+  const {data}=await supa.from('global_chat').select('*').order('created_at',{ascending:true}).limit(80);
+  if(!data)return;
+  globalMsgs=data.map(m=>({
+    profileId:m.profile_id,username:m.username,heroName:m.hero_name,
+    classIcon:m.class_icon||'⚔',text:m.message,
+    ts:new Date(m.created_at),mine:m.profile_id===currentUser?.id,
+  }));
+  renderGlobalMsgs();
+}
+
+function subscribeGlobalChat(){
+  if(globalChatChannel) supa.removeChannel(globalChatChannel);
+  globalChatChannel=supa.channel('global-chat-v1')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'global_chat'},payload=>{
+      const m=payload.new;
+      const mine=m.profile_id===currentUser?.id;
+      globalMsgs.push({profileId:m.profile_id,username:m.username,heroName:m.hero_name,classIcon:m.class_icon||'⚔',text:m.message,ts:new Date(m.created_at),mine});
+      if(globalMsgs.length>200) globalMsgs=globalMsgs.slice(-200);
+      renderGlobalMsgs();
+      if(!gchatOpen&&!mine){
+        gchatUnread++;
+        const dot=document.getElementById('gchat-dot');
+        if(dot) dot.style.display='block';
+      }
+    }).subscribe();
+}
+
+function renderGlobalMsgs(){
+  const box=document.getElementById('gchat-msgs');if(!box)return;
+  if(!globalMsgs.length){box.innerHTML='<div style="text-align:center;padding:20px;font-size:11px;color:var(--ink3);">Henüz mesaj yok. İlk sen yaz! 👋</div>';return;}
+  const fmtTs=d=>{
+    const now=new Date();
+    const sameDay=d.toDateString()===now.toDateString();
+    const h=String(d.getHours()).padStart(2,'0'),mn=String(d.getMinutes()).padStart(2,'0');
+    if(sameDay) return `${h}:${mn}`;
+    const day=String(d.getDate()).padStart(2,'0'),mon=String(d.getMonth()+1).padStart(2,'0');
+    return `${day}.${mon} ${h}:${mn}`;
+  };
+  box.innerHTML=globalMsgs.map(m=>`
+    <div class="chat-msg ${m.mine?'mine':'other'}">
+      ${!m.mine?`<div class="chat-meta"><span class="chat-sender">${m.classIcon} ${m.heroName||'?'}</span><span style="color:var(--ink3);margin-left:3px;font-size:7px;">@${m.username||'?'}</span></div>`:''}
+      <div class="chat-bubble">${m.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      <div class="chat-meta">${fmtTs(m.ts)}</div>
+    </div>`).join('');
+  box.scrollTop=box.scrollHeight;
+}
+
+async function sendGlobalChat(){
+  const inp=document.getElementById('gchat-inp');
+  if(!inp||!inp.value.trim())return;
+  if(!currentUser){toast('Giriş yapman gerekiyor.');return;}
+  const cls=CLASSES.find(c=>c.id===G.classId);
+  const msg=inp.value.trim().slice(0,200);inp.value='';
+  const {error}=await supa.from('global_chat').insert({
+    profile_id:currentUser.id,
+    username:G.username||currentUser.email?.split('@')[0]||'?',
+    hero_name:G.heroName||'Kahraman',
+    class_icon:cls?.icon||'⚔',
+    message:msg,
+  });
+  if(error) toast('Mesaj gönderilemedi: '+error.message);
+}
+
 function renderGuildChat(){
   if(!G.guildId){document.getElementById('guild-content').innerHTML=`<div style="text-align:center;padding:30px;font-size:13px;color:var(--ink3);">Sohbet için önce bir loncaya katıl.</div>`;return;}
   document.getElementById('guild-content').innerHTML=`
@@ -7752,7 +7879,7 @@ function renderProfile(t){
 function toggleSetting(id){const el=document.getElementById('tog-'+id);if(!el)return;el.classList.toggle('on');toast(el.classList.contains('on')?'Açıldı':'Kapatıldı');}
 function readNotif(id){const n=NOTIFS.find(x=>x.id===id);if(n){n.read=true;}G.notifCount=NOTIFS.filter(x=>!x.read).length;const dot=document.getElementById('notif-dot');if(dot) dot.style.display=G.notifCount>0?'block':'none';renderProfile('profile');}
 function markAllRead(){NOTIFS.forEach(n=>n.read=true);G.notifCount=0;const dot=document.getElementById('notif-dot');if(dot) dot.style.display='none';toast('Tüm bildirimler okundu.');renderProfile('profile');}
-function logout(){document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));document.getElementById('p-onboard').classList.add('active');document.getElementById('bottom-nav').style.display='none';toast('Çıkış yapıldı.');}
+function logout(){document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));document.getElementById('p-onboard').classList.add('active');document.getElementById('bottom-nav').style.display='none';document.getElementById('gchat-fab').style.display='none';document.getElementById('gchat-win').style.display='none';if(globalChatChannel){supa.removeChannel(globalChatChannel);globalChatChannel=null;}gchatOpen=false;toast('Çıkış yapıldı.');}
 
 /* ══════════════════════════════════════
    MODAL & TOAST
@@ -8119,7 +8246,7 @@ async function doLogin() {
     // Direkt oyuna geç (startGame içindeki kayıt bloğunu atla)
     document.getElementById('p-onboard').classList.remove('active');
     document.getElementById('p-game').classList.add('active');
-    document.getElementById('bottom-nav').style.display='flex';
+    document.getElementById('bottom-nav').style.display='flex';document.getElementById('gchat-fab').style.display='flex';
     updateHUD();
     renderGame('karakter');renderGame('kale');renderGame('gelistirme');renderGame('halk');renderGame('harita');renderGame('arena');renderGame('zindan');
     renderQuest(G.questTab);renderMarket();renderGuild(G.guildTab);renderProd(G.prodTab);renderProfile(G.profileTab);
@@ -8567,7 +8694,7 @@ const nd=document.getElementById('notif-dot');if(nd) nd.style.display='block';
       obClass = G.classId;
       document.getElementById('p-onboard').classList.remove('active');
       document.getElementById('p-game').classList.add('active');
-      document.getElementById('bottom-nav').style.display='flex';
+      document.getElementById('bottom-nav').style.display='flex';document.getElementById('gchat-fab').style.display='flex';
       questLoad();
       updateHUD();
       renderGame('karakter');renderGame('kale');renderGame('gelistirme');renderGame('halk');renderGame('harita');renderGame('arena');renderGame('zindan');
