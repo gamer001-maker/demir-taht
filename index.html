@@ -2162,7 +2162,7 @@ function startGather(idx, type){
   toast('Başladı! 2 dakika sonra tamamlanacak. ⏳');
   renderHarita();
   // Info kartını güncelle
-  if(G.selectedCell===idx) cellClick(idx,G_MAP[idx]);
+  if(G.selectedCell===idx) cellClick(idx);
 }
 
 function finishGather(idx, type){
@@ -2201,6 +2201,9 @@ function finishGather(idx, type){
   G_MAP[idx].harvested=true;
   if(currentUser) supa.from('player_maps').upsert({profile_id:currentUser.id,cells:G_MAP},{onConflict:'profile_id'});
   gainXP(15);updateHUD();renderKarakter();
+  renderHarita();
+  // Info kartını güncelle (o kare seçiliyse)
+  if(G.selectedCell===idx) cellClick(idx);
   if(currentUser) sbSave();
 }
 
@@ -4247,11 +4250,13 @@ function renderHarita(){
     } else {
       d.innerHTML=`<span style="font-size:18px;">❓</span>`;
     }
-    d.onclick=()=>cellClick(idx,cell);
+    d.onclick=()=>cellClick(idx);
     grid.appendChild(d);
   });
 }
-function cellClick(idx,cell){
+function cellClick(idx,_cell){
+  const cell=G_MAP[idx]; // her zaman güncel referansı kullan
+  if(!cell) return;
   const info=document.getElementById('map-info-card');
   const exploring=exploreTimers.find(t=>t.cellIdx===idx);
   if(exploring){
