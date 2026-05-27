@@ -1378,6 +1378,15 @@ html,body{
 .pvp-act-icon{display:block;font-size:20px;margin-bottom:2px;}
 .pvp-act.pa-attack{border-color:#8b1e1e;}.pvp-act.pa-defend{border-color:#2a4a6a;}.pvp-act.pa-magic{border-color:#7a4a8a;}.pvp-act.pa-flee{border-color:#4a3a18;}
 .pvp-result{text-align:center;padding:14px;background:#00000080;flex-shrink:0;}
+/* ── DEPO SATIŞ POPUP ── */
+.depo-pop-ov{position:fixed;inset:0;z-index:1800;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;}
+.depo-pop-card{background:var(--panel2);border:1px solid var(--border2);border-radius:14px;padding:16px 14px;width:240px;box-shadow:0 10px 40px #000000b0;font-family:Arial,sans-serif;}
+.depo-pop-img{width:72px;height:72px;object-fit:contain;display:block;margin:0 auto 6px;}
+.depo-pop-name{font-family:var(--font-head);font-size:12px;color:var(--gold);text-align:center;margin-bottom:2px;}
+.depo-pop-stock{font-size:11px;color:var(--ink3);text-align:center;margin-bottom:10px;}
+.depo-pop-sep{border:none;border-top:1px solid var(--border);margin:10px 0;}
+.depo-pop-lbl{font-size:10px;color:var(--perg2);margin-bottom:4px;}
+.depo-pop-qty{width:100%;box-sizing:border-box;background:var(--panel);border:1px solid var(--border2);border-radius:6px;color:var(--perg);font-size:13px;padding:5px 8px;outline:none;font-family:Arial,sans-serif;margin-bottom:8px;}
 /* ── SIRALAMALAR ── */
 .lb-overlay{position:fixed;inset:0;z-index:2000;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
 .lb-sheet{flex:1;display:flex;flex-direction:column;overflow:hidden;}
@@ -7866,6 +7875,77 @@ async function startInsaaProd(rId){
   updateInvStrip();renderInsaa();toast(`${r.name} başlatıldı! (${Math.floor(dur/60)} dk)`);sbSave();
 }
 
+const IMG_BASE_DEPO='https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/';
+
+function showDepoPopup(key){
+  const amt=G.prodInv[key]||0;
+  const label=ITEM_LABELS[key]||key;
+  const icon=ITEM_ICONS[key]||'📦';
+  const imgFile=ITEM_IMGS[key]||key;
+  document.getElementById('depo-pop-ov')?.remove();
+  const ov=document.createElement('div');
+  ov.id='depo-pop-ov';ov.className='depo-pop-ov';
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  ov.innerHTML=`
+    <div class="depo-pop-card">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
+        <button class="btn btn-xs btn-ghost" onclick="document.getElementById('depo-pop-ov').remove()">✕</button>
+      </div>
+      <img class="depo-pop-img" src="${IMG_BASE_DEPO}${imgFile}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <div style="font-size:34px;display:none;text-align:center;margin-bottom:6px;">${icon}</div>
+      <div class="depo-pop-name">${label}</div>
+      <div class="depo-pop-stock">Stok: <b style="color:var(--gold)">${amt}</b></div>
+      <div class="depo-pop-lbl">Adet</div>
+      <input class="depo-pop-qty" id="depo-pop-qty" type="number" min="1" max="${amt}" value="1">
+      <hr class="depo-pop-sep">
+      <div class="depo-pop-lbl" style="margin-bottom:6px;">NPC'ye Sat <span style="color:var(--gold)">50🪙/adet</span></div>
+      <button class="btn btn-sm" style="width:100%;margin-bottom:10px;" onclick="npcSellDepo('${key}')">Sat</button>
+      <hr class="depo-pop-sep">
+      <div class="depo-pop-lbl">Pazar fiyatı (🪙/adet)</div>
+      <input class="depo-pop-qty" id="depo-pop-price" type="number" min="1" value="100" style="margin-bottom:8px;">
+      <button class="btn btn-sm" style="width:100%;background:var(--panel3);" onclick="marketListDepo('${key}')">Pazarda Listele</button>
+    </div>`;
+  document.body.appendChild(ov);
+}
+
+function npcSellDepo(key){
+  const qty=Math.max(1,parseInt(document.getElementById('depo-pop-qty')?.value)||1);
+  const have=G.prodInv[key]||0;
+  const sell=Math.min(qty,have);
+  if(sell<=0){toast('Yeterli malzeme yok!');return;}
+  G.prodInv[key]-=sell;
+  G.gold+=sell*50;
+  document.getElementById('depo-pop-ov')?.remove();
+  updateHUD();renderDepot();
+  toast(`${sell}x ${ITEM_LABELS[key]||key} satıldı → +${sell*50}🪙`);
+  if(currentUser) sbSave();
+}
+
+async function marketListDepo(key){
+  if(!currentUser){toast('Giriş yapman gerekiyor!');return;}
+  const qty=Math.max(1,parseInt(document.getElementById('depo-pop-qty')?.value)||1);
+  const price=Math.max(1,parseInt(document.getElementById('depo-pop-price')?.value)||1);
+  const have=G.prodInv[key]||0;
+  const sell=Math.min(qty,have);
+  if(sell<=0){toast('Yeterli malzeme yok!');return;}
+  G.prodInv[key]-=sell;
+  document.getElementById('depo-pop-ov')?.remove();
+  renderDepot();
+  if(currentUser) sbSave();
+  const label=ITEM_LABELS[key]||key;
+  const icon=ITEM_ICONS[key]||'📦';
+  const imgFile=ITEM_IMGS[key]||null;
+  const rows=Array.from({length:sell},()=>({
+    seller_id:currentUser.id,seller_name:G.heroName||G.username,
+    item_name:label,item_icon:icon,item_type:'Hammadde',item_grade:'gray',
+    item_stats:{},item_desc:'Üretim hammaddesi.',item_img:imgFile,
+    item_req_lv:1,item_material:null,item_class_bonus:null,item_enh_plus:0,price
+  }));
+  const {error}=await supa.from('marketplace').insert(rows);
+  if(error){G.prodInv[key]+=sell;renderDepot();toast('Listeleme hatası: '+error.message);return;}
+  toast(`${sell}x ${label} pazara listelendi! (${price}🪙/adet)`);
+}
+
 function renderDepot(){
   const groups=[
     {lbl:'🌾 Tarla',   keys:['bugday','arpa','patates','domates','cicek','yonca','cilek','saman']},
@@ -7885,7 +7965,7 @@ function renderDepot(){
       const icon=ITEM_ICONS[k]||'📦';
       const label=ITEM_LABELS[k]||k;
       const imgFile=ITEM_IMGS[k]||k;
-      return `<div class="card" style="text-align:center;padding:10px 6px;position:relative;">
+      return `<div class="card" style="text-align:center;padding:10px 6px;position:relative;cursor:pointer;" onclick="showDepoPopup('${k}')">
         <img src="${BASE}${imgFile}.webp" style="width:100%;height:72px;object-fit:contain;margin-bottom:5px;"
              onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
         <div style="font-size:34px;display:none;margin-bottom:5px;">${icon}</div>
