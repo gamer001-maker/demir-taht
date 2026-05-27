@@ -1378,6 +1378,25 @@ html,body{
 .pvp-act-icon{display:block;font-size:20px;margin-bottom:2px;}
 .pvp-act.pa-attack{border-color:#8b1e1e;}.pvp-act.pa-defend{border-color:#2a4a6a;}.pvp-act.pa-magic{border-color:#7a4a8a;}.pvp-act.pa-flee{border-color:#4a3a18;}
 .pvp-result{text-align:center;padding:14px;background:#00000080;flex-shrink:0;}
+/* ── SIRALAMALAR ── */
+.lb-overlay{position:fixed;inset:0;background:var(--bg);z-index:2000;display:flex;flex-direction:column;overflow:hidden;}
+.lb-hdr{background:var(--panel3);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0;}
+.lb-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--panel2);}
+.lb-tab{flex:1;padding:10px 4px;text-align:center;font-family:var(--font-head);font-size:10px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.lb-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.lb-body{flex:1;overflow-y:auto;padding:10px 12px;}
+.lb-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;margin-bottom:4px;background:var(--panel);border:1px solid var(--border);}
+.lb-row.lb-me{background:#2a1e08;border-color:var(--gold);}
+.lb-row.lb-top1{background:#2a2000;border-color:#ffd700;}
+.lb-row.lb-top2{background:#1e1e2a;border-color:#c0c0c0;}
+.lb-row.lb-top3{background:#2a1200;border-color:#cd7f32;}
+.lb-rank{font-family:var(--font-head);font-size:13px;color:var(--ink3);min-width:26px;text-align:center;}
+.lb-rank.r1{color:#ffd700;}.lb-rank.r2{color:#c0c0c0;}.lb-rank.r3{color:#cd7f32;}
+.lb-name{flex:1;font-size:12px;}
+.lb-name-hero{font-family:var(--font-head);font-size:11px;color:var(--perg);}
+.lb-name-user{font-size:9px;color:var(--ink3);}
+.lb-val{font-family:var(--font-head);font-size:13px;color:var(--gold);}
+.lb-loading{text-align:center;padding:40px;font-size:12px;color:var(--ink3);}
 </style>
 </head>
 <body>
@@ -1769,6 +1788,21 @@ html,body{
   </div>
 
   <!-- GLOBAL CHAT FAB -->
+  <!-- SIRALAMA OVERLAY -->
+  <div class="lb-overlay" id="lb-overlay" style="display:none;">
+    <div class="lb-hdr">
+      <span style="font-family:var(--font-head);font-size:15px;color:var(--gold);">🏆 SIRALAMALAR</span>
+      <button class="btn btn-xs btn-ghost" onclick="closeLb()">✕</button>
+    </div>
+    <div class="lb-tabs">
+      <div class="lb-tab active" id="lb-tab-level"  onclick="switchLb('level')">⭐ Seviye</div>
+      <div class="lb-tab"        id="lb-tab-arena"  onclick="switchLb('arena')">⚔ Arena</div>
+      <div class="lb-tab"        id="lb-tab-guilds" onclick="switchLb('guilds')">🛡 Loncalar</div>
+    </div>
+    <div class="lb-body" id="lb-body">
+      <div class="lb-loading">Yükleniyor...</div>
+    </div>
+  </div>
   <div class="gchat-fab" id="gchat-fab" style="display:none;" onclick="toggleGlobalChat()">
     💬<div class="gchat-dot" id="gchat-dot"></div>
   </div>
@@ -6463,6 +6497,69 @@ async function sendGlobalChat(){
   }
 }
 
+/* ── SIRALAMALAR ── */
+let lbTab='level';
+
+async function openLb(tab){
+  lbTab=tab||'level';
+  document.getElementById('lb-overlay').style.display='flex';
+  await loadLb();
+}
+
+function closeLb(){
+  document.getElementById('lb-overlay').style.display='none';
+}
+
+async function switchLb(tab){
+  lbTab=tab;
+  ['level','arena','guilds'].forEach(k=>{
+    document.getElementById('lb-tab-'+k).classList.toggle('active',k===tab);
+  });
+  await loadLb();
+}
+
+async function loadLb(){
+  const body=document.getElementById('lb-body');
+  body.innerHTML='<div class="lb-loading">Yükleniyor...</div>';
+  if(lbTab==='level'){
+    const {data}=await supa.from('profiles').select('hero_name,username,level,xp,class_id').order('level',{ascending:false}).order('xp',{ascending:false}).limit(50);
+    if(!data){body.innerHTML='<div class="lb-loading">Veri alınamadı.</div>';return;}
+    renderLbRows(body,data.map((r,i)=>({rank:i+1,icon:CLASSES.find(c=>c.id===r.class_id)?.icon||'⚔',hero:r.hero_name||'?',user:r.username||'?',val:`Sv. ${r.level}`,mine:(r.username===G.username)})));
+  } else if(lbTab==='arena'){
+    const {data}=await supa.from('profiles').select('hero_name,username,arena_score,class_id').order('arena_score',{ascending:false}).limit(50);
+    if(!data){body.innerHTML='<div class="lb-loading">Veri alınamadı.</div>';return;}
+    renderLbRows(body,data.map((r,i)=>({rank:i+1,icon:CLASSES.find(c=>c.id===r.class_id)?.icon||'⚔',hero:r.hero_name||'?',user:r.username||'?',val:`${r.arena_score} puan`,mine:(r.username===G.username)})));
+  } else {
+    const {data}=await supa.from('guilds').select('name,emblem,member_count,level').order('level',{ascending:false}).order('member_count',{ascending:false}).limit(30);
+    if(!data){body.innerHTML='<div class="lb-loading">Veri alınamadı.</div>';return;}
+    renderLbRows(body,data.map((r,i)=>({rank:i+1,icon:r.emblem||'🛡',hero:r.name||'?',user:`${r.member_count} üye`,val:`Sv. ${r.level}`,mine:false})),true);
+  }
+}
+
+function renderLbRows(body,rows,isGuild=false){
+  if(!rows.length){body.innerHTML='<div class="lb-loading">Henüz kayıt yok.</div>';return;}
+  const rankCls=r=>r===1?'r1':r===2?'r2':r===3?'r3':'';
+  const rowCls=r=>r.mine?'lb-me':r.rank===1?'lb-top1':r.rank===2?'lb-top2':r.rank===3?'lb-top3':'';
+  body.innerHTML=rows.map(r=>`
+    <div class="lb-row ${rowCls(r)}">
+      <div class="lb-rank ${rankCls(r.rank)}">${r.rank===1?'🥇':r.rank===2?'🥈':r.rank===3?'🥉':'#'+r.rank}</div>
+      <div style="font-size:18px;flex-shrink:0;">${r.icon}</div>
+      <div class="lb-name">
+        <div class="lb-name-hero">${r.hero}${r.mine?' <span style="color:var(--gold);font-size:8px;">◀ Sen</span>':''}</div>
+        <div class="lb-name-user">${isGuild?r.user:'@'+r.user}</div>
+      </div>
+      <div class="lb-val">${r.val}</div>
+    </div>`).join('');
+}
+
+async function fetchMyRank(){
+  if(!currentUser) return;
+  const {count}=await supa.from('profiles').select('*',{count:'exact',head:true}).or(`level.gt.${G.level},and(level.eq.${G.level},xp.gt.${G.xp})`);
+  const rank=(count||0)+1;
+  const el=document.getElementById('my-rank-val');
+  if(el) el.textContent='#'+rank;
+}
+
 function renderGuildChat(){
   if(!G.guildId){document.getElementById('guild-content').innerHTML=`<div style="text-align:center;padding:30px;font-size:13px;color:var(--ink3);">Sohbet için önce bir loncaya katıl.</div>`;return;}
   document.getElementById('guild-content').innerHTML=`
@@ -7824,6 +7921,7 @@ function renderProfile(t){
   const el=document.getElementById('profile-content');
   if(t==='profile'){
     const unread=NOTIFS.filter(n=>!n.read).length;
+    fetchMyRank();
     el.innerHTML=`
       <div class="card" style="text-align:center;margin-bottom:10px;">
         <div style="width:72px;height:72px;border-radius:50%;border:2px solid var(--gold);background:var(--panel);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;overflow:hidden;">${avatarContent}</div>
@@ -7835,7 +7933,7 @@ function renderProfile(t){
         <div class="stat2"><div class="stat2-val">${Math.floor(G.gold)}</div><div class="stat2-lbl">🪙 Altın</div></div>
         <div class="stat2"><div class="stat2-val">${G.arenaWins}</div><div class="stat2-lbl">🏆 Arena</div></div>
         <div class="stat2"><div class="stat2-val">${G.level}</div><div class="stat2-lbl">⭐ Seviye</div></div>
-        <div class="stat2"><div class="stat2-val">#42</div><div class="stat2-lbl">🎖 Sıralama</div></div>
+        <div class="stat2" onclick="openLb('level')" style="cursor:pointer;"><div class="stat2-val" id="my-rank-val">—</div><div class="stat2-lbl">🎖 Sıralama</div></div>
       </div>
       <div class="sec">BİLDİRİMLER</div>
       <div class="card" style="margin-bottom:8px;">
