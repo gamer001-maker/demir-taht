@@ -6538,9 +6538,17 @@ async function loadLb(){
     if(!data){body.innerHTML='<div class="lb-loading">Veri alınamadı.</div>';return;}
     renderLbRows(body,data.map((r,i)=>({rank:i+1,icon:CLASSES.find(c=>c.id===r.class_id)?.icon||'⚔',hero:r.hero_name||'?',user:r.username||'?',val:`${r.arena_score} puan`,mine:(r.username===G.username)})));
   } else {
-    const {data}=await supa.from('guilds').select('name,emblem,member_count,level').order('level',{ascending:false}).order('member_count',{ascending:false}).limit(30);
+    const {data}=await supa.from('guilds').select('name,emblem,level,guild_members(count)').order('level',{ascending:false}).limit(30);
     if(!data){body.innerHTML='<div class="lb-loading">Veri alınamadı.</div>';return;}
-    renderLbRows(body,data.map((r,i)=>({rank:i+1,icon:r.emblem||'🛡',hero:r.name||'?',user:`${r.member_count} üye`,val:`Sv. ${r.level}`,mine:false})),true);
+    const sorted=[...data].sort((a,b)=>{
+      const ca=a.guild_members?.[0]?.count??0, cb=b.guild_members?.[0]?.count??0;
+      return b.level!==a.level ? b.level-a.level : cb-ca;
+    });
+    const rows=sorted.map((r,i)=>{
+      const cnt=r.guild_members?.[0]?.count??r.member_count??'?';
+      return {rank:i+1,icon:r.emblem||'🛡',hero:r.name||'?',user:`${cnt} üye`,val:`Sv. ${r.level}`,mine:false};
+    });
+    renderLbRows(body,rows,true);
   }
 }
 
