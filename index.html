@@ -3221,7 +3221,7 @@ function renderKarakter(){
       <div class="eq-slot-lbl">${s.lbl}</div>
       ${iconHtml}
       ${item?`<div class="inv-tooltip">
-        <div class="tt-name">${item.icon} ${item.name}${item.enhPlus>0?` <span style="color:var(--gold);">+${item.enhPlus}</span>`:''}</div>
+        <div class="tt-name">${item.name}${item.enhPlus>0?` <span style="color:var(--gold);">+${item.enhPlus}</span>`:''}</div>
         <div class="tt-type">${item.type}${item.reqLv>1?' · Sv.'+item.reqLv:''}</div>
         <div class="tt-stat">${formatStats(item.stats)}</div>
         <div class="tt-flavor">${item.desc}</div>
@@ -3285,7 +3285,7 @@ function renderKarakter(){
     return `<div class="inv-slot has-item rarity-${item.grade||'gray'}" onclick="openInvModal(${item.id})" style="position:relative;">
       ${iconHtml}${qtyBadge}
       <div class="inv-tooltip">
-        <div class="tt-name">${item.icon} ${item.name}${item.enhPlus?' <span style="color:var(--gold)">+'+item.enhPlus+'</span>':''}${item.qty&&item.qty>1?' x'+item.qty:''}</div>
+        <div class="tt-name">${item.name}${item.enhPlus?' <span style="color:var(--gold)">+'+item.enhPlus+'</span>':''}${item.qty&&item.qty>1?' x'+item.qty:''}</div>
         <div class="tt-type">${item.type}${item.reqLv>1?' · Sv.'+item.reqLv:''}</div>
         <div class="tt-stat">${formatStats(item.stats)}</div>
         <div class="tt-flavor">${item.desc}</div>
