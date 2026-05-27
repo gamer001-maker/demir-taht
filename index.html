@@ -1379,7 +1379,9 @@ html,body{
 .pvp-act.pa-attack{border-color:#8b1e1e;}.pvp-act.pa-defend{border-color:#2a4a6a;}.pvp-act.pa-magic{border-color:#7a4a8a;}.pvp-act.pa-flee{border-color:#4a3a18;}
 .pvp-result{text-align:center;padding:14px;background:#00000080;flex-shrink:0;}
 /* ── SIRALAMALAR ── */
-.lb-overlay{position:fixed;inset:0;background:var(--bg);z-index:2000;display:flex;flex-direction:column;overflow:hidden;}
+.lb-overlay{position:fixed;inset:0;z-index:2000;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
+.lb-sheet{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+@media(min-width:600px){.lb-overlay{background:rgba(0,0,0,0.65);align-items:center;justify-content:center;}.lb-sheet{flex:none;width:420px;max-height:78vh;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;background:var(--bg);border:1px solid var(--border2);box-shadow:0 16px 48px #000000b0;}}
 .lb-hdr{background:var(--panel3);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0;}
 .lb-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--panel2);}
 .lb-tab{flex:1;padding:10px 4px;text-align:center;font-family:var(--font-head);font-size:10px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
@@ -1789,18 +1791,20 @@ html,body{
 
   <!-- GLOBAL CHAT FAB -->
   <!-- SIRALAMA OVERLAY -->
-  <div class="lb-overlay" id="lb-overlay" style="display:none;">
-    <div class="lb-hdr">
-      <span style="font-family:var(--font-head);font-size:15px;color:var(--gold);">🏆 SIRALAMALAR</span>
-      <button class="btn btn-xs btn-ghost" onclick="closeLb()">✕</button>
-    </div>
-    <div class="lb-tabs">
-      <div class="lb-tab active" id="lb-tab-level"  onclick="switchLb('level')">⭐ Seviye</div>
-      <div class="lb-tab"        id="lb-tab-arena"  onclick="switchLb('arena')">⚔ Arena</div>
-      <div class="lb-tab"        id="lb-tab-guilds" onclick="switchLb('guilds')">🛡 Loncalar</div>
-    </div>
-    <div class="lb-body" id="lb-body">
-      <div class="lb-loading">Yükleniyor...</div>
+  <div class="lb-overlay" id="lb-overlay" style="display:none;" onclick="closeLbBackdrop(event)">
+    <div class="lb-sheet">
+      <div class="lb-hdr">
+        <span style="font-family:var(--font-head);font-size:15px;color:var(--gold);">🏆 SIRALAMALAR</span>
+        <button class="btn btn-xs btn-ghost" onclick="closeLb()">✕</button>
+      </div>
+      <div class="lb-tabs">
+        <div class="lb-tab active" id="lb-tab-level"  onclick="switchLb('level')">⭐ Seviye</div>
+        <div class="lb-tab"        id="lb-tab-arena"  onclick="switchLb('arena')">⚔ Arena</div>
+        <div class="lb-tab"        id="lb-tab-guilds" onclick="switchLb('guilds')">🛡 Loncalar</div>
+      </div>
+      <div class="lb-body" id="lb-body">
+        <div class="lb-loading">Yükleniyor...</div>
+      </div>
     </div>
   </div>
   <div class="gchat-fab" id="gchat-fab" style="display:none;" onclick="toggleGlobalChat()">
@@ -6508,6 +6512,10 @@ async function openLb(tab){
 
 function closeLb(){
   document.getElementById('lb-overlay').style.display='none';
+}
+
+function closeLbBackdrop(e){
+  if(e.target===document.getElementById('lb-overlay')) closeLb();
 }
 
 async function switchLb(tab){
