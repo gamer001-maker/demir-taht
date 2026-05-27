@@ -1245,7 +1245,6 @@ html,body{
   cursor:pointer;
 }
 .inv-slot.has-item:hover .inv-tooltip{display:block;}
-@media(min-width:600px){.inv-slot.has-item:hover .inv-tooltip{display:none;}}
 .inv-slot.rarity-gray{border-color:var(--g-gray);}
 .inv-slot.rarity-green{border-color:var(--g-green);}
 .inv-slot.rarity-blue{border-color:var(--g-blue);}
@@ -1264,8 +1263,7 @@ html,body{
   border-radius:5px;
   padding:7px 9px;
   min-width:120px;max-width:160px;
-  box-sizing:border-box;
-  z-index:100;
+  z-index:2000;
   box-shadow:0 4px 16px #00000080;
   pointer-events:none;
 }
@@ -1280,7 +1278,6 @@ html,body{
 .tt-stat{font-size:9px;color:var(--perg2);}
 .tt-flavor{font-size:8px;color:var(--ink3);font-style:italic;margin-top:4px;border-top:1px solid var(--border);padding-top:4px;}
 @media(min-width:600px){.tt-name{font-size:15px;}.tt-type{font-size:13px;}.tt-stat{font-size:13px;}.tt-flavor{font-size:13px;}}
-@media(min-width:600px){#shared-inv-tip{min-width:200px;max-width:260px;padding:10px 13px;}}
 
 @media(min-width:900px){
   .char-shield-wrap{width:130px;height:130px;}
@@ -1342,7 +1339,6 @@ html,body{
 }
 .eq-slot:hover{border-color:var(--gold);}
 .eq-slot:hover .inv-tooltip{display:block;}
-@media(min-width:600px){.eq-slot:hover .inv-tooltip{display:none;}}
 .eq-slot-lbl{font-family:var(--font-head);font-size:10px;color:var(--ink3);letter-spacing:1px;position:absolute;bottom:5px;}
 .eq-filled{background:var(--panel);border-color:var(--border2);}
 .eq-empty .eq-slot-lbl{bottom:8px;}
@@ -8925,41 +8921,6 @@ const nd=document.getElementById('notif-dot');if(nd) nd.style.display='block';
   // Oturum yoksa login/register ekranını göster
   showLoginScreen();
 })();
-
-/* ── MASAÜSTÜ: FIXED TOOLTIP (overflow:hidden'dan kaçmak için) ── */
-if(window.innerWidth>=600){
-  const sharedTip=document.createElement('div');
-  sharedTip.className='inv-tooltip';
-  sharedTip.id='shared-inv-tip';
-  sharedTip.style.cssText='position:fixed;z-index:9999;pointer-events:none;display:none;';
-  document.body.appendChild(sharedTip);
-
-  document.addEventListener('mouseover',e=>{
-    const slot=e.target.closest?.('.inv-slot.has-item,.eq-slot');
-    if(!slot) return;
-    const tip=slot.querySelector('.inv-tooltip');
-    if(!tip) return;
-    sharedTip.innerHTML=tip.innerHTML;
-    sharedTip.style.display='block';
-    const r=slot.getBoundingClientRect();
-    // Ekran üstünde yer var mı kontrol et
-    const tipH=sharedTip.offsetHeight||120;
-    const showBelow=r.top-tipH-8<8;
-    if(showBelow){
-      sharedTip.style.top=Math.round(r.bottom+8)+'px';
-      sharedTip.style.transform='translateX(-50%)';
-    } else {
-      sharedTip.style.top=Math.round(r.top-8)+'px';
-      sharedTip.style.transform='translate(-50%,-100%)';
-    }
-    sharedTip.style.left=Math.round(r.left+r.width/2)+'px';
-  },true);
-
-  document.addEventListener('mouseout',e=>{
-    const slot=e.target.closest?.('.inv-slot.has-item,.eq-slot');
-    if(slot&&!slot.contains(e.relatedTarget)) sharedTip.style.display='none';
-  },true);
-}
 </script>
 <!-- MAĞARA SAVAŞI OVERLAY -->
 <div id="cave-battle-overlay" style="display:none;position:fixed;inset:0;background:#000000cc;z-index:9500;align-items:center;justify-content:center;padding:16px;"></div>
