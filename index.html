@@ -773,6 +773,24 @@ html,body{
 @media(min-width:600px){.gchat-fab{bottom:20px;right:20px;}.gchat-win{bottom:80px;right:20px;}}
 @media(max-width:599px){.gchat-win.open{top:0;left:0;right:0;bottom:0;width:100%;height:100%;border-radius:0;}}
 
+/* ── SERVER ZAMAN BARI ── */
+#server-time-bar{display:none;font-family:Arial,sans-serif;}
+@media(min-width:600px){
+  #server-time-bar{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    position:sticky;bottom:0;left:0;
+    background:var(--panel3);border-top:1px solid var(--border);
+    border-radius:0 0 0 0;padding:5px 8px;
+    font-size:11px;color:var(--ink3);flex-shrink:0;
+    order:99;width:100%;box-sizing:border-box;
+  }
+  #server-time-bar .stb-season{color:var(--gold2);font-size:12px;}
+  #server-time-bar .stb-sep{color:var(--border2);}
+  #server-time-bar .stb-time{color:var(--perg2);letter-spacing:1px;}
+}
+/* Mobil: HUD içinde küçük gösterim */
+#server-time-mob{font-family:Arial,sans-serif;font-size:9px;color:var(--ink3);text-align:center;padding:2px 0 3px;}
+@media(min-width:600px){#server-time-mob{display:none;}}
 /* ── BOSS BİLDİRİM POPUP ── */
 .boss-notif-overlay{
   position:fixed;top:0;left:0;right:0;bottom:0;
@@ -1507,6 +1525,7 @@ html,body{
       <div class="res-item">⚔<span class="res-val" id="r-army">30</span></div>
       <div class="res-item" id="turn-display" style="font-family:var(--font-head);font-size:10px;color:var(--ink3);">Y1 Bahar</div>
     </div>
+    <div id="server-time-mob"></div>
 
     <!-- SUB-NAV TABS -->
     <div class="tabs" id="game-tabs">
@@ -1847,6 +1866,13 @@ html,body{
     <div class="bnav-btn"        id="bn-guild"   onclick="showPage('guild')">  <span class="bnav-icon"><img src="images/lonca.png" class="nav-img" alt="Lonca"/></span><span class="bnav-lbl">Lonca</span></div>
     <div class="bnav-btn"        id="bn-prod"    onclick="showPage('prod')">   <span class="bnav-icon"><img src="images/uretim.png" class="nav-img" alt="Üretim"/></span><span class="bnav-lbl">Üretim</span></div>
     <div class="bnav-btn"        id="bn-profile" onclick="showPage('profile')"><div class="bnav-notif"><span class="bnav-icon"><img src="images/profil.png" class="nav-img" alt="Profil"/></span><div class="bnav-dot" id="notif-dot"></div></div><span class="bnav-lbl">Profil</span></div>
+    <div id="server-time-bar">
+      <span class="stb-season" id="stb-season">🌸 İlkbahar</span>
+      <span class="stb-sep">·</span>
+      <span id="stb-date">--.--</span>
+      <span class="stb-sep">·</span>
+      <span class="stb-time" id="stb-time">--:--:--</span>
+    </div>
   </div>
 
   <!-- MODAL -->
@@ -8944,6 +8970,51 @@ const nd=document.getElementById('notif-dot');if(nd) nd.style.display='block';
   // Oturum yoksa login/register ekranını göster
   showLoginScreen();
 })();
+
+/* ── SERVER ZAMAN ── */
+const SEASONS=[
+  {id:'ilkbahar',name:'İlkbahar',icon:'🌸'},
+  {id:'yaz',     name:'Yaz',     icon:'☀️'},
+  {id:'sonbahar',name:'Sonbahar',icon:'🍂'},
+  {id:'kis',     name:'Kış',     icon:'❄️'},
+];
+let _srvOffset=0;
+
+async function initServerTime(){
+  try{
+    const {data,error}=await supa.rpc('get_server_time');
+    if(!error&&data) _srvOffset=new Date(data).getTime()-Date.now();
+  }catch(e){}
+  updateServerTimeBar();
+}
+
+function getServerNow(){ return new Date(Date.now()+_srvOffset); }
+
+function getCurrentSeason(date){
+  const epoch=new Date('2024-01-01T00:00:00Z').getTime();
+  const weeks=Math.floor((date.getTime()-epoch)/(7*24*3600*1000));
+  return SEASONS[((weeks%4)+4)%4];
+}
+
+function updateServerTimeBar(){
+  const now=getServerNow();
+  const season=getCurrentSeason(now);
+  if(typeof G!=='undefined') G.currentSeason=season.id;
+  const pad=n=>String(n).padStart(2,'0');
+  const dateStr=`${pad(now.getDate())}.${pad(now.getMonth()+1)}.${now.getFullYear()}`;
+  const timeStr=`${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  const sEl=document.getElementById('stb-season');
+  const dEl=document.getElementById('stb-date');
+  const tEl=document.getElementById('stb-time');
+  if(sEl) sEl.textContent=`${season.icon} ${season.name}`;
+  if(dEl) dEl.textContent=dateStr;
+  if(tEl) tEl.textContent=timeStr;
+  const mob=document.getElementById('server-time-mob');
+  if(mob) mob.textContent=`${season.icon} ${season.name}  ·  ${timeStr}`;
+}
+
+setInterval(updateServerTimeBar,1000);
+initServerTime();
 </script>
 <!-- MAĞARA SAVAŞI OVERLAY -->
 <div id="cave-battle-overlay" style="display:none;position:fixed;inset:0;background:#000000cc;z-index:9500;align-items:center;justify-content:center;padding:16px;"></div>
