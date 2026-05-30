@@ -979,6 +979,14 @@ html,body{
 .rb-member{background:var(--panel);color:var(--ink3);border:1px solid var(--border);}
 .chat-msg{max-width:82%;display:flex;flex-direction:column;}
 .chat-msg.mine{align-self:flex-end;align-items:flex-end;}
+/* Aktif premium etki rozetleri */
+#g-active-perks{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+#g-active-perks:empty{display:none;}
+.perk-badge{display:inline-flex;align-items:center;gap:4px;font-family:Arial,Helvetica,sans-serif;font-size:9px;padding:3px 8px;border-radius:20px;background:#2a1e08;border:1px solid #d4a843;color:#f0c850;white-space:nowrap;}
+.perk-badge .pb-days{font-size:8px;color:#cfae6a;opacity:.85;}
+@media(min-width:900px){.perk-badge{font-size:12px;padding:4px 11px;}.perk-badge .pb-days{font-size:11px;}}
+.chat-bubble.glow{background:linear-gradient(135deg,#3a2c08,#5a4410)!important;border:1px solid #d4a843!important;box-shadow:0 0 10px #d4a84355,inset 0 0 8px #ffe89a22;color:#ffe8a8!important;}
+.chat-sender.glow-name{color:#f0c850!important;text-shadow:0 0 6px #d4a84366;}
 .chat-msg.other{align-self:flex-start;align-items:flex-start;}
 .chat-bubble{padding:7px 10px;border-radius:8px;font-size:12px;line-height:1.5;color:var(--perg2);}
 .mine .chat-bubble{background:#2a1e0c;border:1px solid var(--border2);border-bottom-right-radius:3px;}
@@ -1673,6 +1681,7 @@ html,body{
                 <span class="parch-title">⚡ KARAKTER ÖZELLİKLERİ</span>
               </div>
               <div class="eff-stats-grid" id="g-eff-stats"></div>
+              <div id="g-active-perks"></div>
             </div>
 
           </div><!-- /sol sütun -->
@@ -1719,6 +1728,13 @@ html,body{
         <div class="card">
           <div style="font-family:var(--font-head);font-size:9px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">YÖNETİM</div>
           <div id="folk-actions-wrap"></div>
+        </div>
+        <div class="card">
+          <div class="row-between" style="margin-bottom:8px;">
+            <span style="font-family:var(--font-head);font-size:9px;color:var(--gold);letter-spacing:1px;">⚔ BİRLİKLER</span>
+            <span id="troop-cap-lbl" style="font-family:var(--font-head);font-size:11px;color:var(--gold2);">0/0</span>
+          </div>
+          <div id="troops-wrap"></div>
         </div>
         <div class="card">
           <div style="font-family:var(--font-head);font-size:9px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">HALK OLAYLARI</div>
@@ -1838,6 +1854,7 @@ html,body{
       <div class="cat-tab" id="cat-enhancement" onclick="setCat('enhancement')" style="flex-shrink:0;padding:9px 12px;font-family:var(--font-head);font-size:12px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">🔨 Geliştirme</div>
       <div class="cat-tab" id="cat-production"  onclick="setCat('production')"  style="flex-shrink:0;padding:9px 12px;font-family:var(--font-head);font-size:12px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">🌾 Üretim</div>
       <div class="cat-tab" id="cat-livestock"   onclick="setCat('livestock')"   style="flex-shrink:0;padding:9px 12px;font-family:var(--font-head);font-size:12px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">🐄 Hayvanlar</div>
+      <div class="cat-tab" id="cat-premium"     onclick="setCat('premium')"     style="flex-shrink:0;padding:9px 12px;font-family:var(--font-head);font-size:12px;color:#d4a843;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">👑 Kraliyet</div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 11px;border-bottom:1px solid var(--border);background:var(--panel2);flex-shrink:0;">
       <span style="font-size:10px;color:var(--ink3);" id="market-count">—</span>
@@ -2320,6 +2337,276 @@ function celebrate(icon, title, sub, particleType){
   }, 2200);
 }
 
+/* ══════════════════════════════════════
+   PREMIUM ÖĞELER — süreli buff yardımcıları
+══════════════════════════════════════ */
+const INV_BASE_CAP = 50;          // taban envanter kapasitesi
+const INV_EXPAND_STEP = 20;       // her genişleme +20 slot
+const PERK_DURATION_DAYS = 7;     // süreli buff'lar 7 gün
+
+function _now(){
+  try{ return getServerNow().getTime(); }
+  catch(e){ return Date.now(); }
+}
+// Bir süreli buff aktif mi?
+function perkActive(key){
+  const until = G.perks?.[key];
+  if(!until) return false;
+  return new Date(until).getTime() > _now();
+}
+// Kalan süre (gün, yukarı yuvarlanmış) — gösterim için
+function perkDaysLeft(key){
+  const until = G.perks?.[key];
+  if(!until) return 0;
+  const ms = new Date(until).getTime() - _now();
+  if(ms <= 0) return 0;
+  return Math.ceil(ms / 86400000);
+}
+// Buff'ı süreyle uzat/başlat (zaten aktifse üstüne ekler)
+function activatePerk(key, days){
+  const base = perkActive(key) ? new Date(G.perks[key]).getTime() : _now();
+  const until = new Date(base + days*86400000).toISOString();
+  if(!G.perks) G.perks = {};
+  G.perks[key] = until;
+}
+// Envanter kapasitesi
+function invCap(){ return INV_BASE_CAP + (G.invBonus||0); }
+// Envanterdeki eşya sayısı (consumable yığınları tek sayılır)
+function invCount(){ return (G.inventory||[]).length; }
+// Envanter dolu mu?
+function invFull(){ return invCount() >= invCap(); }
+
+/* ══════════════════════════════════════
+   BİRLİKLER (Companions) — Aşama 1: kadro + kapasite + işe al/azat
+══════════════════════════════════════ */
+// Kışla seviyesi başına +1 kapasite (Lv1:1 ... Lv5:5)
+function troopCap(){ return Math.max(0, G.castle?.barracks||1); }
+function troopCount(){ return (G.companions||[]).length; }
+
+// Birim türleri — buff'lar Aşama 2'de devreye girecek, burada sadece tanımlı
+const TROOP_TYPES = {
+  piyade:   {name:'Piyade',   icon:'🗡', desc:'Kışladan toplanan temel asker. Saldırıda yanında çarpışır.', hireGold:50, kind:'basic'},
+  rehber:   {name:'Rehber',   icon:'🧭', desc:'Keşif süresini %5 azaltır, %10 ekstra kaynak getirir.', kind:'special'},
+  rahip:    {name:'Rahip',    icon:'⛪', desc:'Karizmana %5 katkı sağlar (kritik şansı).', kind:'special'},
+  sovalye:  {name:'Şövalye',  icon:'🛡', desc:'Saldırına %5, savunmana %5 katkı sağlar.', kind:'special'},
+  tabip:    {name:'Tabip',    icon:'⚕', desc:'Savaşta tur başına %10 şansla canının %5\'ini yeniler.', kind:'special'},
+};
+
+// Benzersiz birlik ID'si
+function newTroopId(){ return 'tr_'+Date.now()+'_'+Math.floor(Math.random()*1000); }
+
+// Bir birlik ekle (kapasite kontrolü çağıran tarafta)
+function addTroop(typeKey){
+  const t=TROOP_TYPES[typeKey]; if(!t) return null;
+  const troop={ tid:newTroopId(), type:typeKey, equip:{weapon:null,armor:null} };
+  if(!G.companions) G.companions=[];
+  G.companions.push(troop);
+  return troop;
+}
+// Birlik çıkar (azat et) — varsa giydirdiği eşyaları envantere iade et
+function removeTroop(tid){
+  const idx=(G.companions||[]).findIndex(c=>c.tid===tid);
+  if(idx<0) return;
+  const troop=G.companions[idx];
+  // Aşama 3'te ekipman iadesi buraya gelecek (şimdilik equip hep boş)
+  ['weapon','armor'].forEach(slot=>{
+    if(troop.equip?.[slot]){ G.inventory.push(troop.equip[slot]); }
+  });
+  G.companions.splice(idx,1);
+}
+
+// Keşifte birim bulununca teklif modalı
+function offerFoundTroop(typeKey){
+  const t=TROOP_TYPES[typeKey]; if(!t) return;
+  const full=troopCount()>=troopCap();
+  if(!full){
+    showGModal(`
+      <div style="text-align:center;margin-bottom:14px;">
+        <div style="font-size:46px;margin-bottom:6px;">${t.icon}</div>
+        <div style="font-family:var(--font-head);font-size:17px;color:var(--gold2);">Bir ${t.name} buldun!</div>
+        <div style="font-size:12px;color:var(--ink3);margin-top:8px;line-height:1.5;">${t.desc}</div>
+        <div style="font-size:10px;color:var(--ink3);margin-top:8px;">Kadro: ${troopCount()}/${troopCap()}</div>
+      </div>
+      <button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;" onclick="confirmRecruitFound('${typeKey}')">⚔ Kadroya Kat</button>
+      <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal()">Şimdilik Bırak</button>
+    `);
+  } else {
+    // Kadro dolu → azat et seçeneği
+    showGModal(`
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:46px;margin-bottom:6px;">${t.icon}</div>
+        <div style="font-family:var(--font-head);font-size:17px;color:var(--gold2);">Bir ${t.name} buldun!</div>
+        <div style="font-size:11px;color:#f0a050;margin-top:8px;line-height:1.5;">⚠ Kadron dolu (${troopCount()}/${troopCap()}). Onu almak için bir birliği azat etmelisin.</div>
+      </div>
+      <div style="font-size:10px;color:var(--ink3);margin-bottom:8px;">Azat edilecek birlik (yerine ${t.name} gelir):</div>
+      ${G.companions.map(c=>{const ct=TROOP_TYPES[c.type];return `<div onclick="swapTroop('${c.tid}','${typeKey}')" style="display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:6px;border-radius:8px;border:1px solid var(--border2);background:var(--panel2);cursor:pointer;">
+        <span style="font-size:22px;">${ct.icon}</span>
+        <div style="flex:1;text-align:left;"><div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">${ct.name}</div></div>
+        <span style="font-size:10px;color:#f08080;">↔ Değiştir</span>
+      </div>`;}).join('')}
+      <button class="btn btn-ghost" style="width:100%;margin-top:4px;" onclick="closeGModal()">Vazgeç (birimi bırak)</button>
+    `);
+  }
+}
+function confirmRecruitFound(typeKey){
+  if(troopCount()>=troopCap()){ toast('Kadro dolu!'); closeGModal(); return; }
+  addTroop(typeKey);
+  const t=TROOP_TYPES[typeKey];
+  closeGModal();
+  celebrate(t.icon, `${t.name.toUpperCase()} KATILDI!`, `Kadron: ${troopCount()}/${troopCap()}`, 'gold');
+  updateHUD(); if(typeof renderHalk==='function') renderHalk();
+  if(currentUser) sbSave();
+}
+function swapTroop(oldTid, newTypeKey){
+  removeTroop(oldTid);
+  addTroop(newTypeKey);
+  const t=TROOP_TYPES[newTypeKey];
+  closeGModal();
+  celebrate(t.icon, `${t.name.toUpperCase()} KATILDI!`, 'Bir birlik azat edildi, yerine geçti', 'gold');
+  updateHUD(); if(typeof renderHalk==='function') renderHalk();
+  if(currentUser) sbSave();
+}
+// Kışladan piyade işe al
+function hirePiyade(){
+  if(troopCount()>=troopCap()){ toast('Kadro dolu! Kışlanı yükselt veya bir birlik azat et.'); return; }
+  const cost=TROOP_TYPES.piyade.hireGold;
+  if(G.gold<cost){ toast(`Yeterli altın yok! (${cost}🪙 gerekli)`); return; }
+  G.gold-=cost;
+  addTroop('piyade');
+  toast(`🗡 Piyade işe alındı! -${cost}🪙`);
+  updateHUD(); renderHalk();
+  if(currentUser) sbSave();
+}
+// Birliği azat et (manuel, Halk ekranından)
+function dismissTroop(tid){
+  const c=(G.companions||[]).find(x=>x.tid===tid); if(!c) return;
+  const t=TROOP_TYPES[c.type];
+  removeTroop(tid);
+  toast(`${t.icon} ${t.name} azat edildi.`);
+  updateHUD(); renderHalk();
+  if(currentUser) sbSave();
+}
+
+// Üretim süresi — hızlandırıcı aktifse %10 kısa
+function effectiveProdDur(dur){
+  return perkActive('prodSpeedUntil') ? Math.max(1, Math.round(dur*0.9)) : dur;
+}
+
+/* Premium öğe etkisini uygula. (Fiyat zaten buyItem'da düşüldü.) */
+function applyPremium(key, item){
+  if(key==='invExpand'){
+    G.invBonus = (G.invBonus||0) + INV_EXPAND_STEP;
+    celebrate('🎒', 'HEYBE GENİŞLEDİ!', `Envanter kapasiten artık ${invCap()} slot`, 'gold');
+    return;
+  }
+  if(key==='prodSpeed'){
+    activatePerk('prodSpeedUntil', PERK_DURATION_DAYS);
+    celebrate('⏩', 'ÇIRAKLIK FERMANI!', `${PERK_DURATION_DAYS} gün boyunca üretim %10 hızlı`, 'gold');
+    if(typeof renderProd==='function' && document.getElementById('p-prod')?.classList.contains('active')) renderProd(G.prodTab);
+    return;
+  }
+  if(key==='luckCharm'){
+    activatePerk('luckCharmUntil', PERK_DURATION_DAYS);
+    celebrate('🍀', 'ŞANS MUSKASI!', `${PERK_DURATION_DAYS} gün boyunca geliştirme +%5 şans`, 'gold');
+    return;
+  }
+  if(key==='chatGlow'){
+    activatePerk('chatGlowUntil', PERK_DURATION_DAYS);
+    celebrate('💬', 'SÖZ TILSIMI!', `${PERK_DURATION_DAYS} gün boyunca ismin altın parıltıyla`, 'gold');
+    return;
+  }
+  if(key==='statReset'){
+    openStatResetModal();
+    return;
+  }
+  if(key==='classChange'){
+    openClassChangeModal();
+    return;
+  }
+}
+
+/* Tüm harcanmış nitelik puanlarını geri ver (sınıf base hariç) */
+function refundStatPoints(){
+  const cls=CLASSES.find(c=>c.id===G.classId)||CLASSES[0];
+  const b=cls.base;
+  let refunded=0;
+  ['str','def','agi','wis','cha'].forEach(k=>{
+    const spent=(G.stats[k]||0)-(b[k]||0);
+    if(spent>0){ refunded+=spent; G.stats[k]=b[k]||0; }
+  });
+  G.skillPoints=(G.skillPoints||0)+refunded;
+  // maxhp'yi base'e döndür (def puanı +8 hp ekliyordu)
+  G.stats.maxhp=b.maxhp||100;
+  G.stats.hp=Math.min(G.stats.hp, G.stats.maxhp);
+  return refunded;
+}
+
+function openStatResetModal(){
+  const refundPreview=(()=>{
+    const cls=CLASSES.find(c=>c.id===G.classId)||CLASSES[0];const b=cls.base;
+    return ['str','def','agi','wis','cha'].reduce((a,k)=>a+Math.max(0,(G.stats[k]||0)-(b[k]||0)),0);
+  })();
+  showGModal(`
+    <div style="text-align:center;margin-bottom:14px;">
+      <div style="font-size:40px;margin-bottom:6px;">🧪</div>
+      <div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);">Unutuş İksiri</div>
+      <div style="font-size:12px;color:var(--ink3);margin-top:6px;line-height:1.5;">Tüm dağıttığın nitelik puanları geri verilecek. <b style="color:var(--gold);">${refundPreview} puan</b> yeniden dağıtılabilir hale gelecek.</div>
+    </div>
+    <button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#0a2030,#051018);border-color:#5a8aaa;color:#7abddd;" onclick="confirmStatReset()">✅ Puanları Sıfırla</button>
+    <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal()">Vazgeç</button>
+  `);
+}
+function confirmStatReset(){
+  const n=refundStatPoints();
+  closeGModal();
+  celebrate('🧪', 'NİTELİKLER SIFIRLANDI', `${n} puan yeniden dağıtıma hazır`, 'levelup');
+  updateHUD(); renderKarakter();
+  if(currentUser) sbSave();
+}
+
+function openClassChangeModal(){
+  const cards=CLASSES.map(c=>{
+    const isCur=c.id===G.classId;
+    return `<div onclick="${isCur?'':`confirmClassChange('${c.id}')`}" style="display:flex;align-items:center;gap:10px;padding:11px;margin-bottom:7px;border-radius:9px;border:1px solid ${isCur?'var(--gold)':'var(--border2)'};background:${isCur?'#2a1e08':'var(--panel2)'};cursor:${isCur?'default':'pointer'};opacity:${isCur?'.6':'1'};">
+      <span style="font-size:26px;">${c.icon}</span>
+      <div style="flex:1;text-align:left;">
+        <div style="font-family:var(--font-head);font-size:13px;color:var(--perg);">${c.name}${isCur?' <span style="font-size:9px;color:var(--gold);">(mevcut)</span>':''}</div>
+        <div style="font-size:9px;color:var(--ink3);">${c.desc||''}</div>
+      </div>
+    </div>`;
+  }).join('');
+  showGModal(`
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="font-size:40px;margin-bottom:6px;">🪞</div>
+      <div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);">Ruh Aynası</div>
+      <div style="font-size:11px;color:var(--ink3);margin-top:6px;line-height:1.5;">Yeni bir sınıf seç. Nitelik puanların iade edilecek; kuşandığın silahlar sınıfına uymazsa çıkarılır.</div>
+    </div>
+    ${cards}
+    <button class="btn btn-ghost" style="width:100%;margin-top:4px;" onclick="closeGModal()">Vazgeç</button>
+  `);
+}
+function confirmClassChange(newClassId){
+  const cls=CLASSES.find(c=>c.id===newClassId);
+  if(!cls) return;
+  // Puanları iade et (eski sınıfa göre), sonra yeni sınıfın base'ine geç
+  refundStatPoints();
+  const oldBase=(CLASSES.find(c=>c.id===G.classId)||CLASSES[0]).base;
+  G.classId=newClassId;
+  // Yeni base statları uygula (mevcut harcanabilir puanları koru)
+  G.stats.str=cls.base.str; G.stats.def=cls.base.def; G.stats.agi=cls.base.agi;
+  G.stats.wis=cls.base.wis; G.stats.cha=cls.base.cha;
+  G.stats.maxhp=cls.base.maxhp; G.stats.hp=cls.base.maxhp;
+  // Sınıfa uymayan silahı çıkar (büyücü olmayan asayı kullanamaz vb. — basit kontrol: classBonus)
+  const wpn=G.equipped?.weapon;
+  if(wpn && wpn.classBonus && !wpn.classBonus[newClassId]){
+    G.inventory.push({...wpn}); G.equipped.weapon=null;
+  }
+  closeGModal();
+  celebrate('🪞', 'YENİDEN DOĞDUN!', `Artık bir ${cls.name}'sın`, 'levelup');
+  updateHUD(); renderKarakter();
+  if(currentUser) sbSave();
+}
+
 let _attrPopAnchor=null;
 function showAttrPop(key,el){
   const pop=document.getElementById('attr-popover');
@@ -2483,6 +2770,12 @@ async function finishExplore(idx,dbId){
   if(cell.t==='ruins'){const b=Math.floor(Math.random()*40)+20;G.gold+=b;toast(`Harabeler keşfedildi! ${b}🪙 hazine bulundu! 💰`);trackQuest('exploreRuin');trackQuest('exploreRuin2',Math.min(2,[...G.explored].filter(i=>G_MAP[i]?.t==='ruins').length));}
   else if(cell.t==='village'){G.folk.population+=20;toast(`${cell.n} keşfedildi! +20 nüfus 🏘`);trackQuest('exploreVillage3',Math.min(3,[...G.explored].filter(i=>G_MAP[i]?.t==='village').length));}
   else toast(`${cell.n} keşfedildi! 🗺`);
+  // Özel birim keşfi — sadece harabe/kasaba, ~%8 şans
+  if((cell.t==='ruins'||cell.t==='village') && Math.random()<0.08){
+    const pool=['rehber','rahip','sovalye','tabip'];
+    const found=pool[Math.floor(Math.random()*pool.length)];
+    setTimeout(()=>offerFoundTroop(found), 700); // keşif toast'ından sonra
+  }
   trackQuest('exploreDaily');trackQuest('explore5',Math.min(5,G.explored.size-7));
   gainXP(10);updateHUD();
   // Supabase'den timer'ı sil
@@ -2552,7 +2845,7 @@ function finishGather(idx, type){
       const item={id:Date.now(),name:base.name,icon:base.icon,type:base.type||'Eşya',grade:base.grade||'gray',price:base.price,stats:{...base.stats},desc:base.desc||'',seller:'player',sellerName:'Harabeler',img:base.img||null,reqLv:base.reqLv||1,material:base.material||null,classBonus:base.classBonus||null,tplId:base.tplId||null,enhPlus:enh,baseStats:{...base.stats}};
       G.inventory.push(item);
       toast(`🎁 ${base.name} +${enh} bulundu!`);
-    } else if(G.inventory.length>=50){
+    } else if(invCount()>=invCap()){
       const b=Math.floor(Math.random()*20)+10;G.gold+=b;toast(`Envanter dolu! Harabelerden ${b}🪙 buldun.`);
     } else {
       const b=Math.floor(Math.random()*20)+10;G.gold+=b;toast(`💰 Boş harabeler. ${b}🪙 kalıntı buldun.`);
@@ -3012,6 +3305,17 @@ const MARKET_ITEMS=[
   {id:402,name:'Güç Runesi',      icon:'🔶',cat:'consumable',grade:'green', price:120,qty:20,seller:'npc',sellerName:'Rune Ustası', type:'Rune', reqLv:5, material:null,desc:'Saldırı +%50.',                     stats:{atk_boost:50},  img:null,classBonus:null},
 
   /* ══════════════════════════════════════
+     PREMIUM ÖĞELER (Kraliyet Tüccarı) — pay-to-win DEĞİL
+     Kolaylık + kozmetik + hafif hız/şans. Şimdilik 1🪙.
+  ══════════════════════════════════════ */
+  {id:901,name:'Heybe Genişletici', icon:'🎒',cat:'premium',grade:'orange',price:1,qty:99,seller:'npc',sellerName:'Kraliyet Tüccarı',type:'Parşömen',reqLv:1,material:null,desc:'Envanter kapasiteni kalıcı olarak +20 slot artırır.',stats:{},img:null,classBonus:null,premiumKey:'invExpand'},
+  {id:902,name:'Söz Tılsımı',       icon:'💬',cat:'premium',grade:'purple',price:1,qty:99,seller:'npc',sellerName:'Kraliyet Tüccarı',type:'Parşömen',reqLv:1,material:null,desc:'7 gün boyunca sohbette ismin altın parıltıyla görünür.',stats:{},img:null,classBonus:null,premiumKey:'chatGlow'},
+  {id:903,name:'Unutuş İksiri',     icon:'🧪',cat:'premium',grade:'blue',  price:1,qty:99,seller:'npc',sellerName:'Kraliyet Tüccarı',type:'İksir',   reqLv:1,material:null,desc:'Tüm yetenek puanlarını geri kazan, niteliklerini yeniden dağıt.',stats:{},img:null,classBonus:null,premiumKey:'statReset'},
+  {id:904,name:'Ruh Aynası',        icon:'🪞',cat:'premium',grade:'orange',price:1,qty:99,seller:'npc',sellerName:'Kraliyet Tüccarı',type:'Parşömen',reqLv:1,material:null,desc:'Sınıfını değiştir (örn. Avcı→Büyücü). Puanların iade edilir.',stats:{},img:null,classBonus:null,premiumKey:'classChange'},
+  {id:905,name:'Çıraklık Fermanı',  icon:'⏩',cat:'premium',grade:'purple',price:1,qty:99,seller:'npc',sellerName:'Kraliyet Tüccarı',type:'İksir',   reqLv:1,material:null,desc:'7 gün boyunca tüm üretim ve işleme süreleri %10 kısalır.',stats:{},img:null,classBonus:null,premiumKey:'prodSpeed'},
+  {id:906,name:'Şans Muskası',      icon:'🍀',cat:'premium',grade:'purple',price:1,qty:99,seller:'npc',sellerName:'Kraliyet Tüccarı',type:'İksir',   reqLv:1,material:null,desc:'7 gün boyunca geliştirme başarı şansın +%5 artar.',stats:{},img:null,classBonus:null,premiumKey:'luckCharm'},
+
+  /* ══════════════════════════════════════
      KAYNAK
   ══════════════════════════════════════ */
   {id:501,name:'Ham Demir',       icon:'⛏',cat:'resource',grade:'gray',  price:1, qty:999,seller:'npc',sellerName:'Maden Ocağı', type:'Materyal',reqLv:1,material:null,desc:'+1 geliştirme için gerekli.',      stats:{}, img:null,classBonus:null,isMat:true,matKey:'ham_demir'},
@@ -3235,6 +3539,10 @@ const G={
   arenaScore:0,arenaWins:0,arenaLosses:0,
   zdTickets:3, zdTicketDate:'',
   loginStreak:0, lastLoginDate:'', loginClaimedToday:false,
+  // Premium öğeler — süreli buff'lar bitiş zamanı (ISO string) tutar, yoksa '' / null
+  perks:{ prodSpeedUntil:'', luckCharmUntil:'', chatGlowUntil:'' },
+  invBonus:0, // envanter genişlemesi (+20'şer, kalıcı)
+  companions:[], // birlikler (Aşama 1): [{tid, type, equip:{weapon,armor}}]
   animals:{tavuk:1,koyun:1,inek:1,ari:1},
   explored:new Set([21,22,27,28,14,15,20]),
   selectedCell:null,
@@ -3660,6 +3968,16 @@ function renderKarakter(){
       </div>`).join('');
   }
 
+  // Aktif premium etkiler
+  const perksEl=document.getElementById('g-active-perks');
+  if(perksEl){
+    const badges=[];
+    if(perkActive('prodSpeedUntil')) badges.push(`<span class="perk-badge">⏩ Üretim +%10 <span class="pb-days">${perkDaysLeft('prodSpeedUntil')}g</span></span>`);
+    if(perkActive('luckCharmUntil')) badges.push(`<span class="perk-badge">🍀 Geliştirme +%5 <span class="pb-days">${perkDaysLeft('luckCharmUntil')}g</span></span>`);
+    if(perkActive('chatGlowUntil'))  badges.push(`<span class="perk-badge">💬 Söz Parıltısı <span class="pb-days">${perkDaysLeft('chatGlowUntil')}g</span></span>`);
+    perksEl.innerHTML=badges.join('');
+  }
+
   // Set bonusu göstergesi
   const activeSet=getActiveBonusStats();
   const setLabel=getSetBonus();
@@ -3673,11 +3991,12 @@ function renderKarakter(){
   if(setBonusEl) setBonusEl.innerHTML=setBonusHtml;
 
   // Envanter grid — 50 slot
-  const invCount=document.getElementById('inv-count');
-  if(invCount) invCount.textContent=`${G.inventory.length}/50`;
+  const invCountEl=document.getElementById('inv-count');
+  const cap=invCap();
+  if(invCountEl) invCountEl.textContent=`${G.inventory.length}/${cap}`;
   const grid=document.getElementById('inv-grid');
-  const slots=Array(50).fill(null);
-  G.inventory.forEach((item,i)=>{if(i<50)slots[i]=item;});
+  const slots=Array(cap).fill(null);
+  G.inventory.forEach((item,i)=>{if(i<cap)slots[i]=item;});
   grid.innerHTML=slots.map((item,i)=>{
     if(!item) return `<div class="inv-slot"></div>`;
     const iconHtml=item.img
@@ -3865,7 +4184,7 @@ function getActiveBonusStats(){
 
 function unequipItem(slot){
   const item=G.equipped[slot];if(!item)return;
-  if(G.inventory.length>=50){toast('Envanter dolu!');return;}
+  if(invCount()>=invCap()){toast('Envanter dolu!');return;}
   G.inventory.push(item);
   G.equipped[slot]=null;
   closeGModal();
@@ -4443,7 +4762,9 @@ function startEnhancement(itemId){
   setTimeout(()=>{
     enhRunning=false;
     const isNekro=item.img?.startsWith('necro');
-    const success=Math.random()<(isNekro?0.5:level.chance);
+    const luckBonus=perkActive('luckCharmUntil')?0.05:0;
+    const baseChance=(isNekro?0.5:level.chance);
+    const success=Math.random()<Math.min(1, baseChance+luckBonus);
 
     if(success){
       // Eşyayı güncelle
@@ -4625,6 +4946,44 @@ function renderHalk(){
   document.getElementById('folk-actions-wrap').innerHTML=`<div class="row-between" style="margin-bottom:7px;"><span style="font-size:12px;color:var(--perg2);">Vergi: ${f.tax}%</span><div style="display:flex;gap:5px;"><button class="btn btn-xs" onclick="changeTax(-5)">▼ İndir</button><button class="btn btn-xs" onclick="changeTax(5)">▲ Artır</button></div></div><button class="btn btn-sm" style="width:100%;margin-bottom:5px;" onclick="festival()">🎉 Şenlik (-40🪙)</button><button class="btn btn-sm" style="width:100%;" onclick="feedPeople()">🌾 Yiyecek Dağıt (-30🌾)</button>`;
   const evs=G.folkEvents.filter(e=>!e.done);
   document.getElementById('folk-events-wrap').innerHTML=evs.length===0?`<div style="font-size:11px;color:var(--ink3);">Şu an sakin...</div>`:evs.map(e=>`<div class="card-sm"><div style="font-family:var(--font-head);font-size:11px;color:var(--gold2);margin-bottom:3px;">${e.title}</div><div style="font-size:11px;color:var(--ink3);margin-bottom:5px;">${e.desc}</div><div style="display:flex;gap:5px;flex-wrap:wrap;">${e.choices.map((c,ci)=>`<button class="btn btn-xs" onclick="folkChoice('${e.id}',${ci})">${c.t}</button>`).join('')}</div></div>`).join('');
+  renderTroops();
+}
+
+function renderTroops(){
+  const wrap=document.getElementById('troops-wrap');
+  const capLbl=document.getElementById('troop-cap-lbl');
+  if(!wrap) return;
+  const cap=troopCap(), cnt=troopCount();
+  if(capLbl) capLbl.textContent=`${cnt}/${cap}`;
+  let html='';
+  // Mevcut birlikler
+  if(cnt>0){
+    html += (G.companions||[]).map(c=>{
+      const t=TROOP_TYPES[c.type]||{name:c.type,icon:'❓',desc:''};
+      return `<div class="card-sm" style="display:flex;align-items:center;gap:9px;margin-bottom:6px;">
+        <span style="font-size:22px;">${t.icon}</span>
+        <div style="flex:1;">
+          <div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">${t.name}</div>
+          <div style="font-size:9px;color:var(--ink3);line-height:1.3;">${t.desc}</div>
+        </div>
+        <button class="btn btn-xs btn-ghost" style="flex-shrink:0;" onclick="dismissTroop('${c.tid}')">Azat</button>
+      </div>`;
+    }).join('');
+  } else {
+    html += `<div style="font-size:11px;color:var(--ink3);margin-bottom:8px;">Henüz birliğin yok. Kışladan piyade işe al ya da harita keşfinde özel birim bul (Rehber, Rahip, Şövalye, Tabip).</div>`;
+  }
+  // İşe alma alanı
+  const canHire = cnt<cap;
+  const pCost=TROOP_TYPES.piyade.hireGold;
+  html += `<div style="margin-top:6px;padding-top:8px;border-top:1px solid var(--border);">
+    <button class="btn btn-sm" style="width:100%;${canHire?'':'opacity:.5;'}" onclick="hirePiyade()" ${canHire?'':'disabled'}>
+      🗡 Piyade İşe Al (${pCost}🪙)
+    </button>
+    <div style="font-size:9px;color:var(--ink3);text-align:center;margin-top:5px;">
+      Kapasite kışla seviyesiyle artar (şu an Sv.${G.castle?.barracks||1} → ${cap} birlik). ${cnt>=cap?'<span style="color:#f0a050;">Kadro dolu.</span>':''}
+    </div>
+  </div>`;
+  wrap.innerHTML=html;
 }
 function changeTax(d){G.folk.tax=Math.max(0,Math.min(40,G.folk.tax+d));G.folk.happiness=Math.max(0,Math.min(100,G.folk.happiness+(d>0?-8:8)));toast('Vergi: %'+G.folk.tax);renderHalk();}
 function festival(){if(G.gold<40){toast('Yeterli altın yok!');return;}G.gold-=40;G.folk.happiness=Math.min(100,G.folk.happiness+15);gainXP(15);toast('Şenlik düzenlendi! +15 mutluluk');if(G.folk.happiness>=60)trackQuest('happiness60');updateHUD();renderHalk();}
@@ -5791,7 +6150,7 @@ function zdDeath(){
 const ZD_SUN_WEAPONS = ['gunesasa','gunesbicak','guneskilic','gunesyay'];
 
 function zdNecroItemDrop(){
-  if(G.inventory.length>=50){ toast('⚠ Envanter dolu, item düşmedi!'); return; }
+  if(invCount()>=invCap()){ toast('⚠ Envanter dolu, item düşmedi!'); return; }
   const necroIds=[800,801,802,803,804];
   const base=MARKET_ITEMS.find(i=>i.id===necroIds[Math.floor(Math.random()*necroIds.length)]);
   if(!base) return;
@@ -5805,7 +6164,7 @@ function zdNecroItemDrop(){
 }
 
 function zdBossWeaponDrop(enemy, floor){
-  if(G.inventory.length>=50){ toast('⚠ Envanter dolu, silah düşmedi!'); return; }
+  if(invCount()>=invCap()){ toast('⚠ Envanter dolu, silah düşmedi!'); return; }
   if(enemy.id==='nekromancer'){ zdNecroItemDrop(); return; }
   let tplId;
   if(enemy.id==='altinsovalye'){
@@ -6027,6 +6386,10 @@ function renderMarket(){
       if(c==='enhancement'&& !(i.cat==='resource' && i.isMat)) return false;
       if(c==='production' && !((i.cat==='resource' && !i.isMat) || i.cat==='consumable')) return false;
       if(c==='livestock'  && i.cat!=='livestock') return false;
+      if(c==='premium'    && i.cat!=='premium') return false;
+    } else {
+      // "Tümü"de premium öğeleri gizle — sadece Kraliyet sekmesinde görünsün
+      if(i.cat==='premium') return false;
     }
     if(q&&!i.name.toLowerCase().includes(q)) return false;
     return true;
@@ -6100,6 +6463,14 @@ function buyItem(id){
     return;
   }
 
+  // Premium öğe ise → doğrudan etki / seçim ekranı
+  if(item.cat==='premium' && item.premiumKey){
+    applyPremium(item.premiumKey, item);
+    updateHUD();renderMarket();
+    if(currentUser) sbSave();
+    return;
+  }
+
   // Tüketilebilir → envanterde yığ
   if(item.cat==='consumable'){
     const exist=G.inventory.find(x=>x.tplId===item.id&&x.cat==='consumable');
@@ -6111,7 +6482,7 @@ function buyItem(id){
       if(currentUser) sbSave();
       return;
     }
-    if(G.inventory.length>=50){toast('Envanter dolu! Önce bir eşya sat.');G.gold+=item.price;return;}
+    if(invCount()>=invCap()){toast('Envanter dolu! Önce bir eşya sat.');G.gold+=item.price;return;}
     const cInv={id:Date.now(),name:item.name,icon:item.icon,type:item.type||'İksir',grade:item.grade||'gray',price:item.price,stats:{...item.stats||{}},desc:item.desc||'',seller:'player',sellerName:G.heroName||G.username,img:item.img||null,reqLv:item.reqLv||1,material:null,classBonus:null,tplId:item.id,qty:1,cat:'consumable'};
     G.inventory.push(cInv);
     gainXP(10);toast(`${item.name} envantere eklendi! -${item.price}🪙`);trackQuest('marketBuy1');
@@ -6120,7 +6491,7 @@ function buyItem(id){
     return;
   }
 
-  if(G.inventory.length>=50){toast('Envanter dolu! Önce bir eşya sat.');G.gold+=item.price;return;}
+  if(invCount()>=invCap()){toast('Envanter dolu! Önce bir eşya sat.');G.gold+=item.price;return;}
   const invItem={
     id: Date.now(),
     name: item.name, icon: item.icon,
@@ -6150,7 +6521,7 @@ async function buyMarketItem(id){
   if(!listing){ toast('İlan bulunamadı!'); return; }
   if(listing.sellerId===currentUser?.id){ toast('Kendi ilanını satın alamazsın!'); return; }
   if(G.gold < listing.price){ toast('Yeterli altın yok!'); return; }
-  if(G.inventory.length >= 50){ toast('Envanter dolu!'); return; }
+  if(invCount()>=invCap()){ toast('Envanter dolu!'); return; }
 
   // --- GÜVENLİ VERİTABANI İŞLEMİ (RPC) ---
   const { error } = await supa.rpc('buy_market_item', {
@@ -6879,7 +7250,7 @@ async function loadGlobalChatHistory(){
   if(!data)return;
   globalMsgs=data.map(m=>({
     profileId:m.profile_id,username:m.username,heroName:m.hero_name,
-    classIcon:m.class_icon||'⚔',text:m.message,
+    classIcon:m.class_icon||'⚔',text:m.message,glow:!!m.is_glow,
     ts:new Date(m.created_at),mine:m.profile_id===currentUser?.id,
   }));
   renderGlobalMsgs();
@@ -6891,7 +7262,7 @@ function subscribeGlobalChat(){
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'global_chat'},payload=>{
       const m=payload.new;
       const mine=m.profile_id===currentUser?.id;
-      globalMsgs.push({profileId:m.profile_id,username:m.username,heroName:m.hero_name,classIcon:m.class_icon||'⚔',text:m.message,ts:new Date(m.created_at),mine});
+      globalMsgs.push({profileId:m.profile_id,username:m.username,heroName:m.hero_name,classIcon:m.class_icon||'⚔',text:m.message,glow:!!m.is_glow,ts:new Date(m.created_at),mine});
       if(globalMsgs.length>200) globalMsgs=globalMsgs.slice(-200);
       renderGlobalMsgs();
       if(!gchatOpen&&!mine){
@@ -6915,8 +7286,8 @@ function renderGlobalMsgs(){
   };
   box.innerHTML=globalMsgs.map(m=>`
     <div class="chat-msg ${m.mine?'mine':'other'}">
-      ${!m.mine?`<div class="chat-meta"><span class="chat-sender">${m.classIcon} ${m.heroName||'?'}</span><span style="color:var(--ink3);margin-left:3px;font-size:7px;">@${m.username||'?'}</span></div>`:''}
-      <div class="chat-bubble">${m.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      ${!m.mine?`<div class="chat-meta"><span class="chat-sender ${m.glow?'glow-name':''}">${m.classIcon} ${m.heroName||'?'}</span><span style="color:var(--ink3);margin-left:3px;font-size:7px;">@${m.username||'?'}</span></div>`:''}
+      <div class="chat-bubble ${m.glow?'glow':''}">${m.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
       <div class="chat-meta">${fmtTs(m.ts)}</div>
     </div>`).join('');
   box.scrollTop=box.scrollHeight;
@@ -6928,12 +7299,14 @@ async function sendGlobalChat(){
   if(!currentUser){toast('Giriş yapman gerekiyor.');return;}
   const cls=CLASSES.find(c=>c.id===G.classId);
   const msg=inp.value.trim().slice(0,200);inp.value='';
+  const isGlow=perkActive('chatGlowUntil');
   const {error}=await supa.from('global_chat').insert({
     profile_id:currentUser.id,
     username:G.username||currentUser.email?.split('@')[0]||'?',
     hero_name:G.heroName||'Kahraman',
     class_icon:cls?.icon||'⚔',
     message:msg,
+    is_glow:isGlow,
   });
   if(error){toast('Mesaj gönderilemedi: '+error.message);return;}
   const {count}=await supa.from('global_chat').select('*',{count:'exact',head:true});
@@ -7413,15 +7786,16 @@ async function startMillProd(rId){
     const amount=bonus?(o.base*mult):o.base;
     outputs[k]={amount,bonus};
   });
+  const dur=effectiveProdDur(r.dur);
   // Supabase
   let dbId=null;
   if(currentUser){
     const {data,error}=await supa.from('production_timers').insert({
-      profile_id:currentUser.id,building:'mill',recipe_id:rId,duration_secs:r.dur,outputs
+      profile_id:currentUser.id,building:'mill',recipe_id:rId,duration_secs:dur,outputs
     }).select().single();
     if(!error&&data) dbId=data.id;
   }
-  G.prodTimers.push({id:G.prodTimerId++,dbId,building:'mill',recipe:rId,remaining:r.dur,total:r.dur,outputs});
+  G.prodTimers.push({id:G.prodTimerId++,dbId,building:'mill',recipe:rId,remaining:dur,total:dur,outputs});
   trackQuest('prodStart1');
   updateInvStrip();renderMill();toast(`${r.name} başlatıldı!`);sbSave();
 }
@@ -7600,13 +7974,14 @@ async function startRanchProd(rId){
     outputs[k]={amount,bonus};
   });
   let dbId=null;
+  const dur=effectiveProdDur(r.dur);
   if(currentUser){
     const {data,error}=await supa.from('production_timers').insert({
-      profile_id:currentUser.id,building:'ranch',recipe_id:rId,duration_secs:r.dur,outputs
+      profile_id:currentUser.id,building:'ranch',recipe_id:rId,duration_secs:dur,outputs
     }).select().single();
     if(!error&&data) dbId=data.id;
   }
-  G.prodTimers.push({id:G.prodTimerId++,dbId,building:'ranch',recipe:rId,remaining:r.dur,total:r.dur,outputs});
+  G.prodTimers.push({id:G.prodTimerId++,dbId,building:'ranch',recipe:rId,remaining:dur,total:dur,outputs});
   trackQuest('prodStart1');
   updateInvStrip();renderRanch();toast(`${r.name} başlatıldı!`);sbSave();
 }
@@ -7775,13 +8150,14 @@ async function startKitchenProd(rId){
     outputs[k]={amount,bonus};
   });
   let dbId=null;
+  const dur=effectiveProdDur(r.dur);
   if(currentUser){
     const {data,error}=await supa.from('production_timers').insert({
-      profile_id:currentUser.id,building:'kitchen',recipe_id:rId,duration_secs:r.dur,outputs
+      profile_id:currentUser.id,building:'kitchen',recipe_id:rId,duration_secs:dur,outputs
     }).select().single();
     if(!error&&data) dbId=data.id;
   }
-  G.prodTimers.push({id:G.prodTimerId++,dbId,building:'kitchen',recipe:rId,remaining:r.dur,total:r.dur,outputs});
+  G.prodTimers.push({id:G.prodTimerId++,dbId,building:'kitchen',recipe:rId,remaining:dur,total:dur,outputs});
   trackQuest('prodStart1');
   updateInvStrip();renderKitchen();toast(`${r.name} başlatıldı!`);sbSave();
 }
@@ -8019,8 +8395,8 @@ async function startFarmCrop(cropId){
   }
 
   let farmDbId=null;
+  const dur=effectiveProdDur(crop.dur||120);
   if(currentUser){
-    const dur=crop.dur||120;
     const {data,error}=await supa.from('production_timers').insert({
       profile_id:currentUser.id,building:'farm',recipe_id:cropId,duration_secs:dur,outputs
     }).select().single();
@@ -8028,7 +8404,7 @@ async function startFarmCrop(cropId){
   }
   G.prodTimers.push({
     id:G.prodTimerId++, dbId:farmDbId, building:'farm', recipe:cropId,
-    remaining:crop.dur||120, total:crop.dur||120, outputs
+    remaining:dur, total:dur, outputs
   });
   trackQuest('prodStart1');
   updateInvStrip(); renderProd('farm');
@@ -8060,18 +8436,19 @@ async function startProd(bKey,rId){
   });
   // Supabase'e kaydet
   let dbId=null;
+  const dur=effectiveProdDur(r.dur);
   if(currentUser){
     const {data,error}=await supa.from('production_timers').insert({
       profile_id:currentUser.id,
       building:bKey,
       recipe_id:rId,
-      duration_secs:r.dur,
+      duration_secs:dur,
       outputs:outputs
     }).select().single();
     if(!error&&data) dbId=data.id;
   }
   // Yerel timer (remaining = sunucu zamanından hesaplanır)
-  G.prodTimers.push({id:G.prodTimerId++,dbId,building:bKey,recipe:rId,remaining:r.dur,total:r.dur,outputs});
+  G.prodTimers.push({id:G.prodTimerId++,dbId,building:bKey,recipe:rId,remaining:dur,total:dur,outputs});
   trackQuest('prodStart1');
   updateInvStrip();renderProd(bKey);toast(`${r.name} başlatıldı!`);sbSave();
 }
@@ -8735,6 +9112,11 @@ async function sbLoadProfile() {
   if(p.zd_ticket_date) G.zdTicketDate = p.zd_ticket_date;
   if(p.login_streak !== undefined) G.loginStreak = p.login_streak;
   if(p.last_login_date) G.lastLoginDate = p.last_login_date;
+  if(p.perks) { try{ G.perks = typeof p.perks==='string'?JSON.parse(p.perks):p.perks; }catch(e){} }
+  if(!G.perks) G.perks = { prodSpeedUntil:'', luckCharmUntil:'', chatGlowUntil:'' };
+  if(p.inv_bonus !== undefined) G.invBonus = p.inv_bonus;
+  if(p.companions) { try{ G.companions = typeof p.companions==='string'?JSON.parse(p.companions):p.companions; }catch(e){ G.companions=[]; } }
+  if(!Array.isArray(G.companions)) G.companions=[];
   refreshLoginStreak();
 
   // G.stats.hp'yi effective maxhp'ye göre kliple (G.stats.maxhp değişmez)
@@ -8786,6 +9168,9 @@ async function sbSave() {
       zd_ticket_date: G.zdTicketDate,
       login_streak: G.loginStreak,
       last_login_date: G.lastLoginDate,
+      perks: G.perks,
+      inv_bonus: G.invBonus,
+      companions: G.companions,
       animals:      G.animals,
     }).eq('id', currentUser.id);
     if (e1) { console.error('[sbSave] profiles hatası:', e1); toast('⚠ Kayıt hatası: ' + e1.message); return; }
