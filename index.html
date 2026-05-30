@@ -97,7 +97,7 @@ html,body{
     border-top:none !important;
     background:#ffffff0a;
   }
-  .bnav-lbl{font-size:12px !important;}
+  .bnav-lbl{font-size:14px !important;}
   .nav-img{width:50px;height:50px;}
 
   /* Sayfa içeriği */
@@ -105,21 +105,21 @@ html,body{
 
   /* Resource bar */
   .res-bar{padding:10px 28px;}
-  .res-val{font-size:18px !important;}
-  .res-item{font-size:16px !important;gap:6px;}
+  .res-val{font-size:20px !important;}
+  .res-item{font-size:17px !important;gap:6px;}
 
   /* İçerik max genişlik */
   .scroll{max-width:1100px;margin:0 auto;width:100%;}
 
   /* Header */
   .hdr{padding:18px 28px 16px;}
-  .hdr-title{font-size:22px !important;letter-spacing:1px;}
-  .hdr-sub{font-size:14px !important;}
+  .hdr-title{font-size:24px !important;letter-spacing:1px;}
+  .hdr-sub{font-size:16px !important;}
 
   /* Tabs */
-  .tab{font-size:14px !important;padding:14px 8px;}
+  .tab{font-size:16px !important;padding:14px 8px;}
   .tab-icon{font-size:26px !important;}
-  .tab-img{width:36px;height:36px;}
+  .tab-img{width:38px;height:38px;}
 
   /* Pad */
   .pad{padding:20px 28px !important;}
@@ -129,15 +129,15 @@ html,body{
   .card-sm{padding:12px 16px !important;}
 
   /* Butonlar */
-  .btn{font-size:14px !important;padding:10px 20px !important;border-radius:8px;}
-  .btn-sm{padding:7px 14px !important;font-size:12px !important;}
-  .btn-xs{padding:5px 10px !important;font-size:11px !important;}
+  .btn{font-size:15px !important;padding:11px 22px !important;border-radius:8px;}
+  .btn-sm{padding:8px 16px !important;font-size:14px !important;}
+  .btn-xs{padding:6px 12px !important;font-size:13px !important;}
 
   /* Taglar */
-  .tag{font-size:12px !important;padding:3px 10px !important;}
+  .tag{font-size:13px !important;padding:4px 11px !important;}
 
   /* Sec başlıkları */
-  .sec{font-size:13px !important;margin:14px 0 10px !important;}
+  .sec{font-size:15px !important;margin:14px 0 10px !important;}
 
   /* Avatar ve portreler */
   .portrait-lg{width:140px !important;height:140px !important;}
@@ -153,7 +153,7 @@ html,body{
   /* Stat grid 4 kolon */
   .stat-grid2{grid-template-columns:1fr 1fr 1fr 1fr !important;}
   .stat2-val{font-size:24px !important;}
-  .stat2-lbl{font-size:13px !important;}
+  .stat2-lbl{font-size:14px !important;}
 
   /* Input */
   .input-field{font-size:16px !important;padding:12px 14px !important;}
@@ -165,8 +165,8 @@ html,body{
 
   /* Stat barlar */
   .stat-row{margin-bottom:10px !important;}
-  .stat-lbl{font-size:13px !important;width:90px !important;}
-  .stat-val{font-size:16px !important;}
+  .stat-lbl{font-size:15px !important;width:96px !important;}
+  .stat-val{font-size:17px !important;}
   .xp-bar{height:10px !important;}
 
   /* Quest kartlar */
@@ -175,11 +175,11 @@ html,body{
 
   /* Üretim */
   .recipe{padding:14px !important;}
-  .mat-chip{font-size:13px !important;padding:4px 10px !important;}
+  .mat-chip{font-size:14px !important;padding:5px 11px !important;}
 
   /* Timer kartlar */
   .timer-card{padding:14px !important;}
-  .collect-btn{padding:10px !important;font-size:13px !important;}
+  .collect-btn{padding:11px !important;font-size:14px !important;}
 }
 
 @media (min-width:1400px){
@@ -884,6 +884,37 @@ html,body{
 .qcard:hover{filter:brightness(1.06);}
 .qcard.story-card{background:#1a1228;border:1px solid #3a2050;}
 .qcard.daily-card{background:#121a10;border:1px solid #2a3a18;}
+/* ── İlk kez ipucu (coach mark) ── */
+#coach-mark{position:fixed;left:50%;bottom:78px;transform:translateX(-50%) translateY(12px);z-index:8000;
+  width:min(440px,92vw);background:#1a1408;border:1px solid var(--gold);border-radius:11px;
+  box-shadow:0 8px 28px #000000bb;padding:13px 15px;font-family:Arial,Helvetica,sans-serif;
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;}
+#coach-mark.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+#coach-mark .cm-row{display:flex;align-items:flex-start;gap:10px;}
+#coach-mark .cm-icon{font-size:24px;line-height:1;flex-shrink:0;margin-top:1px;}
+#coach-mark .cm-body{flex:1;}
+#coach-mark .cm-title{font-size:13px;font-weight:700;color:var(--gold2);margin-bottom:3px;letter-spacing:.3px;}
+#coach-mark .cm-text{font-size:12px;line-height:1.5;color:var(--perg2);}
+#coach-mark .cm-btn{margin-top:10px;width:100%;background:var(--gold);border:none;color:#1a1206;
+  font-family:var(--font-head);font-size:12px;font-weight:700;padding:8px;border-radius:7px;cursor:pointer;letter-spacing:.5px;}
+#coach-mark .cm-btn:active{filter:brightness(.92);}
+/* ── Giriş serisi takvimi ── */
+.login-cal-card{background:#13190f;border:1px solid #2a3a18;border-top:2px solid var(--daily2);border-radius:10px;padding:13px 14px;margin-bottom:14px;font-family:Arial,Helvetica,sans-serif;}
+.lc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;}
+.lc-title{font-family:var(--font-head);font-size:14px;color:#cfe6a8;letter-spacing:.5px;}
+.lc-streak{font-size:11px;color:var(--daily2);font-weight:700;}
+.lc-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+.lc-cell{position:relative;background:#0e130a;border:1px solid #243018;border-radius:7px;padding:7px 3px 6px;text-align:center;min-height:74px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;transition:transform .12s;}
+.lc-day{font-size:8.5px;color:var(--ink3);font-weight:700;line-height:1.1;}
+.lc-icon{font-size:19px;line-height:1;margin:1px 0;}
+.lc-lbl{font-size:7.5px;color:var(--perg2);line-height:1.15;}
+.lc-check{position:absolute;top:3px;right:4px;font-size:10px;color:var(--g-green);font-weight:700;}
+.lc-now{position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);font-size:7px;font-weight:700;color:#0a1508;background:var(--g-green);padding:0 4px;border-radius:3px;letter-spacing:.4px;}
+.lc-cell.lc-past{opacity:.5;}
+.lc-cell.lc-today-active{border-color:var(--g-green);box-shadow:0 0 9px #2a7a2a55;background:#16240e;transform:scale(1.04);}
+.lc-cell.lc-today-done{border-color:var(--daily2);background:#16200e;}
+.lc-cell.lc-future{opacity:.78;}
+@media(min-width:600px){.lc-day{font-size:10px;}.lc-lbl{font-size:9px;}.lc-icon{font-size:23px;}.lc-cell{min-height:86px;}}
 .qcard.side-card{background:#10141e;border:1px solid #1e2a38;}
 .qcard.guild-card{background:#1a1408;border:1px solid #3a2808;}
 .qcard.done-card{background:var(--panel2);border:1px solid var(--border);opacity:.6;}
@@ -1297,6 +1328,35 @@ html,body{
 .tt-flavor{font-size:8px;color:var(--ink3);font-style:italic;margin-top:4px;border-top:1px solid var(--border);padding-top:4px;}
 @media(min-width:600px){.tt-name{font-size:15px;}.tt-type{font-size:13px;}.tt-stat{font-size:13px;}.tt-flavor{font-size:13px;}}
 
+/* ── Özellik açıklama tooltip'i (nitelik + karakter özellikleri) ── */
+.attr-explain{cursor:help;}
+#attr-popover{
+  position:fixed;z-index:5000;display:none;
+  width:230px;max-width:78vw;
+  background:#1e1608;
+  border:1px solid var(--border2);
+  border-top:2px solid var(--gold);
+  border-radius:7px;
+  padding:11px 13px;
+  box-shadow:0 6px 22px #000000aa;
+  font-family:Arial,Helvetica,sans-serif;
+  animation:attrPopIn .13s ease;
+}
+@keyframes attrPopIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+#attr-popover .ap-head{
+  display:flex;align-items:center;gap:7px;margin-bottom:6px;
+  padding-bottom:6px;border-bottom:1px solid var(--border);
+}
+#attr-popover .ap-icon{font-size:18px;line-height:1;}
+#attr-popover .ap-title{font-size:13px;font-weight:700;color:var(--gold2);letter-spacing:.3px;}
+#attr-popover .ap-desc{font-size:11.5px;line-height:1.5;color:var(--perg2);margin-bottom:8px;}
+#attr-popover .ap-bonus{
+  font-size:11.5px;line-height:1.45;color:#9bd17a;
+  background:#0e1a08;border:1px solid #2a4a18;border-radius:5px;
+  padding:6px 8px;display:flex;align-items:flex-start;gap:6px;
+}
+#attr-popover .ap-bonus b{color:#bfe89a;font-weight:700;}
+
 @media(min-width:900px){
   .char-shield-wrap{width:130px;height:130px;}
   .char-shield{width:130px;height:130px;}
@@ -1364,7 +1424,24 @@ html,body{
 .eq-filled{background:var(--panel);border-color:var(--border2);}
 .eq-empty .eq-slot-lbl{bottom:8px;}
 
-#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#2a1e0c;border:1px solid var(--border2);border-top:1px solid var(--gold);color:var(--perg);font-family:var(--font-head);font-size:11px;padding:8px 18px;border-radius:6px;z-index:500;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:320px;text-align:center;box-shadow:0 4px 16px #00000080;}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#2a1e0c;border:1px solid var(--border2);border-top:1px solid var(--gold);color:var(--perg);font-family:var(--font-head);font-size:13px;padding:9px 20px;border-radius:6px;z-index:500;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:340px;text-align:center;box-shadow:0 4px 16px #00000080;}
+@media(min-width:900px){#toast{font-size:15px;padding:11px 24px;max-width:440px;}}
+
+/* ── Büyük kutlama bildirimi (başarı anları) ── */
+#celebrate{position:fixed;top:24%;left:50%;transform:translate(-50%,-10px) scale(.85);z-index:9100;
+  display:none;pointer-events:none;text-align:center;
+  background:linear-gradient(180deg,#2a1e0c,#1a1206);border:2px solid var(--gold);
+  border-radius:16px;padding:20px 30px;box-shadow:0 10px 44px #000000cc,0 0 30px #c9a64640;
+  font-family:var(--font-head);min-width:240px;max-width:90vw;}
+#celebrate.show{display:block;animation:celebPop .5s cubic-bezier(.2,1.3,.5,1) forwards;}
+#celebrate.hide{animation:celebOut .35s ease forwards;}
+@keyframes celebPop{0%{opacity:0;transform:translate(-50%,-10px) scale(.85);}60%{opacity:1;transform:translate(-50%,0) scale(1.06);}100%{opacity:1;transform:translate(-50%,0) scale(1);}}
+@keyframes celebOut{to{opacity:0;transform:translate(-50%,-14px) scale(.92);}}
+#celebrate .cel-icon{font-size:46px;line-height:1;margin-bottom:8px;filter:drop-shadow(0 2px 6px #000a);animation:celSpin .5s ease;}
+@keyframes celSpin{from{transform:rotate(-18deg) scale(.6);}to{transform:rotate(0) scale(1);}}
+#celebrate .cel-title{font-size:21px;font-weight:700;color:var(--gold2);letter-spacing:1px;text-shadow:0 2px 8px #000a;margin-bottom:4px;}
+#celebrate .cel-sub{font-size:14px;color:var(--perg2);font-family:Arial,Helvetica,sans-serif;}
+@media(min-width:900px){#celebrate{padding:26px 40px;}#celebrate .cel-icon{font-size:58px;}#celebrate .cel-title{font-size:26px;}#celebrate .cel-sub{font-size:16px;}}
 
 /* ═══════════════════════════════════════════
    ONLINE PVP ARENA
@@ -1593,7 +1670,7 @@ html,body{
             <!-- Efektif Savaş Statları -->
             <div class="parchment-section">
               <div class="parch-header">
-                <span class="parch-title">⚡ SAVAŞ İSTATİSTİKLERİ</span>
+                <span class="parch-title">⚡ KARAKTER ÖZELLİKLERİ</span>
               </div>
               <div class="eff-stats-grid" id="g-eff-stats"></div>
             </div>
@@ -2028,6 +2105,259 @@ const STAT_META={
   str:{lbl:'Güç',color:'#c0392b'},def:{lbl:'Savunma',color:'#2980b9'},
   agi:{lbl:'Çeviklik',color:'#27ae60'},wis:{lbl:'Bilgelik',color:'#8e44ad'},cha:{lbl:'Karizma',color:'#d4905a'},
 };
+
+/* ── ÖZELLİK AÇIKLAMALARI (tooltip) ──
+   bonus(eff) → o anki değerden kazanılan somut bonusu döndürür. */
+const ATTR_INFO={
+  // Kahraman Nitelikleri
+  str:{icon:'⚔',title:'Güç',
+    desc:'Fiziksel saldırıların gücünü belirler. Savaşçı ve Şövalye için en önemli özelliktir.',
+    bonus:eff=>{const v=G.stats.str||0;return `Her puan fiziksel hasarını artırır. Şu anki <b>${v} Güç</b> önemli bir hasar katkısı sağlıyor.`;}},
+  def:{icon:'🛡',title:'Savunma',
+    desc:'Aldığın hasarı azaltır. Yüksek savunma seni dayanıklı kılar.',
+    bonus:eff=>{const v=G.stats.def||0;const pct=Math.round(Math.min(0.65,v*0.02)*100);return `Her puan <b>%2</b> hasar azaltır (en fazla %65) ve <b>+8 can</b> verir. Şu an: <b>%${pct} hasar azaltma</b>.`;}},
+  agi:{icon:'💨',title:'Çeviklik',
+    desc:'Düşman saldırılarından kaçınma şansını yükseltir. Haydut ve Avcı için kritiktir.',
+    bonus:eff=>{const v=G.stats.agi||0;const pct=Math.round(Math.min(0.40,v*0.008)*100);return `Her puan <b>%0.8</b> kaçınma verir (en fazla %40). Şu an: <b>%${pct} kaçınma şansı</b>.`;}},
+  wis:{icon:'📖',title:'Bilgelik',
+    desc:'Büyü hasarını belirler. Büyücü için ana hasar kaynağıdır.',
+    bonus:eff=>{const v=G.stats.wis||0;return `Her puan büyü hasarını <b>×2</b> oranında artırır. Şu anki <b>${v} Bilgelik</b> büyülerini güçlendiriyor.`;}},
+  cha:{icon:'👑',title:'Karizma',
+    desc:'Kritik vuruş şansını yükseltir. Kritik saldırılar normalden çok daha fazla hasar verir.',
+    bonus:eff=>{const v=G.stats.cha||0;const pct=(v*1.2).toFixed(1);return `Herkeste %3 taban kritik vardır; her Karizma puanı buna <b>%1.2</b> ekler. Şu anki <b>${v} Karizma</b> → toplam <b>%${Math.round((eff.critChance||0)*100)} kritik şansı</b>.`;}},
+  // Karakter Özellikleri (efektif statlar)
+  e_phys:{icon:'⚔',title:'Fiziksel Hasar',
+    desc:'Saldırı hamlende düşmana vurduğun temel hasar. Silah, Güç ve Çeviklikten beslenir.',
+    bonus:eff=>`Mevcut saldırı hasarın: <b>${eff.physDmg||0}</b>. Daha güçlü silah ve Güç puanı bunu yükseltir.`},
+  e_magic:{icon:'✨',title:'Büyü Hasarı',
+    desc:'Büyü hamlende verdiğin hasar. Bilgelik ve büyü ekipmanından beslenir.',
+    bonus:eff=>`Mevcut büyü hasarın: <b>${eff.magicDmg||0}</b>. Bilgelik artırarak yükselir.`},
+  e_maxhp:{icon:'❤',title:'Maksimum Can',
+    desc:'Yenilmeden önce dayanabileceğin toplam can. Savunma seti ve ekipman bonusu artırır.',
+    bonus:eff=>`Toplam canın: <b>${eff.maxhp||0}</b>. Can biterse savaşı kaybedersin.`},
+  e_red:{icon:'🛡',title:'Hasar Azaltma',
+    desc:'Gelen her saldırının ne kadarını savuşturduğun. Savunma özelliğinden gelir.',
+    bonus:eff=>`Şu an gelen hasarın <b>%${Math.round((eff.damageReduction||0)*100)}</b>’unu azaltıyorsun. Savunma artırarak yükselir (en fazla %65).`},
+  e_crit:{icon:'💥',title:'Kritik Şansı',
+    desc:'Bir saldırının kritik vurma (büyük hasar) ihtimali. Karizma ve silahın + seviyesinden gelir.',
+    bonus:eff=>`Her saldırıda <b>%${Math.round((eff.critChance||0)*100)}</b> ihtimalle kritik vuruyorsun (%3 taban + Karizma + silah yükseltmesi).`},
+  e_dodge:{icon:'💨',title:'Kaçınma',
+    desc:'Düşman saldırısını tamamen ıskalatma şansın. Çeviklikten gelir.',
+    bonus:eff=>`Düşman saldırılarını <b>%${Math.round((eff.dodgeChance||0)*100)}</b> ihtimalle savuşturuyorsun. Çeviklik artırarak yükselir (en fazla %40).`},
+  e_atk:{icon:'⚡',title:'Saldırı',
+    desc:'Ekipmanından gelen ham saldırı bonusu. Fiziksel hasarına doğrudan eklenir.',
+    bonus:eff=>`Ekipman saldırı bonusun: <b>${eff.atk||0}</b>. Daha iyi silahla artar.`},
+  e_acc:{icon:'🎯',title:'İsabet',
+    desc:'Avcıya özel. Iskalama şansını düşürür, gerçek hasar ihtimalini artırır.',
+    bonus:eff=>`Her puan ıskalamanı azaltır ve <b>%1</b> gerçek hasar şansı verir. Şu an: <b>${eff.acc||0} İsabet</b>.`},
+  e_true:{icon:'🏹',title:'Gerçek Hasar',
+    desc:'Düşmanın savunmasını tamamen yok sayan hasar şansı. İsabetten gelir.',
+    bonus:eff=>`<b>%${Math.round((eff.trueDmgChance||0)*100)}</b> ihtimalle savunmayı delip tam hasar veriyorsun. İsabet artırarak yükselir (en fazla %50).`},
+  e_wis:{icon:'🔮',title:'Bilgelik',
+    desc:'Büyücüye özel. Büyü hasarının temel kaynağı.',
+    bonus:eff=>`Şu anki Bilgeliğin: <b>${eff.wis||0}</b>. Büyü hasarını doğrudan besler.`},
+};
+
+/* ══════════════════════════════════════
+   GİRİŞ SERİSİ ÖDÜLLERİ (7 günlük döngü)
+══════════════════════════════════════ */
+const LOGIN_REWARDS=[
+  {day:1, type:'gold', val:50,  icon:'🪙', lbl:'50 Altın'},
+  {day:2, type:'xp',   val:40,  icon:'⭐', lbl:'40 XP'},
+  {day:3, type:'gold', val:100, icon:'🪙', lbl:'100 Altın'},
+  {day:4, type:'ticket',val:5,  icon:'🎟', lbl:'5 Zindan Hakkı'},
+  {day:5, type:'xp',   val:120, icon:'⭐', lbl:'120 XP'},
+  {day:6, type:'gold', val:200, icon:'🪙', lbl:'200 Altın'},
+  {day:7, type:'gold', val:400, icon:'🎁', lbl:'400 Altın + 150 XP', bonusXp:150},
+];
+
+// Bugünün tarih anahtarı (sunucu saatiyle, yoksa cihaz saati)
+function _todayKey(){
+  try{ return getServerNow().toISOString().slice(0,10); }
+  catch(e){ return new Date().toISOString().slice(0,10); }
+}
+function _dateDiffDays(a,b){
+  // a,b 'YYYY-MM-DD' → b - a (gün)
+  const da=new Date(a+'T00:00:00Z'), db=new Date(b+'T00:00:00Z');
+  return Math.round((db-da)/86400000);
+}
+
+// Giriş durumunu güncelle (her oyun açılışında / karaktere girişte çağrılır)
+function refreshLoginStreak(){
+  const today=_todayKey();
+  if(G.lastLoginDate===today){
+    G.loginClaimedToday=true; // bugün zaten işlendi
+    return;
+  }
+  const gap = G.lastLoginDate ? _dateDiffDays(G.lastLoginDate, today) : 999;
+  if(gap===1){
+    G.loginStreak=(G.loginStreak||0)+1;     // seri devam
+  } else {
+    G.loginStreak=1;                          // ilk gün veya seri koptu
+  }
+  if(G.loginStreak>7) G.loginStreak=1;        // 7 günlük döngü başa sarar
+  G.lastLoginDate=today;
+  G.loginClaimedToday=false;                  // yeni gün → ödül alınabilir
+}
+
+// Bugünkü ödülü ver
+function claimLoginReward(){
+  if(G.loginClaimedToday){ toast('Bugünkü ödülü zaten aldın!'); return; }
+  const idx=Math.max(1,Math.min(7,G.loginStreak||1))-1;
+  const r=LOGIN_REWARDS[idx];
+  let msg='';
+  if(r.type==='gold'){ G.gold+=r.val; msg=`+${r.val}🪙`; if(r.bonusXp){ gainXP(r.bonusXp); msg+=` +${r.bonusXp}XP`; } }
+  else if(r.type==='xp'){ gainXP(r.val); msg=`+${r.val} XP`; }
+  else if(r.type==='ticket'){ G.zdTickets=Math.min(ZD_MAX_TICKETS,(G.zdTickets||0)+r.val); msg=`+${r.val} 🎟 Zindan Hakkı`; }
+  G.loginClaimedToday=true;
+  celebrate('🎁', `${G.loginStreak}. GÜN ÖDÜLÜ!`, msg, 'gold');
+  updateHUD();
+  if(typeof renderQuest==='function' && G.questTab==='daily') renderQuest('daily');
+  if(currentUser) sbSave();
+}
+
+// Günlük sekmesinin üstüne basılacak takvim HTML'i
+function loginCalendarHTML(){
+  const streak=Math.max(1,Math.min(7,G.loginStreak||1));
+  const claimable=!G.loginClaimedToday;
+  const cells=LOGIN_REWARDS.map(r=>{
+    const isPast = r.day < streak || (r.day===streak && G.loginClaimedToday);
+    const isToday = r.day===streak;
+    const cls = isToday ? (claimable?'lc-today-active':'lc-today-done')
+              : isPast ? 'lc-past' : 'lc-future';
+    return `<div class="lc-cell ${cls}">
+      <div class="lc-day">${r.day}. Gün</div>
+      <div class="lc-icon">${r.icon}</div>
+      <div class="lc-lbl">${r.lbl}</div>
+      ${isPast?'<div class="lc-check">✓</div>':''}
+      ${isToday&&claimable?'<div class="lc-now">BUGÜN</div>':''}
+    </div>`;
+  }).join('');
+  const btn = claimable
+    ? `<button class="btn" style="width:100%;margin-top:10px;background:var(--g-green);border-color:var(--g-green);color:#0a1508;font-weight:700;" onclick="claimLoginReward()">🎁 ${streak}. Gün Ödülünü Al</button>`
+    : `<div style="text-align:center;margin-top:10px;font-size:11px;color:var(--ink3);">✓ Bugünkü ödül alındı · yarın geri gel!</div>`;
+  return `<div class="login-cal-card">
+    <div class="lc-head">
+      <span class="lc-title">🔥 Giriş Serisi</span>
+      <span class="lc-streak">${G.loginStreak||1} gün üst üste</span>
+    </div>
+    <div class="lc-grid">${cells}</div>
+    ${btn}
+  </div>`;
+}
+
+/* ══════════════════════════════════════
+   İLK KEZ İPUÇLARI (coach marks)
+   localStorage'da tutulur — Supabase'e dokunmaz.
+══════════════════════════════════════ */
+const COACH_TIPS={
+  // Ana sayfalar
+  'g:karakter':  {icon:'⚡', title:'Karakterin', text:'Buradan kahramanını yönetirsin. Nitelik ve özelliklerin üstüne dokunarak ne işe yaradıklarını öğren; seviye atladıkça gelen puanları (+) dağıtarak güçlen.'},
+  'page:quest':  {icon:'📜', title:'Görevler', text:'Hikâye ve günlük görevleri buradan takip et. Günlük sekmesindeki giriş serini kaçırma — her gün artan ödüller seni bekliyor.'},
+  'page:market': {icon:'🛒', title:'Pazar', text:'Silah, zırh ve eşya alıp satabilirsin. Diğer oyuncuların ilanlarına da buradan ulaşırsın. İyi ekipman savaşta fark yaratır.'},
+  'page:guild':  {icon:'🛡', title:'Lonca', text:'Bir loncaya katıl, sohbet et ve lonca savaşlarına gir. Birlikte güçlü düşmanları (boss) devirip ortak ödüller kazanırsınız.'},
+  'page:prod':   {icon:'🌾', title:'Üretim', text:'Çiftlik, değirmen, mutfak ve hayvanlarla hammadde üret. Ürünler zamanla olgunlaşır — sık sık uğrayıp topla, sonra işleyip sat ya da kullan.'},
+  'page:profile':{icon:'👤', title:'Profil', text:'İstatistiklerini, başarımlarını ve sıralamadaki yerini buradan görürsün. Hedeflerini takip etmek için iyi bir yer.'},
+  // Oyun alt sekmeleri
+  'g:kale':      {icon:'🏰', title:'Kale', text:'Krallığının kalbi. Binaları geliştirerek gelir, asker kapasitesi ve savunma kazanırsın.'},
+  'g:gelistirme':{icon:'⚒', title:'Geliştirme', text:'Silah ve zırhlarını yükselt. Her seviye saldırı/savunma gücünü artırır ve kritik şansını besler.'},
+  'g:halk':      {icon:'👥', title:'Halk', text:'Halkının mutluluğunu yönet. Mutlu halk daha çok gelir ve asker verir; mutsuzluk isyana yol açabilir.'},
+  'g:harita':    {icon:'🗺', title:'Harita', text:'Bölgeleri keşfet ve mağaralarda savaş. Yeni alanlar açtıkça ganimet ve kaynak kazanırsın.'},
+  'g:arena':     {icon:'⚔', title:'Arena', text:'Diğer oyuncularla dövüş, sıralamada yüksel. Zaferler arena puanı ve ödül kazandırır.'},
+  'g:zindan':    {icon:'🗝', title:'Zindan', text:'Sıra tabanlı savaşların kalbi. Saldır, büyü yap, savun ya da Sıyrıl (%50 ihtimalle savuştur + sonraki vuruş kesin kritik). Günlük giriş hakkın sınırlı.'},
+};
+
+function _seenTips(){
+  try{ return new Set(JSON.parse(localStorage.getItem('dt_seen_tips')||'[]')); }
+  catch(e){ return new Set(); }
+}
+function _saveSeenTip(key){
+  try{
+    const s=_seenTips(); s.add(key);
+    localStorage.setItem('dt_seen_tips', JSON.stringify([...s]));
+  }catch(e){}
+}
+let _coachTimer=null, _coachKey=null;
+function maybeCoach(key){
+  const tip=COACH_TIPS[key];
+  // Açıkta kalan başka ipucu varsa kapat (işaretlemeden)
+  document.getElementById('coach-mark').classList.remove('show');
+  _coachKey=null;
+  if(!tip) return;
+  if(_seenTips().has(key)) return;
+  // Onboarding'in hemen ardından üst üste patlamasın diye küçük gecikme
+  clearTimeout(_coachTimer);
+  _coachTimer=setTimeout(()=>{
+    document.getElementById('cm-icon').textContent=tip.icon;
+    document.getElementById('cm-title').textContent=tip.title;
+    document.getElementById('cm-text').textContent=tip.text;
+    document.getElementById('coach-mark').classList.add('show');
+    _coachKey=key;
+  }, 420);
+}
+function dismissCoach(){
+  document.getElementById('coach-mark').classList.remove('show');
+  if(_coachKey){ _saveSeenTip(_coachKey); _coachKey=null; }
+}
+
+/* ── BÜYÜK KUTLAMA (başarı anları) ──
+   celebrate(icon, title, sub, particleType) */
+let _celebTimer=null;
+function celebrate(icon, title, sub, particleType){
+  const el=document.getElementById('celebrate');
+  if(!el) return;
+  document.getElementById('cel-icon').textContent=icon||'🎉';
+  document.getElementById('cel-title').textContent=title||'';
+  document.getElementById('cel-sub').textContent=sub||'';
+  el.classList.remove('hide');
+  el.classList.add('show');
+  if(particleType && typeof showEnhSmoke==='function') showEnhSmoke(particleType);
+  clearTimeout(_celebTimer);
+  _celebTimer=setTimeout(()=>{
+    el.classList.remove('show');
+    el.classList.add('hide');
+    setTimeout(()=>{ el.classList.remove('hide'); el.style.display='none'; setTimeout(()=>el.style.display='',50); }, 360);
+  }, 2200);
+}
+
+let _attrPopAnchor=null;
+function showAttrPop(key,el){
+  const pop=document.getElementById('attr-popover');
+  if(!pop) return;
+  // Aynı elemana tekrar dokunulursa kapat (mobil toggle)
+  if(_attrPopAnchor===el && pop.style.display==='block'){ hideAttrPop(); return; }
+  const info=ATTR_INFO[key]; if(!info) return;
+  const eff=getEffectiveStats();
+  pop.innerHTML=`
+    <div class="ap-head"><span class="ap-icon">${info.icon}</span><span class="ap-title">${info.title}</span></div>
+    <div class="ap-desc">${info.desc}</div>
+    <div class="ap-bonus"><span>📈</span><span>${info.bonus(eff)}</span></div>`;
+  pop.style.display='block';
+  // Konumlandır — elemanın yakınında, ekran dışına taşmasın
+  const r=el.getBoundingClientRect();
+  const pw=pop.offsetWidth, ph=pop.offsetHeight;
+  let left=r.left, top=r.bottom+8;
+  if(left+pw>window.innerWidth-8) left=window.innerWidth-pw-8;
+  if(left<8) left=8;
+  if(top+ph>window.innerHeight-8) top=r.top-ph-8; // yer yoksa üste aç
+  if(top<8) top=8;
+  pop.style.left=left+'px';
+  pop.style.top=top+'px';
+  _attrPopAnchor=el;
+}
+function hideAttrPop(){
+  const pop=document.getElementById('attr-popover');
+  if(pop) pop.style.display='none';
+  _attrPopAnchor=null;
+}
+// Mobil: dışarı tıklayınca kapat
+document.addEventListener('click',e=>{
+  const pop=document.getElementById('attr-popover');
+  if(!pop||pop.style.display==='none') return;
+  if(_attrPopAnchor&&(_attrPopAnchor===e.target||_attrPopAnchor.contains(e.target))) return;
+  if(pop.contains(e.target)) return;
+  hideAttrPop();
+},true);
 const ARMOR_COLORS=['#8a8a8a','#b87333','#c9943a','#4a3c8a','#2a6a4a','#8a2a2a','#1a3a6a','#2a2a2a'];
 const CLOAK_COLORS=['#8b0000','#2c4a1a','#1a1a4a','#4a2a00','#3a003a','#1a1a1a','#c9943a','#5a3a1a'];
 const SKILL_TREES={
@@ -2248,6 +2578,8 @@ function startCaveBattle(cellIdx){
     defending:false,
     shieldTurns:0,
     shieldPct:0,
+    dodging:false,
+    guaranteedCrit:false,
     log:[],
     cellIdx,
     over:false
@@ -2287,6 +2619,7 @@ function renderCaveBattle(){
           <div style="display:flex;align-items:center;gap:6px;">
             <span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${G.heroName||'Kahraman'}</span>
             ${caveState.shieldTurns>0?`<span style="font-size:9px;background:#0a2a3a;border:1px solid #6adfff;border-radius:3px;padding:1px 5px;color:#6adfff;">🛡 ${caveState.shieldTurns} tur · %${caveState.shieldPct} blok</span>`:''}
+            ${caveState.guaranteedCrit?`<span style="font-size:9px;background:#2a1e08;border:1px solid #d4a843;border-radius:3px;padding:1px 5px;color:#d4a843;">💥 Kesin Kritik hazır</span>`:''}
           </div>
           <div style="display:flex;align-items:center;gap:5px;margin-top:3px;">
             <div style="flex:1;height:6px;background:var(--panel3);border-radius:3px;overflow:hidden;border:1px solid var(--border);">
@@ -2306,7 +2639,7 @@ function renderCaveBattle(){
         <button class="btn" style="border-color:#8b1e1e;color:#f87171;" onclick="caveAction('attack')">⚔ Saldır</button>
         <button class="btn" style="border-color:#2a4a6a;color:#6a9abf;" onclick="caveAction('defend')">🛡 Savun</button>
         <button class="btn" style="border-color:#7a4a8a;color:#c084fc;" onclick="caveAction('magic')">✨ Büyü</button>
-        <button class="btn btn-ghost" onclick="caveAction('flee')">🏃 Kaç</button>
+        <button class="btn" style="border-color:#4a3a18;color:#d4a843;" onclick="caveAction('dodge')">💨 Sıyrıl</button>
       </div>`}
       ${caveState.over?`<button class="btn" style="width:100%;margin-top:8px;" onclick="closeCaveBattle()">Kapat</button>`:''}
     </div>`;
@@ -2317,22 +2650,26 @@ async function caveAction(action){
   const eff=getEffectiveStats();
   const log=caveState.log;
 
-  if(action==='flee'){
-    log.push({t:'Mağaradan kaçtın!',c:'var(--ink3)'});
-    caveState.over=true;
-    caveState=null;
-    renderCaveBattle();
-    document.getElementById('cave-battle-overlay').style.display='none';
-    return;
+  if(action==='dodge'){
+    const dodgeSuccess=Math.random()<0.5;
+    if(dodgeSuccess){
+      caveState.dodging=true;
+      caveState.guaranteedCrit=true;
+      log.push({t:'💨 Sıyrıldın! Düşmanın saldırısı boşa çıktı. Sonraki saldırın KESİN kritik!',c:'#d4a843'});
+    } else {
+      caveState.dodging=false;
+      log.push({t:'💨 Sıyrılma başarısız! Tam darbeyi yedin.',c:'#f87171'});
+    }
   }
 
   // Oyuncu saldırı
   let playerDmg=0;
   if(action==='attack'){
     playerDmg=Math.max(1,Math.floor(eff.physDmg*(0.85+Math.random()*0.3)));
-    const isCrit=Math.random()<(eff.critChance||0.05);
+    const isCrit=caveState.guaranteedCrit||Math.random()<(eff.critChance||0.05);
     if(isCrit){playerDmg=Math.floor(playerDmg*1.8);log.push({t:`⚔ Kritik! ${playerDmg} hasar verdin!`,c:'#f87171'});}
     else log.push({t:`⚔ ${playerDmg} hasar verdin.`,c:'#f87171'});
+    caveState.guaranteedCrit=false;
     caveState.enemyHp=Math.max(0,caveState.enemyHp-playerDmg);
   } else if(action==='defend'){
     caveState.defending=true;
@@ -2363,7 +2700,7 @@ async function caveAction(action){
       const item={...reward,id:Date.now(),enhPlus:0,baseStats:{...reward.stats}};
       G.inventory.push(item);
       log.push({t:`🎁 ${reward.name} kazandın!`,c:'var(--gold2)'});
-      toast(`🎉 ${reward.name} envantere eklendi!`);
+      celebrate('🐉', '3 BAŞLI YILAN DEVRİLDİ!', `Efsanevi ödül: ${reward.name}`, 'gold');
     }
     // Mağarayı temizlenmiş olarak işaretle — bir daha girilemesin
     if(caveState.cellIdx!=null && G_MAP[caveState.cellIdx]){
@@ -2377,18 +2714,23 @@ async function caveAction(action){
 
   // Düşman saldırısı
   const rawDmg=Math.max(1,Math.floor(CAVE_ENEMY.atk*(0.8+Math.random()*0.4)));
-  let blockPct=0;
-  if(caveState.defending) blockPct=Math.max(blockPct,0.5);
-  if(caveState.shieldTurns>0){
-    blockPct=Math.max(blockPct,caveState.shieldPct/100);
-    caveState.shieldTurns--;
+  if(caveState.dodging){
+    caveState.dodging=false;
+    log.push({t:`💨 Yılanın saldırısını savuşturdun! 0 hasar aldın.`,c:'#d4a843'});
+  } else {
+    let blockPct=0;
+    if(caveState.defending) blockPct=Math.max(blockPct,0.5);
+    if(caveState.shieldTurns>0){
+      blockPct=Math.max(blockPct,caveState.shieldPct/100);
+      caveState.shieldTurns--;
+    }
+    const blocked=Math.floor(rawDmg*blockPct);
+    const actualDmg=Math.max(0,rawDmg-blocked-(eff.def||0));
+    G.stats.hp=Math.max(0,G.stats.hp-actualDmg);
+    const shieldLeft=caveState.shieldTurns>0?` (${caveState.shieldTurns} tur koruma kaldı)`:'';
+    if(blocked>0) log.push({t:`🛡 Yılan ${rawDmg} vurdu, ${blocked} bloklandı. ${actualDmg} hasar aldın.${shieldLeft}`,c:'#f8c471'});
+    else log.push({t:`🐍 Yılan ${actualDmg} hasar verdi!`,c:'#f8c471'});
   }
-  const blocked=Math.floor(rawDmg*blockPct);
-  const actualDmg=Math.max(0,rawDmg-blocked-(eff.def||0));
-  G.stats.hp=Math.max(0,G.stats.hp-actualDmg);
-  const shieldLeft=caveState.shieldTurns>0?` (${caveState.shieldTurns} tur koruma kaldı)`:'';
-  if(blocked>0) log.push({t:`🛡 Yılan ${rawDmg} vurdu, ${blocked} bloklandı. ${actualDmg} hasar aldın.${shieldLeft}`,c:'#f8c471'});
-  else log.push({t:`🐍 Yılan ${actualDmg} hasar verdi!`,c:'#f8c471'});
   caveState.defending=false;
 
   updateHUD();
@@ -2729,10 +3071,12 @@ function getNPCSellPrice(item){
     const gb = {gray:60, green:250, blue:1000, purple:3500, orange:8000};
     base = gb[item.grade||'gray'] || 60;
   }
-  // Geliştirme bonusu: her + için %25 eklenir
+  // Geliştirme bonusu: her + için %25 eklenir (geliştirme değeri korunur)
   const plus = item.enhPlus || 0;
   if(plus > 0) base = Math.floor(base * (1 + plus * 0.25));
-  return base;
+  // NPC alış oranı: piyasa fiyatının %40'ı (alıp-satarak para basmayı önler)
+  const SELL_RATIO = 0.40;
+  return Math.max(1, Math.floor(base * SELL_RATIO));
 }
 
 const QUEST_DATA={
@@ -2890,6 +3234,7 @@ const G={
   ],
   arenaScore:0,arenaWins:0,arenaLosses:0,
   zdTickets:3, zdTicketDate:'',
+  loginStreak:0, lastLoginDate:'', loginClaimedToday:false,
   animals:{tavuk:1,koyun:1,inek:1,ari:1},
   explored:new Set([21,22,27,28,14,15,20]),
   selectedCell:null,
@@ -3027,6 +3372,7 @@ async function startGame(){
   document.getElementById('p-game').classList.add('active');
   document.getElementById('bottom-nav').style.display='flex';document.getElementById('gchat-fab').style.display='flex';
   questLoad();
+  refreshLoginStreak();
   updateHUD();renderGame('karakter');renderGame('kale');renderGame('gelistirme');renderGame('halk');renderGame('harita');renderGame('arena');renderGame('zindan');
   renderQuest(G.questTab);renderMarket();renderGuild(G.guildTab);renderProd(G.prodTab);renderProfile(G.profileTab);
   updateInvStrip();
@@ -3038,6 +3384,7 @@ async function startGame(){
   // Harita başlat
   initPlayerMap().then(()=>renderGame('harita'));
   toast(`Hoş geldin, ${G.heroName}! 🏰`);
+  maybeCoach('g:karakter');
 }
 
 /* ══════════════════════════════════════
@@ -3153,6 +3500,7 @@ function showPage(p){
   if(p==='guild') renderGuild(G.guildTab);
   if(p==='prod'){updateInvStrip();renderProd(G.prodTab);}
   if(p==='profile') renderProfile(G.profileTab);
+  maybeCoach('page:'+p);
 }
 
 /* ══════════════════════════════════════
@@ -3170,7 +3518,10 @@ function updateHUD(){
 }
 function gainXP(n){
   G.xp+=n;const need=G.level*100;
-  if(G.xp>=need){G.xp-=need;G.level++;G.skillPoints+=2;toast(`Seviye ${G.level}! +2 yetenek puanı 🎉`);}
+  if(G.xp>=need){
+    G.xp-=need;G.level++;G.skillPoints+=2;
+    celebrate('🎊', `SEVİYE ${G.level}!`, '+2 yetenek puanı kazandın', 'levelup');
+  }
 }
 
 /* ══════════════════════════════════════
@@ -3183,6 +3534,7 @@ function ggo(s){
   document.getElementById('gt-'+s).classList.add('active');
   if(s==='zindan') trackQuest('visitZindan');
   renderGame(s);
+  maybeCoach('g:'+s);
 }
 function renderGame(s){
   if(s==='karakter') renderKarakter();
@@ -3223,7 +3575,9 @@ function renderKarakter(){
     const bonus=total-base;
     const pct=Math.min(100,Math.round(total/20*100));
     const bonusHtml=bonus>0?`<span style="font-size:8px;color:#7aaa5a;margin-left:2px;">+${bonus}</span>`:'';
-    return `<div class="stat-rune-row">
+    return `<div class="stat-rune-row attr-explain"
+      onmouseenter="showAttrPop('${k}',this)" onmouseleave="hideAttrPop()"
+      onclick="if(event.target.tagName!=='BUTTON'){event.stopPropagation();showAttrPop('${k}',this);}">
       <div class="stat-rune-icon">${statIcons[k]||'◆'}</div>
       <span class="stat-rune-lbl">${m.lbl}</span>
       <div class="stat-rune-bar">
@@ -3287,17 +3641,19 @@ function renderKarakter(){
     const dmgLabel=isMage?'Büyü Hasarı':'Fiziksel Hasar';
     const dmgVal=isMage?eff.magicDmg:eff.physDmg;
     const rows=[
-      {icon:'⚔',lbl:dmgLabel,      val:dmgVal},
-      {icon:'❤',lbl:'Maksimum Can',  val:eff.maxhp},
-      {icon:'🛡',lbl:'Hasar Azaltma',val:`%${redPct}`},
-      {icon:'💥',lbl:'Kritik Şansı', val:`%${critPct}`},
-      {icon:'💨',lbl:'Kaçınma',      val:`%${dodgePct}`},
-      {icon:'⚡',lbl:'Saldırı',      val:eff.atk||0},
+      {icon:'⚔',lbl:dmgLabel,      val:dmgVal, key:isMage?'e_magic':'e_phys'},
+      {icon:'❤',lbl:'Maksimum Can',  val:eff.maxhp, key:'e_maxhp'},
+      {icon:'🛡',lbl:'Hasar Azaltma',val:`%${redPct}`, key:'e_red'},
+      {icon:'💥',lbl:'Kritik Şansı', val:`%${critPct}`, key:'e_crit'},
+      {icon:'💨',lbl:'Kaçınma',      val:`%${dodgePct}`, key:'e_dodge'},
+      {icon:'⚡',lbl:'Saldırı',      val:eff.atk||0, key:'e_atk'},
     ];
-    if(isRanger) rows.push({icon:'🎯',lbl:'İsabet',val:eff.acc||0},{icon:'🏹',lbl:'Gerçek Hasar',val:`%${Math.round((eff.trueDmgChance||0)*100)}`});
-    if(isMage)   rows.push({icon:'🔮',lbl:'Bilgelik',val:eff.wis||0});
+    if(isRanger) rows.push({icon:'🎯',lbl:'İsabet',val:eff.acc||0,key:'e_acc'},{icon:'🏹',lbl:'Gerçek Hasar',val:`%${Math.round((eff.trueDmgChance||0)*100)}`,key:'e_true'});
+    if(isMage)   rows.push({icon:'🔮',lbl:'Bilgelik',val:eff.wis||0,key:'e_wis'});
     effStats.innerHTML=rows.map(r=>`
-      <div class="eff-stat-row">
+      <div class="eff-stat-row attr-explain"
+        onmouseenter="showAttrPop('${r.key}',this)" onmouseleave="hideAttrPop()"
+        onclick="event.stopPropagation();showAttrPop('${r.key}',this);">
         <span class="eff-stat-icon">${r.icon}</span>
         <span class="eff-stat-lbl">${r.lbl}</span>
         <span class="eff-stat-val">${r.val}</span>
@@ -3541,6 +3897,7 @@ function sellToNPC(itemId){
       <div style="margin-top:12px;font-size:15px;color:var(--gold2);font-family:var(--font-head);">
         NPC Alış Fiyatı: ${price.toLocaleString('tr-TR')}🪙
       </div>
+      <div style="font-size:9px;color:var(--ink3);margin-top:3px;">NPC, piyasa değerinin %40'ını öder</div>
       ${item.enhPlus>0?`<div style="font-size:10px;color:var(--ink3);margin-top:4px;">Geliştirme +${item.enhPlus} dahil</div>`:''}
     </div>
     <button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;font-size:14px;"
@@ -4105,7 +4462,7 @@ function startEnhancement(itemId){
         }
       }
       showEnhSmoke('success');
-      toast(`✨ ${item.name} +${newPlus} geliştirme başarılı!`);
+      celebrate('✨', `+${newPlus} BAŞARILI!`, `${item.name} güçlendi`, null);
     } else {
       if(isNekro){
         // Nekro eşya: başarısız olursa tamamen yok edilir
@@ -4157,7 +4514,7 @@ function startEnhancement(itemId){
   }, 5000);
 }
 
-/* Duman efekti — canvas tabanlı */
+/* Duman/parçacık efekti — canvas tabanlı. type: 'success'|'fail'|'gold'|'levelup' */
 function showEnhSmoke(type){
   // Varolan canvas varsa kaldır
   document.getElementById('enh-smoke-canvas')?.remove();
@@ -4167,7 +4524,13 @@ function showEnhSmoke(type){
   canvas.height=window.innerHeight;
   document.body.appendChild(canvas);
   const ctx=canvas.getContext('2d');
-  const color=type==='success'?['#2a6a2a','#7aaa5a','#a0e060','#c0ff80']:['#6a1a1a','#c03030','#f05050','#ff8080'];
+  const palettes={
+    success:['#2a6a2a','#7aaa5a','#a0e060','#c0ff80'],
+    fail:   ['#6a1a1a','#c03030','#f05050','#ff8080'],
+    gold:   ['#7a5a10','#c9a646','#f0c850','#ffe89a'],
+    levelup:['#b8860b','#f0c850','#fff0a0','#ffffff'],
+  };
+  const color=palettes[type]||palettes.success;
   const particles=[];
 
   // 4 köşeden parçacık üret
@@ -4835,17 +5198,18 @@ function getEffectiveStats(){
   if(sb){ s.def+=(sb.def||0); s.agi+=(sb.agi||0); s.wis+=(sb.wis||0); s.maxhp+=(sb.def||0)*5; }
 
   // Savunma → hasar azaltma (maxhp artışı addStat'ta base'e ekleniyor, burada sadece combat hesabı)
-  s.damageReduction = Math.min(0.60, s.def*0.015);
+  s.damageReduction = Math.min(0.65, s.def*0.02);
 
   // Çeviklik → kaçınma
   s.dodgeChance = Math.min(0.40, s.agi*0.008);
 
   // Karizma + Kritik stat → kritik şansı
+  // Herkese %3 taban kritik + Karizma/kritik statı + silah geliştirme bonusu
   // Kuşanılan silahın + seviyesi ekstra kritik şansı katkısı (+10% per plus)
   const wpn=G.equipped?.weapon;
   const wpnPlus=wpn?.enhPlus||0;
   const wpnCritBonus=wpnPlus*0.10; // +1=10%, +5=50%, +9=90%
-  s.critChance = Math.min(0.75, s.cha*0.012 + s.crit*0.005 + wpnCritBonus);
+  s.critChance = Math.min(0.75, 0.03 + s.cha*0.012 + s.crit*0.005 + wpnCritBonus);
 
   // İsabet (acc) mekaniği — Yay silahları için (ranger)
   // Her 1 acc → %1 ıskalama azaltma + %1 gerçek hasar şansı
@@ -4967,7 +5331,7 @@ function zdGenFloor(floorNum){
           ? eligible.filter(e=>e.floor===Math.min(floorNum, ZD_FLOORS))
           : eligible;
         const base = (pool.length>0?pool:eligible)[Math.floor(Math.random()*(pool.length||eligible.length))] || ZD_ENEMIES[0];
-        const bossHpMult = r.type==='boss' ? 10 : 1;
+        const bossHpMult = r.type==='boss' ? 4 : 1;
         r.enemy = {
           ...base,
           hp:   Math.floor(base.hp   * mult * bossHpMult),
@@ -5129,7 +5493,7 @@ function zdBattleHTML(){
           <img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/${_playerSpr1()}.webp"
                class="zd-split-char" id="zd-player-spr-zd"
                onerror="this.style.opacity='0'"/>
-          <div style="font-family:var(--font-head);font-size:9px;color:var(--perg2);margin-bottom:2px;">${G.heroName||cls.icon}</div>
+          <div style="font-family:var(--font-head);font-size:9px;color:var(--perg2);margin-bottom:2px;">${G.heroName||cls.icon}${b.guaranteedCrit?` <span style="color:#d4a843;">💥</span>`:''}</div>
           <div class="zd-hp-bar-wrap" style="margin:0;width:100%;">
             <span class="zd-hp-label" style="color:var(--gold);">${cls.icon}</span>
             <div class="zd-hp-bg"><div class="zd-hp-fill player" id="zd-player-hp-bar" style="width:${pHpPct}%;background:linear-gradient(90deg,#8b1e1e,${hpColor});"></div></div>
@@ -5142,7 +5506,7 @@ function zdBattleHTML(){
           <button class="zd-overlay-btn" onclick="zdAction('attack')" style="border-color:#5a1a1a;">⚔<br>Saldır</button>
           <button class="zd-overlay-btn" onclick="zdAction('defend')" style="border-color:#1a3a5a;${defendActive?'background:rgba(26,58,90,0.55);color:#6a9abf;':''}">🛡<br>Savun</button>
           <button class="zd-overlay-btn${!hasMagic?' zd-ob-disabled':''}" onclick="${hasMagic?`zdAction('magic')`:'void(0)'}" style="border-color:#4a2a5a;">✨<br>Büyü</button>
-          <button class="zd-overlay-btn" onclick="zdAction('flee')" style="border-color:#3a2a10;">💨<br>Kaç</button>
+          <button class="zd-overlay-btn" onclick="zdAction('dodge')" style="border-color:#5a4418;">💨<br>Sıyrıl</button>
         </div>
 
         <!-- Sağ: Düşman -->
@@ -5217,6 +5581,8 @@ function zdEnterRoom(idx){
       playerHp: eff.hp,
       playerMaxHp: eff.maxhp,
       defending:false,
+      dodging:false,
+      guaranteedCrit:false,
       roomIdx: idx,
       log:[{text:`${room.enemy.name} karşınıza çıktı!`, type:'info'}],
     };
@@ -5270,7 +5636,7 @@ function zdAction(action){
     playerDmg=Math.max(1, Math.floor(eff.physDmg*(0.85+Math.random()*0.3)) - Math.floor(b.enemy.def*0.5));
     const zdCritStat=eff.crit||0;
     const zdCritMult=1+Math.max(0.5,zdCritStat/100);
-    if(Math.random()<eff.critChance){
+    if(b.guaranteedCrit||Math.random()<eff.critChance){
       playerDmg=Math.floor(playerDmg*zdCritMult);
       log(`💥 Kritik! ${b.enemy.name}'a ${playerDmg} hasar verdin.`,'good');
     } else if(G.classId==='ranger'&&Math.random()<(eff.trueDmgChance||0)){
@@ -5279,6 +5645,7 @@ function zdAction(action){
     } else {
       log(`⚔ ${b.enemy.name}'a ${playerDmg} hasar verdin.`,'good');
     }
+    b.guaranteedCrit=false;
   }
   else if(action==='defend'){
     b.defending=true;
@@ -5288,17 +5655,14 @@ function zdAction(action){
     playerDmg=Math.max(1, Math.floor(eff.magicDmg*(0.9+Math.random()*0.4)));
     log(`✨ Büyü! ${b.enemy.name}'a ${playerDmg} büyü hasarı verdin.`,'good');
   }
-  else if(action==='flee'){
-    const fleeChance=0.4+(eff.agi*0.01);
-    if(Math.random()<fleeChance){
-      fled=true;
-      log('💨 Kaçmayı başardın!','info');
-      G.stats.hp=b.playerHp;
-      ZD.battle=null;
-      updateHUD();renderZindan();
-      return;
+  else if(action==='dodge'){
+    if(Math.random()<0.5){
+      b.dodging=true;
+      b.guaranteedCrit=true;
+      log('💨 Sıyrıldın! Düşmanın saldırısı boşa çıkacak. Sonraki saldırın KESİN kritik!','good');
     } else {
-      log('🚫 Kaçamadın!','bad');
+      b.dodging=false;
+      log('💨 Sıyrılma başarısız! Saldırıya açıksın.','bad');
     }
   }
 
@@ -5321,14 +5685,21 @@ function zdAction(action){
     }
     updateHUD(); ZD.battle=null;
     const dmgText = playerDmg>0 ? ` (${playerDmg} hasar)` : '';
-    toast(`⚔ ${b.enemy.name} yenildi!${dmgText} 🏆`);
+    if(room.type==='boss'){
+      celebrate('🏆', 'BOSS YENİLDİ!', `${b.enemy.name} · +${b.enemy.gold}🪙 +${b.enemy.xp}XP`, 'gold');
+    } else {
+      toast(`⚔ ${b.enemy.name} yenildi!${dmgText} 🏆`);
+    }
     if(currentUser) sbSave();
     renderZindan();
     return;
   }
 
   // Düşman turu — kaçınma kontrolü
-  if(Math.random()<eff.dodgeChance){
+  if(b.dodging){
+    b.dodging=false;
+    log(`💨 ${b.enemy.name}'ın saldırısını savuşturdun! 0 hasar aldın.`,'good');
+  } else if(Math.random()<eff.dodgeChance){
     log(`💨 Saldırıdan kaçındın!`,'good');
   } else {
     let eDmg=Math.max(1, Math.floor(b.enemy.atk*(0.85+Math.random()*0.3) * (1-eff.damageReduction)));
@@ -5542,10 +5913,15 @@ function checkQuestCompletion(){
   });
 }
 function giveQuestReward(q){
+  let goldSum=0, xpSum=0;
   q.rewards.forEach(r=>{
-    if(r.t==='gold'){G.gold+=r.v;toast(`"${q.title}" tamamlandı! +${r.v}🪙 🎉`);}
-    if(r.t==='xp'){gainXP(r.v);}
+    if(r.t==='gold'){G.gold+=r.v; goldSum+=r.v;}
+    if(r.t==='xp'){gainXP(r.v); xpSum+=r.v;}
   });
+  const parts=[];
+  if(goldSum) parts.push(`+${goldSum}🪙`);
+  if(xpSum) parts.push(`+${xpSum} XP`);
+  celebrate('✅', 'GÖREV TAMAM!', `${q.title}${parts.length?' · '+parts.join('  '):''}`, 'gold');
   updateHUD();
 }
 function collectDailyReward(qid){
@@ -5588,7 +5964,8 @@ function renderQuest(t){
       ${actionBtn}
     </div>`;
   };
-  document.getElementById('quest-content').innerHTML=data.map(rr).join('');
+  const calHTML = t==='daily' ? loginCalendarHTML() : '';
+  document.getElementById('quest-content').innerHTML=calHTML+data.map(rr).join('');
 }
 
 /* ══════════════════════════════════════
@@ -8356,6 +8733,9 @@ async function sbLoadProfile() {
   if(needsSave) setTimeout(()=>sbSave(), 1500);
   if(p.zd_tickets !== undefined) G.zdTickets = p.zd_tickets;
   if(p.zd_ticket_date) G.zdTicketDate = p.zd_ticket_date;
+  if(p.login_streak !== undefined) G.loginStreak = p.login_streak;
+  if(p.last_login_date) G.lastLoginDate = p.last_login_date;
+  refreshLoginStreak();
 
   // G.stats.hp'yi effective maxhp'ye göre kliple (G.stats.maxhp değişmez)
   const effAfterLoad = getEffectiveStats();
@@ -8404,6 +8784,8 @@ async function sbSave() {
       equipped:     G.equipped,
       zd_tickets:   G.zdTickets,
       zd_ticket_date: G.zdTicketDate,
+      login_streak: G.loginStreak,
+      last_login_date: G.lastLoginDate,
       animals:      G.animals,
     }).eq('id', currentUser.id);
     if (e1) { console.error('[sbSave] profiles hatası:', e1); toast('⚠ Kayıt hatası: ' + e1.message); return; }
@@ -9018,5 +9400,8 @@ initServerTime();
 </script>
 <!-- MAĞARA SAVAŞI OVERLAY -->
 <div id="cave-battle-overlay" style="display:none;position:fixed;inset:0;background:#000000cc;z-index:9500;align-items:center;justify-content:center;padding:16px;"></div>
+<div id="attr-popover"></div>
+<div id="coach-mark"><div class="cm-row"><span class="cm-icon" id="cm-icon">💡</span><div class="cm-body"><div class="cm-title" id="cm-title"></div><div class="cm-text" id="cm-text"></div><button class="cm-btn" onclick="dismissCoach()">Anladım ✓</button></div></div></div>
+<div id="celebrate"><div class="cel-icon" id="cel-icon">🎉</div><div class="cel-title" id="cel-title"></div><div class="cel-sub" id="cel-sub"></div></div>
 </body>
 </html>
