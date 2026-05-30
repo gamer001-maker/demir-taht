@@ -2377,7 +2377,7 @@ function invCount(){ return (G.inventory||[]).length; }
 function invFull(){ return invCount() >= invCap(); }
 
 /* ══════════════════════════════════════
-   BİRLİKLER (Companions) — Aşama 1: kadro + kapasite + işe al/azat
+   BİRLİKLER (Companions) — Aşama 1: birlik + kapasite + işe al/azat
 ══════════════════════════════════════ */
 // Kışla seviyesi başına +1 kapasite (Lv1:1 ... Lv5:5)
 function troopCap(){ return Math.max(0, G.castle?.barracks||1); }
@@ -2408,11 +2408,160 @@ function removeTroop(tid){
   const idx=(G.companions||[]).findIndex(c=>c.tid===tid);
   if(idx<0) return;
   const troop=G.companions[idx];
-  // Aşama 3'te ekipman iadesi buraya gelecek (şimdilik equip hep boş)
+  // Giydirdiği eşyaları envantere iade et (kapasiteyi biraz aşsa bile kaybolmasın)
   ['weapon','armor'].forEach(slot=>{
     if(troop.equip?.[slot]){ G.inventory.push(troop.equip[slot]); }
   });
   G.companions.splice(idx,1);
+}
+
+/* ── BİRLİK BUFF'LARI (Aşama 2) ── */
+// Belirli türden kaç birlik var?
+function troopCountOf(type){ return (G.companions||[]).filter(c=>c.type===type).length; }
+// Toplam birlik buff'ları — tek yerden hesaplanır
+function troopBuffs(){
+  const rehber=troopCountOf('rehber');
+  const rahip=troopCountOf('rahip');
+  const sovalye=troopCountOf('sovalye');
+  const tabip=troopCountOf('tabip');
+  return {
+    rehber, rahip, sovalye, tabip,
+    chaMult:   1 + rahip*0.05,        // Rahip: +%5 karizma (her biri)
+    atkMult:   1 + sovalye*0.05,      // Şövalye: +%5 saldırı
+    defMult:   1 + sovalye*0.05,      // Şövalye: +%5 savunma
+    exploreSpeedMult: Math.max(0.5, 1 - rehber*0.05), // Rehber: −%5 süre (min %50)
+    resourceMult: 1 + rehber*0.10,    // Rehber: +%10 kaynak
+    healChance: Math.min(0.9, tabip*0.10), // Tabip: tur başına %10 şans (her biri)
+    healPct: 0.05,                    // canının %5'i
+  };
+}
+// Keşif süresi — Rehber buff'ı uygular
+function effectiveExploreDur(dur){
+  return Math.max(5, Math.round(dur * troopBuffs().exploreSpeedMult));
+}
+
+/* ── BİRLİK EKİPMANI (Aşama 3) ── */
+// Bir birliğin savaştaki vuruş gücü = silahının atk'si (+küçük baz). Silahsız vurmaz.
+function troopAttackDmg(troop){
+  const w=troop.equip?.weapon;
+  if(!w) return 0;
+  const wAtk=(w.stats?.atk||0) + (w.stats?.mgc||0); // silah ya da asa
+  if(wAtk<=0) return 0;
+  // Geliştirme (+) bonusu: her + için %15 daha hasar
+  const plus=w.enhPlus||0;
+  return Math.max(1, Math.floor(wAtk*(1+plus*0.15)));
+}
+// Tüm birliklerin toplam ek savunması (zırhtan) — oyuncunun hasar azaltmasına eklenir
+function troopArmorDef(){
+  let def=0;
+  (G.companions||[]).forEach(c=>{
+    const a=c.equip?.armor;
+    if(a?.stats?.def) def += a.stats.def;
+  });
+  return def;
+}
+// Silah giydirilmiş birlik var mı? (savaşta vuracak)
+function armedTroops(){
+  return (G.companions||[]).filter(c=>c.equip?.weapon && troopAttackDmg(c)>0);
+}
+
+// Bir birliği donatma modalı
+function openEquipTroopModal(tid){
+  const troop=(G.companions||[]).find(c=>c.tid===tid);
+  if(!troop) return;
+  const t=TROOP_TYPES[troop.type]||{name:troop.type,icon:'❓'};
+  // Envanterdeki silahlar ve zırhlar (oyuncunun kuşandıkları hariç — onlar zaten G.equipped'te)
+  const weapons=G.inventory.filter(i=>i.cat==='weapon');
+  const armors=G.inventory.filter(i=>i.cat==='armor');
+  const slotHtml=(slotKey, label, items, cur)=>{
+    let rows='';
+    // Mevcut giydirilmiş
+    if(cur){
+      rows+=`<div style="display:flex;align-items:center;gap:8px;padding:8px;margin-bottom:5px;border-radius:7px;border:1px solid var(--gold);background:#2a1e08;">
+        <span style="font-size:18px;">${cur.icon}</span>
+        <div style="flex:1;text-align:left;"><div style="font-size:11px;color:var(--gold2);">${cur.name}${cur.enhPlus>0?' +'+cur.enhPlus:''} <span style="font-size:8px;color:var(--g-green);">(giydirilmiş)</span></div></div>
+        <button class="btn btn-xs btn-ghost" onclick="unequipTroop('${tid}','${slotKey}')">Çıkar</button>
+      </div>`;
+    }
+    // Envanterdeki seçenekler
+    if(items.length){
+      rows+=items.map(it=>`<div onclick="equipTroop('${tid}','${slotKey}',${it.id})" style="display:flex;align-items:center;gap:8px;padding:8px;margin-bottom:4px;border-radius:7px;border:1px solid var(--border2);background:var(--panel2);cursor:pointer;">
+        <span style="font-size:18px;">${it.icon}</span>
+        <div style="flex:1;text-align:left;">
+          <div style="font-size:11px;color:var(--perg);">${it.name}${it.enhPlus>0?' +'+it.enhPlus:''}</div>
+          <div style="font-size:8px;color:var(--ink3);">${Object.entries(it.stats||{}).slice(0,3).map(([k,v])=>`+${v} ${STAT_LABELS[k]||k}`).join(' · ')}</div>
+        </div>
+      </div>`).join('');
+    } else if(!cur){
+      rows+=`<div style="font-size:10px;color:var(--ink3);padding:6px;">Envanterde uygun ${label.toLowerCase()} yok.</div>`;
+    }
+    return `<div style="margin-bottom:10px;"><div style="font-size:9px;color:var(--gold);font-family:var(--font-head);letter-spacing:.5px;margin-bottom:5px;">${label}</div>${rows}</div>`;
+  };
+  showGModal(`
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="font-size:34px;">${t.icon}</div>
+      <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);margin-top:4px;">${t.name}'i Donat</div>
+      <div style="font-size:10px;color:var(--ink3);margin-top:4px;">Silah verirsen savaşta düşmana vurur. Zırh, hasar azaltmana eklenir.</div>
+    </div>
+    ${slotHtml('weapon','⚔ SİLAH', weapons, troop.equip?.weapon)}
+    ${slotHtml('armor','🛡 ZIRH', armors, troop.equip?.armor)}
+    <button class="btn btn-ghost" style="width:100%;margin-top:4px;" onclick="closeGModal()">Kapat</button>
+  `);
+}
+function equipTroop(tid, slotKey, itemId){
+  const troop=(G.companions||[]).find(c=>c.tid===tid);
+  if(!troop) return;
+  const idx=G.inventory.findIndex(i=>i.id===itemId);
+  if(idx<0) return;
+  const item=G.inventory[idx];
+  // Önce o slotta bir şey varsa envantere geri koy
+  if(troop.equip[slotKey]){ G.inventory.push(troop.equip[slotKey]); }
+  // Eşyayı envanterden al, birliğe tak
+  troop.equip[slotKey]=item;
+  G.inventory.splice(idx,1);
+  // Eğer geri koyduğumuz eşya idx'i kaydırdıysa sorun olmaz çünkü item'ı id ile bulduk ve splice'ı sonra yaptık
+  toast(`${item.icon} ${item.name} donatıldı!`);
+  if(currentUser) sbSave();
+  renderHalk(); renderKarakter();
+  openEquipTroopModal(tid); // modalı tazele
+}
+function unequipTroop(tid, slotKey){
+  const troop=(G.companions||[]).find(c=>c.tid===tid);
+  if(!troop || !troop.equip[slotKey]) return;
+  if(invCount()>=invCap()){ toast('Envanter dolu! Eşyayı geri alamıyorsun.'); return; }
+  const item=troop.equip[slotKey];
+  G.inventory.push(item);
+  troop.equip[slotKey]=null;
+  toast(`${item.icon} ${item.name} çıkarıldı.`);
+  if(currentUser) sbSave();
+  renderHalk(); renderKarakter();
+  openEquipTroopModal(tid);
+}
+
+/* ── BİRLİK BESLEME MALİYETİ (götürü) ──
+   Her aktivitede birlik başına yemek + az altın tüketilir.
+   Yetersizse false döner ve aktivite engellenir. */
+const TROOP_UPKEEP_FOOD = 2;  // birlik başına yemek
+const TROOP_UPKEEP_GOLD = 3;  // birlik başına altın
+function troopUpkeepCost(){
+  const n=troopCount();
+  return { food: n*TROOP_UPKEEP_FOOD, gold: n*TROOP_UPKEEP_GOLD, count:n };
+}
+// Maliyeti karşılayabiliyor mu? (tüketmeden kontrol)
+function canAffordUpkeep(){
+  const c=troopUpkeepCost();
+  return G.food>=c.food && G.gold>=c.gold;
+}
+// Maliyeti tüket — başarılıysa true. activityName uyarı metninde kullanılır.
+function payTroopUpkeep(activityName){
+  const c=troopUpkeepCost();
+  if(c.count===0) return true; // birlik yoksa maliyet yok
+  if(G.food<c.food || G.gold<c.gold){
+    toast(`⚠ Birliklerin için ${c.food}🌾 + ${c.gold}🪙 gerekli (${c.count} birlik). Yetersiz!`);
+    return false;
+  }
+  G.food-=c.food; G.gold-=c.gold;
+  return true;
 }
 
 // Keşifte birim bulununca teklif modalı
@@ -2425,18 +2574,18 @@ function offerFoundTroop(typeKey){
         <div style="font-size:46px;margin-bottom:6px;">${t.icon}</div>
         <div style="font-family:var(--font-head);font-size:17px;color:var(--gold2);">Bir ${t.name} buldun!</div>
         <div style="font-size:12px;color:var(--ink3);margin-top:8px;line-height:1.5;">${t.desc}</div>
-        <div style="font-size:10px;color:var(--ink3);margin-top:8px;">Kadro: ${troopCount()}/${troopCap()}</div>
+        <div style="font-size:10px;color:var(--ink3);margin-top:8px;">Birlik: ${troopCount()}/${troopCap()}</div>
       </div>
-      <button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;" onclick="confirmRecruitFound('${typeKey}')">⚔ Kadroya Kat</button>
+      <button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;" onclick="confirmRecruitFound('${typeKey}')">⚔ Birliğe Kat</button>
       <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal()">Şimdilik Bırak</button>
     `);
   } else {
-    // Kadro dolu → azat et seçeneği
+    // Birlik dolu → azat et seçeneği
     showGModal(`
       <div style="text-align:center;margin-bottom:12px;">
         <div style="font-size:46px;margin-bottom:6px;">${t.icon}</div>
         <div style="font-family:var(--font-head);font-size:17px;color:var(--gold2);">Bir ${t.name} buldun!</div>
-        <div style="font-size:11px;color:#f0a050;margin-top:8px;line-height:1.5;">⚠ Kadron dolu (${troopCount()}/${troopCap()}). Onu almak için bir birliği azat etmelisin.</div>
+        <div style="font-size:11px;color:#f0a050;margin-top:8px;line-height:1.5;">⚠ Birliğin dolu (${troopCount()}/${troopCap()}). Onu almak için bir üyeyi azat etmelisin.</div>
       </div>
       <div style="font-size:10px;color:var(--ink3);margin-bottom:8px;">Azat edilecek birlik (yerine ${t.name} gelir):</div>
       ${G.companions.map(c=>{const ct=TROOP_TYPES[c.type];return `<div onclick="swapTroop('${c.tid}','${typeKey}')" style="display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:6px;border-radius:8px;border:1px solid var(--border2);background:var(--panel2);cursor:pointer;">
@@ -2449,11 +2598,11 @@ function offerFoundTroop(typeKey){
   }
 }
 function confirmRecruitFound(typeKey){
-  if(troopCount()>=troopCap()){ toast('Kadro dolu!'); closeGModal(); return; }
+  if(troopCount()>=troopCap()){ toast('Birlik dolu!'); closeGModal(); return; }
   addTroop(typeKey);
   const t=TROOP_TYPES[typeKey];
   closeGModal();
-  celebrate(t.icon, `${t.name.toUpperCase()} KATILDI!`, `Kadron: ${troopCount()}/${troopCap()}`, 'gold');
+  celebrate(t.icon, `${t.name.toUpperCase()} KATILDI!`, `Birlik: ${troopCount()}/${troopCap()}`, 'gold');
   updateHUD(); if(typeof renderHalk==='function') renderHalk();
   if(currentUser) sbSave();
 }
@@ -2468,7 +2617,7 @@ function swapTroop(oldTid, newTypeKey){
 }
 // Kışladan piyade işe al
 function hirePiyade(){
-  if(troopCount()>=troopCap()){ toast('Kadro dolu! Kışlanı yükselt veya bir birlik azat et.'); return; }
+  if(troopCount()>=troopCap()){ toast('Birlik dolu! Kışlanı yükselt veya bir üyeyi azat et.'); return; }
   const cost=TROOP_TYPES.piyade.hireGold;
   if(G.gold<cost){ toast(`Yeterli altın yok! (${cost}🪙 gerekli)`); return; }
   G.gold-=cost;
@@ -2749,16 +2898,20 @@ async function loadExporeTimers(){
 async function startExplore(idx){
   if(G.gold<10){toast('10🪙 gerekli!');return;}
   if(exploreTimers.find(t=>t.cellIdx===idx)){toast('Bu bölge zaten keşfediliyor!');return;}
+  if(!payTroopUpkeep('keşif')) return;
   G.gold-=10;updateHUD();
+  const exDur=effectiveExploreDur(120);
   let dbId=null;
   if(currentUser){
     const {data}=await supa.from('explore_timers').insert({
-      profile_id:currentUser.id,cell_index:idx,duration_secs:120
+      profile_id:currentUser.id,cell_index:idx,duration_secs:exDur
     }).select().single();
     if(data) dbId=data.id;
   }
-  exploreTimers.push({id:dbId,cellIdx:idx,remaining:120,total:120});
-  toast('Keşif başladı! 2 dakika sonra sonuç belli olacak. 🗺');
+  exploreTimers.push({id:dbId,cellIdx:idx,remaining:exDur,total:exDur});
+  const rb=troopBuffs();
+  const speedNote = rb.rehber>0 ? ` (Rehber: %${Math.round((1-rb.exploreSpeedMult)*100)} hızlı)` : '';
+  toast(`Keşif başladı!${speedNote} 🗺`);
   sbSave();
   renderHarita();
 }
@@ -2767,7 +2920,7 @@ async function finishExplore(idx,dbId){
   const cell=G_MAP[idx];if(!cell)return;
   G.explored.add(idx);
   // Keşif bonusları
-  if(cell.t==='ruins'){const b=Math.floor(Math.random()*40)+20;G.gold+=b;toast(`Harabeler keşfedildi! ${b}🪙 hazine bulundu! 💰`);trackQuest('exploreRuin');trackQuest('exploreRuin2',Math.min(2,[...G.explored].filter(i=>G_MAP[i]?.t==='ruins').length));}
+  if(cell.t==='ruins'){const rb=troopBuffs();let b=Math.floor(Math.random()*40)+20;b=Math.floor(b*rb.resourceMult);G.gold+=b;const bonusNote=rb.rehber>0?` (Rehber +%${Math.round((rb.resourceMult-1)*100)})`:'';toast(`Harabeler keşfedildi! ${b}🪙 hazine bulundu!${bonusNote} 💰`);trackQuest('exploreRuin');trackQuest('exploreRuin2',Math.min(2,[...G.explored].filter(i=>G_MAP[i]?.t==='ruins').length));}
   else if(cell.t==='village'){G.folk.population+=20;toast(`${cell.n} keşfedildi! +20 nüfus 🏘`);trackQuest('exploreVillage3',Math.min(3,[...G.explored].filter(i=>G_MAP[i]?.t==='village').length));}
   else toast(`${cell.n} keşfedildi! 🗺`);
   // Özel birim keşfi — sadece harabe/kasaba, ~%8 şans
@@ -2812,8 +2965,9 @@ async function resetMap(){
 function startGather(idx, type){
   if(G_MAP[idx]?.harvested){toast('Bu bölgeden zaten kaynak toplandı.');return;}
   if(gatherTimers.find(t=>t.cellIdx===idx)){toast('Bu bölgede zaten bir eylem devam ediyor!');return;}
-  gatherTimers.push({cellIdx:idx,type,remaining:120,total:120});
-  toast('Başladı! 2 dakika sonra tamamlanacak. ⏳');
+  const gDur=effectiveExploreDur(120);
+  gatherTimers.push({cellIdx:idx,type,remaining:gDur,total:gDur});
+  toast('Başladı! ⏳');
   renderHarita();
   // Info kartını güncelle
   if(G.selectedCell===idx) cellClick(idx);
@@ -2866,6 +3020,7 @@ const CAVE_ENEMY={id:'3yilan',name:'3 Başlı Yılan',img:'3yilan',hp:3000,maxHp
 let caveState=null; // {enemyHp, defending, log[], cellIdx}
 
 function startCaveBattle(cellIdx){
+  if(!payTroopUpkeep('mağara savaşı')) return;
   caveState={
     enemyHp:CAVE_ENEMY.hp,
     defending:false,
@@ -2981,6 +3136,17 @@ async function caveAction(action){
     log.push({t:`✨ ${wisDmg} büyü hasarı verdin!`,c:'#c084fc'});
   }
 
+  // Birlikler de saldırır (yalnızca oyuncu saldırdıysa)
+  if((action==='attack'||action==='magic') && caveState.enemyHp>0){
+    armedTroops().forEach(c=>{
+      if(caveState.enemyHp<=0) return;
+      const t=TROOP_TYPES[c.type]||{icon:'⚔'};
+      let td=Math.max(1, troopAttackDmg(c) - Math.floor(CAVE_ENEMY.def*0.4));
+      caveState.enemyHp=Math.max(0,caveState.enemyHp-td);
+      log.push({t:`${t.icon} ${t.name} saldırdı: ${td} hasar!`,c:'#7aaa5a'});
+    });
+  }
+
   // Düşman yenildi mi?
   if(caveState.enemyHp<=0){
     caveState.over=true;
@@ -3018,13 +3184,21 @@ async function caveAction(action){
       caveState.shieldTurns--;
     }
     const blocked=Math.floor(rawDmg*blockPct);
-    const actualDmg=Math.max(0,rawDmg-blocked-(eff.def||0));
+    const actualDmg=Math.max(0,rawDmg-blocked-(eff.def||0)-troopArmorDef());
     G.stats.hp=Math.max(0,G.stats.hp-actualDmg);
     const shieldLeft=caveState.shieldTurns>0?` (${caveState.shieldTurns} tur koruma kaldı)`:'';
     if(blocked>0) log.push({t:`🛡 Yılan ${rawDmg} vurdu, ${blocked} bloklandı. ${actualDmg} hasar aldın.${shieldLeft}`,c:'#f8c471'});
     else log.push({t:`🐍 Yılan ${actualDmg} hasar verdi!`,c:'#f8c471'});
   }
   caveState.defending=false;
+
+  // Tabip iyileşmesi — tur başına %10 şans/tabip, canının %5'i
+  const tbCave=troopBuffs();
+  if(tbCave.tabip>0 && G.stats.hp>0 && G.stats.hp<eff.maxhp && Math.random()<tbCave.healChance){
+    const heal=Math.max(1, Math.floor(eff.maxhp*tbCave.healPct));
+    G.stats.hp=Math.min(eff.maxhp, G.stats.hp+heal);
+    log.push({t:`⚕ Tabip seni iyileştirdi! +${heal} can`,c:'#7aaa5a'});
+  }
 
   updateHUD();
 
@@ -4322,7 +4496,7 @@ function renderKale(){
   document.getElementById('castle-hdr-card').innerHTML=`<div class="row-between" style="margin-bottom:5px;"><span style="font-family:var(--font-head);font-size:14px;color:var(--gold2);">🏰 ${G.heroName||'Kral'}\'ın Kalesi</span><span class="tag tag-gold">Sur Sv.${c.walls}</span></div><div style="font-size:10px;color:var(--ink3);">Kule: ${c.towers} | Kışla: ${c.barracks}</div>`;
   const bars=[{icon:'❤',lbl:'Kale Canı',val:c.hp,max:c.maxhp,pct:Math.round(c.hp/c.maxhp*100),color:'var(--hp)'},{icon:'🛡',lbl:'Savunma',val:c.def,max:100,pct:Math.min(100,c.def),color:'var(--def)'},{icon:'⚔',lbl:'Saldırı',val:c.atk,max:100,pct:Math.min(100,c.atk),color:'var(--atk)'},{icon:'😊',lbl:'Moral',val:Math.floor(G.morale),max:100,pct:Math.floor(G.morale),color:'var(--mor)'}];
   document.getElementById('castle-bars-wrap').innerHTML=bars.map(b=>`<div class="castle-stat"><span class="cs-icon">${b.icon}</span><span class="cs-lbl">${b.lbl}</span><div class="cs-bar-bg"><div class="cs-bar" style="width:${b.pct}%;background:${b.color};"></div></div><span class="cs-val">${b.val}${b.max!==100?'/'+b.max:''}</span></div>`).join('');
-  const blds=[{n:'Surlar',lv:c.walls,max:5,icon:'🧱',cost:80,key:'walls'},{n:'Kuleler',lv:c.towers,max:4,icon:'🗼',cost:60,key:'towers'},{n:'Kışla',lv:c.barracks,max:5,icon:'⚔',cost:70,key:'barracks'},{n:'Çiftlik',lv:c.farm,max:5,icon:'🌾',cost:50,key:'farm'},{n:'Pazar',lv:c.market,max:4,icon:'🏪',cost:90,key:'market'}];
+  const blds=[{n:'Surlar',lv:c.walls,max:5,icon:'🧱',cost:80,key:'walls'},{n:'Kuleler',lv:c.towers,max:4,icon:'🗼',cost:60,key:'towers'},{n:'Kışla',lv:c.barracks,max:10,icon:'⚔',cost:70,key:'barracks'},{n:'Çiftlik',lv:c.farm,max:5,icon:'🌾',cost:50,key:'farm'},{n:'Pazar',lv:c.market,max:4,icon:'🏪',cost:90,key:'market'}];
   document.getElementById('castle-buildings-wrap').innerHTML=blds.map(b=>{const uc=Math.floor(b.cost*Math.pow(1.4,b.lv));const mx=b.lv>=b.max;return `<div class="row-between" style="margin-bottom:7px;"><span>${b.icon}</span><span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);flex:1;margin:0 7px;">${b.n} <span style="color:var(--ink3);">Sv.${b.lv}</span></span><button class="btn btn-xs" onclick="upgBld('${b.key}',${uc})" ${mx||G.gold<uc?'disabled':''}>${mx?'Max':uc+'🪙'}</button></div>`;}).join('');
 }
 function upgBld(key,cost){
@@ -4960,13 +5134,25 @@ function renderTroops(){
   if(cnt>0){
     html += (G.companions||[]).map(c=>{
       const t=TROOP_TYPES[c.type]||{name:c.type,icon:'❓',desc:''};
-      return `<div class="card-sm" style="display:flex;align-items:center;gap:9px;margin-bottom:6px;">
-        <span style="font-size:22px;">${t.icon}</span>
-        <div style="flex:1;">
-          <div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">${t.name}</div>
-          <div style="font-size:9px;color:var(--ink3);line-height:1.3;">${t.desc}</div>
+      const w=c.equip?.weapon, a=c.equip?.armor;
+      const dmg=troopAttackDmg(c);
+      const equipChips=[
+        w?`<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:#2a1e08;border:1px solid #7a5a18;color:#d4a843;">${w.icon} ${w.name}${w.enhPlus>0?' +'+w.enhPlus:''}</span>`:'',
+        a?`<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:#0a1e28;border:1px solid #2a5a6a;color:#6adfff;">${a.icon} ${a.name}${a.enhPlus>0?' +'+a.enhPlus:''}</span>`:'',
+      ].filter(Boolean).join(' ');
+      return `<div class="card-sm" style="margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:9px;">
+          <span style="font-size:22px;">${t.icon}</span>
+          <div style="flex:1;">
+            <div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">${t.name}${dmg>0?` <span style="font-size:9px;color:#f08080;">⚔${dmg}</span>`:''}</div>
+            <div style="font-size:9px;color:var(--ink3);line-height:1.3;">${t.desc}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0;">
+            <button class="btn btn-xs" style="padding:3px 8px;" onclick="openEquipTroopModal('${c.tid}')">⚔ Donat</button>
+            <button class="btn btn-xs btn-ghost" style="padding:3px 8px;" onclick="dismissTroop('${c.tid}')">Azat</button>
+          </div>
         </div>
-        <button class="btn btn-xs btn-ghost" style="flex-shrink:0;" onclick="dismissTroop('${c.tid}')">Azat</button>
+        ${equipChips?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">${equipChips}</div>`:''}
       </div>`;
     }).join('');
   } else {
@@ -4975,12 +5161,28 @@ function renderTroops(){
   // İşe alma alanı
   const canHire = cnt<cap;
   const pCost=TROOP_TYPES.piyade.hireGold;
+  // Aktif buff özeti
+  const tb=troopBuffs();
+  const buffLines=[];
+  if(tb.rehber>0)  buffLines.push(`🧭 Keşif −%${Math.round((1-tb.exploreSpeedMult)*100)} süre, +%${Math.round((tb.resourceMult-1)*100)} kaynak`);
+  if(tb.rahip>0)   buffLines.push(`⛪ +%${Math.round((tb.chaMult-1)*100)} karizma (kritik)`);
+  if(tb.sovalye>0) buffLines.push(`🛡 +%${Math.round((tb.atkMult-1)*100)} saldırı & savunma`);
+  if(tb.tabip>0)   buffLines.push(`⚕ Savaşta %${Math.round(tb.healChance*100)} şansla +%5 can/tur`);
+  const upkeep=troopUpkeepCost();
+  let summaryHtml='';
+  if(cnt>0){
+    summaryHtml=`<div style="margin-top:8px;padding:8px 10px;background:#13190f;border:1px solid #2a3a18;border-radius:8px;">
+      ${buffLines.length?`<div style="font-size:9px;color:var(--gold2);font-family:var(--font-head);letter-spacing:.5px;margin-bottom:4px;">AKTİF ETKİLER</div>${buffLines.map(b=>`<div style="font-size:10px;color:#9bd17a;line-height:1.5;">${b}</div>`).join('')}`:'<div style="font-size:10px;color:var(--ink3);">Bu birlikler pasif güç sağlamaz (sadece Piyade). Saldırıda yanında çarpışırlar.</div>'}
+      <div style="font-size:9px;color:#c8a25a;margin-top:6px;padding-top:5px;border-top:1px solid var(--border);">⚠ Her aktivitede besleme: <b>${upkeep.food}🌾 + ${upkeep.gold}🪙</b></div>
+    </div>`;
+  }
+  html += summaryHtml;
   html += `<div style="margin-top:6px;padding-top:8px;border-top:1px solid var(--border);">
     <button class="btn btn-sm" style="width:100%;${canHire?'':'opacity:.5;'}" onclick="hirePiyade()" ${canHire?'':'disabled'}>
       🗡 Piyade İşe Al (${pCost}🪙)
     </button>
     <div style="font-size:9px;color:var(--ink3);text-align:center;margin-top:5px;">
-      Kapasite kışla seviyesiyle artar (şu an Sv.${G.castle?.barracks||1} → ${cap} birlik). ${cnt>=cap?'<span style="color:#f0a050;">Kadro dolu.</span>':''}
+      Kapasite kışla seviyesiyle artar (şu an Sv.${G.castle?.barracks||1} → ${cap} birlik). ${cnt>=cap?'<span style="color:#f0a050;">Birlik dolu.</span>':''}
     </div>
   </div>`;
   wrap.innerHTML=html;
@@ -5556,6 +5758,11 @@ function getEffectiveStats(){
   const sb=getActiveBonusStats();
   if(sb){ s.def+=(sb.def||0); s.agi+=(sb.agi||0); s.wis+=(sb.wis||0); s.maxhp+=(sb.def||0)*5; }
 
+  // Birlik buff'ları (Aşama 2): Rahip → karizma, Şövalye → saldırı/savunma
+  const tb=troopBuffs();
+  if(tb.rahip>0)   s.cha = Math.floor(s.cha * tb.chaMult);
+  if(tb.sovalye>0){ s.def = Math.floor(s.def * tb.defMult); s.atk = Math.floor(s.atk * tb.atkMult); }
+
   // Savunma → hasar azaltma (maxhp artışı addStat'ta base'e ekleniyor, burada sadece combat hesabı)
   s.damageReduction = Math.min(0.65, s.def*0.02);
 
@@ -5589,6 +5796,12 @@ function getEffectiveStats(){
     s.physDmg = Math.floor(s.str*2.0 + s.atk);
 
   s.magicDmg = Math.floor(s.wis*2.0 + s.mgc);
+
+  // Şövalye buff'ı fiziksel ve büyü hasarına da doğrudan yansısın (+%5/şövalye)
+  if(tb.sovalye>0){
+    s.physDmg = Math.floor(s.physDmg * tb.atkMult);
+    s.magicDmg = Math.floor(s.magicDmg * tb.atkMult);
+  }
 
   // hp, maxhp'yi geçemesin
   s.hp = Math.min(s.hp, s.maxhp);
@@ -5894,6 +6107,7 @@ function zdBattleHTML(){
 function zdEnter(){
   zdCheckTicketReset();
   if(ZD.tickets<=0){toast('Bugün hakkın kalmadı!');return;}
+  if(!payTroopUpkeep('zindan')) return;
   ZD.tickets--;
   ZD.active=true;
   ZD.floor=1;
@@ -5904,7 +6118,9 @@ function zdEnter(){
   ZD.battle=null;
   zdSaveTickets();
   renderZindan();
-  toast('Zindana girdin! 🗝');
+  const uc=troopUpkeepCost();
+  const upNote = uc.count>0 ? ` (Birlik beslemesi: ${uc.food}🌾 ${uc.gold}🪙)` : '';
+  toast(`Zindana girdin! 🗝${upNote}`);
 }
 
 function zdExit(){
@@ -6030,6 +6246,20 @@ function zdAction(action){
     zdAnimateHit('enemy');
   }
 
+  // Birlikler de saldırır (yalnızca oyuncu saldırdıysa: attack/magic)
+  if((action==='attack'||action==='magic') && b.enemyHp>0){
+    const armed=armedTroops();
+    armed.forEach(c=>{
+      if(b.enemyHp<=0) return;
+      const t=TROOP_TYPES[c.type]||{icon:'⚔'};
+      let td=troopAttackDmg(c);
+      td=Math.max(1, td - Math.floor((b.enemy.def||0)*0.4)); // düşman savunması kısmen etkiler
+      b.enemyHp=Math.max(0,b.enemyHp-td);
+      log(`${t.icon} ${t.name} saldırdı: ${td} hasar!`,'good');
+    });
+    if(armed.length) zdAnimateHit('enemy');
+  }
+
   // Düşman öldü mü?
   if(b.enemyHp<=0){
     const room=ZD.rooms[b.roomIdx];
@@ -6061,11 +6291,22 @@ function zdAction(action){
   } else if(Math.random()<eff.dodgeChance){
     log(`💨 Saldırıdan kaçındın!`,'good');
   } else {
-    let eDmg=Math.max(1, Math.floor(b.enemy.atk*(0.85+Math.random()*0.3) * (1-eff.damageReduction)));
+    // Birlik zırhı ek hasar azaltma sağlar (her 1 def → %0.5, en fazla %25 ek)
+    const troopRed=Math.min(0.25, troopArmorDef()*0.005);
+    const totalRed=Math.min(0.80, eff.damageReduction + troopRed);
+    let eDmg=Math.max(1, Math.floor(b.enemy.atk*(0.85+Math.random()*0.3) * (1-totalRed)));
     if(b.defending) eDmg=Math.floor(eDmg*0.6);
     b.playerHp=Math.max(0,b.playerHp-eDmg);
     log(`${b.enemy.icon} ${b.enemy.name}: ${eDmg} hasar verdi.`,'bad');
     zdAnimateHit('player');
+  }
+
+  // Tabip iyileşmesi — tur başına %10 şans/tabip, canının %5'i
+  const tbZd=troopBuffs();
+  if(tbZd.tabip>0 && b.playerHp>0 && b.playerHp<eff.maxhp && Math.random()<tbZd.healChance){
+    const heal=Math.max(1, Math.floor(eff.maxhp*tbZd.healPct));
+    b.playerHp=Math.min(eff.maxhp, b.playerHp+heal);
+    log(`⚕ Tabip seni iyileştirdi! +${heal} can`,'good');
   }
 
   // Oyuncu öldü mü?
