@@ -2457,11 +2457,11 @@ function gainTroopXP(troop, amount){
   }
   return leveled;
 }
-// Savaşta yer alan (silahlı) birliklere XP dağıt + seviye atlama bildirimi
+// Savaşta yer alan TÜM birliklere XP dağıt + seviye atlama bildirimi
 function awardTroopCombatXP(amount){
-  const armed=armedTroops();
-  if(!armed.length) return;
-  armed.forEach(c=>{
+  const troops=G.companions||[];
+  if(!troops.length) return;
+  troops.forEach(c=>{
     if(gainTroopXP(c, amount)){
       const t=TROOP_TYPES[c.type]||{name:c.type,icon:'⚔'};
       toast(`${t.icon} ${t.name} seviye atladı! → Sv.${c.level}`);
@@ -6791,6 +6791,7 @@ function buyItem(id){
   const invItem={
     id: Date.now(),
     name: item.name, icon: item.icon,
+    cat: item.cat,
     type: item.type||'Eşya', grade: item.grade||'gray',
     price: item.price, stats: item.stats||{},
     desc: item.desc||'', seller:'player',
@@ -6799,6 +6800,9 @@ function buyItem(id){
     reqLv: item.reqLv||1,
     material: item.material||null,
     classBonus: item.classBonus||null,
+    isMat: item.isMat||false,
+    matKey: item.matKey||null,
+    enhPlus: item.enhPlus||0,
   };
   G.inventory.push(invItem);
   gainXP(10);
@@ -9367,9 +9371,14 @@ async function sbLoadProfile() {
   const { data: folk } = await supa.from('folk').select('*').eq('profile_id', currentUser.id).single();
   if (folk) G.folk = { population: folk.population, happiness: folk.happiness, tax: folk.tax };
 
-  // Keşfedilen hücreler
+  // Keşfedilen hücreler — önce tablo, boşsa profiles.explored_json yedeği
   const { data: cells } = await supa.from('explored_cells').select('cell_index').eq('profile_id', currentUser.id);
-  if (cells?.length) G.explored = new Set(cells.map(c => c.cell_index));
+  if (cells?.length) {
+    G.explored = new Set(cells.map(c => c.cell_index));
+  } else if (Array.isArray(p.explored_json) && p.explored_json.length) {
+    G.explored = new Set(p.explored_json);
+  }
+  G.explored.add(21); // Kale her zaman keşfedilmiş
 
   // Aktif üretim sayaçları
   await sbLoadProdTimers();
@@ -9389,8 +9398,24 @@ async function sbLoadProfile() {
   if(p.inventory && Array.isArray(p.inventory)) G.inventory = p.inventory;
   if(p.equipped  && typeof p.equipped==='object') G.equipped  = {...G.equipped, ...p.equipped};
   if(p.animals   && typeof p.animals==='object')  G.animals   = {...G.animals,  ...p.animals};
+  // Eski eşyalarda cat eksikse, isim/tür eşleşmesiyle geri doldur (zırh giydirme bug fix)
+  let catFixed=false;
+  const inferCat=(item)=>{
+    if(item.cat) return item.cat;
+    const m=MARKET_ITEMS.find(x=>x.name===item.name || (x.img&&x.img===item.img));
+    if(m&&m.cat) return m.cat;
+    // Tür adından tahmin (Göğüslük/Kask/Eldiven/Bot/Zırh → armor)
+    const t=(item.type||'').toLowerCase();
+    if(/göğüslük|kask|eldiven|bot|zırh|kalkan/.test(t)) return 'armor';
+    if(/kılıç|balta|yay|asa|hançer|mızrak|topuz/.test(t)) return 'weapon';
+    return item.cat;
+  };
+  G.inventory.forEach(item=>{ const c=inferCat(item); if(c&&c!==item.cat){ item.cat=c; catFixed=true; } });
+  ['weapon','armor','accessory'].forEach(slot=>{ const it=G.equipped[slot]; if(it){ const c=inferCat(it); if(c&&c!==it.cat){ it.cat=c; catFixed=true; } } });
+  // Birliklerin giydirdiği eşyalarda da cat'i düzelt
+  (G.companions||[]).forEach(tr=>{ ['weapon','armor'].forEach(slot=>{ const it=tr.equip?.[slot]; if(it){ const c=inferCat(it); if(c&&c!==it.cat){ it.cat=c; catFixed=true; } } }); });
   // Mevcut silahları yeni random-stat sistemine migrate et (tek seferlik)
-  let needsSave=false;
+  let needsSave=catFixed;
   G.inventory=G.inventory.map(item=>{
     if(item.cat==='weapon'&&!item._migrated&&WEAPON_TEMPLATES[item.tplId||item.img]){
       needsSave=true; return migrateWeapon(item);
@@ -9469,6 +9494,7 @@ async function sbSave() {
       perks: G.perks,
       inv_bonus: G.invBonus,
       companions: G.companions,
+      explored_json: [...G.explored],
       animals:      G.animals,
     }).eq('id', currentUser.id);
     if (e1) { console.error('[sbSave] profiles hatası:', e1); toast('⚠ Kayıt hatası: ' + e1.message); return; }
