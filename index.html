@@ -2398,7 +2398,7 @@ function newTroopId(){ return 'tr_'+Date.now()+'_'+Math.floor(Math.random()*1000
 // Bir birlik ekle (kapasite kontrolü çağıran tarafta)
 function addTroop(typeKey){
   const t=TROOP_TYPES[typeKey]; if(!t) return null;
-  const troop={ tid:newTroopId(), type:typeKey, equip:{weapon:null,armor:null} };
+  const troop={ tid:newTroopId(), type:typeKey, level:1, xp:0, equip:{weapon:null,armor:null} };
   if(!G.companions) G.companions=[];
   G.companions.push(troop);
   return troop;
@@ -2441,6 +2441,34 @@ function effectiveExploreDur(dur){
 }
 
 /* ── BİRLİK EKİPMANI (Aşama 3) ── */
+// Bir birliğin seviyesi (eski kayıtlarda yoksa 1)
+function troopLevel(troop){ return troop.level||1; }
+// Seviye atlamak için gereken XP
+function troopXpNeed(level){ return level*50; }
+// Birliğe XP ver, seviye atlatabilir. Atlarsa true döner.
+function gainTroopXP(troop, amount){
+  if(!troop) return false;
+  troop.level=troop.level||1; troop.xp=(troop.xp||0)+amount;
+  let leveled=false;
+  while(troop.xp >= troopXpNeed(troop.level)){
+    troop.xp -= troopXpNeed(troop.level);
+    troop.level++;
+    leveled=true;
+  }
+  return leveled;
+}
+// Savaşta yer alan (silahlı) birliklere XP dağıt + seviye atlama bildirimi
+function awardTroopCombatXP(amount){
+  const armed=armedTroops();
+  if(!armed.length) return;
+  armed.forEach(c=>{
+    if(gainTroopXP(c, amount)){
+      const t=TROOP_TYPES[c.type]||{name:c.type,icon:'⚔'};
+      toast(`${t.icon} ${t.name} seviye atladı! → Sv.${c.level}`);
+    }
+  });
+}
+
 // Bir birliğin savaştaki vuruş gücü = silahının atk'si (+küçük baz). Silahsız vurmaz.
 function troopAttackDmg(troop){
   const w=troop.equip?.weapon;
@@ -2470,9 +2498,10 @@ function openEquipTroopModal(tid){
   const troop=(G.companions||[]).find(c=>c.tid===tid);
   if(!troop) return;
   const t=TROOP_TYPES[troop.type]||{name:troop.type,icon:'❓'};
-  // Envanterdeki silahlar ve zırhlar (oyuncunun kuşandıkları hariç — onlar zaten G.equipped'te)
+  const lv=troopLevel(troop);
+  // Envanterdeki silahlar ve zırhlar (aksesuar da zırh slotuna girer)
   const weapons=G.inventory.filter(i=>i.cat==='weapon');
-  const armors=G.inventory.filter(i=>i.cat==='armor');
+  const armors=G.inventory.filter(i=>i.cat==='armor'||i.cat==='accessory');
   const slotHtml=(slotKey, label, items, cur)=>{
     let rows='';
     // Mevcut giydirilmiş
@@ -2485,23 +2514,39 @@ function openEquipTroopModal(tid){
     }
     // Envanterdeki seçenekler
     if(items.length){
-      rows+=items.map(it=>`<div onclick="equipTroop('${tid}','${slotKey}',${it.id})" style="display:flex;align-items:center;gap:8px;padding:8px;margin-bottom:4px;border-radius:7px;border:1px solid var(--border2);background:var(--panel2);cursor:pointer;">
-        <span style="font-size:18px;">${it.icon}</span>
-        <div style="flex:1;text-align:left;">
-          <div style="font-size:11px;color:var(--perg);">${it.name}${it.enhPlus>0?' +'+it.enhPlus:''}</div>
-          <div style="font-size:8px;color:var(--ink3);">${Object.entries(it.stats||{}).slice(0,3).map(([k,v])=>`+${v} ${STAT_LABELS[k]||k}`).join(' · ')}</div>
-        </div>
-      </div>`).join('');
+      rows+=items.map(it=>{
+        const need=it.reqLv||1;
+        const locked=lv<need;
+        const statsTxt=Object.entries(it.stats||{}).slice(0,3).map(([k,v])=>`+${v} ${STAT_LABELS[k]||k}`).join(' · ');
+        if(locked){
+          return `<div style="display:flex;align-items:center;gap:8px;padding:8px;margin-bottom:4px;border-radius:7px;border:1px solid var(--border);background:#15110a;opacity:.55;cursor:not-allowed;">
+            <span style="font-size:18px;filter:grayscale(1);">${it.icon}</span>
+            <div style="flex:1;text-align:left;">
+              <div style="font-size:11px;color:var(--ink3);">${it.name}${it.enhPlus>0?' +'+it.enhPlus:''}</div>
+              <div style="font-size:8px;color:#c0703a;">🔒 Sv.${need} gerekli (birlik Sv.${lv})</div>
+            </div>
+          </div>`;
+        }
+        return `<div onclick="equipTroop('${tid}','${slotKey}',${it.id})" style="display:flex;align-items:center;gap:8px;padding:8px;margin-bottom:4px;border-radius:7px;border:1px solid var(--border2);background:var(--panel2);cursor:pointer;">
+          <span style="font-size:18px;">${it.icon}</span>
+          <div style="flex:1;text-align:left;">
+            <div style="font-size:11px;color:var(--perg);">${it.name}${it.enhPlus>0?' +'+it.enhPlus:''} ${need>1?`<span style="font-size:8px;color:var(--ink3);">Sv.${need}</span>`:''}</div>
+            <div style="font-size:8px;color:var(--ink3);">${statsTxt}</div>
+          </div>
+        </div>`;
+      }).join('');
     } else if(!cur){
       rows+=`<div style="font-size:10px;color:var(--ink3);padding:6px;">Envanterde uygun ${label.toLowerCase()} yok.</div>`;
     }
     return `<div style="margin-bottom:10px;"><div style="font-size:9px;color:var(--gold);font-family:var(--font-head);letter-spacing:.5px;margin-bottom:5px;">${label}</div>${rows}</div>`;
   };
+  const xpNeed=troopXpNeed(lv);
   showGModal(`
     <div style="text-align:center;margin-bottom:12px;">
       <div style="font-size:34px;">${t.icon}</div>
-      <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);margin-top:4px;">${t.name}'i Donat</div>
-      <div style="font-size:10px;color:var(--ink3);margin-top:4px;">Silah verirsen savaşta düşmana vurur. Zırh, hasar azaltmana eklenir.</div>
+      <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);margin-top:4px;">${t.name} <span style="font-size:11px;color:var(--gold);">Sv.${lv}</span></div>
+      <div style="font-size:9px;color:var(--ink3);margin-top:3px;">Savaş XP: ${troop.xp||0}/${xpNeed} · Savaştıkça seviye atlar, daha güçlü ekipman giyer.</div>
+      <div style="font-size:10px;color:var(--ink3);margin-top:5px;">Silah → düşmana vurur. Zırh → hasar azaltmana eklenir.</div>
     </div>
     ${slotHtml('weapon','⚔ SİLAH', weapons, troop.equip?.weapon)}
     ${slotHtml('armor','🛡 ZIRH', armors, troop.equip?.armor)}
@@ -2514,12 +2559,17 @@ function equipTroop(tid, slotKey, itemId){
   const idx=G.inventory.findIndex(i=>i.id===itemId);
   if(idx<0) return;
   const item=G.inventory[idx];
+  // Seviye kontrolü — birlik, eşyanın gerektirdiği seviyede olmalı
+  const need=item.reqLv||1;
+  if(troopLevel(troop) < need){
+    toast(`⚠ Bu ekipman için Sv.${need} gerekli. Bu birlik Sv.${troopLevel(troop)}. Savaşarak seviye atlamalı.`);
+    return;
+  }
   // Önce o slotta bir şey varsa envantere geri koy
   if(troop.equip[slotKey]){ G.inventory.push(troop.equip[slotKey]); }
   // Eşyayı envanterden al, birliğe tak
   troop.equip[slotKey]=item;
   G.inventory.splice(idx,1);
-  // Eğer geri koyduğumuz eşya idx'i kaydırdıysa sorun olmaz çünkü item'ı id ile bulduk ve splice'ı sonra yaptık
   toast(`${item.icon} ${item.name} donatıldı!`);
   if(currentUser) sbSave();
   renderHalk(); renderKarakter();
@@ -3151,6 +3201,8 @@ async function caveAction(action){
   if(caveState.enemyHp<=0){
     caveState.over=true;
     log.push({t:'💀 3 Başlı Yılan yenildi!',c:'var(--gold2)'});
+    // Birlikler büyük savaş XP'si kazanır
+    awardTroopCombatXP(60);
     // Ödül: rastgele nekro item
     const nekroIds=[800,801,802,803,804];
     const rewardId=nekroIds[Math.floor(Math.random()*nekroIds.length)];
@@ -4505,6 +4557,7 @@ function upgBld(key,cost){
   if(key==='walls'){G.castle.def+=8;if(G.castle.walls>=2)trackQuest('wallsLv2');}
   if(key==='towers') G.castle.atk+=6;
   gainXP(25);toast(key+' geliştirildi!');updateHUD();renderKale();
+  if(currentUser) sbSave();
 }
 function endTurn(){
   G.turn++;G.season=(G.season+1)%4;
@@ -5144,7 +5197,7 @@ function renderTroops(){
         <div style="display:flex;align-items:center;gap:9px;">
           <span style="font-size:22px;">${t.icon}</span>
           <div style="flex:1;">
-            <div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">${t.name}${dmg>0?` <span style="font-size:9px;color:#f08080;">⚔${dmg}</span>`:''}</div>
+            <div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">${t.name} <span style="font-size:9px;color:var(--gold);">Sv.${troopLevel(c)}</span>${dmg>0?` <span style="font-size:9px;color:#f08080;">⚔${dmg}</span>`:''}</div>
             <div style="font-size:9px;color:var(--ink3);line-height:1.3;">${t.desc}</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0;">
@@ -6266,6 +6319,8 @@ function zdAction(action){
     room.cleared=true;
     G.gold+=b.enemy.gold; ZD.totalGold+=b.enemy.gold;
     gainXP(b.enemy.xp);   ZD.totalXP+=b.enemy.xp;
+    // Birlikler de savaş XP'si kazanır (düşman XP'sinin yarısı)
+    awardTroopCombatXP(Math.max(5, Math.floor(b.enemy.xp*0.5)));
     G.stats.hp=Math.max(1,b.playerHp);
     log(`🏆 ${b.enemy.name} yenildi! +${b.enemy.gold}🪙 +${b.enemy.xp}XP`,'gold');
     // Boss oda ise silah düşür
@@ -6657,7 +6712,7 @@ function renderMarket(){
       ${statsP?`<div style="display:flex;gap:2px;flex-wrap:wrap;justify-content:center;">${statsP}</div>`:''}
       <div style="font-size:8px;color:var(--ink3);">${isBoss?'⚔ Boss':item.seller==='npc'?'🤖 NPC':'👤 '+item.sellerName}${isOwnListing?' <span style="color:var(--gold);">(Sen)</span>':''}</div>
       <div style="font-family:var(--font-head);font-size:11px;color:${isBoss?'var(--g-orange)':'var(--gold)'};">${isBoss?'Boss Drop':item.price.toLocaleString('tr')+'🪙'}</div>
-      ${!isBoss&&!isOwnListing?`<button class="buy-btn-sm" style="width:100%;margin-top:3px;" onclick="event.stopPropagation();buyMarketItem('${item.id}')" ${!canBuy?'disabled':''}>Satın Al</button>`:''}
+      ${!isBoss&&!isOwnListing?`<button class="buy-btn-sm" style="width:100%;margin-top:3px;" onclick="event.stopPropagation();buyMarketItem('${item.id}')" ${!canBuy?'disabled':''}>${item.cat==='premium'?'✨ Etkinleştir':'Satın Al'}</button>`:''}
       ${isOwnListing?`<div style="font-size:8px;color:var(--ink3);margin-top:2px;">Satışta</div>`:''}
     </div>`;
   }).join('');
@@ -9358,6 +9413,8 @@ async function sbLoadProfile() {
   if(p.inv_bonus !== undefined) G.invBonus = p.inv_bonus;
   if(p.companions) { try{ G.companions = typeof p.companions==='string'?JSON.parse(p.companions):p.companions; }catch(e){ G.companions=[]; } }
   if(!Array.isArray(G.companions)) G.companions=[];
+  // Eski kayıtlarda seviye/xp yoksa ekle
+  G.companions.forEach(c=>{ if(c.level==null) c.level=1; if(c.xp==null) c.xp=0; if(!c.equip) c.equip={weapon:null,armor:null}; });
   refreshLoginStreak();
 
   // G.stats.hp'yi effective maxhp'ye göre kliple (G.stats.maxhp değişmez)
