@@ -9488,6 +9488,8 @@ async function sbSave() {
   try {
     const { error: e1 } = await supa.from('profiles').update({
       hero_name:    G.heroName,
+      class_id:     G.classId,
+      avatar_idx:   G.avatarIdx,
       level:        G.level,
       xp:           G.xp,
       skill_points: G.skillPoints,
