@@ -81,7 +81,7 @@ html,body{
     height:100dvh;
     border-top:none !important;
     border-right:1px solid var(--border);
-    padding:20px 0;
+    padding:8px 0 0;
     gap:4px;
     position:sticky;top:0;
     order:-1;
@@ -778,17 +778,15 @@ html,body{
 @media(min-width:600px){
   #server-time-bar{
     display:flex;flex-direction:column;align-items:center;
-    position:fixed;top:16px;right:20px;z-index:900;
-    background:var(--panel2);border:1px solid var(--border2);
-    border-top:2px solid var(--gold);border-radius:10px;
-    padding:10px 16px;gap:4px;
-    box-shadow:0 4px 18px #00000070;font-family:Arial,sans-serif;
-    min-width:160px;text-align:center;
+    margin-top:auto;width:100%;box-sizing:border-box;
+    border-top:1px solid var(--border);
+    padding:10px 8px 14px;gap:3px;
+    font-family:Arial,sans-serif;text-align:center;
   }
-  #stb-season-lbl{font-size:9px;color:var(--ink3);letter-spacing:1px;text-transform:uppercase;margin-bottom:1px;}
-  #stb-season{font-family:var(--font-head);font-size:14px;color:var(--gold2);}
-  #stb-date{font-size:11px;color:var(--perg2);margin-top:2px;}
-  #stb-time{font-size:15px;color:var(--gold);letter-spacing:2px;font-weight:700;margin-top:1px;}
+  #stb-season-lbl{font-size:8px;color:var(--ink3);letter-spacing:1px;text-transform:uppercase;}
+  #stb-season{font-family:var(--font-head);font-size:13px;color:var(--gold2);}
+  #stb-date{font-size:10px;color:var(--perg2);}
+  #stb-time{font-size:13px;color:var(--gold);letter-spacing:2px;font-weight:700;}
 }
 /* Mobil: HUD içinde küçük gösterim */
 #server-time-mob{font-family:Arial,sans-serif;font-size:9px;color:var(--ink3);text-align:center;padding:2px 0 3px;}
