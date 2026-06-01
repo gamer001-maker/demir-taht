@@ -773,20 +773,22 @@ html,body{
 @media(min-width:600px){.gchat-fab{bottom:20px;right:20px;}.gchat-win{bottom:80px;right:20px;}}
 @media(max-width:599px){.gchat-win.open{top:0;left:0;right:0;bottom:0;width:100%;height:100%;border-radius:0;}}
 
-/* ── SERVER ZAMAN BARI ── */
-#server-time-bar{display:none;font-family:Arial,sans-serif;}
+/* ── SERVER ZAMAN PANELİ ── */
+#server-time-bar{display:none;}
 @media(min-width:600px){
   #server-time-bar{
-    display:flex;align-items:center;justify-content:center;gap:10px;
-    position:sticky;bottom:0;left:0;
-    background:var(--panel3);border-top:1px solid var(--border);
-    border-radius:0 0 0 0;padding:5px 8px;
-    font-size:11px;color:var(--ink3);flex-shrink:0;
-    order:99;width:100%;box-sizing:border-box;
+    display:flex;flex-direction:column;align-items:center;
+    position:fixed;top:16px;right:20px;z-index:900;
+    background:var(--panel2);border:1px solid var(--border2);
+    border-top:2px solid var(--gold);border-radius:10px;
+    padding:10px 16px;gap:4px;
+    box-shadow:0 4px 18px #00000070;font-family:Arial,sans-serif;
+    min-width:160px;text-align:center;
   }
-  #server-time-bar .stb-season{color:var(--gold2);font-size:12px;}
-  #server-time-bar .stb-sep{color:var(--border2);}
-  #server-time-bar .stb-time{color:var(--perg2);letter-spacing:1px;}
+  #stb-season-lbl{font-size:9px;color:var(--ink3);letter-spacing:1px;text-transform:uppercase;margin-bottom:1px;}
+  #stb-season{font-family:var(--font-head);font-size:14px;color:var(--gold2);}
+  #stb-date{font-size:11px;color:var(--perg2);margin-top:2px;}
+  #stb-time{font-size:15px;color:var(--gold);letter-spacing:2px;font-weight:700;margin-top:1px;}
 }
 /* Mobil: HUD içinde küçük gösterim */
 #server-time-mob{font-family:Arial,sans-serif;font-size:9px;color:var(--ink3);text-align:center;padding:2px 0 3px;}
@@ -1960,13 +1962,12 @@ html,body{
     <div class="bnav-btn"        id="bn-guild"   onclick="showPage('guild')">  <span class="bnav-icon"><img src="images/lonca.png" class="nav-img" alt="Lonca"/></span><span class="bnav-lbl">Lonca</span></div>
     <div class="bnav-btn"        id="bn-prod"    onclick="showPage('prod')">   <span class="bnav-icon"><img src="images/uretim.png" class="nav-img" alt="Üretim"/></span><span class="bnav-lbl">Üretim</span></div>
     <div class="bnav-btn"        id="bn-profile" onclick="showPage('profile')"><div class="bnav-notif"><span class="bnav-icon"><img src="images/profil.png" class="nav-img" alt="Profil"/></span><div class="bnav-dot" id="notif-dot"></div></div><span class="bnav-lbl">Profil</span></div>
-    <div id="server-time-bar">
-      <span class="stb-season" id="stb-season">🌸 İlkbahar</span>
-      <span class="stb-sep">·</span>
-      <span id="stb-date">--.--</span>
-      <span class="stb-sep">·</span>
-      <span class="stb-time" id="stb-time">--:--:--</span>
-    </div>
+  </div>
+  <div id="server-time-bar">
+    <div id="stb-season-lbl">Güncel Mevsim</div>
+    <div id="stb-season">🌸 İlkbahar</div>
+    <div id="stb-date">--.--.-.-.-</div>
+    <div id="stb-time">--:--:--</div>
   </div>
 
   <!-- MODAL -->
@@ -2692,6 +2693,34 @@ function effectiveProdDur(dur){
 }
 
 /* Premium öğe etkisini uygula. (Fiyat zaten buyItem'da düşüldü.) */
+function openPremiumConfirm(id){
+  const item=MARKET_ITEMS.find(x=>x.id===id);
+  if(!item) return;
+  const canBuy=G.gold>=item.price;
+  const EFFECTS={
+    invExpand:  `Envanteriniz <b style="color:var(--gold)">${invCap()} birimden ${invCap()+20} birime</b> çıkacaktır. Bu etki kalıcıdır.`,
+    chatGlow:   `<b style="color:var(--gold)">7 gün</b> boyunca sohbette isminiz altın parıltıyla görünecektir.`,
+    statReset:  `Tüm harcadığınız <b style="color:var(--gold)">nitelik puanları iade edilecek</b>, yeniden dağıtabileceksiniz.`,
+    classChange:`Mevcut sınıfınız değiştirilebilir. Puanlarınız iade edilir ve <b style="color:var(--gold)">yeni bir sınıf seçersiniz</b>.`,
+    prodSpeed:  `<b style="color:var(--gold)">7 gün</b> boyunca tüm üretim ve işleme süreleriniz <b style="color:var(--gold)">%10 kısalacaktır</b>.`,
+    luckCharm:  `<b style="color:var(--gold)">7 gün</b> boyunca tüm geliştirme işlemlerinde başarı şansınız <b style="color:var(--gold)">+%5 artacaktır</b>.`,
+  };
+  const effect=EFFECTS[item.premiumKey]||item.desc;
+  showGModal(`
+    <div style="text-align:center;margin-bottom:14px;">
+      <div style="font-size:40px;margin-bottom:6px;">${item.icon}</div>
+      <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);margin-bottom:4px;">${item.name}</div>
+      <div style="font-size:11px;color:var(--ink3);font-style:italic;margin-bottom:12px;">${item.desc}</div>
+      <div style="background:var(--panel3);border:1px solid var(--border2);border-left:3px solid var(--gold);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--perg2);text-align:left;line-height:1.6;">${effect}</div>
+    </div>
+    <div style="font-family:var(--font-head);font-size:13px;color:var(--gold);text-align:center;margin-bottom:12px;">Maliyet: ${item.price}🪙</div>
+    ${canBuy
+      ?`<button class="btn" style="width:100%;margin-bottom:8px;" onclick="closeGModal();buyItem(${id})">✨ Etkinleştir</button>`
+      :`<button class="btn" disabled style="width:100%;margin-bottom:8px;opacity:.5;">Yeterli Altın Yok</button>`}
+    <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal()">Vazgeç</button>
+  `);
+}
+
 function applyPremium(key, item){
   if(key==='invExpand'){
     G.invBonus = (G.invBonus||0) + INV_EXPAND_STEP;
@@ -2784,7 +2813,7 @@ function openClassChangeModal(){
     <button class="btn btn-ghost" style="width:100%;margin-top:4px;" onclick="closeGModal()">Vazgeç</button>
   `);
 }
-function confirmClassChange(newClassId){
+async function confirmClassChange(newClassId){
   const cls=CLASSES.find(c=>c.id===newClassId);
   if(!cls) return;
   // Puanları iade et (eski sınıfa göre), sonra yeni sınıfın base'ine geç
@@ -2803,7 +2832,7 @@ function confirmClassChange(newClassId){
   closeGModal();
   celebrate('🪞', 'YENİDEN DOĞDUN!', `Artık bir ${cls.name}'sın`, 'levelup');
   updateHUD(); renderKarakter();
-  if(currentUser) sbSave();
+  if(currentUser) await sbSave();
 }
 
 let _attrPopAnchor=null;
@@ -6705,14 +6734,15 @@ function renderMarket(){
       ?`<img src="images/${item.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:36px;height:36px;object-fit:contain;"/><span style="display:none;font-size:24px;">${item.icon}</span>`
       :`<span style="font-size:24px;">${item.icon}</span>`;
     const enhBadge=item.enhPlus>0?`<span style="font-size:7px;padding:1px 4px;border-radius:3px;background:#1a1200;border:1px solid var(--gold);color:var(--gold);font-family:var(--font-head);">+${item.enhPlus}</span>`:'';
-    return `<div class="listing-card ${item.grade}" onclick="buyMarketItem('${item.id}')">
+    const clickFn=item.cat==='premium'?`openPremiumConfirm(${item.id})`:`buyMarketItem('${item.id}')`;
+    return `<div class="listing-card ${item.grade}" onclick="${clickFn}">
       <div class="item-icon ${item.grade}" style="margin-bottom:2px;">${iconContent}<div class="grade-pip gp-${item.grade}">${GRADES[item.grade]?.name||''}</div></div>
       <div class="item-name ${item.grade}" style="font-family:var(--font-head);font-size:10px;line-height:1.3;word-break:break-word;">${item.name}${enhBadge?'&nbsp;'+enhBadge:''}</div>
       <div style="display:flex;gap:3px;flex-wrap:wrap;justify-content:center;">${lvBadge}${item.type?`<span style="font-size:7px;color:var(--ink3);">${item.type}</span>`:''}</div>
       ${statsP?`<div style="display:flex;gap:2px;flex-wrap:wrap;justify-content:center;">${statsP}</div>`:''}
       <div style="font-size:8px;color:var(--ink3);">${isBoss?'⚔ Boss':item.seller==='npc'?'🤖 NPC':'👤 '+item.sellerName}${isOwnListing?' <span style="color:var(--gold);">(Sen)</span>':''}</div>
       <div style="font-family:var(--font-head);font-size:11px;color:${isBoss?'var(--g-orange)':'var(--gold)'};">${isBoss?'Boss Drop':item.price.toLocaleString('tr')+'🪙'}</div>
-      ${!isBoss&&!isOwnListing?`<button class="buy-btn-sm" style="width:100%;margin-top:3px;" onclick="event.stopPropagation();buyMarketItem('${item.id}')" ${!canBuy?'disabled':''}>${item.cat==='premium'?'✨ Etkinleştir':'Satın Al'}</button>`:''}
+      ${!isBoss&&!isOwnListing?`<button class="buy-btn-sm" style="width:100%;margin-top:3px;" onclick="event.stopPropagation();${clickFn}" ${!canBuy?'disabled':''}>${item.cat==='premium'?'✨ Etkinleştir':'Satın Al'}</button>`:''}
       ${isOwnListing?`<div style="font-size:8px;color:var(--ink3);margin-top:2px;">Satışta</div>`:''}
     </div>`;
   }).join('');
@@ -6763,7 +6793,8 @@ function buyItem(id){
   if(item.cat==='premium' && item.premiumKey){
     applyPremium(item.premiumKey, item);
     updateHUD();renderMarket();
-    if(currentUser) sbSave();
+    // classChange ve statReset modal açar — save confirmClassChange/confirmStatReset içinde yapılır
+    if(currentUser && item.premiumKey!=='classChange' && item.premiumKey!=='statReset') sbSave();
     return;
   }
 
@@ -6988,6 +7019,7 @@ async function treasuryAction(type){
     toast(amt.toLocaleString('tr')+'🪙 hazineden çekildi!');
   }
   updateHUD();
+  if(currentUser) sbSave();
   const el=document.getElementById('t-amount');if(el)el.value='';
   const td=document.getElementById('treasury-display');if(td)td.textContent=G.guildTreasury.toLocaleString('tr')+' 🪙';
 }
