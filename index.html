@@ -1856,6 +1856,7 @@ html,body{
       <div class="cat-tab" id="cat-production"  onclick="setCat('production')"  style="flex-shrink:0;padding:9px 12px;font-family:var(--font-head);font-size:12px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">🌾 Üretim</div>
       <div class="cat-tab" id="cat-livestock"   onclick="setCat('livestock')"   style="flex-shrink:0;padding:9px 12px;font-family:var(--font-head);font-size:12px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">🐄 Hayvanlar</div>
       <div class="cat-tab" id="cat-premium"     onclick="setCat('premium')"     style="flex-shrink:0;padding:9px 12px;font-family:var(--font-head);font-size:12px;color:#d4a843;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">👑 Kraliyet</div>
+      <div class="cat-tab" id="cat-materials"   onclick="setCat('materials')"   style="flex-shrink:0;padding:9px 12px;font-family:var(--font-head);font-size:12px;color:#9bd17a;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">📦 Malzeme</div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 11px;border-bottom:1px solid var(--border);background:var(--panel2);flex-shrink:0;">
       <span style="font-size:10px;color:var(--ink3);" id="market-count">—</span>
@@ -3752,6 +3753,68 @@ const PROD_RECIPES={
 const FOOD_VALUE={bugday:1,arpa:1,sebze:2,saman:0,un:0,arpa_unu:0,tuy:0,yumurta:2,yun:0,sut:2,ekmek:0,corba:0,kek:0,patates:1,domates:2,cicek:0,yonca:0,cilek:3,bugday_unu:0,patates_puresi:3,kaymak:4,cilek_puresi:4,domates_puresi:3,bal:2,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0};
 const KITCHEN_FOOD_VALUES={domates_corbasi:10,patates_corbasi:12,ekmek:12,salcali_ekmek:15,borek:18,cilekli_turta:20,balli_kaymak:25};
 const ITEM_LABELS={bugday:'Buğday',saman:'Saman',arpa:'Arpa',sebze:'Sebze',un:'Un',arpa_unu:'Arpa Unu',tuy:'Tüy',yumurta:'Yumurta',yun:'Yün',sut:'Süt',ekmek:'Ekmek',corba:'Çorba',kek:'Kek',patates:'Patates',domates:'Domates',cicek:'Çiçek',yonca:'Yonca',cilek:'Çilek',patates_tohum:'Patates Tohumu',domates_tohum:'Domates Tohumu',cicek_tohum:'Çiçek Tohumu',yonca_tohum:'Yonca Tohumu',cilek_tohum:'Çilek Tohumu',bugday_unu:'Buğday Unu',patates_puresi:'Patates Püresi',kaymak:'Kaymak',cilek_puresi:'Çilek Püresi',domates_puresi:'Domates Püresi',bal:'Bal',domates_corbasi:'Domates Çorbası',patates_corbasi:'Patates Çorbası',salcali_ekmek:'Salçalı Ekmek',borek:'Börek',cilekli_turta:'Çilekli Turta',balli_kaymak:'Ballı Kaymak',meseLodunu:'Meşe Odunu',demir:'Demir',kil:'Kil',kereste:'Kereste',civi:'Çivi',tugla:'Tuğla'};
+
+/* ══════════════════════════════════════
+   BİNA YÜKSELTME MALZEMELERİ (kereste/çivi/tuğla)
+   Sv1→2 taban değerler. Sonraki her seviye ×1.5 (yukarı yuvarlanır).
+   tuglaStart: tuğlanın devreye girdiği seviye (surlarda 4 → tahta siperden taşa geçiş).
+══════════════════════════════════════ */
+const BUILDING_MATS = {
+  // Kale binaları
+  walls:    {kereste:500, civi:1000, tugla:0,   tuglaStart:4, tuglaBase:200}, // tahta siper → taş
+  towers:   {kereste:300, civi:400,  tugla:200, tuglaStart:1},
+  barracks: {kereste:150, civi:300,  tugla:100, tuglaStart:1}, // senin örneğin
+  farm:     {kereste:200, civi:150,  tugla:20,  tuglaStart:1}, // az tuğla
+  market:   {kereste:250, civi:300,  tugla:50,  tuglaStart:1},
+  // Üretim binaları
+  prod_farm:    {kereste:150, civi:100, tugla:15, tuglaStart:1},
+  prod_mill:    {kereste:200, civi:250, tugla:40, tuglaStart:1},
+  prod_kitchen: {kereste:200, civi:250, tugla:40, tuglaStart:1},
+  prod_ranch:   {kereste:250, civi:200, tugla:30, tuglaStart:1},
+  prod_insaa:   {kereste:150, civi:200, tugla:30, tuglaStart:1},
+};
+
+// Bir binayı 'fromLevel'den (fromLevel+1)'e yükseltmenin malzeme maliyeti.
+// fromLevel = mevcut seviye (Sv1'den Sv2'ye yükseltiyorsak fromLevel=1).
+function buildingMatCost(key, fromLevel){
+  const m = BUILDING_MATS[key];
+  if(!m) return {};
+  const mult = Math.pow(1.5, Math.max(0, fromLevel-1)); // Sv1→2'de ×1, Sv2→3'te ×1.5...
+  const cost = {};
+  if(m.kereste) cost.kereste = Math.ceil(m.kereste * mult);
+  if(m.civi)    cost.civi    = Math.ceil(m.civi * mult);
+  // Tuğla: belirli seviyeden sonra devreye girer
+  const ts = m.tuglaStart || 1;
+  if(fromLevel >= ts){
+    if(m.tugla > 0){
+      // Normal bina: taban tuğla ×1.5^seviye
+      cost.tugla = Math.ceil(m.tugla * mult);
+    } else if(m.tuglaBase){
+      // Surlar gibi: tuğla sonradan başlar, başladığı seviyeden itibaren artar
+      const tuglaMult = Math.pow(1.5, fromLevel - ts);
+      cost.tugla = Math.ceil(m.tuglaBase * tuglaMult);
+    }
+  }
+  return cost;
+}
+
+// Oyuncunun bu maliyeti karşılayıp karşılamadığı
+function canAffordMats(cost){
+  return Object.entries(cost).every(([k,v]) => (G.prodInv[k]||0) >= v);
+}
+// Maliyeti tüket
+function spendMats(cost){
+  Object.entries(cost).forEach(([k,v]) => { G.prodInv[k] = (G.prodInv[k]||0) - v; });
+}
+// Maliyeti okunabilir HTML rozetlerine çevir (yetersizi kırmızı gösterir)
+function matCostHTML(cost){
+  return Object.entries(cost).map(([k,v])=>{
+    const have = G.prodInv[k]||0;
+    const ok = have >= v;
+    const ic = ITEM_ICONS[k]||'';
+    return `<span style="font-size:10px;padding:1px 6px;border-radius:4px;margin:1px;display:inline-block;background:${ok?'#13190f':'#2a1010'};border:1px solid ${ok?'#2a3a18':'#6a2020'};color:${ok?'#9bd17a':'#f08080'};">${ic} ${v}${ok?'':` (${have})`}</span>`;
+  }).join(' ');
+}
 const ITEM_ICONS={bugday:'🌾',saman:'🌿',arpa:'🌱',sebze:'🥦',un:'🥛',arpa_unu:'🥛',tuy:'🪶',yumurta:'🥚',yun:'🧶',sut:'🥛',ekmek:'🍞',corba:'🥣',kek:'🎂',patates:'🥔',domates:'🍅',cicek:'🌸',yonca:'🍀',cilek:'🍓',patates_tohum:'🌱',domates_tohum:'🌱',cicek_tohum:'🌱',yonca_tohum:'🌱',cilek_tohum:'🌱',bugday_unu:'🫙',patates_puresi:'🫙',kaymak:'🫙',cilek_puresi:'🫙',domates_puresi:'🫙',bal:'🍯',domates_corbasi:'🥣',patates_corbasi:'🥣',salcali_ekmek:'🍞',borek:'🥐',cilekli_turta:'🍓',balli_kaymak:'🍯',meseLodunu:'🪵',demir:'⛏',kil:'🪣',kereste:'🪵',civi:'🔩',tugla:'🧱'};
 // Görseli olan eşyaların dosya adı — key ile farklıysa buraya ekle
 const ITEM_IMGS={meseLodunu:'odun',demir:'demir',kil:'kil',kereste:'kereste',civi:'civi',tugla:'tugla'};
@@ -3938,7 +4001,7 @@ async function startGame(){
   updateHUD();renderGame('karakter');renderGame('kale');renderGame('gelistirme');renderGame('halk');renderGame('harita');renderGame('arena');renderGame('zindan');
   renderQuest(G.questTab);renderMarket();renderGuild(G.guildTab);renderProd(G.prodTab);renderProfile(G.profileTab);
   updateInvStrip();
-  loadPlayerMarketItems().then(()=>renderMarket());
+  Promise.all([loadPlayerMarketItems(),loadMaterialListings()]).then(()=>renderMarket());
   if(G.gold>=100) trackQuest('goldReached100');
   const initArmy=G.units.reduce((a,u)=>a+u.count,0);
   if(initArmy>=30) trackQuest('armyCount30');
@@ -4058,7 +4121,7 @@ function showPage(p){
   document.querySelectorAll('.bnav-btn').forEach(el=>el.classList.remove('active'));
   document.getElementById('bn-'+p).classList.add('active');
   if(p==='quest') renderQuest(G.questTab);
-  if(p==='market'){ loadPlayerMarketItems().then(()=>renderMarket()); }
+  if(p==='market'){ Promise.all([loadPlayerMarketItems(),loadMaterialListings()]).then(()=>renderMarket()); }
   if(p==='guild') renderGuild(G.guildTab);
   if(p==='prod'){updateInvStrip();renderProd(G.prodTab);}
   if(p==='profile') renderProfile(G.profileTab);
@@ -4577,11 +4640,19 @@ function renderKale(){
   const bars=[{icon:'❤',lbl:'Kale Canı',val:c.hp,max:c.maxhp,pct:Math.round(c.hp/c.maxhp*100),color:'var(--hp)'},{icon:'🛡',lbl:'Savunma',val:c.def,max:100,pct:Math.min(100,c.def),color:'var(--def)'},{icon:'⚔',lbl:'Saldırı',val:c.atk,max:100,pct:Math.min(100,c.atk),color:'var(--atk)'},{icon:'😊',lbl:'Moral',val:Math.floor(G.morale),max:100,pct:Math.floor(G.morale),color:'var(--mor)'}];
   document.getElementById('castle-bars-wrap').innerHTML=bars.map(b=>`<div class="castle-stat"><span class="cs-icon">${b.icon}</span><span class="cs-lbl">${b.lbl}</span><div class="cs-bar-bg"><div class="cs-bar" style="width:${b.pct}%;background:${b.color};"></div></div><span class="cs-val">${b.val}${b.max!==100?'/'+b.max:''}</span></div>`).join('');
   const blds=[{n:'Surlar',lv:c.walls,max:5,icon:'🧱',cost:80,key:'walls'},{n:'Kuleler',lv:c.towers,max:4,icon:'🗼',cost:60,key:'towers'},{n:'Kışla',lv:c.barracks,max:10,icon:'⚔',cost:70,key:'barracks'},{n:'Çiftlik',lv:c.farm,max:5,icon:'🌾',cost:50,key:'farm'},{n:'Pazar',lv:c.market,max:4,icon:'🏪',cost:90,key:'market'}];
-  document.getElementById('castle-buildings-wrap').innerHTML=blds.map(b=>{const uc=Math.floor(b.cost*Math.pow(1.4,b.lv));const mx=b.lv>=b.max;return `<div class="row-between" style="margin-bottom:7px;"><span>${b.icon}</span><span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);flex:1;margin:0 7px;">${b.n} <span style="color:var(--ink3);">Sv.${b.lv}</span></span><button class="btn btn-xs" onclick="upgBld('${b.key}',${uc})" ${mx||G.gold<uc?'disabled':''}>${mx?'Max':uc+'🪙'}</button></div>`;}).join('');
+  document.getElementById('castle-buildings-wrap').innerHTML=blds.map(b=>{const uc=Math.floor(b.cost*Math.pow(1.4,b.lv));const mx=b.lv>=b.max;const matCost=mx?{}:buildingMatCost(b.key,b.lv);const matsOk=canAffordMats(matCost);const canUpg=!mx&&G.gold>=uc&&matsOk;return `<div style="margin-bottom:10px;padding:8px;background:var(--panel2);border-radius:8px;border:1px solid var(--border);"><div class="row-between" style="margin-bottom:${mx?'0':'5px'};"><span>${b.icon}</span><span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);flex:1;margin:0 7px;">${b.n} <span style="color:var(--ink3);">Sv.${b.lv}</span></span><button class="btn btn-xs" onclick="upgBld('${b.key}',${uc})" ${canUpg?'':'disabled'}>${mx?'Max':uc+'🪙'}</button></div>${mx?'':`<div style="display:flex;flex-wrap:wrap;gap:2px;">${matCostHTML(matCost)}</div>`}</div>`;}).join('');
 }
 function upgBld(key,cost){
   if(G.gold<cost){toast('Yeterli altın yok!');return;}
-  G.gold-=cost;G.castle[key]++;
+  const matCost=buildingMatCost(key, G.castle[key]);
+  if(!canAffordMats(matCost)){
+    const eksik=Object.entries(matCost).filter(([k,v])=>(G.prodInv[k]||0)<v).map(([k,v])=>`${ITEM_LABELS[k]} (${G.prodInv[k]||0}/${v})`).join(', ');
+    toast(`Malzeme yetersiz! Gerekli: ${eksik}`);
+    return;
+  }
+  G.gold-=cost;
+  spendMats(matCost);
+  G.castle[key]++;
   if(key==='walls'){G.castle.def+=8;if(G.castle.walls>=2)trackQuest('wallsLv2');}
   if(key==='towers') G.castle.atk+=6;
   gainXP(25);toast(key+' geliştirildi!');updateHUD();renderKale();
@@ -6655,7 +6726,7 @@ function renderQuest(t){
    MARKET
 ══════════════════════════════════════ */
 function setSrc(s){G.marketSrc=s;document.querySelectorAll('.src-btn').forEach(el=>{const active=el.id==='src-'+s;el.style.color=active?'var(--gold)':'var(--ink3)';el.style.borderBottom=active?'2px solid var(--gold)':'2px solid transparent';});renderMarket();}
-function setCat(c){G.marketCat=c;document.querySelectorAll('.cat-tab').forEach(el=>{const active=el.id==='cat-'+c;el.style.color=active?'var(--gold2)':'var(--ink3)';el.style.borderBottom=active?'2px solid var(--gold2)':'2px solid transparent';});renderMarket();}
+function setCat(c){G.marketCat=c;document.querySelectorAll('.cat-tab').forEach(el=>{const active=el.id==='cat-'+c;el.style.color=active?'var(--gold2)':'var(--ink3)';el.style.borderBottom=active?'2px solid var(--gold2)':'2px solid transparent';});if(c==='materials'){loadMaterialListings().then(()=>renderMarket());}else{renderMarket();}}
 // Supabase'den gelen gerçek player ilanları (belleğe cache)
 let G_PLAYER_LISTINGS = [];
 
@@ -6690,10 +6761,157 @@ async function loadPlayerMarketItems(){
   }));
 }
 
+// Yığın malzeme/ürün ilanlarını yükle
+let G_MATERIAL_LISTINGS = [];
+async function loadMaterialListings(){
+  if(!currentUser) return;
+  const {data,error} = await supa.from('material_listings')
+    .select('*')
+    .order('unit_price',{ascending:true})
+    .limit(200);
+  if(error||!data){ G_MATERIAL_LISTINGS=[]; return; }
+  G_MATERIAL_LISTINGS = data.map(row=>({
+    id: row.id,
+    itemKey: row.item_key,
+    label: row.item_label,
+    stock: row.stock,
+    unitPrice: row.unit_price,
+    sellerName: row.seller_name||'Oyuncu',
+    sellerId: row.seller_id,
+    icon: ITEM_ICONS[row.item_key]||'📦',
+    img: ITEM_IMGS[row.item_key]||row.item_key,
+  }));
+}
+
+const IMG_BASE_MAT='https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/';
+
+function renderMaterialMarket(q, sort){
+  let listings=[...G_MATERIAL_LISTINGS];
+  if(q) listings=listings.filter(l=>l.label.toLowerCase().includes(q));
+  if(sort==='price_asc') listings.sort((a,b)=>a.unitPrice-b.unitPrice);
+  else if(sort==='price_desc') listings.sort((a,b)=>b.unitPrice-a.unitPrice);
+  const cnt=document.getElementById('market-count'); if(cnt) cnt.textContent=listings.length+' ilan';
+  const wrap=document.getElementById('market-content');
+  if(!wrap) return;
+  if(!listings.length){
+    wrap.innerHTML=`<div style="text-align:center;padding:40px 16px;color:var(--ink3);">
+      <div style="font-size:36px;margin-bottom:8px;">📦</div>
+      <div style="font-size:13px;">Henüz yığın ilanı yok.</div>
+      <div style="font-size:10px;margin-top:6px;">Üretim → Depo'dan malzemelerini pazara listeleyebilirsin.</div>
+    </div>`;
+    return;
+  }
+  const cards=listings.map(l=>{
+    const mine=l.sellerId===currentUser?.id;
+    const canAfford=G.gold>=l.unitPrice;
+    return `<div class="listing-card gray" style="cursor:${mine?'default':'pointer'};" ${mine?'':`onclick="openMaterialBuy('${l.id}')"`}>
+      <div class="item-icon gray" style="margin-bottom:2px;">
+        <img src="${IMG_BASE_MAT}${l.img}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" style="width:36px;height:36px;object-fit:contain;"/>
+        <span style="display:none;font-size:24px;">${l.icon}</span>
+      </div>
+      <div class="item-name gray" style="font-family:var(--font-head);font-size:10px;line-height:1.3;">${l.label}</div>
+      <div style="font-family:var(--font-head);font-size:13px;color:var(--gold2);">${l.stock.toLocaleString('tr')} adet</div>
+      <div style="font-size:8px;color:var(--ink3);">👤 ${mine?'<span style="color:var(--gold);">Sen</span>':l.sellerName}</div>
+      <div style="font-family:var(--font-head);font-size:12px;color:var(--gold);">${l.unitPrice.toLocaleString('tr')}🪙<span style="font-size:8px;color:var(--ink3);">/adet</span></div>
+      ${mine
+        ? `<button class="buy-btn-sm" style="width:100%;margin-top:3px;background:var(--panel3);" onclick="event.stopPropagation();withdrawMaterial('${l.id}')">Geri Çek</button>`
+        : `<button class="buy-btn-sm" style="width:100%;margin-top:3px;" onclick="event.stopPropagation();openMaterialBuy('${l.id}')" ${canAfford?'':'disabled'}>Satın Al</button>`}
+    </div>`;
+  }).join('');
+  wrap.innerHTML=`<div class="market-grid">${cards}</div>`;
+}
+
+// Kısmi alım popup'ı
+function openMaterialBuy(listingId){
+  const l=G_MATERIAL_LISTINGS.find(x=>x.id===listingId);
+  if(!l){ toast('İlan bulunamadı!'); return; }
+  if(l.sellerId===currentUser?.id){ toast('Kendi ilanını satın alamazsın!'); return; }
+  const maxByGold=Math.floor(G.gold/l.unitPrice);
+  const maxBuy=Math.min(l.stock, maxByGold);
+  document.getElementById('depo-pop-ov')?.remove();
+  const ov=document.createElement('div');
+  ov.id='depo-pop-ov'; ov.className='depo-pop-ov';
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  ov.innerHTML=`
+    <div class="depo-pop-card">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
+        <button class="btn btn-xs btn-ghost" onclick="document.getElementById('depo-pop-ov').remove()">✕</button>
+      </div>
+      <img class="depo-pop-img" src="${IMG_BASE_MAT}${l.img}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <div style="font-size:34px;display:none;text-align:center;margin-bottom:6px;">${l.icon}</div>
+      <div class="depo-pop-name">${l.label}</div>
+      <div class="depo-pop-stock">Satıcı: <b>${l.sellerName}</b></div>
+      <div class="depo-pop-stock">Mevcut: <b style="color:var(--gold)">${l.stock.toLocaleString('tr')}</b> · Fiyat: <b style="color:var(--gold)">${l.unitPrice}🪙</b>/adet</div>
+      <div class="depo-pop-lbl">Kaç adet alacaksın?</div>
+      <input class="depo-pop-qty" id="mat-buy-qty" type="number" min="1" max="${l.stock}" value="${Math.min(l.stock,1)}" oninput="updateMatBuyTotal('${listingId}')">
+      <div id="mat-buy-total" style="text-align:center;font-family:var(--font-head);font-size:13px;color:var(--gold2);margin:8px 0;"></div>
+      ${maxBuy<1?`<div style="text-align:center;font-size:10px;color:#f08080;margin-bottom:8px;">Yeterli altının yok!</div>`:''}
+      <button class="btn btn-sm" style="width:100%;" onclick="confirmMaterialBuy('${listingId}')" ${maxBuy<1?'disabled':''}>Satın Al</button>
+    </div>`;
+  document.body.appendChild(ov);
+  updateMatBuyTotal(listingId);
+}
+function updateMatBuyTotal(listingId){
+  const l=G_MATERIAL_LISTINGS.find(x=>x.id===listingId); if(!l) return;
+  const inp=document.getElementById('mat-buy-qty');
+  let qty=Math.max(1,Math.min(l.stock,parseInt(inp?.value)||1));
+  const total=qty*l.unitPrice;
+  const el=document.getElementById('mat-buy-total');
+  const afford=G.gold>=total;
+  if(el) el.innerHTML=`Toplam: <span style="color:${afford?'var(--gold)':'#f08080'}">${total.toLocaleString('tr')}🪙</span> <span style="font-size:9px;color:var(--ink3);">(elinde ${G.gold.toLocaleString('tr')}🪙)</span>`;
+}
+async function confirmMaterialBuy(listingId){
+  const l=G_MATERIAL_LISTINGS.find(x=>x.id===listingId);
+  if(!l){ toast('İlan bulunamadı!'); return; }
+  const qty=Math.max(1,Math.min(l.stock,parseInt(document.getElementById('mat-buy-qty')?.value)||1));
+  const total=qty*l.unitPrice;
+  if(G.gold<total){ toast('Yeterli altın yok!'); return; }
+  document.getElementById('depo-pop-ov')?.remove();
+  // Atomik RPC ile satın al
+  const {data,error}=await supa.rpc('buy_material',{
+    listing_id: listingId,
+    buyer_id: currentUser.id,
+    qty: qty
+  });
+  if(error || !data?.ok){
+    toast('İşlem başarısız: '+(data?.error||error?.message||'bilinmeyen hata'));
+    await loadMaterialListings(); renderMarket();
+    return;
+  }
+  // Başarılı: altını düş, malzemeyi envantere ekle
+  G.gold-=total;
+  const key=data.item_key;
+  G.prodInv[key]=(G.prodInv[key]||0)+qty;
+  updateHUD();
+  if(currentUser) sbSave();
+  celebrate('📦', `${qty.toLocaleString('tr')}x ${l.label}`, `-${total.toLocaleString('tr')}🪙 · depona eklendi`, 'gold');
+  await loadMaterialListings();
+  renderMarket();
+}
+// Kendi yığın ilanını geri çek
+async function withdrawMaterial(listingId){
+  const l=G_MATERIAL_LISTINGS.find(x=>x.id===listingId);
+  if(!l || l.sellerId!==currentUser?.id) return;
+  const {error}=await supa.from('material_listings').delete().eq('id',listingId).eq('seller_id',currentUser.id);
+  if(error){ toast('Geri çekme hatası: '+error.message); return; }
+  // Stoğu envantere iade et
+  G.prodInv[l.itemKey]=(G.prodInv[l.itemKey]||0)+l.stock;
+  if(currentUser) sbSave();
+  toast(`${l.stock.toLocaleString('tr')}x ${l.label} geri alındı.`);
+  await loadMaterialListings();
+  renderMarket();
+}
+
 function renderMarket(){
   const q=(document.getElementById('market-search')?.value||'').toLowerCase();
   const sort=document.getElementById('market-sort')?.value||'price_asc';
   const go={gray:0,green:1,blue:2,purple:3,orange:4};
+
+  // ── MALZEME KATEGORİSİ: yığın ilanları (miktar + birim fiyat, kısmi alım) ──
+  if(G.marketCat==='materials'){
+    renderMaterialMarket(q, sort);
+    return;
+  }
 
   // NPC + gerçek player ilanları birleştir (sahte player ilanı yok)
   const allItems = [
@@ -7912,13 +8130,17 @@ function renderProd(t){
 
   if(bld.level<bld.max){
     const uc=Math.floor(bld.cost*Math.pow(1.6,bld.level));
+    const fMat=buildingMatCost('prod_'+t,bld.level);const fOk=canAffordMats(fMat);
     leftHtml+=`<div class="sec">GELİŞTİR</div>
-      <div class="card row-between">
-        <div>
-          <div style="font-family:var(--font-head);font-size:12px;font-weight:600;color:var(--perg);">Sv.${bld.level} → Sv.${bld.level+1}</div>
-          <div style="font-size:10px;color:var(--ink3);margin-top:2px;">Üretim kapasitesi artar</div>
+      <div class="card">
+        <div class="row-between">
+          <div>
+            <div style="font-family:var(--font-head);font-size:12px;font-weight:600;color:var(--perg);">Sv.${bld.level} → Sv.${bld.level+1}</div>
+            <div style="font-size:10px;color:var(--ink3);margin-top:2px;">Üretim kapasitesi artar</div>
+          </div>
+          <button class="btn btn-sm" onclick="upgProd('${t}',${uc})" ${G.gold>=uc&&fOk?'':'disabled'}>${uc}🪙</button>
         </div>
-        <button class="btn btn-sm" onclick="upgProd('${t}',${uc})" ${G.gold>=uc?'':'disabled'}>${uc}🪙</button>
+        <div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:7px;">${matCostHTML(fMat)}</div>
       </div>`;
   }
 
@@ -8025,9 +8247,10 @@ function renderMill(){
           </div>
         </div>
         <div style="text-align:right;">
-          <button class="btn btn-sm" onclick="upgProd('mill',${uc})" ${G.gold>=uc?'':'disabled'}>${uc}🪙</button>
+          <button class="btn btn-sm" onclick="upgProd('mill',${uc})" ${G.gold>=uc&&canAffordMats(buildingMatCost('prod_mill',lv))?'':'disabled'}>${uc}🪙</button>
         </div>
-      </div>`;
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:2px;margin:-6px 0 12px;">${matCostHTML(buildingMatCost('prod_mill',lv))}</div>`;
   }
 
   // Tarif listesi
@@ -8195,9 +8418,10 @@ function renderRanch(){
           </div>
         </div>
         <div style="text-align:right;">
-          <button class="btn btn-sm" onclick="upgProd('ranch',${uc})" ${G.gold>=uc?'':'disabled'}>${uc}🪙</button>
+          <button class="btn btn-sm" onclick="upgProd('ranch',${uc})" ${G.gold>=uc&&canAffordMats(buildingMatCost('prod_ranch',lv))?'':'disabled'}>${uc}🪙</button>
         </div>
-      </div>`;
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:2px;margin:-6px 0 12px;">${matCostHTML(buildingMatCost('prod_ranch',lv))}</div>`;
   }
 
   let recipesHtml=`<div class="sec" style="margin-top:0;">TARİFLER</div>`;
@@ -8381,9 +8605,10 @@ function renderKitchen(){
           </div>
         </div>
         <div style="text-align:right;">
-          <button class="btn btn-sm" onclick="upgProd('kitchen',${uc})" ${G.gold>=uc?'':'disabled'}>${uc}🪙</button>
+          <button class="btn btn-sm" onclick="upgProd('kitchen',${uc})" ${G.gold>=uc&&canAffordMats(buildingMatCost('prod_kitchen',lv))?'':'disabled'}>${uc}🪙</button>
         </div>
-      </div>`;
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:2px;margin:-6px 0 12px;">${matCostHTML(buildingMatCost('prod_kitchen',lv))}</div>`;
   }
 
   // Depodaki yemek stoku
@@ -8752,7 +8977,7 @@ function timerCardHTML(t){
   return `<div class="timer-card${isDone?' t-done':''}" id="tc-${t.id}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;"><span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${r.icon} ${r.name}</span><div style="display:flex;align-items:center;gap:5px;"><span style="font-family:var(--font-head);font-size:12px;color:${isDone?'var(--g-green)':'var(--gold)'};" id="tsecs-${t.id}">${isDone?'✓ Hazır':fmtT(t.remaining)}</span>${!isDone?`<button class="btn btn-xs btn-ghost" onclick="cancelProd(${t.id})" style="font-size:8px;padding:2px 5px;">✕</button>`:''}</div></div><div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px;">${outChips}</div>${isDone?`<button class="collect-btn" onclick="collectProd(${t.id})">🎁 Topla</button>`:''}<div class="timer-prog-bg"><div class="timer-prog-fill" id="tprog-${t.id}" style="width:${pct}%;"></div></div></div>`;
 }
 function buildProd(t){const bld=PROD_BUILDINGS[t];if(G.gold<bld.cost){toast('Yeterli altın yok!');return;}G.gold-=bld.cost;bld.level=1;toast(`${bld.name} inşa edildi!`);updateHUD();renderProd(t);sbSave();}
-function upgProd(t,cost){const bld=PROD_BUILDINGS[t];if(G.gold<cost){toast('Yeterli altın yok!');return;}G.gold-=cost;bld.level++;gainXP(20);toast(`${bld.name} Sv.${bld.level}'e yükseltildi!`);updateHUD();renderProd(t);sbSave();}
+function upgProd(t,cost){const bld=PROD_BUILDINGS[t];if(G.gold<cost){toast('Yeterli altın yok!');return;}const matCost=buildingMatCost('prod_'+t, bld.level);if(!canAffordMats(matCost)){const eksik=Object.entries(matCost).filter(([k,v])=>(G.prodInv[k]||0)<v).map(([k,v])=>`${ITEM_LABELS[k]} (${G.prodInv[k]||0}/${v})`).join(', ');toast(`Malzeme yetersiz! Gerekli: ${eksik}`);return;}G.gold-=cost;spendMats(matCost);bld.level++;gainXP(20);toast(`${bld.name} Sv.${bld.level}'e yükseltildi!`);updateHUD();renderProd(t);sbSave();}
 async function startProd(bKey,rId){
   const r=(PROD_RECIPES[bKey]||[]).find(x=>x.id===rId);if(!r)return;
   if(!Object.entries(r.inputs).every(([k,v])=>(G.prodInv[k]||0)>=v)){toast('Malzeme eksik!');return;}
@@ -8955,8 +9180,9 @@ function renderInsaa(){
         <div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">Sv.${lv} → Sv.${lv+1}</div>
         <div style="font-size:10px;color:var(--ink3);margin-top:2px;">Slot: ${slots} → ${nextSlots} · Süre: ${fmtT(dur)} → ${fmtT(nextDur)}</div>
       </div>
-      <button class="btn btn-sm" onclick="upgProd('insaa',${upgCost})" ${G.gold>=upgCost?'':'disabled'}>${upgCost}🪙</button>
-    </div>`;
+      <button class="btn btn-sm" onclick="upgProd('insaa',${upgCost})" ${G.gold>=upgCost&&canAffordMats(buildingMatCost('prod_insaa',lv))?'':'disabled'}>${upgCost}🪙</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:7px;">${matCostHTML(buildingMatCost('prod_insaa',lv))}</div>`;
   }
 
   let rightHtml=`<div class="sec" style="margin-top:0;">AKTİF ÜRETİM <span style="font-size:10px;color:var(--ink3);">(${usedSlots}/${slots})</span></div>`;
@@ -9069,22 +9295,30 @@ async function marketListDepo(key){
   const have=G.prodInv[key]||0;
   const sell=Math.min(qty,have);
   if(sell<=0){toast('Yeterli malzeme yok!');return;}
+  const label=ITEM_LABELS[key]||key;
+  // Stoğu envanterden düş, tek bir yığın ilanı oluştur
   G.prodInv[key]-=sell;
   document.getElementById('depo-pop-ov')?.remove();
   renderDepot();
   if(currentUser) sbSave();
-  const label=ITEM_LABELS[key]||key;
-  const icon=ITEM_ICONS[key]||'📦';
-  const imgFile=ITEM_IMGS[key]||null;
-  const rows=Array.from({length:sell},()=>({
-    seller_id:currentUser.id,seller_name:G.heroName||G.username,
-    item_name:label,item_icon:icon,item_type:'Hammadde',item_grade:'gray',
-    item_stats:{},item_desc:'Üretim hammaddesi.',item_img:imgFile,
-    item_req_lv:1,item_material:null,item_class_bonus:null,item_enh_plus:0,price
-  }));
-  const {error}=await supa.from('marketplace').insert(rows);
-  if(error){G.prodInv[key]+=sell;renderDepot();toast('Listeleme hatası: '+error.message);return;}
+  const {error}=await supa.from('material_listings').insert({
+    seller_id:currentUser.id,
+    seller_name:G.heroName||G.username,
+    item_key:key,
+    item_label:label,
+    stock:sell,
+    unit_price:price,
+  });
+  if(error){
+    // Hata olursa stoğu geri ver
+    G.prodInv[key]=(G.prodInv[key]||0)+sell; renderDepot();
+    if(currentUser) sbSave();
+    toast('Listeleme hatası: '+error.message);
+    return;
+  }
   toast(`${sell}x ${label} pazara listelendi! (${price}🪙/adet)`);
+  await loadMaterialListings();
+  if(G.marketCat==='materials' || G.marketCat==='all') renderMarket();
 }
 
 function renderDepot(){
