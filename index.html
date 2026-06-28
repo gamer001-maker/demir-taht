@@ -1437,20 +1437,20 @@ html,body{
 @media(min-width:900px){#toast{font-size:15px;padding:11px 24px;max-width:440px;}}
 
 /* ── Büyük kutlama bildirimi (başarı anları) ── */
-#celebrate{position:fixed;top:24%;left:50%;transform:translate(-50%,-10px) scale(.85);z-index:9100;
+#celebrate{position:fixed;top:9%;left:50%;transform:translate(-50%,-10px) scale(.85);z-index:9100;
   display:none;pointer-events:none;text-align:center;
   background:linear-gradient(180deg,#2a1e0c,#1a1206);border:2px solid var(--gold);
-  border-radius:16px;padding:20px 30px;box-shadow:0 10px 44px #000000cc,0 0 30px #c9a64640;
-  font-family:var(--font-head);min-width:240px;max-width:90vw;}
+  border-radius:14px;padding:13px 20px;box-shadow:0 10px 44px #000000cc,0 0 30px #c9a64640;
+  font-family:var(--font-head);min-width:200px;max-width:86vw;}
 #celebrate.show{display:block;animation:celebPop .5s cubic-bezier(.2,1.3,.5,1) forwards;}
 #celebrate.hide{animation:celebOut .35s ease forwards;}
 @keyframes celebPop{0%{opacity:0;transform:translate(-50%,-10px) scale(.85);}60%{opacity:1;transform:translate(-50%,0) scale(1.06);}100%{opacity:1;transform:translate(-50%,0) scale(1);}}
 @keyframes celebOut{to{opacity:0;transform:translate(-50%,-14px) scale(.92);}}
-#celebrate .cel-icon{font-size:46px;line-height:1;margin-bottom:8px;filter:drop-shadow(0 2px 6px #000a);animation:celSpin .5s ease;}
+#celebrate .cel-icon{font-size:40px;line-height:1;margin-bottom:6px;filter:drop-shadow(0 2px 6px #000a);animation:celSpin .5s ease;}
 @keyframes celSpin{from{transform:rotate(-18deg) scale(.6);}to{transform:rotate(0) scale(1);}}
-#celebrate .cel-title{font-size:21px;font-weight:700;color:var(--gold2);letter-spacing:1px;text-shadow:0 2px 8px #000a;margin-bottom:4px;}
-#celebrate .cel-sub{font-size:14px;color:var(--perg2);font-family:Arial,Helvetica,sans-serif;}
-@media(min-width:900px){#celebrate{padding:26px 40px;}#celebrate .cel-icon{font-size:58px;}#celebrate .cel-title{font-size:26px;}#celebrate .cel-sub{font-size:16px;}}
+#celebrate .cel-title{font-size:19px;font-weight:700;color:var(--gold2);letter-spacing:1px;text-shadow:0 2px 8px #000a;margin-bottom:4px;}
+#celebrate .cel-sub{font-size:13px;color:var(--perg2);font-family:Arial,Helvetica,sans-serif;}
+@media(min-width:900px){#celebrate{top:11%;padding:18px 30px;}#celebrate .cel-icon{font-size:50px;}#celebrate .cel-title{font-size:23px;}#celebrate .cel-sub{font-size:15px;}}
 
 /* ═══════════════════════════════════════════
    ONLINE PVP ARENA
@@ -3006,10 +3006,17 @@ async function finishExplore(idx,dbId){
   if(cell.t==='ruins'){const rb=troopBuffs();let b=Math.floor(Math.random()*40)+20;b=Math.floor(b*rb.resourceMult);G.gold+=b;const bonusNote=rb.rehber>0?` (Rehber +%${Math.round((rb.resourceMult-1)*100)})`:'';toast(`Harabeler keşfedildi! ${b}🪙 hazine bulundu!${bonusNote} 💰`);trackQuest('exploreRuin');trackQuest('exploreRuin2',Math.min(2,[...G.explored].filter(i=>G_MAP[i]?.t==='ruins').length));}
   else if(cell.t==='village'){G.folk.population+=20;toast(`${cell.n} keşfedildi! +20 nüfus 🏘`);trackQuest('exploreVillage3',Math.min(3,[...G.explored].filter(i=>G_MAP[i]?.t==='village').length));}
   else toast(`${cell.n} keşfedildi! 🗺`);
-  // Özel birim keşfi — sadece harabe/kasaba, ~%8 şans
-  if((cell.t==='ruins'||cell.t==='village') && Math.random()<0.08){
-    const pool=['rehber','rahip','sovalye','tabip'];
-    const found=pool[Math.floor(Math.random()*pool.length)];
+  // Özel birim keşfi — araziye göre tematik, TEST: %50 şans
+  // Kasaba→Rahip/Tabip, Harabe→Şövalye, Orman→Rehber, Dağlar→Şövalye/Rehber
+  const TROOP_BY_TERRAIN={
+    village: ['rahip','tabip'],
+    ruins:   ['sovalye'],
+    forest:  ['rehber'],
+    mountain:['sovalye','rehber'],
+  };
+  const terrainPool=TROOP_BY_TERRAIN[cell.t];
+  if(terrainPool && Math.random()<0.50){
+    const found=terrainPool[Math.floor(Math.random()*terrainPool.length)];
     setTimeout(()=>offerFoundTroop(found), 700); // keşif toast'ından sonra
   }
   trackQuest('exploreDaily');trackQuest('explore5',Math.min(5,G.explored.size-7));
@@ -3561,7 +3568,7 @@ const MARKET_ITEMS=[
   {id:401,name:'Küçük Can İksiri',icon:'🧪',cat:'consumable',grade:'gray',  price:30,  qty:99,seller:'npc',sellerName:'Eczacı',      type:'İksir',reqLv:1,  material:null,desc:'Maksimum canın %10\'unu yeniler.',  stats:{hp_restore_pct:10}, img:'kucukcaniksiri',classBonus:null},
   {id:411,name:'Orta Can İksiri', icon:'🧪',cat:'consumable',grade:'green',price:100, qty:99,seller:'npc',sellerName:'Eczacı',      type:'İksir',reqLv:5,  material:null,desc:'Maksimum canın %20\'sini yeniler.',  stats:{hp_restore_pct:20}, img:'ortacaniksiri', classBonus:null},
   {id:412,name:'Büyük Can İksiri',icon:'🧪',cat:'consumable',grade:'blue', price:300, qty:99,seller:'npc',sellerName:'Eczacı',      type:'İksir',reqLv:10, material:null,desc:'Maksimum canın %30\'unu yeniler.',  stats:{hp_restore_pct:30}, img:'buyukcaniksiri',classBonus:null},
-  {id:402,name:'Güç Runesi',      icon:'🔶',cat:'consumable',grade:'green', price:120,qty:20,seller:'npc',sellerName:'Rune Ustası', type:'Rune', reqLv:5, material:null,desc:'Saldırı +%50.',                     stats:{atk_boost:50},  img:null,classBonus:null},
+  {id:402,name:'Güç Runesi',      icon:'🔶',cat:'_removed',grade:'green', price:120,qty:0,seller:'_none',sellerName:'Rune Ustası', type:'Rune', reqLv:5, material:null,desc:'(kaldırıldı)',                     stats:{},  img:null,classBonus:null},
 
   /* ══════════════════════════════════════
      PREMIUM ÖĞELER (Kraliyet Tüccarı) — pay-to-win DEĞİL
