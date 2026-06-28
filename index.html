@@ -9878,7 +9878,7 @@ async function sbSave() {
   if (!currentUser) { console.warn('[sbSave] currentUser yok — kayıt atlandı'); return; }
   console.log('[sbSave] başladı, user:', currentUser.id);
   try {
-    const { error: e1 } = await supa.from('profiles').update({
+    const profilePayload = {
       hero_name:    G.heroName,
       class_id:     G.classId,
       avatar_idx:   G.avatarIdx,
@@ -9922,8 +9922,29 @@ async function sbSave() {
       captured_troops: G.capturedTroops,
       explored_json: [...G.explored],
       animals:      G.animals,
-    }).eq('id', currentUser.id);
-    if (e1) { console.error('[sbSave] profiles hatası:', e1); toast('⚠ Kayıt hatası: ' + e1.message); return; }
+    };
+    let { error: e1 } = await supa.from('profiles').update(profilePayload).eq('id', currentUser.id);
+    // Güvenlik ağı: bir sütun veritabanında yoksa (SQL henüz çalıştırılmadıysa),
+    // o alanı çıkarıp tekrar dene — kayıt tamamen çökmesin.
+    let _retryGuard=0;
+    while(e1 && /could not find the '(.+?)' column/i.test(e1.message||'') && _retryGuard<8){
+      _retryGuard++;
+      const missing=(e1.message.match(/could not find the '(.+?)' column/i)||[])[1];
+      if(!missing || !(missing in profilePayload)) break;
+      delete profilePayload[missing];
+      console.warn('[sbSave] eksik sütun atlandı:', missing);
+      ({ error: e1 } = await supa.from('profiles').update(profilePayload).eq('id', currentUser.id));
+    }
+    if (e1) {
+      console.error('[sbSave] profiles hatası:', e1);
+      const miss=(e1.message?.match(/could not find the '(.+?)' column/i)||[])[1];
+      if(miss){
+        toast(`⚠ DB sütunu eksik: "${miss}"`);
+      } else {
+        toast('⚠ Kayıt hatası: ' + (e1.message||'').slice(0,40));
+      }
+      return;
+    }
     console.log('[sbSave] profiles OK');
 
     const { error: e2 } = await supa.from('castles').update({
