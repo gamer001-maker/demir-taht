@@ -2620,37 +2620,105 @@ function payTroopUpkeep(activityName){
 }
 
 // Keşifte birim bulununca teklif modalı
+const CAPTURE_DURATION_MS = 5*60*1000; // esir 5 dakika bekler, sonra kaçar
+
+// Keşifte birim bulununca → esir havuzuna ekle (modal yok, üst üste binmez)
 function offerFoundTroop(typeKey){
   const t=TROOP_TYPES[typeKey]; if(!t) return;
-  const full=troopCount()>=troopCap();
-  if(!full){
-    showGModal(`
-      <div style="text-align:center;margin-bottom:14px;">
-        <div style="font-size:46px;margin-bottom:6px;">${t.icon}</div>
-        <div style="font-family:var(--font-head);font-size:17px;color:var(--gold2);">Bir ${t.name} buldun!</div>
-        <div style="font-size:12px;color:var(--ink3);margin-top:8px;line-height:1.5;">${t.desc}</div>
-        <div style="font-size:10px;color:var(--ink3);margin-top:8px;">Birlik: ${troopCount()}/${troopCap()}</div>
-      </div>
-      <button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;" onclick="confirmRecruitFound('${typeKey}')">⚔ Birliğe Kat</button>
-      <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal()">Şimdilik Bırak</button>
-    `);
-  } else {
-    // Birlik dolu → azat et seçeneği
-    showGModal(`
-      <div style="text-align:center;margin-bottom:12px;">
-        <div style="font-size:46px;margin-bottom:6px;">${t.icon}</div>
-        <div style="font-family:var(--font-head);font-size:17px;color:var(--gold2);">Bir ${t.name} buldun!</div>
-        <div style="font-size:11px;color:#f0a050;margin-top:8px;line-height:1.5;">⚠ Birliğin dolu (${troopCount()}/${troopCap()}). Onu almak için bir üyeyi azat etmelisin.</div>
-      </div>
-      <div style="font-size:10px;color:var(--ink3);margin-bottom:8px;">Azat edilecek birlik (yerine ${t.name} gelir):</div>
-      ${G.companions.map(c=>{const ct=TROOP_TYPES[c.type];return `<div onclick="swapTroop('${c.tid}','${typeKey}')" style="display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:6px;border-radius:8px;border:1px solid var(--border2);background:var(--panel2);cursor:pointer;">
-        <span style="font-size:22px;">${ct.icon}</span>
-        <div style="flex:1;text-align:left;"><div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">${ct.name}</div></div>
-        <span style="font-size:10px;color:#f08080;">↔ Değiştir</span>
-      </div>`;}).join('')}
-      <button class="btn btn-ghost" style="width:100%;margin-top:4px;" onclick="closeGModal()">Vazgeç (birimi bırak)</button>
-    `);
+  if(!G.capturedTroops) G.capturedTroops=[];
+  const cap={ cid:'cap_'+Date.now()+'_'+Math.floor(Math.random()*1000), type:typeKey, foundAt:_now() };
+  G.capturedTroops.push(cap);
+  toast(`${t.icon} Bir ${t.name} yakaladın! Halk sekmesinde seni bekliyor.`);
+  if(currentUser) sbSave();
+  if(typeof renderHalk==='function' && document.getElementById('p-game')?.classList.contains('active')) renderHalk();
+}
+
+// Süresi dolan esirleri temizle (kaçtı). Değişiklik olduysa true döner.
+function pruneCapturedTroops(){
+  if(!G.capturedTroops || !G.capturedTroops.length) return false;
+  const now=_now();
+  const before=G.capturedTroops.length;
+  const escaped=G.capturedTroops.filter(c=> now - c.foundAt >= CAPTURE_DURATION_MS);
+  if(escaped.length){
+    G.capturedTroops=G.capturedTroops.filter(c=> now - c.foundAt < CAPTURE_DURATION_MS);
+    escaped.forEach(c=>{ const t=TROOP_TYPES[c.type]; if(t) toast(`${t.icon} Bekleyen ${t.name} kaçtı!`); });
+    if(currentUser) sbSave();
   }
+  return G.capturedTroops.length !== before;
+}
+
+// Esir bir birliği birliğe kat
+function recruitCaptured(cid){
+  const idx=(G.capturedTroops||[]).findIndex(c=>c.cid===cid);
+  if(idx<0){ toast('Bu esir artık yok.'); renderHalk(); return; }
+  const cap=G.capturedTroops[idx];
+  // Süre dolmuş mu?
+  if(_now()-cap.foundAt >= CAPTURE_DURATION_MS){
+    G.capturedTroops.splice(idx,1);
+    const t=TROOP_TYPES[cap.type];
+    toast(`${t?.icon||''} ${t?.name||'Birim'} çoktan kaçmış!`);
+    renderHalk(); if(currentUser) sbSave();
+    return;
+  }
+  // Birlik dolu mu?
+  if(troopCount()>=troopCap()){
+    offerCapturedSwap(cid); // değiştirme ekranı
+    return;
+  }
+  // Havuzdan çıkar, birliğe kat
+  G.capturedTroops.splice(idx,1);
+  addTroop(cap.type);
+  const t=TROOP_TYPES[cap.type];
+  celebrate(t.icon, `${t.name.toUpperCase()} KATILDI!`, `Birlik: ${troopCount()}/${troopCap()}`, 'gold');
+  updateHUD(); renderHalk();
+  if(currentUser) sbSave();
+}
+
+// Esir birliği azat et (havuzdan sil)
+function releaseCaptured(cid){
+  const idx=(G.capturedTroops||[]).findIndex(c=>c.cid===cid);
+  if(idx<0) return;
+  const cap=G.capturedTroops[idx];
+  const t=TROOP_TYPES[cap.type];
+  G.capturedTroops.splice(idx,1);
+  toast(`${t?.icon||''} ${t?.name||'Birim'} serbest bırakıldı.`);
+  renderHalk();
+  if(currentUser) sbSave();
+}
+
+// Birlik doluyken esiri almak için değiştirme ekranı
+function offerCapturedSwap(cid){
+  const cap=(G.capturedTroops||[]).find(c=>c.cid===cid);
+  if(!cap) return;
+  const t=TROOP_TYPES[cap.type]; if(!t) return;
+  showGModal(`
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="font-size:40px;margin-bottom:6px;">${t.icon}</div>
+      <div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);">${t.name} için yer aç</div>
+      <div style="font-size:11px;color:#f0a050;margin-top:8px;line-height:1.5;">⚠ Birliğin dolu (${troopCount()}/${troopCap()}). Onu almak için bir üyeyi azat etmelisin.</div>
+    </div>
+    <div style="font-size:10px;color:var(--ink3);margin-bottom:8px;">Azat edilecek birlik (yerine ${t.name} gelir):</div>
+    ${G.companions.map(c=>{const ct=TROOP_TYPES[c.type];return `<div onclick="swapCapturedTroop('${c.tid}','${cid}')" style="display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:6px;border-radius:8px;border:1px solid var(--border2);background:var(--panel2);cursor:pointer;">
+      <span style="font-size:22px;">${ct.icon}</span>
+      <div style="flex:1;text-align:left;"><div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">${ct.name} <span style="font-size:9px;color:var(--gold);">Sv.${troopLevel(c)}</span></div></div>
+      <span style="font-size:10px;color:#f08080;">↔ Değiştir</span>
+    </div>`;}).join('')}
+    <button class="btn btn-ghost" style="width:100%;margin-top:4px;" onclick="closeGModal()">Vazgeç</button>
+  `);
+}
+// Değiştir: eski birliği azat et, esiri birliğe kat
+function swapCapturedTroop(oldTid, cid){
+  const idx=(G.capturedTroops||[]).findIndex(c=>c.cid===cid);
+  if(idx<0){ closeGModal(); return; }
+  const cap=G.capturedTroops[idx];
+  removeTroop(oldTid);
+  G.capturedTroops.splice(idx,1);
+  addTroop(cap.type);
+  const t=TROOP_TYPES[cap.type];
+  closeGModal();
+  celebrate(t.icon, `${t.name.toUpperCase()} KATILDI!`, 'Bir birlik azat edildi, yerine geçti', 'gold');
+  updateHUD(); renderHalk();
+  if(currentUser) sbSave();
 }
 function confirmRecruitFound(typeKey){
   if(troopCount()>=troopCap()){ toast('Birlik dolu!'); closeGModal(); return; }
@@ -3335,6 +3403,12 @@ setInterval(async()=>{
       }
     }
   }
+  // Esir birlikler — geri sayım + süre dolanları temizle (Halk sekmesi açıksa)
+  if((G.capturedTroops||[]).length){
+    const halkOpen=document.getElementById('gs-halk')?.style.display!=='none' && document.getElementById('p-game')?.classList.contains('active');
+    const escaped=pruneCapturedTroops();
+    if(halkOpen && typeof renderTroops==='function') renderTroops();
+  }
 },1000);
 
 const ARENA_LEAGUES=[
@@ -3871,6 +3945,7 @@ const G={
   perks:{ prodSpeedUntil:'', luckCharmUntil:'', chatGlowUntil:'' },
   invBonus:0, // envanter genişlemesi (+20'şer, kalıcı)
   companions:[], // birlikler (Aşama 1): [{tid, type, equip:{weapon,armor}}]
+  capturedTroops:[], // esir havuzu: [{cid, type, foundAt(ms)}] — 5dk içinde karar verilmezse kaçar
   animals:{tavuk:1,koyun:1,inek:1,ari:1},
   explored:new Set([21,22,27,28,14,15,20]),
   selectedCell:null,
@@ -5301,9 +5376,38 @@ function renderTroops(){
   const wrap=document.getElementById('troops-wrap');
   const capLbl=document.getElementById('troop-cap-lbl');
   if(!wrap) return;
+  pruneCapturedTroops(); // süresi dolanları temizle
   const cap=troopCap(), cnt=troopCount();
   if(capLbl) capLbl.textContent=`${cnt}/${cap}`;
   let html='';
+
+  // ── ESİR BİRLİKLER (keşifte yakalananlar, 5dk içinde karar) ──
+  if((G.capturedTroops||[]).length){
+    const now=_now();
+    const capCards=G.capturedTroops.map(c=>{
+      const t=TROOP_TYPES[c.type]||{name:c.type,icon:'❓',desc:''};
+      const leftMs=Math.max(0, CAPTURE_DURATION_MS-(now-c.foundAt));
+      const mm=Math.floor(leftMs/60000), ss=Math.floor((leftMs%60000)/1000);
+      const timeStr=`${mm}:${String(ss).padStart(2,'0')}`;
+      return `<div class="card-sm" style="margin-bottom:6px;border:1px solid #5a4418;background:#1a1408;">
+        <div style="display:flex;align-items:center;gap:9px;">
+          <span style="font-size:22px;">${t.icon}</span>
+          <div style="flex:1;">
+            <div style="font-family:var(--font-head);font-size:12px;color:var(--gold2);">${t.name} <span style="font-size:9px;color:#f0a050;">⏳ ${timeStr}</span></div>
+            <div style="font-size:9px;color:var(--ink3);line-height:1.3;">${t.desc}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:5px;margin-top:7px;">
+          <button class="btn btn-xs" style="flex:1;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;" onclick="recruitCaptured('${c.cid}')">⚔ Birliğe Kat</button>
+          <button class="btn btn-xs btn-ghost" style="flex:1;" onclick="releaseCaptured('${c.cid}')">Serbest Bırak</button>
+        </div>
+      </div>`;
+    }).join('');
+    html+=`<div style="margin-bottom:10px;padding:9px;border-radius:9px;background:#13100a;border:1px solid #5a4418;">
+      <div style="font-family:var(--font-head);font-size:9px;color:#f0c050;letter-spacing:.5px;margin-bottom:7px;">🔒 ESİR BİRLİKLER <span style="color:var(--ink3);font-size:8px;">(süre bitince kaçar)</span></div>
+      ${capCards}
+    </div>`;
+  }
   // Mevcut birlikler
   if(cnt>0){
     html += (G.companions||[]).map(c=>{
@@ -9756,6 +9860,9 @@ async function sbLoadProfile() {
   if(!Array.isArray(G.companions)) G.companions=[];
   // Eski kayıtlarda seviye/xp yoksa ekle
   G.companions.forEach(c=>{ if(c.level==null) c.level=1; if(c.xp==null) c.xp=0; if(!c.equip) c.equip={weapon:null,armor:null}; });
+  if(p.captured_troops) { try{ G.capturedTroops = typeof p.captured_troops==='string'?JSON.parse(p.captured_troops):p.captured_troops; }catch(e){ G.capturedTroops=[]; } }
+  if(!Array.isArray(G.capturedTroops)) G.capturedTroops=[];
+  pruneCapturedTroops(); // çevrimdışıyken süresi dolanlar kaçmış olur
   refreshLoginStreak();
 
   // G.stats.hp'yi effective maxhp'ye göre kliple (G.stats.maxhp değişmez)
@@ -9812,6 +9919,7 @@ async function sbSave() {
       perks: G.perks,
       inv_bonus: G.invBonus,
       companions: G.companions,
+      captured_troops: G.capturedTroops,
       explored_json: [...G.explored],
       animals:      G.animals,
     }).eq('id', currentUser.id);
