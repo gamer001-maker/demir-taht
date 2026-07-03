@@ -1608,8 +1608,7 @@ html,body{
       <div class="res-item">🪙<span class="res-val" id="r-gold">500</span></div>
       <div class="res-item">🌾<span class="res-val" id="r-food">80</span></div>
       <div class="res-item">🪵<span class="res-val" id="r-wood">40</span></div>
-      <div class="res-item">⚔<span class="res-val" id="r-army">30</span></div>
-      <div class="res-item" id="turn-display" style="font-family:var(--font-head);font-size:10px;color:var(--ink3);">Y1 Bahar</div>
+      <div class="res-item" title="Birlikler">⚔<span class="res-val" id="r-army">0</span></div>
     </div>
     <div id="server-time-mob"></div>
 
@@ -1723,7 +1722,6 @@ html,body{
           <div style="font-family:var(--font-head);font-size:9px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">🏭 ÜRETİM BİNALARI</div>
           <div id="castle-prod-wrap"></div>
         </div>
-        <button class="btn" style="width:100%;" onclick="endTurn()">⏭ Tur Bitir</button>
       </div>
       <!-- GELİŞTİRME -->
       <div class="scroll" id="gs-gelistirme" style="display:none;"></div>
@@ -2107,6 +2105,15 @@ html,body{
     if(p.classList.contains('active')) start();
   }
 })();
+/* ══════════════════════════════════════
+   GÜVENLİK YARDIMCILARI
+   esc  → innerHTML'e basılan kullanıcı metnini escape eder (sohbet vb.)
+   sani → DB'den gelen isim/etiket alanlarından HTML karakterlerini söker
+          (idempotent: iki kez uygulansa da bozulmaz)
+══════════════════════════════════════ */
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function sani(s){return String(s??'').replace(/[<>"]/g,'');}
+
 /* ══════════════════════════════════════
    CONSTANTS
 ══════════════════════════════════════ */
@@ -2832,7 +2839,13 @@ function refundStatPoints(){
   let refunded=0;
   ['str','def','agi','wis','cha'].forEach(k=>{
     const spent=(G.stats[k]||0)-(b[k]||0);
-    if(spent>0){ refunded+=spent; G.stats[k]=b[k]||0; }
+    if(spent>0){
+      refunded+=spent; G.stats[k]=b[k]||0;
+      // addStat'ın kaleye eklediği bonusları da geri al —
+      // yoksa sıfırla+yeniden dağıt döngüsüyle sınırsız kale def/atk kasılır
+      if(k==='def') G.castle.def=Math.max(0,G.castle.def-spent*2);
+      if(k==='str') G.castle.atk=Math.max(0,G.castle.atk-spent*1);
+    }
   });
   G.skillPoints=(G.skillPoints||0)+refunded;
   // maxhp'yi base'e döndür (def puanı +8 hp ekliyordu)
@@ -2860,7 +2873,7 @@ function confirmStatReset(){
   const n=refundStatPoints();
   closeGModal();
   celebrate('🧪', 'NİTELİKLER SIFIRLANDI', `${n} puan yeniden dağıtıma hazır`, 'levelup');
-  updateHUD(); renderKarakter();
+  updateHUD(); renderKarakter(); renderKale();
   if(currentUser) sbSave();
 }
 
@@ -3151,7 +3164,7 @@ function finishGather(idx, type){
     toast(`💰 Kasabadan ${amt}🪙 topladın!`);
   } else if(type==='loot'){
     const equipPool=MARKET_ITEMS.filter(x=>['weapon','armor','accessory'].includes(x.cat)&&['gray','green','blue'].includes(x.grade)&&x.seller!=='boss');
-    if(equipPool.length&&G.inventory.length<50){
+    if(equipPool.length&&!invFull()){
       const base=equipPool[Math.floor(Math.random()*equipPool.length)];
       const enh=Math.floor(Math.random()*4)+1;
       const item={id:Date.now(),name:base.name,icon:base.icon,type:base.type||'Eşya',grade:base.grade||'gray',price:base.price,stats:{...base.stats},desc:base.desc||'',seller:'player',sellerName:'Harabeler',img:base.img||null,reqLv:base.reqLv||1,material:base.material||null,classBonus:base.classBonus||null,tplId:base.tplId||null,enhPlus:enh,baseStats:{...base.stats}};
@@ -3929,10 +3942,8 @@ const G={
   armorColor:'#8a8a8a',cloakColor:'#8b0000',
   level:1,xp:0,skillPoints:3,
   stats:{str:0,def:0,agi:0,wis:0,cha:0,hp:100,maxhp:100},
-  gold:500,food:50,wood:40,army:0,morale:72,
-  turn:1,season:0,
+  gold:500,food:50,wood:40,morale:72,
   castle:{hp:100,maxhp:100,def:40,atk:25,morale:72,walls:1,towers:1,barracks:1,farm:1,market:1},
-  units:[{id:'infantry',name:'Piyade',icon:'🗡',count:0,atk:8,def:5,goldCost:20,popCost:5},{id:'archer',name:'Okçu',icon:'🏹',count:0,atk:12,def:3,goldCost:35,popCost:8},{id:'cavalry',name:'Süvari',icon:'🐴',count:0,atk:18,def:8,goldCost:80,popCost:15}],
   folk:{population:100,happiness:68,tax:10},
   folkEvents:[
     {id:'fe1',title:'Kıtlık Haberleri',desc:'Güney köylerinde yiyecek sıkıntısı.',done:false,choices:[{t:'Yardım gönder (-30🌾)',fn:()=>{if(G.food<30){toast('Yeterli yiyecek yok!');return;}G.food-=30;G.folk.happiness=Math.min(100,G.folk.happiness+12);}},{t:'Görmezden gel',fn:()=>{G.folk.happiness=Math.max(0,G.folk.happiness-8);}}]},
@@ -4084,13 +4095,12 @@ async function startGame(){
   document.getElementById('bottom-nav').style.display='flex';document.getElementById('gchat-fab').style.display='flex';
   questLoad();
   refreshLoginStreak();
+  if(currentUser) initSaleWatcher();
   updateHUD();renderGame('karakter');renderGame('kale');renderGame('gelistirme');renderGame('halk');renderGame('harita');renderGame('arena');renderGame('zindan');
   renderQuest(G.questTab);renderMarket();renderGuild(G.guildTab);renderProd(G.prodTab);renderProfile(G.profileTab);
   updateInvStrip();
   Promise.all([loadPlayerMarketItems(),loadMaterialListings()]).then(()=>renderMarket());
   if(G.gold>=100) trackQuest('goldReached100');
-  const initArmy=G.units.reduce((a,u)=>a+u.count,0);
-  if(initArmy>=30) trackQuest('armyCount30');
   if(G.folk.happiness>=60) trackQuest('happiness60');
   // Harita başlat
   initPlayerMap().then(()=>renderGame('harita'));
@@ -4221,18 +4231,19 @@ function updateHUD(){
   document.getElementById('r-gold').textContent=Math.floor(G.gold);
   document.getElementById('r-food').textContent=Math.floor(G.food);
   document.getElementById('r-wood').textContent=Math.floor(G.wood);
-  document.getElementById('r-army').textContent=G.units.reduce((a,u)=>a+u.count,0);
-  const seasons=['Bahar','Yaz','Sonbahar','Kış'];
-  document.getElementById('turn-display').textContent=`Y${Math.ceil(G.turn/4)} ${seasons[G.season]}`;
+  document.getElementById('r-army').textContent=troopCount();
   const me=document.getElementById('m-gold');if(me) me.textContent=Math.floor(G.gold);
   const pe=document.getElementById('prod-gold');if(pe) pe.textContent=Math.floor(G.gold);
 }
 function gainXP(n){
-  G.xp+=n;const need=G.level*100;
-  if(G.xp>=need){
-    G.xp-=need;G.level++;G.skillPoints+=2;
-    celebrate('🎊', `SEVİYE ${G.level}!`, '+2 yetenek puanı kazandın', 'levelup');
+  G.xp+=n;
+  // Büyük XP kazançları tek seferde birden çok seviye atlatabilir
+  let leveled=0;
+  while(G.xp>=G.level*100){
+    G.xp-=G.level*100;
+    G.level++;G.skillPoints+=2;leveled++;
   }
+  if(leveled>0) celebrate('🎊', `SEVİYE ${G.level}!`, `+${leveled*2} yetenek puanı kazandın`, 'levelup');
 }
 
 /* ══════════════════════════════════════
@@ -4669,7 +4680,7 @@ async function confirmSellItem(itemId){
   if(currentUser) sbSave();
 
   // Supabase marketplace tablosuna ekle — enhPlus dahil
-  const {error}=await supa.from('marketplace').insert({
+  const {data:newListing,error}=await supa.from('marketplace').insert({
     seller_id:        currentUser.id,
     seller_name:      G.heroName||G.username,
     item_name:        item.name,
@@ -4685,7 +4696,9 @@ async function confirmSellItem(itemId){
     item_enh_plus:    item.enhPlus||0,
     price,
     created_at: new Date().toISOString(),
-  });
+  }).select().single();
+
+  if(!error&&newListing) _myListings.market.set(newListing.id,{name:sani(item.name),price});
 
   if(error){
     // Hata olursa eşyayı geri ver
@@ -4753,110 +4766,9 @@ function upgBld(key,cost){
   gainXP(25);toast(key+' geliştirildi!');updateHUD();renderKale();
   if(currentUser) sbSave();
 }
-function endTurn(){
-  G.turn++;G.season=(G.season+1)%4;
-
-  /* ── MUTFAK YEMEKLERİ: collectProd sırasında anında G.food'a eklenir ── */
-
-  /* ── ALTIN GELİRİ ── */
-  const taxIncome=Math.floor(G.folk.population*G.folk.tax/100);
-  G.gold+=20+G.castle.market*15+taxIncome;
-
-  /* ── NÜFUS BÜYÜMESI ── */
-  const tax=G.folk.tax;
-  const popGrowth=tax<=10?12:tax<=20?8:tax<=30?4:0;
-  // Yemek yoksa nüfus azalır
-  const foodPerPop=0.1;
-  const foodNeeded=Math.ceil(G.folk.population*foodPerPop);
-  const totalArmy=G.units.reduce((a,u)=>a+u.count,0);
-  const armyFood=Math.floor(totalArmy*0.5);
-  const totalFoodCost=foodNeeded+armyFood;
-  if(G.food>=totalFoodCost){
-    G.food-=totalFoodCost;
-    G.folk.population+=popGrowth;
-  } else if(G.food>0){
-    // Kısmi yemek — nüfus az büyür
-    G.food=0;
-    G.folk.population+=Math.floor(popGrowth/2);
-    G.morale=Math.max(0,G.morale-5);
-    toast('⚠ Yemek azalıyor! Üretimi artır.');
-  } else {
-    // Yemek yok — nüfus azalır, moral düşer
-    G.folk.population=Math.max(10,G.folk.population-10);
-    G.morale=Math.max(0,G.morale-10);
-    toast('🚨 Kıtlık! Halk aç, nüfus azalıyor!');
-  }
-
-  /* ── ASKER GİDERLERİ: ALTIN ── */
-  const maint=Math.floor(G.units.reduce((a,u)=>a+u.count*(u.goldCost||u.cost||2)*0.15,0));
-  G.gold-=maint;
-
-  /* ── MORAL & KALE ── */
-  G.morale=Math.min(100,G.morale+(G.folk.happiness>60?2:-3));
-  G.castle.hp=Math.min(G.castle.maxhp,G.castle.hp+5);
-  if(G.gold<0) G.gold=0;
-  G.stats.hp=Math.min(getEffectiveStats().maxhp, G.stats.hp+10);
-  gainXP(15);
-
-  /* ── GÖREV TAKİBİ ── */
-  if(G.gold>=100) trackQuest('goldReached100');
-  if(totalArmy>=30) trackQuest('armyCount30');
-  if(G.folk.happiness>=60) trackQuest('happiness60');
-
-  const seasons=['Bahar','Yaz','Sonbahar','Kış'];
-  const kitchenNote=kitchenFood>0?` | 🍽 Mutfak +${kitchenFood}🍖`:'';
-  const log=`${seasons[G.season]} geldi! Nüfus: ${G.folk.population} | Yemek: ${Math.floor(G.food)}${kitchenNote} | Vergi: ${taxIncome}🪙`;
-  toast(log);
-  updateHUD();renderGame('kale');renderHalk();
-}
-
-/* ── ORDU ── */
-function renderOrdu(){
-  const total=G.units.reduce((a,u)=>a+u.count,0);
-  const maint=Math.floor(G.units.reduce((a,u)=>a+u.count*(u.goldCost||20)*0.15,0));
-  document.getElementById('total-army').textContent=total;
-  document.getElementById('army-cost').textContent=maint+'🪙/tur';
-  document.getElementById('unit-list').innerHTML=G.units.map(u=>`<div class="card-sm" style="display:flex;align-items:center;gap:9px;"><span style="font-size:22px;">${u.icon}</span><div style="flex:1;"><div style="font-family:var(--font-head);font-size:11px;color:var(--perg);">${u.name}</div><div style="font-size:9px;color:var(--ink3);">⚔${u.atk} 🛡${u.def} · ${(u.goldCost||20)*0.15|0}🪙/tur</div></div><span style="font-family:var(--font-head);font-size:14px;color:var(--gold);">${u.count}</span></div>`).join('');
-  // İşe alım: altın + vatandaş gereksinimi
-  const recruits=[
-    {name:'Piyade',icon:'🗡',count:5,uid:'infantry'},
-    {name:'Okçu',icon:'🏹',count:3,uid:'archer'},
-    {name:'Süvari',icon:'🐴',count:1,uid:'cavalry'},
-  ];
-  document.getElementById('recruit-list').innerHTML=recruits.map(r=>{
-    const u=G.units.find(x=>x.id===r.uid);
-    const goldNeed=u.goldCost*r.count;
-    const popNeed=u.popCost*r.count;
-    const canAfford=G.gold>=goldNeed&&G.folk.population>=popNeed+10;
-    return `<div class="card-sm"><div style="display:flex;align-items:center;gap:9px;margin-bottom:5px;">
-      <span style="font-size:20px;">${r.icon}</span>
-      <div style="flex:1;"><div style="font-family:var(--font-head);font-size:11px;color:var(--perg);">${r.count}x ${r.name}</div>
-      <div style="font-size:9px;color:var(--ink3);">⚔${u.atk} 🛡${u.def}</div></div>
-    </div>
-    <div style="display:flex;gap:4px;margin-bottom:5px;flex-wrap:wrap;">
-      <span class="tag ${G.gold>=goldNeed?'tag-gold':'tag-red'}">${goldNeed}🪙</span>
-      <span class="tag ${G.folk.population>=popNeed+10?'tag-blue':'tag-red'}">👥 ${popNeed} vatandaş</span>
-      <span class="tag tag-blue" style="font-size:8px;">Mevcut: ${G.folk.population}</span>
-    </div>
-    <button class="btn btn-xs" style="width:100%;" onclick="recruit('${r.uid}',${r.count})" ${canAfford?'':'disabled'}>${canAfford?'İşe Al':'Yetersiz'}</button>
-    </div>`;
-  }).join('');
-}
-function recruit(uid,count){
-  const u=G.units.find(x=>x.id===uid);
-  const goldNeed=u.goldCost*count;
-  const popNeed=u.popCost*count;
-  if(G.gold<goldNeed){toast('Yeterli altın yok! '+goldNeed+'🪙 gerekli');return;}
-  if(G.folk.population<popNeed+10){toast('Yeterli vatandaş yok! En az '+(popNeed+10)+' kişi gerekli');return;}
-  G.gold-=goldNeed;
-  G.folk.population-=popNeed;
-  u.count+=count;
-  const totalArmy=G.units.reduce((a,u)=>a+u.count,0);
-  if(totalArmy>=30) trackQuest('armyCount30');
-  gainXP(10);
-  toast(`${count}x ${u.name} işe alındı! -${goldNeed}🪙 -${popNeed} vatandaş`);
-  updateHUD();renderOrdu();renderHalk();
-}
+/* ── TUR & ORDU SİSTEMİ KALDIRILDI ──
+   Oyun artık sabit server saatiyle akar (bkz. initServerTime).
+   Askerler "Halk" sekmesindeki birlik (companions) sistemine taşındı. */
 
 /* ══════════════════════════════════════
    GELİŞTİRME SİSTEMİ
@@ -5341,30 +5253,20 @@ function renderHalk(){
   const f=G.folk;
   const mood=f.happiness>=70?'Mutlu 😊':f.happiness>=45?'Nötr 😐':'Mutsuz 😠';
   const moodCls=f.happiness>=70?'tag-green':f.happiness>=45?'tag-gold':'tag-red';
-  const foodNeeded=Math.ceil(f.population*0.1);
-  const totalArmy=G.units.reduce((a,u)=>a+u.count,0);
-  const armyFood=Math.floor(totalArmy*0.5);
-  const totalFoodCost=foodNeeded+armyFood;
-  const foodOk=G.food>=totalFoodCost;
-  const tax=f.tax;
-  const popGrowth=tax<=10?'+12':tax<=20?'+8':tax<=30?'+4':'0';
+  const upkeep=troopUpkeepCost();
   document.getElementById('folk-overview-card').innerHTML=`
     <div class="row-between" style="margin-bottom:7px;">
       <span style="font-family:var(--font-head);font-size:13px;color:var(--perg);">Nüfus</span>
-      <span style="font-family:var(--font-head);font-size:16px;color:var(--gold);">${f.population} <span style="font-size:11px;color:var(--g-green);">(${popGrowth}/tur)</span></span>
+      <span style="font-family:var(--font-head);font-size:16px;color:var(--gold);">${f.population}</span>
     </div>
     <div class="row-between" style="margin-bottom:7px;">
       <span style="font-size:11px;color:var(--ink3);">Durum</span>
       <span class="tag ${moodCls}">${mood}</span>
     </div>
-    <div class="row-between" style="margin-bottom:7px;">
-      <span style="font-size:11px;color:var(--ink3);">🍖 Yemek tüketimi/tur</span>
-      <span style="font-family:var(--font-head);font-size:12px;color:${foodOk?'var(--g-green)':'var(--hp)'};">${totalFoodCost} (Mevcut: ${Math.floor(G.food)})</span>
-    </div>
-    <div class="row-between" style="margin-bottom:7px;">
-      <span style="font-size:10px;color:var(--ink3);">  Halk: ${foodNeeded} + Ordu: ${armyFood}</span>
-      <span class="tag ${foodOk?'tag-green':'tag-red'}">${foodOk?'✓ Yeterli':'⚠ Yetersiz'}</span>
-    </div>
+    ${upkeep.count>0?`<div class="row-between" style="margin-bottom:7px;">
+      <span style="font-size:11px;color:var(--ink3);">🍖 Birlik beslemesi/aktivite</span>
+      <span style="font-family:var(--font-head);font-size:12px;color:${G.food>=upkeep.food?'var(--g-green)':'var(--hp)'};">${upkeep.food}🌾 + ${upkeep.gold}🪙</span>
+    </div>`:''}
     <div class="castle-stat" style="margin-bottom:0;"><span class="cs-icon">😊</span><span class="cs-lbl">Mutluluk</span><div class="cs-bar-bg"><div class="cs-bar" style="width:${f.happiness}%;background:var(--mor);"></div></div><span class="cs-val">${f.happiness}%</span></div>`;
   document.getElementById('folk-actions-wrap').innerHTML=`<div class="row-between" style="margin-bottom:7px;"><span style="font-size:12px;color:var(--perg2);">Vergi: ${f.tax}%</span><div style="display:flex;gap:5px;"><button class="btn btn-xs" onclick="changeTax(-5)">▼ İndir</button><button class="btn btn-xs" onclick="changeTax(5)">▲ Artır</button></div></div><button class="btn btn-sm" style="width:100%;margin-bottom:5px;" onclick="festival()">🎉 Şenlik (-40🪙)</button><button class="btn btn-sm" style="width:100%;" onclick="feedPeople()">🌾 Yiyecek Dağıt (-30🌾)</button>`;
   const evs=G.folkEvents.filter(e=>!e.done);
@@ -5628,7 +5530,7 @@ function renderArena(){
 }
 function calcPow(){
   const eff=getEffectiveStats();
-  return eff.physDmg*3 + eff.maxhp*0.5 + eff.def*4 + G.level*10 + G.units.reduce((a,u)=>a+u.count,0)/2;
+  return eff.physDmg*3 + eff.maxhp*0.5 + eff.def*4 + G.level*10;
 }
 function fight(name){
   if(ARENA_TICKETS<=0){toast('⚡ Arena hakkın yok! Yarın yenilenir.');return;}
@@ -6614,10 +6516,12 @@ function zdUpdateBattleUI(){
   const logEl=document.getElementById('zd-log');
   if(eEl) eEl.style.width=Math.max(0,Math.round(b.enemyHp/b.enemy.hp*100))+'%';
   if(eVal) eVal.textContent=`${b.enemyHp}/${b.enemy.hp}`;
-  const pPct=Math.max(0,Math.round(b.playerHp/G.stats.maxhp*100));
+  // Efektif (ekipman dahil) maxhp kullan — base G.stats.maxhp değil
+  const pMax=b.playerMaxHp||getEffectiveStats().maxhp;
+  const pPct=Math.min(100,Math.max(0,Math.round(b.playerHp/pMax*100)));
   const hpColor=pPct>50?'#7aaa5a':pPct>25?'#c9a646':'#f87171';
   if(pEl){ pEl.style.width=pPct+'%'; pEl.style.background=`linear-gradient(90deg,#8b1e1e,${hpColor})`; }
-  if(pVal) pVal.textContent=`${b.playerHp}/${G.stats.maxhp}`;
+  if(pVal) pVal.textContent=`${b.playerHp}/${pMax}`;
   if(logEl){
     logEl.innerHTML=b.log.slice(-6).map(l=>`<div class="zd-log-line ${l.type}">${l.text}</div>`).join('');
     logEl.scrollTop=logEl.scrollHeight;
@@ -6677,9 +6581,7 @@ function zdNecroItemDrop(){
   if(!base) return;
   const drop={...base, id:Date.now()+Math.floor(Math.random()*10000), price:0, seller:'player', sellerName:G.heroName||G.username};
   G.inventory.push(drop);
-  const gradeColors={orange:'#c9a646',purple:'#9a6aaa',blue:'#5a8aaa',green:'#5a8a4a',gray:'#7a7268'};
-  const col=gradeColors[drop.grade]||'var(--gold)';
-  setTimeout(()=>{ toast(`💀 Nekro Drop: <span style="color:${col};">${drop.name}</span> düştü!`); },600);
+  setTimeout(()=>{ toast(`💀 Nekro Drop: ${drop.name} düştü!`); },600);
   renderKarakter();
   if(currentUser) sbSave();
 }
@@ -6712,11 +6614,9 @@ function zdBossWeaponDrop(enemy, floor){
     sellerName:G.heroName||G.username,
   };
   G.inventory.push(weapon);
-  const gradeColors={orange:'#c9a646',purple:'#9a6aaa',blue:'#5a8aaa',green:'#5a8a4a',gray:'#7a7268'};
-  const col = gradeColors[tpl.grade]||'var(--gold)';
   // Kısa gecikme ile drop mesajı (kill toast'tan sonra görünsün)
   setTimeout(()=>{
-    toast(`🗡 Boss dropu: <span style="color:${col};">${tpl.name}</span> düştü!`);
+    toast(`🗡 Boss dropu: ${tpl.name} düştü!`);
   }, 600);
   renderKarakter();
 }
@@ -6863,28 +6763,37 @@ async function loadPlayerMarketItems(){
     .order('created_at',{ascending:false})
     .limit(100);
   if(error||!data) return;
-  G_PLAYER_LISTINGS = data.map(row=>({
-    id: 'mp_'+row.id,
-    dbId: row.id,
-    name: row.item_name,
-    icon: row.item_icon||'📦',
-    cat:  getCatFromType(row.item_type),
-    grade: row.item_grade||'gray',
-    price: row.price,
-    qty: 1,
-    seller: 'player',
-    sellerName: row.seller_name||'Oyuncu',
-    sellerId: row.seller_id,
-    type: row.item_type,
-    desc: row.item_desc||'',
-    stats: row.item_stats||{},
-    img: row.item_img||null,
-    reqLv: row.item_req_lv||1,
-    material: row.item_material||null,
-    classBonus: row.item_class_bonus||null,
-    enhPlus: row.item_enh_plus||0,
-    isMarketplace: true,
-  }));
+  // Tüm alanlar başka oyuncuların yazdığı veridir — HTML'e basılmadan önce temizle
+  G_PLAYER_LISTINGS = data.map(row=>{
+    const stats={};
+    Object.entries(row.item_stats||{}).forEach(([k,v])=>{
+      if(typeof v==='number'&&isFinite(v)) stats[sani(k)]=v;
+      else if(k==='animalKey'&&['tavuk','koyun','inek','ari'].includes(v)) stats[k]=v;
+      else if(k==='isAnimal') stats[k]=!!v;
+    });
+    return {
+      id: 'mp_'+row.id,
+      dbId: row.id,
+      name: sani(row.item_name),
+      icon: sani(row.item_icon||'📦'),
+      cat:  getCatFromType(row.item_type),
+      grade: ['gray','green','blue','purple','orange'].includes(row.item_grade)?row.item_grade:'gray',
+      price: Number(row.price)||0,
+      qty: 1,
+      seller: 'player',
+      sellerName: sani(row.seller_name||'Oyuncu'),
+      sellerId: row.seller_id,
+      type: sani(row.item_type),
+      desc: sani(row.item_desc||''),
+      stats,
+      img: row.item_img?sani(row.item_img):null,
+      reqLv: Number(row.item_req_lv)||1,
+      material: row.item_material?sani(row.item_material):null,
+      classBonus: row.item_class_bonus||null,
+      enhPlus: Number(row.item_enh_plus)||0,
+      isMarketplace: true,
+    };
+  });
 }
 
 // Yığın malzeme/ürün ilanlarını yükle
@@ -6898,14 +6807,14 @@ async function loadMaterialListings(){
   if(error||!data){ G_MATERIAL_LISTINGS=[]; return; }
   G_MATERIAL_LISTINGS = data.map(row=>({
     id: row.id,
-    itemKey: row.item_key,
-    label: row.item_label,
-    stock: row.stock,
-    unitPrice: row.unit_price,
-    sellerName: row.seller_name||'Oyuncu',
+    itemKey: sani(row.item_key),
+    label: sani(row.item_label),
+    stock: Number(row.stock)||0,
+    unitPrice: Number(row.unit_price)||0,
+    sellerName: sani(row.seller_name||'Oyuncu'),
     sellerId: row.seller_id,
     icon: ITEM_ICONS[row.item_key]||'📦',
-    img: ITEM_IMGS[row.item_key]||row.item_key,
+    img: ITEM_IMGS[row.item_key]||sani(row.item_key),
   }));
 }
 
@@ -7047,14 +6956,77 @@ async function confirmMaterialBuy(listingId){
 async function withdrawMaterial(listingId){
   const l=G_MATERIAL_LISTINGS.find(x=>x.id===listingId);
   if(!l || l.sellerId!==currentUser?.id) return;
+  _withdrawnListings.add('mt_'+listingId); // sale watcher bunu satış sanmasın
   const {error}=await supa.from('material_listings').delete().eq('id',listingId).eq('seller_id',currentUser.id);
-  if(error){ toast('Geri çekme hatası: '+error.message); return; }
+  if(error){ _withdrawnListings.delete('mt_'+listingId); toast('Geri çekme hatası: '+error.message); return; }
+  _myListings.mat.delete(listingId);
   // Stoğu envantere iade et
   G.prodInv[l.itemKey]=(G.prodInv[l.itemKey]||0)+l.stock;
   if(currentUser) sbSave();
   toast(`${l.stock.toLocaleString('tr')}x ${l.label} geri alındı.`);
   await loadMaterialListings();
   renderMarket();
+}
+
+/* ══════════════════════════════════════
+   SATIŞ TAHSİLATI (sale watcher)
+   Sorun: alıcının RPC'si satıcının altınını DB'de artırsa bile, satıcının
+   açık oturumu bir sonraki sbSave'de eski (düşük) altını üzerine yazıyordu
+   → satış geliri kayboluyordu.
+   Çözüm: satıcı kendi ilanlarını Realtime ile izler; ilan satılınca altını
+   YEREL olarak ekler (sbSave artık doğru değeri yazar) ve bildirim gösterir.
+   Not: marketplace + material_listings tablolarında Realtime açık olmalı.
+══════════════════════════════════════ */
+let _saleChannel=null;
+const _creditedSales=new Set();      // aynı satışı iki kez ödememek için
+const _withdrawnListings=new Set();  // kendi geri çektiklerim (satış değil)
+const _myListings={market:new Map(), mat:new Map()}; // id → fiyat/stok bilgisi
+
+async function _refreshMyListingCache(){
+  if(!currentUser) return;
+  const {data:mk}=await supa.from('marketplace').select('id,item_name,price').eq('seller_id',currentUser.id);
+  _myListings.market.clear();
+  (mk||[]).forEach(r=>_myListings.market.set(r.id,{name:sani(r.item_name),price:Number(r.price)||0}));
+  const {data:mt}=await supa.from('material_listings').select('id,item_label,stock,unit_price').eq('seller_id',currentUser.id);
+  _myListings.mat.clear();
+  (mt||[]).forEach(r=>_myListings.mat.set(r.id,{label:sani(r.item_label),stock:Number(r.stock)||0,unitPrice:Number(r.unit_price)||0}));
+}
+
+function _creditSale(key, amount, label){
+  if(amount<=0 || _creditedSales.has(key)) return;
+  _creditedSales.add(key);
+  G.gold+=amount;
+  updateHUD();
+  celebrate('🪙','İLANIN SATILDI!',`${label} → +${amount.toLocaleString('tr')}🪙`,'gold');
+  if(currentUser) sbSave();
+}
+
+async function initSaleWatcher(){
+  if(!currentUser || _saleChannel) return;
+  await _refreshMyListingCache();
+  _saleChannel=supa.channel('my_sales_'+currentUser.id)
+    // Ekipman/hayvan ilanı satıldı (satır silindi)
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'marketplace'},({old:row})=>{
+      const rec=_myListings.market.get(row?.id); if(!rec) return;
+      _myListings.market.delete(row.id);
+      _creditSale('mk_'+row.id, rec.price, rec.name);
+    })
+    // Yığın ilanından kısmi alım (stok azaldı)
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'material_listings',filter:`seller_id=eq.${currentUser.id}`},({new:row})=>{
+      const rec=_myListings.mat.get(row?.id); if(!rec) return;
+      const newStock=Number(row.stock)||0;
+      const sold=rec.stock-newStock;
+      rec.stock=newStock;
+      if(sold>0) _creditSale('mt_'+row.id+'_'+newStock, sold*rec.unitPrice, `${sold}x ${rec.label}`);
+    })
+    // Yığın ilanı tamamen bitti / silindi
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'material_listings'},({old:row})=>{
+      const rec=_myListings.mat.get(row?.id); if(!rec) return;
+      _myListings.mat.delete(row.id);
+      if(_withdrawnListings.has('mt_'+row.id)) return;
+      if(rec.stock>0) _creditSale('mt_'+row.id+'_son', rec.stock*rec.unitPrice, `${rec.stock}x ${rec.label}`);
+    })
+    .subscribe();
 }
 
 function renderMarket(){
@@ -7097,7 +7069,9 @@ function renderMarket(){
   const cnt=document.getElementById('market-count');if(cnt) cnt.textContent=items.length+' ilan';
   const cards=items.map(item=>{
     const statsP=Object.entries(item.stats||{}).slice(0,3).map(([k,v])=>`<span style="font-size:7px;padding:1px 4px;border-radius:3px;background:var(--panel);color:var(--perg2);border:1px solid var(--border);">+${v} ${STAT_LABELS[k]||k}</span>`).join('');
-    const canBuy=item.seller!=='boss'&&G.gold>=item.price&&item.sellerId!==currentUser?.id;
+    const npcLimited=item.seller==='npc'&&typeof item.qty==='number'&&item.qty<99;
+    const soldOut=npcLimited&&item.qty<=0;
+    const canBuy=item.seller!=='boss'&&G.gold>=item.price&&item.sellerId!==currentUser?.id&&!soldOut;
     const isBoss=item.seller==='boss';
     const isOwnListing=item.sellerId===currentUser?.id;
     const canEquipLv=G.level>=(item.reqLv||1);
@@ -7112,9 +7086,9 @@ function renderMarket(){
       <div class="item-name ${item.grade}" style="font-family:var(--font-head);font-size:10px;line-height:1.3;word-break:break-word;">${item.name}${enhBadge?'&nbsp;'+enhBadge:''}</div>
       <div style="display:flex;gap:3px;flex-wrap:wrap;justify-content:center;">${lvBadge}${item.type?`<span style="font-size:7px;color:var(--ink3);">${item.type}</span>`:''}</div>
       ${statsP?`<div style="display:flex;gap:2px;flex-wrap:wrap;justify-content:center;">${statsP}</div>`:''}
-      <div style="font-size:8px;color:var(--ink3);">${isBoss?'⚔ Boss':item.seller==='npc'?'🤖 NPC':'👤 '+item.sellerName}${isOwnListing?' <span style="color:var(--gold);">(Sen)</span>':''}</div>
+      <div style="font-size:8px;color:var(--ink3);">${isBoss?'⚔ Boss':item.seller==='npc'?('🤖 NPC'+(npcLimited?` · <span style="color:${soldOut?'#f08080':'var(--gold2)'};">Stok: ${item.qty}</span>`:'')):'👤 '+item.sellerName}${isOwnListing?' <span style="color:var(--gold);">(Sen)</span>':''}</div>
       <div style="font-family:var(--font-head);font-size:11px;color:${isBoss?'var(--g-orange)':'var(--gold)'};">${isBoss?'Boss Drop':item.price.toLocaleString('tr')+'🪙'}</div>
-      ${!isBoss&&!isOwnListing?`<button class="buy-btn-sm" style="width:100%;margin-top:3px;" onclick="event.stopPropagation();${clickFn}" ${!canBuy?'disabled':''}>${item.cat==='premium'?'✨ Etkinleştir':'Satın Al'}</button>`:''}
+      ${!isBoss&&!isOwnListing?`<button class="buy-btn-sm" style="width:100%;margin-top:3px;" onclick="event.stopPropagation();${clickFn}" ${!canBuy?'disabled':''}>${item.cat==='premium'?'✨ Etkinleştir':soldOut?'Tükendi':'Satın Al'}</button>`:''}
       ${isOwnListing?`<div style="font-size:8px;color:var(--ink3);margin-top:2px;">Satışta</div>`:''}
     </div>`;
   }).join('');
@@ -7126,9 +7100,12 @@ function buyItem(id){
   const item=MARKET_ITEMS.find(x=>x.id===id);
   if(!item)return;
   if(item.seller==='boss'){toast("Bu eşya sadece Boss savaşından düşer!");return;}
+  // Sınırlı NPC stoğu: qty<99 olan NPC ürünleri tükenebilir (99+ = sınırsız)
+  const limitedStock=item.seller==='npc'&&typeof item.qty==='number'&&item.qty<99;
+  if(limitedStock&&item.qty<=0){toast('Stok tükendi!');return;}
   if(G.gold<item.price){toast('Yeterli altın yok!');return;}
   G.gold-=item.price;
-  if(item.qty!==undefined&&item.qty<=98) item.qty--;
+  if(limitedStock) item.qty--;
 
   // Hayvan ise G.animals'a ekle
   if(item.isAnimal && item.animalKey){
@@ -7181,7 +7158,7 @@ function buyItem(id){
       if(currentUser) sbSave();
       return;
     }
-    if(invCount()>=invCap()){toast('Envanter dolu! Önce bir eşya sat.');G.gold+=item.price;return;}
+    if(invCount()>=invCap()){toast('Envanter dolu! Önce bir eşya sat.');G.gold+=item.price;if(limitedStock)item.qty++;return;}
     const cInv={id:Date.now(),name:item.name,icon:item.icon,type:item.type||'İksir',grade:item.grade||'gray',price:item.price,stats:{...item.stats||{}},desc:item.desc||'',seller:'player',sellerName:G.heroName||G.username,img:item.img||null,reqLv:item.reqLv||1,material:null,classBonus:null,tplId:item.id,qty:1,cat:'consumable'};
     G.inventory.push(cInv);
     gainXP(10);toast(`${item.name} envantere eklendi! -${item.price}🪙`);trackQuest('marketBuy1');
@@ -7190,7 +7167,7 @@ function buyItem(id){
     return;
   }
 
-  if(invCount()>=invCap()){toast('Envanter dolu! Önce bir eşya sat.');G.gold+=item.price;return;}
+  if(invCount()>=invCap()){toast('Envanter dolu! Önce bir eşya sat.');G.gold+=item.price;if(limitedStock)item.qty++;return;}
   const invItem={
     id: Date.now(),
     name: item.name, icon: item.icon,
@@ -7326,7 +7303,7 @@ function renderGuildHome(){
   document.getElementById('guild-content').innerHTML=`
     <div class="guild-banner" style="margin-bottom:10px;text-align:center;">
       <div style="font-size:38px;margin-bottom:6px;">🛡</div>
-      <div style="font-family:var(--font-head);font-size:17px;font-weight:700;color:var(--gold2);">${G.guildName}</div>
+      <div style="font-family:var(--font-head);font-size:17px;font-weight:700;color:var(--gold2);">${esc(G.guildName)}</div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
       <div class="stat2"><div class="stat2-val" id="guild-member-count">—</div><div class="stat2-lbl">Üye</div></div>
@@ -7352,7 +7329,7 @@ function confirmLeaveGuild(){
     <div style="text-align:center;margin-bottom:16px;">
       <div style="font-size:40px;margin-bottom:10px;">🚪</div>
       <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);margin-bottom:6px;">Loncadan Ayrıl</div>
-      <div style="font-size:12px;color:var(--ink3);line-height:1.6;">"<b style="color:var(--perg);">${G.guildName}</b>" loncasından ayrılmak istediğine emin misin?</div>
+      <div style="font-size:12px;color:var(--ink3);line-height:1.6;">"<b style="color:var(--perg);">${esc(G.guildName)}</b>" loncasından ayrılmak istediğine emin misin?</div>
     </div>
     <button class="btn btn-danger" style="width:100%;margin-bottom:8px;" onclick="leaveGuild()">Evet, Ayrıl</button>
     <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal()">Hayır, Kal</button>
@@ -7420,7 +7397,7 @@ async function sbLoadGuildMembers(){
 
   const mc=m=>{
     const prof=profMap[m.profile_id]||{};
-    const displayName = prof.hero_name || prof.username || '(İsimsiz)';
+    const displayName = sani(prof.hero_name || prof.username || '(İsimsiz)');
     const cls=CLASSES.find(c=>c.id===prof.class_id);
     return `<div class="member-card">
       <div class="m-av">${cls?.icon||'⚔'}</div>
@@ -7690,7 +7667,7 @@ function joinBossHunt(){
   const avatarHtml=avSrc
     ?`<img src="${avSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none'"/>`
     :`<span>${cls?.icon||'⚔'}</span>`;
-  bossHunters.push({name:G.heroName||G.username||'Sen',classIcon:cls?.icon||'⚔',className:cls?.name||'',avatarHtml,isMe:true});
+  bossHunters.push({name:sani(G.heroName||G.username||'Sen'),classIcon:cls?.icon||'⚔',className:cls?.name||'',avatarHtml,isMe:true});
   if(currentUser&&G.guildId){
     supa.from('guild_boss_sessions').upsert({
       guild_id:G.guildId,profile_id:currentUser.id,
@@ -7771,7 +7748,7 @@ async function _loadBossHunters(){
     const avatarHtml=avSrc
       ?`<img src="${avSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none'"/>`
       :`<span>${cls?.icon||'⚔'}</span>`;
-    return {name:p.hero_name||p.username||'Avcı',classIcon:cls?.icon||'⚔',className:cls?.name||'',avatarHtml,isMe,
+    return {name:sani(p.hero_name||p.username||'Avcı'),classIcon:cls?.icon||'⚔',className:cls?.name||'',avatarHtml,isMe,
       prepAction: isMe ? myPrepAction : prepMap[d.profile_id]};
   });
   _updateBossParticipants();
@@ -7823,6 +7800,8 @@ async function showBossResult(boss){
     if(existing){
       won=existing.won;
     } else {
+      // Katılımcı listesini DB'den tazele — tüm client'lar aynı veriyle hesaplasın
+      await _loadBossHunters();
       // Başarı şansı hesapla:
       // Baz: %40
       // +%5 her katılımcı (max +%25)
@@ -7834,7 +7813,12 @@ async function showBossResult(boss){
       const fortifyCount = bossHunters.filter(h=>h.prepAction==='fortify').length;
       const prepBonus = (sharpenCount + fortifyCount) * 0.05;
       const winChance = Math.min(0.40 + participantBonus + prepBonus, 0.85);
-      won = Math.random() < winChance;
+      // DETERMİNİSTİK zar: seed = lonca + döngü → her client aynı sonucu
+      // hesaplar; kim önce yazarsa yazsın history'de çelişki oluşmaz.
+      const seedStr=`${G.guildId}_${cycle}`;
+      let sh=0;for(let i=0;i<seedStr.length;i++){sh=Math.imul(31,sh)+seedStr.charCodeAt(i)|0;}
+      const roll=mulberry32(Math.abs(sh))();
+      won = roll < winChance;
 
       const {error:insErr}=await supa.from('guild_boss_history').insert({
         guild_id:G.guildId,boss_id:boss.id,boss_name:boss.name,
@@ -7846,12 +7830,12 @@ async function showBossResult(boss){
     }
   }catch(e){
     console.warn('Boss result hatası:',e);
-    won=Math.random()>0.5;
+    won=false;
   }
 
   const dropped=won&&Math.random()<boss.drop.chance;
   let dropItem=null;
-  if(dropped&&G.inventory.length<50){
+  if(dropped&&!invFull()){
     // Boss düşen silah — random stat roll
     const bTplId=boss.drop.item.tplId;
     const bRolledStats=bTplId?rollWeaponStats(bTplId):(boss.drop.item.stats||{});
@@ -7990,8 +7974,8 @@ function renderGlobalMsgs(){
   };
   box.innerHTML=globalMsgs.map(m=>`
     <div class="chat-msg ${m.mine?'mine':'other'}">
-      ${!m.mine?`<div class="chat-meta"><span class="chat-sender ${m.glow?'glow-name':''}">${m.classIcon} ${m.heroName||'?'}</span><span style="color:var(--ink3);margin-left:3px;font-size:7px;">@${m.username||'?'}</span></div>`:''}
-      <div class="chat-bubble ${m.glow?'glow':''}">${m.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      ${!m.mine?`<div class="chat-meta"><span class="chat-sender ${m.glow?'glow-name':''}">${esc(m.classIcon)} ${esc(m.heroName||'?')}</span><span style="color:var(--ink3);margin-left:3px;font-size:7px;">@${esc(m.username||'?')}</span></div>`:''}
+      <div class="chat-bubble ${m.glow?'glow':''}">${esc(m.text)}</div>
       <div class="chat-meta">${fmtTs(m.ts)}</div>
     </div>`).join('');
   box.scrollTop=box.scrollHeight;
@@ -8078,12 +8062,12 @@ function renderLbRows(body,rows,isGuild=false){
   body.innerHTML=rows.map(r=>`
     <div class="lb-row ${rowCls(r)}">
       <div class="lb-rank ${rankCls(r.rank)}">${r.rank===1?'🥇':r.rank===2?'🥈':r.rank===3?'🥉':'#'+r.rank}</div>
-      <div style="font-size:18px;flex-shrink:0;">${r.icon}</div>
+      <div style="font-size:18px;flex-shrink:0;">${esc(r.icon)}</div>
       <div class="lb-name">
-        <div class="lb-name-hero">${r.hero}${r.mine?' <span style="color:var(--gold);font-size:8px;">◀ Sen</span>':''}</div>
-        <div class="lb-name-user">${isGuild?r.user:'@'+r.user}</div>
+        <div class="lb-name-hero">${esc(r.hero)}${r.mine?' <span style="color:var(--gold);font-size:8px;">◀ Sen</span>':''}</div>
+        <div class="lb-name-user">${isGuild?esc(r.user):'@'+esc(r.user)}</div>
       </div>
-      <div class="lb-val">${r.val}</div>
+      <div class="lb-val">${esc(r.val)}</div>
     </div>`).join('');
 }
 
@@ -8109,13 +8093,13 @@ async function sbLoadChatHistory(){
   if(!G.guildId) return;
   const {data}=await supa.from('guild_chat').select('*').eq('guild_id',G.guildId).order('created_at',{ascending:true}).limit(50);
   if(!data) return;
-  G.chatMsgs=data.map(m=>({sender:m.hero_name,role:'member',icon:m.class_icon||'⚔',text:m.message,time:new Date(m.created_at).toLocaleTimeString('tr',{hour:'2-digit',minute:'2-digit'}),mine:m.profile_id===currentUser?.id}));
+  G.chatMsgs=data.map(m=>({sender:sani(m.hero_name),role:'member',icon:sani(m.class_icon||'⚔'),text:m.message,time:new Date(m.created_at).toLocaleTimeString('tr',{hour:'2-digit',minute:'2-digit'}),mine:m.profile_id===currentUser?.id}));
   renderChatMessages();
 }
 function renderChatMessages(){
   const box=document.getElementById('chat-msgs');if(!box)return;
   if(!G.chatMsgs.length){box.innerHTML=`<div style="text-align:center;color:var(--ink3);font-size:12px;padding:20px;">Henüz mesaj yok. İlk sen yaz!</div>`;return;}
-  box.innerHTML=G.chatMsgs.map(msg=>`<div class="chat-msg ${msg.mine?'mine':'other'}">${!msg.mine?`<div class="chat-meta"><span class="chat-sender">${msg.icon} ${msg.sender}</span></div>`:''}<div class="chat-bubble">${msg.text}</div><div class="chat-meta">${msg.time}</div></div>`).join('');
+  box.innerHTML=G.chatMsgs.map(msg=>`<div class="chat-msg ${msg.mine?'mine':'other'}">${!msg.mine?`<div class="chat-meta"><span class="chat-sender">${esc(msg.icon)} ${esc(msg.sender)}</span></div>`:''}<div class="chat-bubble">${esc(msg.text)}</div><div class="chat-meta">${msg.time}</div></div>`).join('');
   box.scrollTop=box.scrollHeight;
 }
 function sbSubscribeChat(){
@@ -8123,7 +8107,7 @@ function sbSubscribeChat(){
   if(!G.guildId) return;
   chatChannel=supa.channel('guild-chat-'+G.guildId)
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'guild_chat',filter:`guild_id=eq.${G.guildId}`},
-      payload=>{const m=payload.new;G.chatMsgs.push({sender:m.hero_name,role:'member',icon:m.class_icon||'⚔',text:m.message,time:new Date(m.created_at).toLocaleTimeString('tr',{hour:'2-digit',minute:'2-digit'}),mine:m.profile_id===currentUser?.id});renderChatMessages();})
+      payload=>{const m=payload.new;G.chatMsgs.push({sender:sani(m.hero_name),role:'member',icon:sani(m.class_icon||'⚔'),text:m.message,time:new Date(m.created_at).toLocaleTimeString('tr',{hour:'2-digit',minute:'2-digit'}),mine:m.profile_id===currentUser?.id});renderChatMessages();})
     .subscribe();
 }
 async function gSend(){
@@ -8159,13 +8143,13 @@ async function sbSearchGuilds(q){
   if(!data){document.getElementById('g-search-list').innerHTML='';return;}
   if(!data.length){document.getElementById('g-search-list').innerHTML=`<div style="text-align:center;color:var(--ink3);font-size:12px;padding:16px;">Lonca bulunamadı.</div>`;return;}
   document.getElementById('g-search-list').innerHTML=data.map(g=>{
-    const safeName=(g.name||'').replace(/'/g,'&#39;');
+    const safeName=esc(g.name||'');
     return `
     <div class="card" style="cursor:pointer;margin-bottom:7px;" onclick="joinGuild('${g.id}','${safeName}')">
       <div style="display:flex;align-items:center;gap:9px;">
-        <span style="font-size:28px;">${g.emblem||'🛡'}</span>
+        <span style="font-size:28px;">${esc(g.emblem||'🛡')}</span>
         <div style="flex:1;">
-          <div style="font-family:var(--font-head);font-size:13px;font-weight:600;color:var(--perg);">${g.name}</div>
+          <div style="font-family:var(--font-head);font-size:13px;font-weight:600;color:var(--perg);">${esc(g.name)}</div>
           <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;">
             <span class="tag tag-gold">Sv.${g.level||1}</span>
             <span class="tag ${g.type==='open'?'tag-green':'tag-red'}">${g.type==='open'?'🔓 Açık':'🔒 Davetli'}</span>
@@ -9239,14 +9223,15 @@ async function confirmSellAnimal(key){
   const name={tavuk:'Tavuk',koyun:'Koyun',inek:'İnek',ari:'Arı Kovanı'}[key]||key;
   animals[key]--;
   closeGModal();renderRanch();if(currentUser) sbSave();
-  const {error}=await supa.from('marketplace').insert({
+  const {data:newListing,error}=await supa.from('marketplace').insert({
     seller_id:currentUser.id,seller_name:G.heroName||G.username,
     item_name:name,item_icon:icon,item_type:'Hayvan',item_grade:'gray',
     item_stats:{isAnimal:true,animalKey:key},item_desc:`${name} — çiftliğe eklenir.`,
     item_img:null,item_req_lv:1,item_material:null,item_class_bonus:null,item_enh_plus:0,
     price,created_at:new Date().toISOString(),
-  });
+  }).select().single();
   if(error){animals[key]++;renderRanch();toast('Listeleme hatası: '+error.message);return;}
+  if(newListing) _myListings.market.set(newListing.id,{name:sani(name),price});
   toast(`${name} — ${price}🪙 fiyatıyla pazara listelendi!`);
   await loadPlayerMarketItems();renderMarket();
 }
@@ -9456,14 +9441,15 @@ async function marketListDepo(key){
   document.getElementById('depo-pop-ov')?.remove();
   renderDepot();
   if(currentUser) sbSave();
-  const {error}=await supa.from('material_listings').insert({
+  const {data:newListing,error}=await supa.from('material_listings').insert({
     seller_id:currentUser.id,
     seller_name:G.heroName||G.username,
     item_key:key,
     item_label:label,
     stock:sell,
     unit_price:price,
-  });
+  }).select().single();
+  if(!error&&newListing) _myListings.mat.set(newListing.id,{label:sani(label),stock:sell,unitPrice:price});
   if(error){
     // Hata olursa stoğu geri ver
     G.prodInv[key]=(G.prodInv[key]||0)+sell; renderDepot();
@@ -9576,7 +9562,7 @@ function renderProfile(t){
   } else if(t==='stats'){
     el.innerHTML=`
       <div class="sec" style="margin-top:0;">GENEL</div>
-      <div class="stat-grid2"><div class="stat2"><div class="stat2-val">${G.turn}</div><div class="stat2-lbl">Tur</div></div><div class="stat2"><div class="stat2-val">${G.xp+G.level*100}</div><div class="stat2-lbl">Toplam XP</div></div><div class="stat2"><div class="stat2-val">${G.explored.size}</div><div class="stat2-lbl">Keşif</div></div><div class="stat2"><div class="stat2-val">5</div><div class="stat2-lbl">Görev Tamam</div></div></div>
+      <div class="stat-grid2"><div class="stat2"><div class="stat2-val">${troopCount()}</div><div class="stat2-lbl">Birlik</div></div><div class="stat2"><div class="stat2-val">${G.xp+G.level*100}</div><div class="stat2-lbl">Toplam XP</div></div><div class="stat2"><div class="stat2-val">${G.explored.size}</div><div class="stat2-lbl">Keşif</div></div><div class="stat2"><div class="stat2-val">5</div><div class="stat2-lbl">Görev Tamam</div></div></div>
       <div class="sec">SAVAŞ</div>
       <div class="stat-grid2"><div class="stat2"><div class="stat2-val">${G.arenaWins}</div><div class="stat2-lbl">Galibiyet</div></div><div class="stat2"><div class="stat2-val">${G.arenaLosses}</div><div class="stat2-lbl">Mağlubiyet</div></div><div class="stat2"><div class="stat2-val">${G.arenaWins+G.arenaLosses>0?Math.round(G.arenaWins/(G.arenaWins+G.arenaLosses)*100):0}%</div><div class="stat2-lbl">Oran</div></div><div class="stat2"><div class="stat2-val">${G.arenaScore}</div><div class="stat2-lbl">Arena Puanı</div></div></div>
       <div class="sec">EKONOMİ</div>
@@ -9709,12 +9695,6 @@ async function sbCreateProfile(username) {
   });
   if(castleRes.error) console.error('Kale hatası:', castleRes.error);
 
-  // Ordu
-  await supa.from('armies').insert([
-    { profile_id: currentUser.id, unit_type: 'infantry', count: 20 },
-    { profile_id: currentUser.id, unit_type: 'archer',   count: 8  },
-    { profile_id: currentUser.id, unit_type: 'cavalry',  count: 2  },
-  ]);
   // Halk
   await supa.from('folk').insert({
     profile_id: currentUser.id,
@@ -9743,10 +9723,7 @@ async function sbLoadProfile() {
   G.gold      = p.gold;
   G.food      = p.food || 80;
   G.wood      = p.wood || 40;
-  G.army      = p.army || 30;
   G.morale    = p.morale || 72;
-  G.turn      = p.turn || 1;
-  G.season    = p.season || 0;
   G.arenaScore= p.arena_score;
   G.arenaWins = p.arena_wins;
   G.arenaLosses = p.arena_losses;
@@ -9777,15 +9754,6 @@ async function sbLoadProfile() {
   // Kale
   const { data: c } = await supa.from('castles').select('*').eq('profile_id', currentUser.id).single();
   if (c) G.castle = { hp:c.hp, maxhp:c.max_hp, def:c.defense, atk:c.attack, morale:G.morale, walls:c.walls, towers:c.towers, barracks:c.barracks, farm:c.farm, market:c.market };
-
-  // Ordu
-  const { data: armies } = await supa.from('armies').select('*').eq('profile_id', currentUser.id);
-  if (armies?.length) {
-    G.units.forEach(u => {
-      const row = armies.find(a => a.unit_type === u.id);
-      if (row) u.count = row.count;
-    });
-  }
 
   // Halk
   const { data: folk } = await supa.from('folk').select('*').eq('profile_id', currentUser.id).single();
@@ -9888,10 +9856,8 @@ async function sbSave() {
       gold:         Math.floor(G.gold),
       food:         Math.floor(G.food),
       wood:         Math.floor(G.wood),
-      army:         G.units.reduce((a,u)=>a+u.count,0),
+      army:         troopCount(),
       morale:       Math.floor(G.morale),
-      turn:         G.turn,
-      season:       G.season,
       arena_score:  G.arenaScore,
       arena_wins:   G.arenaWins,
       arena_losses: G.arenaLosses,
@@ -9959,11 +9925,6 @@ async function sbSave() {
     }).eq('profile_id', currentUser.id);
     if (e2) console.error('sbSave castles hatası:', e2);
 
-    for (const u of G.units) {
-      const { error: eu } = await supa.from('armies').update({ count: u.count }).eq('profile_id', currentUser.id).eq('unit_type', u.id);
-      if (eu) console.error('sbSave armies hatası:', eu);
-    }
-
     const { error: e3 } = await supa.from('folk').update({
       population: G.folk.population,
       happiness:  G.folk.happiness,
@@ -9984,13 +9945,6 @@ async function sbSave() {
     toast('⚠ Kayıt başarısız! Konsolu kontrol et.');
   }
 }
-
-/* ── OTOMATİK KAYIT (her tur bitiminde) ── */
-const _origEndTurn = endTurn;
-endTurn = async function() {
-  _origEndTurn();
-  if (currentUser) { await sbSave(); toast('İlerleme kaydedildi ☁'); }
-};
 
 /* ── ONBOARDING'E LOGIN EKLE ── */
 function showLoginScreen() {
@@ -10048,6 +10002,7 @@ async function doLogin() {
     renderGame('karakter');renderGame('kale');renderGame('gelistirme');renderGame('halk');renderGame('harita');renderGame('arena');renderGame('zindan');
     renderQuest(G.questTab);renderMarket();renderGuild(G.guildTab);renderProd(G.prodTab);renderProfile(G.profileTab);
     updateInvStrip();
+    initSaleWatcher();
     toast(`Hoş geldin, ${G.heroName}! ☁`);
   } else {
     toast('Profil bulunamadı, yeni karakter oluştur.');
@@ -10194,7 +10149,7 @@ function pvpRender(){
           <div class="pvp-vs">VS</div>
           <div class="pvp-fighter opp-side">
             <div class="pvp-fighter-name">${PVP.oppData?.heroName||'?'}</div>
-            <div class="pvp-fighter-sub">Sv.${PVP.oppData?.level||'?'} · ${cls(PVP.oppData?.classId)}</div>
+            <div class="pvp-fighter-sub">Sv.${Number(PVP.oppData?.level)||'?'} · ${cls(PVP.oppData?.classId)}</div>
             <div class="pvp-hp-bg"><div class="pvp-hp-fill" style="width:${oppPct}%;background:linear-gradient(90deg,#6b1a1a,${hpCol(oppPct)});"></div></div>
             <div class="pvp-hp-val">${PVP.oppHp} / ${PVP.oppMaxHp}</div>
           </div>
@@ -10247,8 +10202,8 @@ function pvpUpdateList(){
   el.innerHTML=`<div style="font-family:var(--font-head);font-size:10px;color:var(--ink3);margin-bottom:6px;letter-spacing:1px;">LOBIDE OLANLAR</div>`+
     presences.map(p=>`<div class="pvp-presence-card">
       <span>${p.pick==='yazi'?'🪙':p.pick==='tura'?'🛡':'⏸'}</span>
-      <span style="color:var(--perg2);">${p.heroName}</span>
-      <span style="color:var(--ink3);">Sv.${p.level}</span>
+      <span style="color:var(--perg2);">${sani(p.heroName)}</span>
+      <span style="color:var(--ink3);">Sv.${Number(p.level)||1}</span>
       ${p.inMatch?'<span style="font-size:9px;color:#f87171;margin-left:auto;">Maçta</span>':''}
     </div>`).join('');
 }
@@ -10333,7 +10288,8 @@ function pvpStartBattle(yaziP,turaP){
   const myData  = imYazi ? yaziP : turaP;
   const oppData = imYazi ? turaP : yaziP;
 
-  PVP.oppData = oppData;
+  // Rakip adı diğer oyuncudan gelir — log/arayüze basılmadan önce temizle
+  PVP.oppData = {...oppData, heroName: sani(oppData.heroName||'Rakip')};
   PVP.myS     = pvpBuildStats(myData);
   PVP.oppS    = pvpBuildStats(oppData);
 
@@ -10347,7 +10303,7 @@ function pvpStartBattle(yaziP,turaP){
   PVP.oppDefending = false;
 
   pvpTrack();
-  pvpLog(`⚔ MAÇ BAŞLADI!  ${yaziP.heroName} 🪙 vs 🛡 ${turaP.heroName}`,'gold');
+  pvpLog(`⚔ MAÇ BAŞLADI!  ${sani(yaziP.heroName)} 🪙 vs 🛡 ${sani(turaP.heroName)}`,'gold');
   if(PVP.myS.chaHpReduce>0)
     pvpLog(`👑 Karizman rakibin HP'sini -%${Math.round(PVP.myS.chaHpReduce*100)} azalttı.`,'info');
   pvpLog(`${imYazi?'🪙 Sen (Yazı)':'🛡 Rakip (Yazı)'} ilk saldırı hakkını kullanacak.`,'info');
@@ -10500,9 +10456,8 @@ const nd=document.getElementById('notif-dot');if(nd) nd.style.display='block';
       if(G.gold>=100) trackQuest('goldReached100');
       // Zaten bir loncadaysa "loncaya katıl" görevini tamamla (geçmiş üyeler için)
       if(G.guildId) trackQuest('joinGuild');
-      const sa=G.units.reduce((a,u)=>a+u.count,0);
-      if(sa>=30) trackQuest('armyCount30');
       if(G.folk.happiness>=60) trackQuest('happiness60');
+      initSaleWatcher();
       toast(`Hoş geldin, ${G.heroName}! ☁`);
       return;
     }
