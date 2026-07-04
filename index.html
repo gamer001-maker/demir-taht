@@ -759,6 +759,22 @@ html,body{
   flex-shrink: 0;
 }
 
+/* ── LONCA (mistik tema) ── */
+.gd-banner{position:relative;text-align:center;padding:22px 14px 16px;margin-bottom:12px;border-radius:12px;border:1px solid #4a3a6a;background:radial-gradient(ellipse at 50% 0%,#2a1a3a 0%,#1a1024 45%,#140c1c 100%);box-shadow:inset 0 0 30px #00000080,0 4px 18px #00000060;overflow:hidden;}
+.gd-banner::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 130%,#7a4a8a26,transparent 60%);pointer-events:none;}
+.gd-emblem{width:64px;height:64px;margin:0 auto 8px;border-radius:50%;border:2px solid var(--gold);background:radial-gradient(circle at 50% 35%,#3a2a4a,#16101f);display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 0 18px #b08d5740,inset 0 0 12px #00000080;}
+.gd-name{font-family:var(--font-head);font-size:clamp(16px,1.8vw,21px);color:var(--gold2);letter-spacing:2px;text-shadow:0 0 14px #b08d5760;position:relative;}
+.gd-sub{font-size:clamp(9px,1vw,12px);color:#9a8ab0;font-style:italic;margin-top:3px;position:relative;}
+.gd-stats{display:flex;justify-content:center;gap:28px;margin-top:12px;position:relative;}
+.gd-stat{text-align:center;}
+.gd-stat b{display:block;font-family:var(--font-head);font-size:clamp(15px,1.7vw,20px);color:var(--perg);}
+.gd-stat label{font-size:clamp(8px,.9vw,10px);color:#9a8ab0;letter-spacing:1px;}
+.gd-vault{border:1px solid #4a3a6a;border-radius:12px;padding:14px;background:linear-gradient(180deg,#1c1428,#140e1e);box-shadow:inset 0 1px 0 #ffffff08,0 2px 10px #00000050;margin-bottom:10px;}
+.gd-vault-amt{font-family:var(--font-head);font-size:clamp(20px,2.4vw,28px);color:var(--g-green);text-align:center;text-shadow:0 0 12px #3a6a2a60;margin-bottom:2px;}
+.gd-vault-lbl{font-size:clamp(9px,.9vw,11px);color:#9a8ab0;text-align:center;margin-bottom:10px;letter-spacing:1px;}
+.gd-tavern-head{font-family:var(--font-head);font-size:clamp(13px,1.4vw,16px);color:var(--gold2);letter-spacing:2px;text-align:center;padding:10px;border:1px solid #4a3a6a;border-radius:10px;background:radial-gradient(ellipse at 50% 0%,#2a1a3a,#161020);margin-bottom:10px;box-shadow:inset 0 0 16px #00000070;}
+.gd-tavern-head small{display:block;font-family:var(--font-body);font-size:clamp(8px,.9vw,10px);color:#9a8ab0;font-style:italic;letter-spacing:0;margin-top:2px;}
+
 /* ── PROFİL SIRALAMA PANOSU ── */
 .rank-row{display:flex;align-items:center;gap:10px;padding:10px 13px;background:linear-gradient(180deg,var(--panel2),var(--panel3));border:1px solid var(--border2);border-radius:9px;margin-bottom:6px;cursor:pointer;transition:border-color .15s,box-shadow .15s;box-shadow:inset 0 1px 0 #ffffff06;}
 .rank-row:hover{border-color:var(--gold);box-shadow:inset 0 1px 0 #ffffff08,0 0 10px #b08d5730;}
@@ -1920,7 +1936,7 @@ html,body{
       <div class="tab active" id="glt-home"    onclick="glgo('home')">   <span class="tab-icon">🏰</span>Ana</div>
       <div class="tab"        id="glt-members" onclick="glgo('members')"><span class="tab-icon">👥</span>Üyeler</div>
       <div class="tab"        id="glt-war"     onclick="glgo('war')">    <span class="tab-icon">⚔</span>Savaş</div>
-      <div class="tab"        id="glt-chat"    onclick="glgo('chat')">   <span class="tab-icon">💬</span>Sohbet</div>
+      <div class="tab"        id="glt-chat"    onclick="glgo('chat')">   <span class="tab-icon">🍺</span>Taverna</div>
       <div class="tab"        id="glt-search"  onclick="glgo('search')"> <span class="tab-icon">🔍</span>Ara</div>
     </div>
     <div class="scroll pad" id="guild-content"></div>
@@ -7382,7 +7398,10 @@ function glgo(t) {
 
 function renderGuild(t) {
   document.getElementById('guild-hdr-sub').textContent = G.guildName || 'Lonca seçilmedi';
-  document.getElementById('guild-role-badge').textContent = 'Üye'; // Dinamik rol sistemi eklenebilir
+  const roleBadge=document.getElementById('guild-role-badge');
+  if(roleBadge) roleBadge.textContent = !G.guildId ? '—'
+    : G.guildRole==='leader' ? '👑 Lider'
+    : G.guildRole==='officer' ? '🔷 Subay' : '👤 Üye';
   if (t === 'home') renderGuildHome();
   else if (t === 'members') renderGuildMembers();
   else if (t === 'war') renderGuildWar();
@@ -7392,36 +7411,40 @@ function renderGuild(t) {
 function renderGuildHome(){
   if(!G.guildId){
     document.getElementById('guild-content').innerHTML=`
-      <div style="text-align:center;padding:40px 20px;">
-        <div style="font-size:48px;margin-bottom:12px;">🛡</div>
-        <div style="font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--perg);margin-bottom:6px;">Henüz bir loncaya üye değilsin</div>
-        <div style="font-size:13px;color:var(--ink3);margin-bottom:20px;line-height:1.6;">Bir lonca kur veya mevcut bir loncaya katıl.</div>
-        <button class="btn" style="width:100%;" onclick="glgo('search')">🔍 Lonca Ara / Kur</button>
+      <div class="gd-banner" style="padding:34px 20px 28px;">
+        <div class="gd-emblem" style="opacity:.8;">🕯</div>
+        <div class="gd-name" style="font-size:15px;">BİR LONCAYA KATIL</div>
+        <div class="gd-sub">Yalnız kurt kışı geçiremez. Tavernada yoldaşlarını bul,<br>boss avlarına katıl, hazineyi birlikte doldurun.</div>
+        <button class="btn" style="margin-top:16px;position:relative;" onclick="glgo('search')">🔍 Lonca Ara / Kur</button>
       </div>`;
     return;
   }
   const treasury=G.guildTreasury||0;
   document.getElementById('guild-content').innerHTML=`
-    <div class="guild-banner" style="margin-bottom:10px;text-align:center;">
-      <div style="font-size:38px;margin-bottom:6px;">🛡</div>
-      <div style="font-family:var(--font-head);font-size:17px;font-weight:700;color:var(--gold2);">${esc(G.guildName)}</div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
-      <div class="stat2"><div class="stat2-val" id="guild-member-count">—</div><div class="stat2-lbl">Üye</div></div>
-      <div class="stat2"><div class="stat2-val">${treasury.toLocaleString('tr')}🪙</div><div class="stat2-lbl">Hazine</div></div>
-    </div>
-    <div class="sec">LONCA HAZİNESİ</div>
-    <div style="background:#0a1028;border:1px solid #2a1a5a;border-radius:10px;padding:12px;margin-bottom:8px;">
-      <div style="font-family:var(--font-head);font-size:22px;font-weight:700;color:var(--g-green);margin-bottom:4px;" id="treasury-display">${treasury.toLocaleString('tr')} 🪙</div>
-      <div style="font-size:11px;color:var(--ink3);margin-bottom:10px;">Ortak lonca hazinesi</div>
-      <div style="display:flex;gap:6px;">
-        <input class="input-field" style="flex:1;padding:7px 9px;font-size:13px;" type="number" id="t-amount" placeholder="Miktar..." min="1"/>
-        <button class="btn btn-sm" onclick="treasuryAction('deposit')">Yatır</button>
-        <button class="btn btn-sm btn-ghost" onclick="treasuryAction('withdraw')">Çek</button>
+    <div class="gd-banner">
+      <div class="gd-emblem">🛡</div>
+      <div class="gd-name">${esc(G.guildName)}</div>
+      <div class="gd-sub">Gölgeler birleşince ordu olur.</div>
+      <div class="gd-stats">
+        <div class="gd-stat"><b id="guild-member-count">—</b><label>YOLDAŞ</label></div>
+        <div class="gd-stat"><b>${treasury.toLocaleString('tr')}🪙</b><label>HAZİNE</label></div>
       </div>
     </div>
-    <div class="sec">LONCA İŞLEMLERİ</div>
-    <button class="btn btn-danger" style="width:100%;margin-top:4px;" onclick="confirmLeaveGuild()">🚪 Loncadan Ayrıl</button>`;
+    <div class="sec">🏦 LONCA KASASI</div>
+    <div class="gd-vault">
+      <div class="gd-vault-amt" id="treasury-display">${treasury.toLocaleString('tr')} 🪙</div>
+      <div class="gd-vault-lbl">Yoldaşların ortak serveti — güvenle saklanır</div>
+      <div style="display:flex;gap:6px;">
+        <input class="input-field" style="flex:1;padding:7px 9px;font-size:13px;" type="number" id="t-amount" placeholder="Miktar..." min="1"/>
+        <button class="btn btn-sm" onclick="treasuryAction('deposit')">↓ Yatır</button>
+        <button class="btn btn-sm btn-ghost" onclick="treasuryAction('withdraw')">↑ Çek</button>
+      </div>
+    </div>
+    <div class="sec">⚗ LONCA İŞLEMLERİ</div>
+    <div class="card-sm row-between">
+      <span style="font-size:11px;color:var(--ink3);">Yolun ayrılırsa kapı açık — ama taverna seni özler.</span>
+      <button class="btn btn-xs btn-danger" style="flex-shrink:0;" onclick="confirmLeaveGuild()">🚪 Ayrıl</button>
+    </div>`;
   sbGetGuildMemberCount();
 }
 
@@ -7443,7 +7466,7 @@ async function leaveGuild(){
   toast('Loncadan ayrılıyorsun...');
   await supa.from('guild_members').delete().eq('profile_id', currentUser.id).eq('guild_id', G.guildId);
   await supa.from('profiles').update({guild_id: null, guild_name: null}).eq('id', currentUser.id);
-  G.guildId = null; G.guildName = ''; G.guildTreasury = 0;
+  G.guildId = null; G.guildName = ''; G.guildTreasury = 0; G.guildRole = null;
   toast('Loncadan ayrıldın.');
   renderGuild(G.guildTab);
 }
@@ -7453,21 +7476,32 @@ async function sbGetGuildMemberCount(){
   const el=document.getElementById('guild-member-count');
   if(el) el.textContent=count||1;
 }
+/* Hazine yatır/çek — atomik RPC (guild_treasury_tx).
+   Eski yöntem guilds tablosunu doğrudan güncelliyordu; RLS sessizce
+   engelleyince "para buhar oldu" hatası yaşanıyordu. RPC hem üyeliği
+   hem bakiyeyi server tarafında doğrular. */
 async function treasuryAction(type){
   const amt=parseInt(document.getElementById('t-amount')?.value);
   if(!amt||amt<1){toast('Geçerli bir miktar gir!');return;}
+  if(!currentUser||!G.guildId){toast('Önce bir loncaya katıl!');return;}
+  if(type==='deposit'&&G.gold<amt){toast('Yeterli altın yok!');return;}
+  if(type==='withdraw'&&(G.guildTreasury||0)<amt){toast('Hazinede yeterli altın yok!');return;}
+  const {data,error}=await supa.rpc('guild_treasury_tx',{
+    p_guild_id:String(G.guildId), p_amount:amt, p_action:type
+  });
+  if(error||!data?.ok){
+    toast('İşlem başarısız: '+(data?.error||error?.message||'bilinmeyen hata'));
+    return;
+  }
   if(type==='deposit'){
-    if(G.gold<amt){toast('Yeterli altın yok!');return;}
-    G.gold-=amt; G.guildTreasury=(G.guildTreasury||0)+amt;
-    await supa.from('guilds').update({treasury:G.guildTreasury}).eq('id',G.guildId);
+    G.gold-=amt;
     toast(amt.toLocaleString('tr')+'🪙 hazineye yatırıldı!');
     if(amt>=100) trackQuest('treasuryDeposit100');
   } else {
-    if((G.guildTreasury||0)<amt){toast('Hazinede yeterli altın yok!');return;}
-    G.gold+=amt; G.guildTreasury=(G.guildTreasury||0)-amt;
-    await supa.from('guilds').update({treasury:G.guildTreasury}).eq('id',G.guildId);
+    G.gold+=amt;
     toast(amt.toLocaleString('tr')+'🪙 hazineden çekildi!');
   }
+  G.guildTreasury=Number(data.treasury)||0;
   updateHUD();
   if(currentUser) sbSave();
   const el=document.getElementById('t-amount');if(el)el.value='';
@@ -8201,11 +8235,12 @@ async function fetchMyRanks(){
 }
 
 function renderGuildChat(){
-  if(!G.guildId){document.getElementById('guild-content').innerHTML=`<div style="text-align:center;padding:30px;font-size:13px;color:var(--ink3);">Sohbet için önce bir loncaya katıl.</div>`;return;}
+  if(!G.guildId){document.getElementById('guild-content').innerHTML=`<div style="text-align:center;padding:30px;font-size:13px;color:var(--ink3);">Tavernaya girmek için önce bir loncaya katıl.</div>`;return;}
   document.getElementById('guild-content').innerHTML=`
+    <div class="gd-tavern-head">🍺 TAVERNA<small>ocak çıtırdıyor, yoldaşlar masada — söz sende</small></div>
     <div id="chat-msgs" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;min-height:200px;"></div>
     <div style="display:flex;gap:6px;">
-      <input class="input-field" style="flex:1;" id="chat-inp" placeholder="Mesaj yaz..." onkeydown="if(event.key==='Enter') gSend()"/>
+      <input class="input-field" style="flex:1;" id="chat-inp" placeholder="Tavernada söz al..." onkeydown="if(event.key==='Enter') gSend()"/>
       <button class="btn btn-sm" onclick="gSend()">➤</button>
     </div>`;
   sbLoadChatHistory();sbSubscribeChat();
@@ -8290,7 +8325,7 @@ async function joinGuild(id,name){
     {onConflict:'guild_id,profile_id', ignoreDuplicates:false}
   );
   if(error){toast('Katılma hatası: '+error.message);return;}
-  G.guildId=id; G.guildName=name;
+  G.guildId=id; G.guildName=name; G.guildRole='member';
   await supa.from('profiles').update({guild_id:id, guild_name:name}).eq('id',currentUser.id);
   toast(name+' loncasına katıldın! 🛡');
   trackQuest('joinGuild');
@@ -8306,7 +8341,7 @@ async function createGuild(){
     {guild_id:data.id, profile_id:currentUser.id, role:'leader'},
     {onConflict:'guild_id,profile_id', ignoreDuplicates:false}
   );
-  G.gold-=1000; G.guildId=data.id; G.guildName=name; G.guildTreasury=0;
+  G.gold-=1000; G.guildId=data.id; G.guildName=name; G.guildTreasury=0; G.guildRole='leader';
   await supa.from('profiles').update({guild_id:data.id, guild_name:name}).eq('id',currentUser.id);
   gainXP(50); updateHUD();
   toast('"'+name+'" loncası kuruldu! 🎉');
@@ -9881,6 +9916,9 @@ async function sbLoadProfile() {
     G.guildName = p.guild_name || '';
     const { data: gld } = await supa.from('guilds').select('treasury').eq('id', p.guild_id).single();
     if (gld) G.guildTreasury = gld.treasury || 0;
+    // Rol rozeti için üyelik kaydını çek
+    const { data: gm } = await supa.from('guild_members').select('role').eq('guild_id', p.guild_id).eq('profile_id', currentUser.id).single();
+    G.guildRole = gm?.role || 'member';
   }
 
   // Kale
