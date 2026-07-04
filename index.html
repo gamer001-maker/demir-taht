@@ -759,6 +759,13 @@ html,body{
   flex-shrink: 0;
 }
 
+/* ── ZAR KALİTESİ ÇERÇEVELERİ (Sıradan/İyi/Epik/Efsanevi) ──
+   Silah & zırhlarda eski grade çerçevelerinin yerini alır */
+.rq-siradan{border-color:#8a8276 !important;}
+.rq-iyi{border-color:#5a8a4a !important;box-shadow:0 0 6px #5a8a4a33 !important;}
+.rq-epik{border-color:#9a5ac0 !important;box-shadow:0 0 8px #9a5ac04d !important;}
+.rq-efsanevi{border-color:#e8a53a !important;box-shadow:0 0 10px #e8a53a59 !important;}
+
 /* ── LONCA (mistik tema) ── */
 .gd-banner{position:relative;text-align:center;padding:22px 14px 16px;margin-bottom:12px;border-radius:12px;border:1px solid #4a3a6a;background:radial-gradient(ellipse at 50% 0%,#2a1a3a 0%,#1a1024 45%,#140c1c 100%);box-shadow:inset 0 0 30px #00000080,0 4px 18px #00000060;overflow:hidden;}
 .gd-banner::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 130%,#7a4a8a26,transparent 60%);pointer-events:none;}
@@ -2602,7 +2609,7 @@ function openEquipTroopModal(tid){
           ?`<img src="images/${it.img}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/><span style="display:none;font-size:22px;">${it.icon}</span>`
           :`<span style="font-size:22px;">${it.icon}</span>`)
       : `<span class="tr-eq-ph">${meta.ph}</span>`;
-    return `<div class="tr-eq-slot${it?' rarity-'+(it.grade||'gray'):' empty'}" onclick="openTroopSlotPicker('${tid}','${key}')" title="${it?it.name:meta.lbl}">
+    return `<div class="tr-eq-slot${it?' '+rqClass(it):' empty'}" onclick="openTroopSlotPicker('${tid}','${key}')" title="${it?it.name:meta.lbl}">
       ${it&&it.enhPlus>0?`<span class="tr-eq-plus">+${it.enhPlus}</span>`:''}
       ${iconHtml}
       <span class="tr-eq-lbl">${meta.lbl}</span>
@@ -3246,9 +3253,13 @@ function finishGather(idx, type){
     if(equipPool.length&&!invFull()){
       const base=equipPool[Math.floor(Math.random()*equipPool.length)];
       const enh=Math.floor(Math.random()*4)+1;
-      const item={id: newItemId(),name:base.name,icon:base.icon,type:base.type||'Eşya',grade:base.grade||'gray',price:base.price,stats:{...base.stats},desc:base.desc||'',seller:'player',sellerName:'Harabeler',img:base.img||null,reqLv:base.reqLv||1,material:base.material||null,classBonus:base.classBonus||null,tplId:base.tplId||null,enhPlus:enh,baseStats:{...base.stats}};
+      // Şablon varsa zar at; (+) statları baseStats üzerinden hesaplanır
+      const lootTpl=getItemTemplate(base);
+      const lootBase=lootTpl?rollStatsFromTpl(lootTpl):{...base.stats};
+      const lootStats=enh>0?getEnhancedStats({baseStats:lootBase,stats:lootBase},enh):{...lootBase};
+      const item={id: newItemId(),name:base.name,icon:base.icon,cat:base.cat,type:base.type||'Eşya',grade:base.grade||'gray',price:base.price,stats:lootStats,desc:base.desc||'',seller:'player',sellerName:'Harabeler',img:base.img||null,reqLv:base.reqLv||1,material:base.material||null,classBonus:base.classBonus||null,tplId:base.tplId||null,enhPlus:enh,baseStats:lootBase};
       G.inventory.push(item);
-      toast(`🎁 ${base.name} +${enh} bulundu!`);
+      toast(`🎁 ${base.name} +${enh} (${rollGradeLabel(item)}) bulundu!`);
     } else if(invCount()>=invCap()){
       const b=Math.floor(Math.random()*20)+10;G.gold+=b;toast(`Envanter dolu! Harabelerden ${b}🪙 buldun.`);
     } else {
@@ -3408,9 +3419,11 @@ async function caveAction(action){
     const rewardId=nekroIds[Math.floor(Math.random()*nekroIds.length)];
     const reward=MARKET_ITEMS.find(x=>x.id===rewardId);
     if(reward){
-      const item={...reward,id: newItemId(),enhPlus:0,baseStats:{...reward.stats}};
+      const rewardTpl=getItemTemplate(reward);
+      const rewardBase=rewardTpl?rollStatsFromTpl(rewardTpl):{...reward.stats};
+      const item={...reward,id: newItemId(),enhPlus:0,stats:rewardBase,baseStats:rewardBase};
       G.inventory.push(item);
-      log.push({t:`🎁 ${reward.name} kazandın!`,c:'var(--gold2)'});
+      log.push({t:`🎁 ${reward.name} (${rollGradeLabel(item)}) kazandın!`,c:'var(--gold2)'});
       celebrate('🐉', '3 BAŞLI YILAN DEVRİLDİ!', `Efsanevi ödül: ${reward.name}`, 'gold');
     }
     // Mağarayı temizlenmiş olarak işaretle — bir daha girilemesin
@@ -3596,17 +3609,92 @@ const WEAPON_TEMPLATES={
   gunesbicak:     {name:'Güneş Bıçağı',  icon:'✨',type:'Bıçak', grade:'orange',reqLv:25, img:'gunesbicak',    classes:['rogue'],                           statRanges:{atk:[60,78], crit:[36,50],agi:[14,22]}},
   guneskilic:     {name:'Güneş Kılıcı',  icon:'☀', type:'Kılıç', grade:'orange',reqLv:25, img:'guneskilic',    classes:['warrior','paladin'],               statRanges:{atk:[72,92], str:[20,28], def:[12,18]}},
   gunesyay:       {name:'Güneş Yayı',    icon:'🏹',type:'Yay',   grade:'orange',reqLv:25, img:'gunesyay',      classes:['ranger'],                         statRanges:{atk:[58,74], acc:[60,78], agi:[15,22]}},
+  /* ── NEKRO KILIÇ — Mağara boss dropu ── */
+  necrokilic:     {name:'Nekro Kılıç',   icon:'⚔', type:'Kılıç', grade:'orange',reqLv:50, img:'necrokilic',    classes:['warrior','paladin'],               statRanges:{atk:[120,180],str:[32,48],crit:[18,26]}},
+};
+
+/* ══════════════════════════════════════
+   ZIRH & TAKI ŞABLONLARI — silahlardaki gibi min/max aralıkları
+   (eski sabit değerler aralığın ortasına denk gelir, ~±%20)
+══════════════════════════════════════ */
+const ARMOR_TEMPLATES={
+  /* Tahta set */
+  tahtazirh:   {statRanges:{def:[3,5],  hp:[12,18]}},
+  tahtakask:   {statRanges:{def:[2,4],  hp:[8,12]}},
+  tahtaeldiven:{statRanges:{def:[1,3],  hp:[6,10]}},
+  tahtabot:    {statRanges:{def:[1,3],  hp:[6,10]}},
+  /* Deri set */
+  derizirh:    {statRanges:{def:[5,8],  agi:[2,4], hp:[16,24]}},
+  derikask:    {statRanges:{def:[3,5],  agi:[1,3], hp:[12,18]}},
+  derieldiven: {statRanges:{def:[2,4],  agi:[1,3], hp:[8,12]}},
+  deribot:     {statRanges:{def:[2,4],  agi:[1,3], hp:[8,12]}},
+  /* Demir set */
+  demirzirh:   {statRanges:{def:[11,17],hp:[32,48]}},
+  demirkask:   {statRanges:{def:[8,12], hp:[24,36]}},
+  demireldiven:{statRanges:{def:[6,10], hp:[20,30]}},
+  demirbot:    {statRanges:{def:[6,10], hp:[20,30]}},
+  /* Nekro set (mağara boss dropu) */
+  necrozirh:   {statRanges:{def:[56,84],hp:[160,240],str:[20,30]}},
+  necrokask:   {statRanges:{def:[32,48],hp:[96,144], wis:[16,24]}},
+  necroeldiven:{statRanges:{def:[24,36],agi:[24,36], crit:[16,24]}},
+  necrobot:    {statRanges:{def:[24,36],agi:[20,30], hp:[80,120]}},
+  /* Takı */
+  bakiryuzuk:  {statRanges:{mgc:[2,4],  wis:[1,3]}},
 };
 
 /* Şablondan rastgele stat üretir — her edinimde çağrılır */
-function rollWeaponStats(tplId){
-  const tpl=WEAPON_TEMPLATES[tplId];
-  if(!tpl) return {};
+function rollStatsFromTpl(tpl){
   const st={};
   Object.entries(tpl.statRanges).forEach(([k,[mn,mx]])=>{
     st[k]=mn+Math.floor(Math.random()*(mx-mn+1));
   });
   return st;
+}
+function rollWeaponStats(tplId){
+  const tpl=WEAPON_TEMPLATES[tplId];
+  return tpl?rollStatsFromTpl(tpl):{};
+}
+/* Bir eşyanın şablonunu bul (silah ya da zırh/takı) */
+function getItemTemplate(item){
+  if(!item) return null;
+  const key=item.tplId||item.img;
+  if(!key) return null;
+  return WEAPON_TEMPLATES[key]||ARMOR_TEMPLATES[key]||null;
+}
+
+/* ══════════════════════════════════════
+   ZAR KALİTESİ → NADİRLİK
+   Eşyanın gelen statlarının toplamı, şablon aralığının
+   neresine düştüyse: 0-25% Sıradan · 25-50% İyi ·
+   50-75% Epik · 75-100% Efsanevi
+══════════════════════════════════════ */
+const ROLL_GRADES={
+  siradan: {label:'Sıradan',  color:'#8a8276'},
+  iyi:     {label:'İyi',      color:'#7aaa5a'},
+  epik:    {label:'Epik',     color:'#b06ae0'},
+  efsanevi:{label:'Efsanevi', color:'#f0a030'},
+};
+function getRollGrade(item){
+  const tpl=getItemTemplate(item);
+  if(!tpl) return null;
+  const src=item.baseStats||item.stats||{};
+  let minS=0,maxS=0,val=0;
+  Object.entries(tpl.statRanges).forEach(([k,[mn,mx]])=>{
+    minS+=mn; maxS+=mx;
+    val+=Math.max(mn,Math.min(mx,src[k]??mn));
+  });
+  if(maxS<=minS) return 'iyi';
+  const q=(val-minS)/(maxS-minS);
+  return q<0.25?'siradan':q<0.5?'iyi':q<0.75?'epik':'efsanevi';
+}
+function rollGradeLabel(item){
+  const g=getRollGrade(item);
+  return g?ROLL_GRADES[g].label:(GRADES[item?.grade]?.name||'');
+}
+/* Çerçeve sınıfı: şablonlu eşyada zar kalitesi, diğerlerinde eski grade */
+function rqClass(item){
+  const g=getRollGrade(item);
+  return g?'rq-'+g:'rarity-'+(item?.grade||'gray');
 }
 
 /* Envanterden bir silahın şablonunu bul */
@@ -3717,7 +3805,7 @@ const MARKET_ITEMS=[
   /* ══════════════════════════════════════
      AKSESUAR
   ══════════════════════════════════════ */
-  {id:301,name:'Bakır Yüzük',     icon:'💍',cat:'accessory',grade:'gray',  price:50,  qty:99,seller:'npc',sellerName:'Mücevherci',  type:'Yüzük',reqLv:1, material:null,desc:'Sıradan bakır yüzük.',                stats:{mgc:3,wis:2},   img:null,classBonus:null},
+  {id:301,name:'Bakır Yüzük',     icon:'💍',cat:'accessory',grade:'gray',  price:50,  qty:99,seller:'npc',sellerName:'Mücevherci',  type:'Yüzük',reqLv:1, material:null,desc:'Sıradan bakır yüzük.',                stats:{mgc:3,wis:2},   img:null,classBonus:null,tplId:'bakiryuzuk'},
 
   /* ══════════════════════════════════════
      NEKRO SET (Mağara Girişi boss dropu)
@@ -4453,7 +4541,7 @@ function renderKarakter(){
     const glowN=plus>=9?9:plus>=8?8:plus>=7?7:plus>=6?6:0;
     const animDiv=glowN?`<div class="enh-border-anim enh-glow-${glowN}"></div>`:'';
     const slotGlowCls=glowN?` enh-slot-${glowN}`:'';
-    return `<div class="eq-slot ${item?'eq-filled rarity-'+(item.grade||'gray'):'eq-empty'}${slotGlowCls}"
+    return `<div class="eq-slot ${item?'eq-filled '+rqClass(item):'eq-empty'}${slotGlowCls}"
       onclick="openInvModal(null,'${s.key}')"
       title="${item?item.name:s.lbl+' slotu'}">
       ${animDiv}
@@ -4461,7 +4549,7 @@ function renderKarakter(){
       ${iconHtml}
       ${item?`<div class="inv-tooltip">
         <div class="tt-name">${item.name}${item.enhPlus>0?` <span style="color:var(--gold);">+${item.enhPlus}</span>`:''}</div>
-        <div class="tt-type">${item.type}${item.reqLv>1?' · Sv.'+item.reqLv:''}</div>
+        <div class="tt-type">${rollGradeLabel(item)?rollGradeLabel(item)+' · ':''}${item.type}${item.reqLv>1?' · Sv.'+item.reqLv:''}</div>
         <div class="tt-stat">${formatStats(item.stats)}</div>
         <div class="tt-flavor">${item.desc}</div>
       </div>`:''}
@@ -4558,11 +4646,11 @@ function renderKarakter(){
       ?`<img src="images/${item.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:72%;height:72%;object-fit:contain;"/><span style="display:none;font-size:18px;">${item.icon}</span>`
       :`<span style="font-size:18px;">${item.icon}</span>`;
     const qtyBadge=(item.qty&&item.qty>1)?`<div style="position:absolute;bottom:2px;right:2px;font-size:8px;font-weight:700;background:rgba(0,0,0,0.82);color:var(--gold);padding:0 3px;border-radius:3px;line-height:1.5;font-family:var(--font-head);">x${item.qty}</div>`:'';
-    return `<div class="inv-slot has-item rarity-${item.grade||'gray'}" onclick="openInvModal(${item.id})" style="position:relative;">
+    return `<div class="inv-slot has-item ${rqClass(item)}" onclick="openInvModal(${item.id})" style="position:relative;">
       ${iconHtml}${qtyBadge}
       <div class="inv-tooltip">
         <div class="tt-name">${item.name}${item.enhPlus?' <span style="color:var(--gold)">+'+item.enhPlus+'</span>':''}${item.qty&&item.qty>1?' x'+item.qty:''}</div>
-        <div class="tt-type">${item.type}${item.reqLv>1?' · Sv.'+item.reqLv:''}</div>
+        <div class="tt-type">${rollGradeLabel(item)?rollGradeLabel(item)+' · ':''}${item.type}${item.reqLv>1?' · Sv.'+item.reqLv:''}</div>
         <div class="tt-stat">${formatStats(item.stats)}</div>
         <div class="tt-flavor">${item.desc}</div>
       </div>
@@ -4587,8 +4675,8 @@ function openInvModal(itemId, eqSlotKey=null){
     html=`
       <div style="text-align:center;margin-bottom:12px;">
         <div style="font-size:36px;margin-bottom:6px;">${eq.icon}</div>
-        <div style="font-family:var(--font-head);font-size:14px;color:var(--gold2);">${eq.name}</div>
-        <div style="font-size:10px;color:var(--ink3);">${eq.type} · ${eq.grade}</div>
+        <div style="font-family:var(--font-head);font-size:14px;color:var(--gold2);">${eq.name}${eq.enhPlus>0?' +'+eq.enhPlus:''}</div>
+        <div style="font-size:10px;color:var(--ink3);">${eq.type} · ${rollGradeLabel(eq)||eq.grade}</div>
         <div style="font-size:11px;color:var(--perg2);margin-top:6px;">${formatStats(eq.stats)}</div>
       </div>
       <button class="btn" style="width:100%;margin-bottom:8px;" onclick="unequipItem('${eqSlotKey}')">Çıkar → Envantere Al</button>`;
@@ -4632,7 +4720,7 @@ function openInvModal(itemId, eqSlotKey=null){
     <div style="text-align:center;margin-bottom:12px;">
       ${imgHtml}
       <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);">${item.name}${item.qty&&item.qty>1?` <span style="font-size:11px;color:var(--gold);">x${item.qty}</span>`:''}</div>
-      <div style="font-size:10px;color:var(--ink3);margin-bottom:4px;">${item.type}${item.reqLv>1?` · <span style="color:${canEquip?'var(--gold2)':'#c87070'}">Sv.${item.reqLv}</span>`:''}</div>
+      <div style="font-size:10px;color:var(--ink3);margin-bottom:4px;">${(()=>{const g=getRollGrade(item);return g?`<span style="color:${ROLL_GRADES[g].color};font-family:var(--font-head);">${ROLL_GRADES[g].label}</span> · `:'';})()}${item.type}${item.reqLv>1?` · <span style="color:${canEquip?'var(--gold2)':'#c87070'}">Sv.${item.reqLv}</span>`:''}</div>
       <div style="font-size:12px;color:var(--perg2);margin-bottom:4px;">${formatStats(item.stats)}</div>
       ${classBonusHtml}
       ${setHtml}
@@ -4835,8 +4923,8 @@ async function confirmSellItem(itemId){
   renderKarakter();
   if(currentUser) sbSave();
 
-  // Supabase marketplace tablosuna ekle — enhPlus dahil
-  const {data:newListing,error}=await supa.from('marketplace').insert({
+  // Supabase marketplace tablosuna ekle — enhPlus + zar kalitesi (baseStats/tplId) dahil
+  const listingPayload={
     seller_id:        currentUser.id,
     seller_name:      G.heroName||G.username,
     item_name:        item.name,
@@ -4844,6 +4932,8 @@ async function confirmSellItem(itemId){
     item_type:        item.type,
     item_grade:       item.grade||'gray',
     item_stats:       item.stats||{},
+    item_base_stats:  item.baseStats||null,
+    item_tpl_id:      item.tplId||null,
     item_desc:        item.desc||'',
     item_img:         item.img||null,
     item_req_lv:      item.reqLv||1,
@@ -4852,7 +4942,14 @@ async function confirmSellItem(itemId){
     item_enh_plus:    item.enhPlus||0,
     price,
     created_at: new Date().toISOString(),
-  }).select().single();
+  };
+  let {data:newListing,error}=await supa.from('marketplace').insert(listingPayload).select().single();
+  // Yeni kolonlar DB'de henüz yoksa onlarsız tekrar dene (kayıt çökmesin)
+  if(error&&/item_base_stats|item_tpl_id/.test(error.message||'')){
+    delete listingPayload.item_base_stats;
+    delete listingPayload.item_tpl_id;
+    ({data:newListing,error}=await supa.from('marketplace').insert(listingPayload).select().single());
+  }
 
   if(!error&&newListing) _myListings.market.set(newListing.id,{name:sani(item.name),price});
 
@@ -5038,14 +5135,16 @@ function renderGelistirme(){
   const listHtml = filteredItems.map(item=>{
     const plus = item.enhPlus||0;
     const plusLabel = plus>0?`<span style="color:var(--gold);">+${plus}</span>`:'';
-    const grade=item.grade||'gray';
-    const gradeBorder={gray:'var(--border2)',green:'#3a6a2a',blue:'#1a3a6a',purple:'#4a1a6a',orange:'#7a3a0a'}[grade]||'var(--border2)';
+    const rg=getRollGrade(item);
+    const gradeBorder=rg?ROLL_GRADES[rg].color
+      :({gray:'var(--border2)',green:'#3a6a2a',blue:'#1a3a6a',purple:'#4a1a6a',orange:'#7a3a0a'}[item.grade||'gray']||'var(--border2)');
+    const qualityTag=rg?` · <span style="color:${ROLL_GRADES[rg].color};">${ROLL_GRADES[rg].label}</span>`:'';
     return `<div class="enh-item-card${item.id===enhSelectedId?' selected':''}" onclick="enhSelect(${item.id})"
        style="${item.id===enhSelectedId?'':'border-color:'+gradeBorder+';'}">
       <div class="enh-item-icon">${itemImgHtml(item,48)}</div>
       <div class="enh-item-info">
         <div class="enh-item-name">${item.name}</div>
-        <div class="enh-item-level">${item.type} ${plusLabel}${item._source==='equipped'?'&nbsp;<span style="color:var(--gold2);font-size:9px;">(Kuşanılmış)</span>':''}</div>
+        <div class="enh-item-level">${item.type}${qualityTag} ${plusLabel}${item._source==='equipped'?'&nbsp;<span style="color:var(--gold2);font-size:9px;">(Kuşanılmış)</span>':''}</div>
       </div>
     </div>`;
   }).join('');
@@ -6687,9 +6786,11 @@ function zdNecroItemDrop(){
   const necroIds=[800,801,802,803,804];
   const base=MARKET_ITEMS.find(i=>i.id===necroIds[Math.floor(Math.random()*necroIds.length)]);
   if(!base) return;
-  const drop={...base, id: newItemId(), price:0, seller:'player', sellerName:G.heroName||G.username};
+  const dropTpl=getItemTemplate(base);
+  const dropBase=dropTpl?rollStatsFromTpl(dropTpl):{...base.stats};
+  const drop={...base, id: newItemId(), price:0, seller:'player', sellerName:G.heroName||G.username, stats:dropBase, baseStats:dropBase};
   G.inventory.push(drop);
-  setTimeout(()=>{ toast(`💀 Nekro Drop: ${drop.name} düştü!`); },600);
+  setTimeout(()=>{ toast(`💀 Nekro Drop: ${drop.name} (${rollGradeLabel(drop)}) düştü!`); },600);
   renderKarakter();
   if(currentUser) sbSave();
 }
@@ -6724,7 +6825,7 @@ function zdBossWeaponDrop(enemy, floor){
   G.inventory.push(weapon);
   // Kısa gecikme ile drop mesajı (kill toast'tan sonra görünsün)
   setTimeout(()=>{
-    toast(`🗡 Boss dropu: ${tpl.name} düştü!`);
+    toast(`🗡 Boss dropu: ${tpl.name} (${rollGradeLabel(weapon)}) düştü!`);
   }, 600);
   renderKarakter();
 }
@@ -6902,6 +7003,12 @@ async function loadPlayerMarketItems(){
       material: row.item_material?sani(row.item_material):null,
       classBonus: row.item_class_bonus||null,
       enhPlus: Number(row.item_enh_plus)||0,
+      tplId: row.item_tpl_id?sani(row.item_tpl_id):null,
+      baseStats: (()=>{ // zar kalitesi için ham roll değerleri (sadece sayısal)
+        const b={};
+        Object.entries(row.item_base_stats||{}).forEach(([k,v])=>{ if(typeof v==='number'&&isFinite(v)) b[sani(k)]=v; });
+        return Object.keys(b).length?b:null;
+      })(),
       isMarketplace: true,
     };
   });
@@ -7179,7 +7286,18 @@ function renderMarket(){
   if(sort==='grade_desc') items.sort((a,b)=>go[b.grade]-go[a.grade]);
   const cnt=document.getElementById('market-count');if(cnt) cnt.textContent=items.length+' ilan';
   const cards=items.map(item=>{
-    const statsP=Object.entries(item.stats||{}).slice(0,3).map(([k,v])=>`<span style="font-size:7px;padding:1px 4px;border-radius:3px;background:var(--panel);color:var(--perg2);border:1px solid var(--border);">+${v} ${STAT_LABELS[k]||k}</span>`).join('');
+    const tpl=getItemTemplate(item);
+    const isNpcRoll=tpl&&item.seller==='npc';           // NPC'den alınırken zar atılacak → aralık göster
+    const rg=item.seller==='player'?getRollGrade(item):null; // oyuncu ilanı → gelen kalite belli
+    const statsP=(isNpcRoll
+      ? Object.entries(tpl.statRanges).slice(0,3).map(([k,[mn,mx]])=>`<span style="font-size:7px;padding:1px 4px;border-radius:3px;background:var(--panel);color:var(--perg2);border:1px solid var(--border);">${STAT_LABELS[k]||k} ${mn}–${mx}</span>`)
+      : Object.entries(item.stats||{}).slice(0,3).map(([k,v])=>`<span style="font-size:7px;padding:1px 4px;border-radius:3px;background:var(--panel);color:var(--perg2);border:1px solid var(--border);">+${v} ${STAT_LABELS[k]||k}</span>`)
+    ).join('');
+    const gradePip=isNpcRoll
+      ? `<div class="grade-pip" style="background:#1a1408;border:1px solid var(--border2);color:var(--gold2);">🎲 Şans</div>`
+      : rg
+        ? `<div class="grade-pip" style="background:#14100a;border:1px solid ${ROLL_GRADES[rg].color};color:${ROLL_GRADES[rg].color};">${ROLL_GRADES[rg].label}</div>`
+        : `<div class="grade-pip gp-${item.grade}">${GRADES[item.grade]?.name||''}</div>`;
     const npcLimited=item.seller==='npc'&&typeof item.qty==='number'&&item.qty<99;
     const soldOut=npcLimited&&item.qty<=0;
     const canBuy=item.seller!=='boss'&&G.gold>=item.price&&item.sellerId!==currentUser?.id&&!soldOut;
@@ -7192,8 +7310,8 @@ function renderMarket(){
       :`<span style="font-size:24px;">${item.icon}</span>`;
     const enhBadge=item.enhPlus>0?`<span style="font-size:7px;padding:1px 4px;border-radius:3px;background:#1a1200;border:1px solid var(--gold);color:var(--gold);font-family:var(--font-head);">+${item.enhPlus}</span>`:'';
     const clickFn=item.cat==='premium'?`openPremiumConfirm(${item.id})`:`buyMarketItem('${item.id}')`;
-    return `<div class="listing-card ${item.grade}" onclick="${clickFn}">
-      <div class="item-icon ${item.grade}" style="margin-bottom:2px;">${iconContent}<div class="grade-pip gp-${item.grade}">${GRADES[item.grade]?.name||''}</div></div>
+    return `<div class="listing-card ${item.grade}" onclick="${clickFn}" style="${rg?`border-color:${ROLL_GRADES[rg].color};`:''}">
+      <div class="item-icon ${item.grade}" style="margin-bottom:2px;${rg?`border-color:${ROLL_GRADES[rg].color};`:''}">${iconContent}${gradePip}</div>
       <div class="item-name ${item.grade}" style="font-family:var(--font-head);font-size:10px;line-height:1.3;word-break:break-word;">${item.name}${enhBadge?'&nbsp;'+enhBadge:''}</div>
       <div style="display:flex;gap:3px;flex-wrap:wrap;justify-content:center;">${lvBadge}${item.type?`<span style="font-size:7px;color:var(--ink3);">${item.type}</span>`:''}</div>
       ${statsP?`<div style="display:flex;gap:2px;flex-wrap:wrap;justify-content:center;">${statsP}</div>`:''}
@@ -7280,16 +7398,21 @@ function buyItem(id){
   }
 
   if(invCount()>=invCap()){toast('Envanter dolu! Önce bir eşya sat.');G.gold+=item.price;if(limitedStock)item.qty++;return;}
+  // Şablonu varsa (silah/zırh/takı) statlar zarla belirlenir → nadirlik zar kalitesinden gelir
+  const buyTpl=getItemTemplate(item);
+  const buyRolled=buyTpl?rollStatsFromTpl(buyTpl):null;
   const invItem={
     id: newItemId(),
     name: item.name, icon: item.icon,
     cat: item.cat,
     type: item.type||'Eşya', grade: item.grade||'gray',
-    price: item.price, stats: item.stats||{},
+    price: item.price, stats: buyRolled||item.stats||{},
+    baseStats: buyRolled||undefined,
     desc: item.desc||'', seller:'player',
     sellerName: G.heroName||G.username,
     img: item.img||null,
     reqLv: item.reqLv||1,
+    tplId: item.tplId||null,
     material: item.material||null,
     classBonus: item.classBonus||null,
     isMat: item.isMat||false,
@@ -7298,7 +7421,7 @@ function buyItem(id){
   };
   G.inventory.push(invItem);
   gainXP(10);
-  toast(`${item.name} envantere eklendi! -${item.price}🪙`);
+  toast(`${item.name}${buyRolled?` (${rollGradeLabel(invItem)})`:''} envantere eklendi! -${item.price}🪙`);
   trackQuest('marketBuy1');
   updateHUD();renderMarket();renderKarakter();
   if(currentUser) sbSave();
@@ -7339,21 +7462,24 @@ async function buyMarketItem(id){
 
   const invItem = {
     id: newItemId(),
-    name: listing.name, 
+    name: listing.name,
     icon: listing.icon,
-    type: listing.type, 
+    cat: listing.cat,
+    type: listing.type,
     grade: listing.grade,
-    price: listing.price, 
+    price: listing.price,
     stats: listing.stats || {},
-    desc: listing.desc || '', 
+    baseStats: listing.baseStats || undefined,
+    tplId: listing.tplId || null,
+    desc: listing.desc || '',
     seller: 'player',
     sellerName: listing.sellerName,
-    img: listing.img || null, 
+    img: listing.img || null,
     reqLv: listing.reqLv || 1,
-    material: listing.material || null, 
+    material: listing.material || null,
     classBonus: listing.classBonus || null,
     // Eşyanın artı değerini (+4 gibi) koruyoruz
-    enhPlus: listing.enhPlus || 0 
+    enhPlus: listing.enhPlus || 0
   };
   
   // Hayvan ise envanter yerine G.animals'a ekle
