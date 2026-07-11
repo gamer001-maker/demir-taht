@@ -6194,21 +6194,66 @@ function getEffectiveStats(){
   return s;
 }
 
-// Düşman havuzu — kat çarpanıyla güçlenir
-const ZD_ENEMIES = [
-  {id:'rat',    name:'Dev Sıçan',     icon:'🐀', img:'devsican',      hp:30,  atk:6,  def:2,  xp:15, gold:12, floor:1},
-  {id:'bat',    name:'Zehirli Yarasa',icon:'🦇', img:'zehirliyarasa', hp:25,  atk:8,  def:1,  xp:12, gold:10, floor:1},
-  {id:'spider', name:'Örümcek',       icon:'🕷', img:'orumcek',       hp:40,  atk:10, def:3,  xp:20, gold:15, floor:1},
-  {id:'zombie', name:'Zombi',         icon:'🧟', img:'zombi',         hp:55,  atk:12, def:4,  xp:28, gold:22, floor:2},
-  {id:'goblin', name:'Goblin',        icon:'👺', img:'goblin',        hp:50,  atk:14, def:5,  xp:25, gold:20, floor:2},
-  {id:'orc',    name:'Ork Savaşçı',   icon:'👹', img:'orksavasci',   hp:80,  atk:18, def:8,  xp:40, gold:35, floor:3},
-  {id:'golem',  name:'Taş Golem',     icon:'🗿', img:'tasgolem',     hp:110, atk:14, def:15, xp:50, gold:40, floor:3},
-  {id:'vampire',name:'Vampir',        icon:'🧛', img:'vampir',        hp:90,  atk:22, def:10, xp:55, gold:50, floor:4},
-  {id:'demon',  name:'Şeytan',        icon:'😈', img:'seytan',        hp:130, atk:26, def:12, xp:70, gold:65, floor:4},
-  {id:'dragon', name:'Mini Ejderha',  icon:'🐲',                     hp:200, atk:35, def:20, xp:120,gold:120,floor:5},
-  {id:'altinsovalye', name:'Altın Şövalye', icon:'⚔', img:'altinsovalye',  hp:7500, atk:70, def:45, xp:500, gold:400, floor:5, isBoss:true},
-  {id:'nekromancer',  name:'Nekromancer',   icon:'💀', img:'necromancer',   hp:6000, atk:65, def:30, xp:500, gold:350, floor:5, isBoss:true},
-];
+/* ══════════════════════════════════════
+   ZİNDAN KADEMELERİ (5 seviye)
+   Oyuncu seviyesi → kademe: 1-10 → 1.svz, 11-20 → 2.svz ... 41-50 → 5.svz
+   Her kademenin kendi arka planı (images/Nseviyezindan.webp),
+   canavar kadrosu ve boss'u var. Son katta %20 şansla GÜÇLÜ boss çıkar.
+   NOT: 3-4-5. kademe canavarları YER TUTUCU (görseller üretilince
+   isim+img alanları değiştirilecek; sistemin geri kalanı hazır).
+══════════════════════════════════════ */
+function zdPlayerTier(){ return Math.max(1, Math.min(5, Math.ceil((G.level||1)/10))); }
+
+const ZD_TIERS={
+  1:{ lv:[1,10], img:'1seviyezindan',
+    mobs:[
+      {id:'jaguar',  name:'Jaguar',  icon:'🐆', img:'jaguar',  hp:34, atk:8,  def:2, xp:16, gold:14},
+      {id:'kirpi',   name:'Kirpi',   icon:'🦔', img:'kirpi',   hp:28, atk:6,  def:4, xp:14, gold:12},
+      {id:'engerek', name:'Engerek', icon:'🐍', img:'engerek', hp:30, atk:10, def:1, xp:18, gold:15},
+      {id:'iguana',  name:'İguana',  icon:'🦎', img:'iguana',  hp:42, atk:7,  def:3, xp:17, gold:14},
+      {id:'akrep',   name:'Akrep',   icon:'🦂', img:'akrep',   hp:26, atk:11, def:2, xp:18, gold:16},
+    ],
+    boss:      {id:'bozayi',  name:'Boz Ayı', icon:'🐻', img:'bozayi',  hp:280, atk:20, def:7, xp:100, gold:90,  isBoss:true},
+    strongBoss:{id:'bozkurt', name:'Bozkurt', icon:'🐺', img:'bozkurt', hp:420, atk:26, def:9, xp:170, gold:150, isBoss:true, strong:true},
+  },
+  2:{ lv:[11,20], img:'2seviyezindan',
+    mobs:[
+      {id:'devakrep',   name:'Dev Akrep',    icon:'🦂', img:'devakrep',    hp:85, atk:22, def:6,  xp:42, gold:36},
+      {id:'kobrayilani',name:'Kobra Yılanı', icon:'🐍', img:'kobrayilani', hp:72, atk:28, def:4,  xp:46, gold:40},
+      {id:'kuduzkirpi', name:'Kuduz Kirpi',  icon:'🦔', img:'kuduzkirpi',  hp:95, atk:19, def:10, xp:44, gold:38},
+    ],
+    boss:      {id:'vahsibozayi',  name:'Vahşi Boz Ayı',  icon:'🐻', img:'vahsibozayi',  hp:700,  atk:45, def:16, xp:260, gold:220, isBoss:true},
+    strongBoss:{id:'ciftbasliayi', name:'Çift Başlı Ayı', icon:'🐻', img:'ciftbasliayi', hp:1000, atk:58, def:20, xp:430, gold:380, isBoss:true, strong:true},
+  },
+  3:{ lv:[21,30], img:'3seviyezindan', /* YER TUTUCU — görseller bekleniyor */
+    mobs:[
+      {id:'orksavasci', name:'Ork Savaşçı', icon:'👹', img:'orksavasci', hp:210, atk:50, def:14, xp:95,  gold:80},
+      {id:'tasgolem',   name:'Taş Golem',   icon:'🗿', img:'tasgolem',   hp:280, atk:40, def:26, xp:110, gold:90},
+      {id:'vampir',     name:'Vampir',      icon:'🧛', img:'vampir',     hp:190, atk:58, def:12, xp:105, gold:95},
+    ],
+    boss:      {id:'seytan',      name:'Şeytan',       icon:'😈', img:'seytan', hp:1600, atk:95,  def:30, xp:600, gold:520, isBoss:true},
+    strongBoss:{id:'kadimseytan', name:'Kadim Şeytan', icon:'👿', img:'seytan', hp:2300, atk:120, def:38, xp:980, gold:850, isBoss:true, strong:true},
+  },
+  4:{ lv:[31,40], img:'4seviyezindan', /* YER TUTUCU — görseller bekleniyor */
+    mobs:[
+      {id:'mezarzombisi', name:'Mezar Zombisi', icon:'🧟', img:'zombi',      hp:460, atk:95,  def:28, xp:185, gold:155},
+      {id:'goblinsefi',   name:'Goblin Şefi',   icon:'👺', img:'goblin',     hp:420, atk:110, def:24, xp:200, gold:170},
+      {id:'orkkomutani',  name:'Ork Komutanı',  icon:'👹', img:'orksavasci', hp:560, atk:100, def:36, xp:215, gold:185},
+    ],
+    boss:      {id:'miniejderha',  name:'Mini Ejderha',  icon:'🐲', hp:3400, atk:175, def:60, xp:1250, gold:1050, isBoss:true},
+    strongBoss:{id:'kadimejderha', name:'Kadim Ejderha', icon:'🐉', hp:4800, atk:215, def:75, xp:2000, gold:1700, isBoss:true, strong:true},
+  },
+  5:{ lv:[41,50], img:'5seviyezindan', /* YER TUTUCU — görseller bekleniyor */
+    mobs:[
+      {id:'iblismuhafiz', name:'İblis Muhafız', icon:'😈', img:'seytan',   hp:950,  atk:180, def:55, xp:360, gold:310},
+      {id:'kadimvampir',  name:'Kadim Vampir',  icon:'🧛', img:'vampir',   hp:880,  atk:200, def:48, xp:390, gold:340},
+      {id:'kemikgolem',   name:'Kemik Golem',   icon:'🗿', img:'tasgolem', hp:1200, atk:165, def:80, xp:410, gold:360},
+    ],
+    boss:      {id:'altinsovalye', name:'Altın Şövalye', icon:'⚔', img:'altinsovalye', hp:9000, atk:260, def:85, xp:2600, gold:2200, isBoss:true},
+    strongBoss:{id:'nekromancer',  name:'Nekromancer',   icon:'💀', img:'necromancer',  hp:12000,atk:310, def:70, xp:4200, gold:3600, isBoss:true, strong:true},
+  },
+};
+const ZD_STRONG_BOSS_CHANCE=0.20; // son katta güçlü boss çıkma şansı
 
 const ZD_ROOM_TYPES = {
   fight:  {icon:'⚔',  name:'Düşman Odası',   hint:'Bir düşman lurk ediyor...', color:'zd-room-type-fight'},
@@ -6221,6 +6266,7 @@ const ZD_ROOM_TYPES = {
 // Zindan durumu
 let ZD = {
   active: false,         // Zindanda mı?
+  tier: 1,              // Zindan kademesi (oyuncu seviyesinden)
   floor: 1,             // Mevcut kat
   rooms: [],            // [{type, cleared, enemy?}]
   currentRoom: null,    // Aktif oda index
@@ -6259,8 +6305,9 @@ function zdSaveTickets(){
   if(currentUser) sbSave();
 }
 
-// Kat için oda dizisi üret
+// Kat için oda dizisi üret — canavarlar zindan kademesinin kadrosundan gelir
 function zdGenFloor(floorNum){
+  const T=ZD_TIERS[ZD.tier||1]||ZD_TIERS[1];
   const roomCount = 3 + Math.floor(Math.random()*2); // 3 veya 4
   const rooms = [];
   // İlk oda dövüş veya tuzak
@@ -6274,29 +6321,35 @@ function zdGenFloor(floorNum){
   // Son oda boss
   rooms.push({type:'boss', cleared:false});
   // Düşman ata
+  const mult = 1 + (floorNum-1)*0.25; // kat içi güçlenme (kademe zaten ölçekli)
+  const pick = ()=>T.mobs[Math.floor(Math.random()*T.mobs.length)];
   rooms.forEach(r=>{
-    if(r.type==='fight'||r.type==='boss'){
-      const mult = 1 + (floorNum-1)*0.4;
-      // 5. kat boss odası: %50 Altın Şövalye, %50 Nekromancer
-      if(r.type==='boss' && floorNum===ZD_FLOORS){
-        const floor5Bosses = ZD_ENEMIES.filter(e=>e.floor===5 && e.isBoss);
-        const picked = floor5Bosses[Math.floor(Math.random()*floor5Bosses.length)];
-        r.enemy = {...picked};
+    if(r.type==='fight'){
+      const base=pick();
+      r.enemy={
+        ...base,
+        hp:   Math.floor(base.hp   * mult),
+        atk:  Math.floor(base.atk  * mult),
+        def:  Math.floor(base.def  * mult),
+        gold: Math.floor(base.gold * mult),
+        xp:   Math.floor(base.xp   * mult),
+      };
+    } else if(r.type==='boss'){
+      if(floorNum===ZD_FLOORS){
+        // Son kat: kademenin gerçek boss'u — %20 şansla GÜÇLÜ boss
+        const strong=Math.random()<ZD_STRONG_BOSS_CHANCE;
+        r.enemy={...(strong?T.strongBoss:T.boss)};
       } else {
-        // Normal düşman havuzu (isBoss=true olanları hariç tut)
-        const eligible = ZD_ENEMIES.filter(e=>e.floor<=floorNum && !e.isBoss);
-        const pool = r.type==='boss'
-          ? eligible.filter(e=>e.floor===Math.min(floorNum, ZD_FLOORS))
-          : eligible;
-        const base = (pool.length>0?pool:eligible)[Math.floor(Math.random()*(pool.length||eligible.length))] || ZD_ENEMIES[0];
-        const bossHpMult = r.type==='boss' ? 4 : 1;
-        r.enemy = {
+        // Ara kat boss'u: kadrodan azılı bir canavar (güçlendirilmiş)
+        const base=pick();
+        r.enemy={
           ...base,
-          hp:   Math.floor(base.hp   * mult * bossHpMult),
-          atk:  Math.floor(base.atk  * mult),
-          def:  Math.floor(base.def  * mult),
-          gold: Math.floor(base.gold * mult),
-          xp:   Math.floor(base.xp   * mult),
+          name:'Azılı '+base.name,
+          hp:   Math.floor(base.hp   * mult * 3.5),
+          atk:  Math.floor(base.atk  * mult * 1.3),
+          def:  Math.floor(base.def  * mult * 1.2),
+          gold: Math.floor(base.gold * mult * 3),
+          xp:   Math.floor(base.xp   * mult * 3),
         };
       }
     }
@@ -6321,25 +6374,29 @@ function renderZindan(){
   el.innerHTML = `<div id="zindan-wrap">${zdFloorHTML()}</div>`;
 }
 
-/* ── GİRİŞ EKRANI ── */
+/* ── GİRİŞ EKRANI — kademeye göre arka plan + kadro bilgisi ── */
 function zdEntranceHTML(){
   zdCheckTicketReset();
   const canEnter = ZD.tickets > 0;
+  const tier=zdPlayerTier();
+  const T=ZD_TIERS[tier];
   const ticketsHTML = Array.from({length:ZD_MAX_TICKETS},(_,i)=>
     `<div class="zd-ticket${i>=ZD.tickets?' used':''}">🗝</div>`
   ).join('');
+  const mobNames=T.mobs.map(m=>m.name).join(', ');
+  const finalNote = tier===5
+    ? `👿 Son katta <b style="color:#c9a646;">${T.boss.name}</b> — %${Math.round(ZD_STRONG_BOSS_CHANCE*100)} şansla <b style="color:#f87171;">${T.strongBoss.name}</b>! <b style="color:#c9a646;">Sv.50 Nekro eşyaları</b> yalnızca burada düşer!`
+    : `👿 Son katta <b style="color:#c9a646;">${T.boss.name}</b> — %${Math.round(ZD_STRONG_BOSS_CHANCE*100)} şansla <b style="color:#f87171;">${T.strongBoss.name}</b> çıkar (daha güçlü, daha cömert)!`;
 
   return `
-    <!-- 3D Koridor Girişi -->
-    <div class="zd-entrance">
-      <div class="zd-corridor"></div>
-      <div class="zd-torch left"></div>
-      <div class="zd-torch right"></div>
-      <div class="zd-door">
-        <div class="zd-door-arch"></div>
-        <div class="zd-door-glow"></div>
+    <!-- Kademe girişi (arka plan görseli) -->
+    <div class="zd-entrance" style="height:230px;">
+      <img src="images/${T.img}.webp" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"/>
+      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(10,6,2,.88) 0%,rgba(10,6,2,.25) 45%,transparent 70%);"></div>
+      <div style="position:absolute;top:10px;left:0;right:0;text-align:center;">
+        <span style="font-family:var(--font-head);font-size:10px;letter-spacing:2px;color:var(--gold);background:rgba(0,0,0,.55);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;">Sv.${T.lv[0]}–${T.lv[1]} BÖLGESİ</span>
       </div>
-      <div class="zd-title-overlay">ZİNDAN</div>
+      <div class="zd-title-overlay">${tier}. SEVİYE ZİNDAN</div>
     </div>
 
     <!-- Giriş hakları -->
@@ -6351,13 +6408,13 @@ function zdEntranceHTML(){
 
     <!-- Bilgi -->
     <div class="card" style="margin-bottom:10px;">
-      <div class="sec" style="margin-top:0;">ZİNDAN HAKKINDA</div>
+      <div class="sec" style="margin-top:0;">${tier}. SEVİYE ZİNDAN HAKKINDA</div>
       <div style="font-size:11px;color:var(--ink3);line-height:1.8;">
         🏚 <b style="color:var(--perg2);">5 kat</b>, her katta rastgele odalar<br>
-        ⚔ Tur bazlı savaş — <b style="color:var(--perg2);">Saldır / Savun / Büyü / Kaç</b><br>
-        📦 Hazine sandıkları, tuzaklar, dinlenme noktaları<br>
-        🗡 1-4. kat boss'ları <b style="color:var(--perg2);">rastgele silah</b> düşürür<br>
-        👿 5. katta <b style="color:#c9a646;">Altın Şövalye</b> seni bekliyor — <b style="color:#c9a646;">Güneş Silahı</b> düşürür!<br>
+        🐾 Bu bölgenin canavarları: <b style="color:var(--perg2);">${mobNames}</b><br>
+        ⚔ Tur bazlı savaş — <b style="color:var(--perg2);">Saldır / Savun / Büyü / Sıyrıl</b><br>
+        🗡 Boss'lar <b style="color:var(--perg2);">Sv.${T.lv[0]}–${T.lv[1]} aralığında</b> silah düşürür — kademe yükseldikçe <b style="color:var(--gold2);">+ değeri artar</b><br>
+        ${finalNote}<br>
         💀 Ölürsen zindandan çıkarsın, haklar azalmaz
       </div>
     </div>
@@ -6365,7 +6422,7 @@ function zdEntranceHTML(){
     <!-- Giriş butonu -->
     <button class="btn" style="width:100%;font-size:14px;padding:14px;${!canEnter?'opacity:.5;cursor:not-allowed;':''}"
       onclick="${canEnter?'zdEnter()':'void(0)'}">
-      ${canEnter?'🗝 Zindana Gir':'🔒 Günlük Hak Bitti'}
+      ${canEnter?`🗝 ${tier}. Seviye Zindana Gir`:'🔒 Günlük Hak Bitti'}
     </button>
     ${ZD.totalGold>0?`<div style="margin-top:10px;text-align:center;font-size:11px;color:var(--ink3);">
       Son zindan: <span style="color:var(--gold);">+${ZD.totalGold}🪙</span> · <span style="color:#7aaa5a;">+${ZD.totalXP}XP</span>
@@ -6400,7 +6457,7 @@ function zdFloorHTML(){
   return `
     <!-- Kat göstergesi -->
     <div style="text-align:center;font-family:var(--font-head);font-size:11px;color:var(--ink3);margin-bottom:8px;letter-spacing:2px;">
-      KAT ${ZD.floor} / ${ZD_FLOORS}
+      <span style="color:var(--gold);">${ZD.tier}. SEVİYE ZİNDAN</span> · KAT ${ZD.floor} / ${ZD_FLOORS}
     </div>
     <div class="zd-floor-bar">${floorDots}</div>
 
@@ -6496,6 +6553,7 @@ function zdEnter(){
   if(!payTroopUpkeep('zindan')) return;
   ZD.tickets--;
   ZD.active=true;
+  ZD.tier=zdPlayerTier(); // kademe girişte kilitlenir (içeride seviye atlansa da değişmez)
   ZD.floor=1;
   ZD.rooms=zdGenFloor(1);
   ZD.currentRoom=null;
@@ -6550,15 +6608,17 @@ function zdEnterRoom(idx){
     renderZindan();
   }
   else if(room.type==='chest'){
-    const goldGain=Math.floor(20+ZD.floor*15+Math.random()*30);
+    const tierMult=ZD.tier||1;
+    const goldGain=Math.floor((20+ZD.floor*15+Math.random()*30)*tierMult);
+    const xpGain=(15+ZD.floor*5)*tierMult;
     G.gold+=goldGain; ZD.totalGold+=goldGain;
-    gainXP(15+ZD.floor*5); ZD.totalXP+=15+ZD.floor*5;
+    gainXP(xpGain); ZD.totalXP+=xpGain;
     room.cleared=true;
     toast(`Sandık açıldı! +${goldGain}🪙 💰`);
     updateHUD(); renderZindan();
   }
   else if(room.type==='trap'){
-    const dmg=Math.floor(8+ZD.floor*4+Math.random()*10);
+    const dmg=Math.floor((8+ZD.floor*4+Math.random()*10)*(1+((ZD.tier||1)-1)*0.8));
     const dodged=Math.random()<(G.stats.agi||5)/50;
     if(dodged){
       toast('Tuzağı atladın! 💨');
@@ -6795,37 +6855,55 @@ function zdNecroItemDrop(){
   if(currentUser) sbSave();
 }
 
+/* Kademenin silah havuzu — o kademenin seviye aralığındaki silahlar.
+   Sv.31-40 aralığında silah olmadığı için 4. kademe en iyi 25'likler +
+   Güneş silahlarını düşürür. 5. kademenin normal boss'ları Güneş silahı,
+   SON boss'u ise Sv.50 Nekro havuzunu (zdNecroItemDrop) düşürür. */
+function zdTierWeaponPool(tier){
+  const entries=Object.entries(WEAPON_TEMPLATES).filter(([k])=>k!=='necrokilic');
+  const inRange=(mn,mx)=>entries.filter(([k,t])=>t.reqLv>=mn&&t.reqLv<=mx&&!ZD_SUN_WEAPONS.includes(k)).map(([k])=>k);
+  if(tier===1) return inRange(1,10);
+  if(tier===2) return inRange(11,20);
+  if(tier===3) return inRange(21,25);
+  if(tier===4) return [...inRange(21,25),...ZD_SUN_WEAPONS];
+  return [...ZD_SUN_WEAPONS];
+}
+/* Kademeye göre düşen eşyanın + değeri: 1.svz +0/+1 ... 5.svz +4/+5; son boss +1 ekstra */
+function zdDropPlusFor(tier,isFinal){
+  const plus=(tier-1)+Math.floor(Math.random()*2)+(isFinal?1:0);
+  return Math.max(0,Math.min(6,plus));
+}
+
 function zdBossWeaponDrop(enemy, floor){
-  if(invCount()>=invCap()){ toast('⚠ Envanter dolu, silah düşmedi!'); return; }
-  if(enemy.id==='nekromancer'){ zdNecroItemDrop(); return; }
-  let tplId;
-  if(enemy.id==='altinsovalye'){
-    // 5. kat boss → rastgele Güneş silahı
-    tplId = ZD_SUN_WEAPONS[Math.floor(Math.random()*ZD_SUN_WEAPONS.length)];
-  } else {
-    // 1-4. kat boss → Güneş silahı hariç rastgele silah
-    const regularIds = Object.keys(WEAPON_TEMPLATES).filter(k=>!ZD_SUN_WEAPONS.includes(k));
-    tplId = regularIds[Math.floor(Math.random()*regularIds.length)];
-  }
-  const tpl = WEAPON_TEMPLATES[tplId];
+  if(invCount()>=invCap()){ toast('⚠ Envanter dolu, ödül düşmedi!'); return; }
+  const tier=ZD.tier||zdPlayerTier();
+  const isFinal=floor>=ZD_FLOORS;
+  // Sv.50 eşyalar (Nekro seti + Nekro Kılıç) SADECE 5. seviye zindanın son boss'unda
+  if(tier===5&&isFinal){ zdNecroItemDrop(); return; }
+  const pool=zdTierWeaponPool(tier);
+  if(!pool.length) return;
+  const tplId=pool[Math.floor(Math.random()*pool.length)];
+  const tpl=WEAPON_TEMPLATES[tplId];
   if(!tpl) return;
-  const rolledStats = rollWeaponStats(tplId);
-  const weapon = {
+  const rolledStats=rollStatsFromTpl(tpl);
+  const plus=zdDropPlusFor(tier,isFinal);
+  const finalStats=plus>0?getEnhancedStats({baseStats:rolledStats,stats:rolledStats},plus):rolledStats;
+  const weapon={
     id: newItemId(),
     cat:'weapon', tplId,
     name:tpl.name, icon:tpl.icon,
     type:tpl.type, grade:tpl.grade,
     reqLv:tpl.reqLv, classes:tpl.classes,
     img:tpl.img,
-    stats:rolledStats, baseStats:rolledStats,
-    _migrated:true, enhPlus:0,
+    stats:finalStats, baseStats:rolledStats,
+    _migrated:true, enhPlus:plus,
     price:0, seller:'player',
     sellerName:G.heroName||G.username,
   };
   G.inventory.push(weapon);
   // Kısa gecikme ile drop mesajı (kill toast'tan sonra görünsün)
   setTimeout(()=>{
-    toast(`🗡 Boss dropu: ${tpl.name} (${rollGradeLabel(weapon)}) düştü!`);
+    toast(`🗡 Boss dropu: ${tpl.name}${plus>0?' +'+plus:''} (${rollGradeLabel(weapon)}) düştü!`);
   }, 600);
   renderKarakter();
 }
