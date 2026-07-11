@@ -791,19 +791,19 @@ html,body{
 .rank-val.top3{color:#ffd700;text-shadow:0 0 8px #ffd70050;}
 
 /* ── BİRLİK ANATOMİ EKİPMAN PENCERESİ (Metin2 tarzı) ── */
-.tr-eq-grid{display:grid;grid-template-columns:64px 84px 64px;grid-template-rows:64px 84px 64px;gap:8px;justify-content:center;align-items:center;margin:12px auto 8px;}
-.tr-eq-slot{width:64px;height:64px;border-radius:9px;border:1.5px solid var(--border2);background:radial-gradient(circle at 50% 35%,#2a2018,#171009);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:border-color .15s,box-shadow .15s;box-shadow:inset 0 2px 6px #00000060;}
+.tr-eq-grid{display:grid;grid-template-columns:repeat(3,80px);grid-template-rows:repeat(3,80px);gap:11px;justify-content:center;align-items:center;margin:16px auto 10px;}
+.tr-eq-slot{width:80px;height:80px;border-radius:9px;border:1.5px solid var(--border2);background:radial-gradient(circle at 50% 35%,#2a2018,#171009);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:border-color .15s,box-shadow .15s;box-shadow:inset 0 2px 6px #00000060;}
 .tr-eq-slot:hover{border-color:var(--gold);box-shadow:inset 0 2px 6px #00000060,0 0 10px #b08d5740;}
-.tr-eq-slot.empty .tr-eq-ph{opacity:.25;font-size:22px;}
+.tr-eq-slot.empty .tr-eq-ph{opacity:.25;font-size:27px;}
 .tr-eq-slot img{width:70%;height:70%;object-fit:contain;}
-.tr-eq-lbl{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-family:var(--font-head);font-size:7px;color:var(--ink3);letter-spacing:.5px;pointer-events:none;}
-.tr-eq-plus{position:absolute;top:2px;right:5px;font-family:var(--font-head);font-size:9px;color:var(--gold);text-shadow:0 1px 2px #000;}
+.tr-eq-lbl{position:absolute;bottom:3px;left:0;right:0;text-align:center;font-family:var(--font-head);font-size:9px;color:var(--ink3);letter-spacing:.5px;pointer-events:none;}
+.tr-eq-plus{position:absolute;top:3px;right:6px;font-family:var(--font-head);font-size:11px;color:var(--gold);text-shadow:0 1px 2px #000;}
 .tr-eq-slot.rarity-green{border-color:var(--g-green-b);}
 .tr-eq-slot.rarity-blue{border-color:var(--g-blue-b);}
 .tr-eq-slot.rarity-purple{border-color:var(--g-purple-b);}
 .tr-eq-slot.rarity-orange{border-color:var(--g-orange-b);box-shadow:inset 0 2px 6px #00000060,0 0 8px #8a5a2a50;}
-.tr-eq-portrait{width:84px;height:84px;border-radius:12px;border:1.5px solid var(--gold);background:radial-gradient(circle at 50% 30%,#3a2a14,#14100a);display:flex;align-items:center;justify-content:center;font-size:42px;box-shadow:inset 0 0 18px #00000080,0 0 14px #b08d5730;overflow:hidden;}
-.tr-eq-portrait img{width:76%;height:76%;object-fit:contain;}
+.tr-eq-slot.locked{opacity:.4;cursor:not-allowed;}
+.tr-eq-slot.locked:hover{border-color:var(--border2);box-shadow:inset 0 2px 6px #00000060;}
 
 /* ── PAZAR KAYNAK BUTONLARI (Tümü / Oyuncu / NPC) ── */
 .src-btn{padding:6px 18px;border:1px solid var(--border2);border-radius:7px;background:var(--panel3);font-family:var(--font-head);font-size:clamp(11px,1.1vw,13px);color:var(--ink3);cursor:pointer;transition:border-color .15s,color .15s,background .15s;box-shadow:inset 0 1px 0 #ffffff06;}
@@ -2487,13 +2487,18 @@ const TROOP_TYPES = {
   tabip:    {name:'Tabip',    icon:'⚕', desc:'Savaşta tur başına %10 şansla canının %5\'ini yeniler.', kind:'special'},
 };
 
+// Birlik türü görseli (varsa images/<type>.webp), yoksa emoji ikonuna düşer
+function troopIconHtml(typeKey, icon, size){
+  return `<img src="images/${typeKey}.webp" style="width:${size}px;height:${size}px;object-fit:contain;border-radius:8px;flex-shrink:0;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><span style="display:none;font-size:${Math.round(size*0.62)}px;width:${size}px;height:${size}px;align-items:center;justify-content:center;flex-shrink:0;">${icon}</span>`;
+}
+
 // Benzersiz birlik ID'si
 function newTroopId(){ return 'tr_'+Date.now()+'_'+Math.floor(Math.random()*1000); }
 
 // Bir birlik ekle (kapasite kontrolü çağıran tarafta)
 function addTroop(typeKey){
   const t=TROOP_TYPES[typeKey]; if(!t) return null;
-  const troop={ tid:newTroopId(), type:typeKey, level:1, xp:0, equip:{weapon:null,helmet:null,chest:null,gloves:null,boots:null,ring:null} };
+  const troop={ tid:newTroopId(), type:typeKey, level:1, xp:0, equip:{weapon:null,helmet:null,chest:null,gloves:null,boots:null,ring:null,ring2:null} };
   if(!G.companions) G.companions=[];
   G.companions.push(troop);
   return troop;
@@ -2505,7 +2510,7 @@ function removeTroop(tid){
   const troop=G.companions[idx];
   // Giydirdiği eşyaları envantere iade et (kapasiteyi biraz aşsa bile kaybolmasın)
   // 'armor' eski tek-slot sisteminin kalıntısı — güvenlik için o da kontrol edilir
-  ['weapon','helmet','chest','gloves','boots','ring','armor'].forEach(slot=>{
+  ['weapon','helmet','chest','gloves','boots','ring','ring2','armor'].forEach(slot=>{
     if(troop.equip?.[slot]){ G.inventory.push(troop.equip[slot]); }
   });
   G.companions.splice(idx,1);
@@ -2576,7 +2581,7 @@ function troopAttackDmg(troop){
   return Math.max(1, Math.floor(wAtk*(1+plus*0.15)));
 }
 // Birlik ekipman slotları — oyuncuyla aynı 6 slot (anatomik dizilim)
-const TROOP_EQ_SLOTS=['weapon','helmet','chest','gloves','boots','ring'];
+const TROOP_EQ_SLOTS=['weapon','helmet','chest','gloves','boots','ring','ring2'];
 const TROOP_SLOT_META={
   weapon:{lbl:'Silah',   ph:'⚔', types:['Kılıç','Asa','Hançer','Yay','Bıçak','Sopa']},
   helmet:{lbl:'Kask',    ph:'🪖', types:['Kask']},
@@ -2584,6 +2589,7 @@ const TROOP_SLOT_META={
   gloves:{lbl:'Eldiven', ph:'🧤', types:['Eldiven']},
   boots: {lbl:'Bot',     ph:'👢', types:['Bot']},
   ring:  {lbl:'Yüzük',   ph:'💍', types:['Yüzük']},
+  ring2: {lbl:'Yüzük',   ph:'💍', types:['Yüzük']},
 };
 // Tüm birliklerin toplam ek savunması (silah dışı tüm slotlardan)
 function troopArmorDef(){
@@ -2614,8 +2620,8 @@ function openEquipTroopModal(tid){
     const it=troop.equip?.[key];
     const iconHtml=it
       ? (it.img
-          ?`<img src="images/${it.img}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/><span style="display:none;font-size:22px;">${it.icon}</span>`
-          :`<span style="font-size:22px;">${it.icon}</span>`)
+          ?`<img src="images/${it.img}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/><span style="display:none;font-size:27px;">${it.icon}</span>`
+          :`<span style="font-size:27px;">${it.icon}</span>`)
       : `<span class="tr-eq-ph">${meta.ph}</span>`;
     return `<div class="tr-eq-slot${it?' '+rqClass(it):' empty'}" onclick="openTroopSlotPicker('${tid}','${key}')" title="${it?it.name:meta.lbl}">
       ${it&&it.enhPlus>0?`<span class="tr-eq-plus">+${it.enhPlus}</span>`:''}
@@ -2623,25 +2629,23 @@ function openEquipTroopModal(tid){
       <span class="tr-eq-lbl">${meta.lbl}</span>
     </div>`;
   };
-  const chestItem=troop.equip?.chest;
-  const portraitHtml = chestItem
-    ? (chestItem.img
-        ? `<img src="images/${chestItem.img}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/><span style="display:none;font-size:42px;">${chestItem.icon}</span>`
-        : `<span style="font-size:42px;">${chestItem.icon}</span>`)
-    : `<span style="opacity:.35;">${t.icon}</span>`;
+  const lockedCell=(lbl,ph)=>`<div class="tr-eq-slot locked empty" title="Yakında eklenecek" onclick="toast('🔒 ${lbl} yakında eklenecek!')">
+    <span class="tr-eq-ph">${ph}</span>
+    <span class="tr-eq-lbl">${lbl}</span>
+  </div>`;
   showGModal(`
     <div style="text-align:center;margin-bottom:2px;">
-      <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);letter-spacing:1px;">${t.icon} ${t.name} <span style="font-size:11px;color:var(--gold);">Sv.${lv}</span></div>
-      <div style="font-size:9px;color:var(--ink3);margin-top:3px;">Savaş XP: ${troop.xp||0}/${xpNeed} · Slota dokun → eşya seç</div>
+      <div style="font-family:var(--font-head);font-size:20px;color:var(--gold2);letter-spacing:1px;">${t.icon} ${t.name} <span style="font-size:14px;color:var(--gold);">Sv.${lv}</span></div>
+      <div style="font-size:13px;color:var(--ink3);margin-top:5px;">Savaş XP: ${troop.xp||0}/${xpNeed} · Slota dokun → eşya seç</div>
     </div>
     <div class="tr-eq-grid">
-      <div></div>${slotCell('helmet')}<div></div>
-      ${slotCell('weapon')}<div class="tr-eq-portrait" title="${chestItem?chestItem.name:'Göğüslük yok'}">${portraitHtml}</div>${slotCell('chest')}
-      ${slotCell('ring')}${slotCell('boots')}${slotCell('gloves')}
+      ${lockedCell('Kolye','📿')}${slotCell('helmet')}${lockedCell('Küpe','💠')}
+      ${slotCell('weapon')}${slotCell('chest')}${slotCell('gloves')}
+      ${slotCell('ring')}${slotCell('boots')}${slotCell('ring2')}
     </div>
-    <div style="font-size:9px;color:var(--ink3);text-align:center;margin-bottom:8px;">Silah → düşmana vurur · Diğer parçalar → savunmana eklenir</div>
-    <button class="btn btn-ghost" style="width:100%;margin-top:4px;" onclick="closeGModal()">Kapat</button>
-  `);
+    <div style="font-size:13px;color:var(--ink3);text-align:center;margin-bottom:8px;">Silah → düşmana vurur · Diğer parçalar → savunmana eklenir</div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:6px;font-size:14px;padding:10px;" onclick="closeGModal()">Kapat</button>
+  `, {width:440});
 }
 
 // Bir slot için envanterden eşya seçimi
@@ -2691,7 +2695,7 @@ function openTroopSlotPicker(tid, slotKey){
     </div>
     ${rows}
     <button class="btn btn-ghost" style="width:100%;margin-top:8px;font-size:14px;padding:10px;" onclick="openEquipTroopModal('${tid}')">← Geri</button>
-  `);
+  `, {width:440});
 }
 function equipTroop(tid, slotKey, itemId){
   const troop=(G.companions||[]).find(c=>c.tid===tid);
@@ -5703,11 +5707,11 @@ function renderTroops(){
       const mm=Math.floor(leftMs/60000), ss=Math.floor((leftMs%60000)/1000);
       const timeStr=`${mm}:${String(ss).padStart(2,'0')}`;
       return `<div class="card-sm" style="margin-bottom:6px;border:1px solid #5a4418;background:#1a1408;">
-        <div style="display:flex;align-items:center;gap:9px;">
-          <span style="font-size:22px;">${t.icon}</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          ${troopIconHtml(c.type,t.icon,34)}
           <div style="flex:1;">
-            <div style="font-family:var(--font-head);font-size:12px;color:var(--gold2);">${t.name} <span style="font-size:9px;color:#f0a050;">⏳ ${timeStr}</span></div>
-            <div style="font-size:9px;color:var(--ink3);line-height:1.3;">${t.desc}</div>
+            <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);">${t.name} <span style="font-size:11px;color:#f0a050;">⏳ ${timeStr}</span></div>
+            <div style="font-size:11px;color:var(--ink3);line-height:1.3;">${t.desc}</div>
           </div>
         </div>
         <div style="display:flex;gap:5px;margin-top:7px;">
@@ -5734,11 +5738,11 @@ function renderTroops(){
         return `<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:${col.bg};border:1px solid ${col.bd};color:${col.fg};">${it.icon} ${it.name}${it.enhPlus>0?' +'+it.enhPlus:''}</span>`;
       }).filter(Boolean).join(' ');
       return `<div class="card-sm" style="margin-bottom:6px;">
-        <div style="display:flex;align-items:center;gap:9px;">
-          <span style="font-size:22px;">${t.icon}</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          ${troopIconHtml(c.type,t.icon,34)}
           <div style="flex:1;">
-            <div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">${t.name} <span style="font-size:9px;color:var(--gold);">Sv.${troopLevel(c)}</span>${dmg>0?` <span style="font-size:9px;color:#f08080;">⚔${dmg}</span>`:''}</div>
-            <div style="font-size:9px;color:var(--ink3);line-height:1.3;">${t.desc}</div>
+            <div style="font-family:var(--font-head);font-size:15px;color:var(--perg);">${t.name} <span style="font-size:12px;color:var(--gold);">Sv.${troopLevel(c)}</span>${dmg>0?` <span style="font-size:12px;color:#f08080;">⚔${dmg}</span>`:''}</div>
+            <div style="font-size:11px;color:var(--ink3);line-height:1.3;">${t.desc}</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0;">
             <button class="btn btn-xs" style="padding:3px 8px;" onclick="openEquipTroopModal('${c.tid}')">⚔ Donat</button>
@@ -10126,7 +10130,15 @@ function markAllRead(){NOTIFS.forEach(n=>n.read=true);G.notifCount=0;const dot=d
    MODAL & TOAST
 ══════════════════════════════════════ */
 function closeGModal(e){if(!e||e.target===document.getElementById('g-modal')) document.getElementById('g-modal').style.display='none';}
-function showGModal(html){document.getElementById('g-modal-content').innerHTML=html;document.getElementById('g-modal').style.display='flex';}
+function showGModal(html,opts){
+  document.getElementById('g-modal-content').innerHTML=html;
+  const box=document.querySelector('#g-modal .modal-box');
+  if(box){
+    if(opts&&opts.width){ box.style.width='94vw'; box.style.maxWidth=opts.width+'px'; }
+    else { box.style.width=''; box.style.maxWidth=''; }
+  }
+  document.getElementById('g-modal').style.display='flex';
+}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.style.opacity='1';clearTimeout(window._nt);window._nt=setTimeout(()=>el.style.opacity='0',2800);}
 
 /* ══════════════════════════════════════
@@ -10325,7 +10337,7 @@ async function sbLoadProfile() {
   G.inventory.forEach(item=>{ const c=inferCat(item); if(c&&c!==item.cat){ item.cat=c; catFixed=true; } });
   ['weapon','armor','accessory'].forEach(slot=>{ const it=G.equipped[slot]; if(it){ const c=inferCat(it); if(c&&c!==it.cat){ it.cat=c; catFixed=true; } } });
   // Birliklerin giydirdiği eşyalarda da cat'i düzelt
-  (G.companions||[]).forEach(tr=>{ ['weapon','helmet','chest','gloves','boots','ring','armor'].forEach(slot=>{ const it=tr.equip?.[slot]; if(it){ const c=inferCat(it); if(c&&c!==it.cat){ it.cat=c; catFixed=true; } } }); });
+  (G.companions||[]).forEach(tr=>{ ['weapon','helmet','chest','gloves','boots','ring','ring2','armor'].forEach(slot=>{ const it=tr.equip?.[slot]; if(it){ const c=inferCat(it); if(c&&c!==it.cat){ it.cat=c; catFixed=true; } } }); });
   // Mevcut silahları yeni random-stat sistemine migrate et (tek seferlik)
   let needsSave=catFixed;
   G.inventory=G.inventory.map(item=>{
