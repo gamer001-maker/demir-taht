@@ -5281,8 +5281,10 @@ function renderGelistirme(){
     const gradeBorder=rg?ROLL_GRADES[rg].color
       :({gray:'var(--border2)',green:'#3a6a2a',blue:'#1a3a6a',purple:'#4a1a6a',orange:'#7a3a0a'}[item.grade||'gray']||'var(--border2)');
     const qualityTag=rg?` · <span style="color:${ROLL_GRADES[rg].color};">${ROLL_GRADES[rg].label}</span>`:'';
+    const cardFaded=item._source==='equipped'?'opacity:.5;':'';
     return `<div class="enh-item-card${item.id===enhSelectedId?' selected':''}" onclick="enhSelect(${item.id})"
-       style="${item.id===enhSelectedId?'':'border-color:'+gradeBorder+';'}">
+       style="${cardFaded}${item.id===enhSelectedId?'':'border-color:'+gradeBorder+';'}"
+       ${item._source==='equipped'?'title="Kuşanılan eşyalar geliştirilemez"':''}>
       <div class="enh-item-icon">${itemImgHtml(item,48)}</div>
       <div class="enh-item-info">
         <div class="enh-item-name">${item.name}</div>
@@ -5331,13 +5333,14 @@ function renderGelistirme(){
       </div>`;
 
   /* ── Materyal + başarı kutusu ── */
+  const isEquippedSelected = selected._source==='equipped';
   let matsHtml='', canEnhance=false;
   if(nextLevel){
     const mat=nextLevel.mat;
     const has=G.matInv[mat.key]||0;
     const hasGold=G.gold>=nextLevel.goldCost;
     const hasMat=has>=mat.qty;
-    canEnhance=hasGold&&hasMat&&!enhRunning;
+    canEnhance=hasGold&&hasMat&&!enhRunning&&!isEquippedSelected;
     const isNekro=selected.img?.startsWith('necro');
     const luckActive=perkActive('luckCharmUntil');
     const baseDisplayChance=isNekro?50:Math.round(nextLevel.chance*100);
@@ -5368,9 +5371,11 @@ function renderGelistirme(){
   const actionHtml = nextLevel ? `
     <button class="btn" style="width:100%;font-size:15px;padding:14px;${!canEnhance&&!enhRunning?'opacity:.5;cursor:not-allowed;':''}"
       onclick="${canEnhance&&!enhRunning?`startEnhancement(${selected.id})`:'void(0)'}"
+      ${isEquippedSelected?'title="Kuşanılan eşyalar geliştirilemez"':''}
       id="enh-btn">
       ${enhRunning?'⚒ Geliştiriliyor...':'⚒ Geliştir'}
     </button>
+    ${isEquippedSelected?'<div style="text-align:center;font-size:11px;color:#f08080;margin-top:6px;">⚠ Kuşanılan eşyalar geliştirilemez. Önce envantere çıkar.</div>':''}
     <div class="enh-progress-wrap" id="enh-progress-wrap" style="margin-top:10px;${enhRunning?'':'display:none'}">
       <div class="enh-progress-fill" id="enh-progress-fill"></div>
     </div>` : '';
@@ -5473,6 +5478,7 @@ function startEnhancement(itemId){
   ];
   const item=allItems.find(x=>x.id===itemId);
   if(!item) return;
+  if(item._source==='equipped'){toast('Kuşanılan eşyalar geliştirilemez!');return;}
   const curPlus=item.enhPlus||0;
   const level=ENH_LEVELS[curPlus];
   if(!level){toast('Maksimum seviye!');return;}
