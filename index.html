@@ -1367,6 +1367,14 @@ html,body{
 .inv-slot.rarity-blue{border-color:var(--g-blue);}
 .inv-slot.rarity-purple{border-color:var(--g-purple);}
 .inv-slot.rarity-orange{border-color:var(--g-orange);box-shadow:0 0 6px #8a5a2a40;}
+.inv-slot.has-item[draggable="true"]{cursor:grab;}
+.inv-slot.dragging{opacity:.35;}
+.inv-slot.drag-over,.eq-slot.drag-over{border-color:var(--gold)!important;box-shadow:0 0 8px 2px #d4af3760!important;}
+.inv-slot.bulk-pick{cursor:pointer;}
+.inv-slot.bulk-selected{border-color:var(--gold)!important;box-shadow:0 0 6px 2px #d4af3750!important;}
+.inv-bulk-check{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:3px;border:1px solid var(--border2);background:#0f0b08cc;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--gold);z-index:2;}
+.inv-slot.bulk-selected .inv-bulk-check{background:var(--gold);color:#221608;border-color:var(--gold);}
+.inv-bulk-bar{display:flex;align-items:center;gap:8px;margin-top:6px;padding:7px 9px;background:#1a1410;border:1px solid var(--border2);border-radius:6px;}
 
 /* Tooltip */
 .inv-tooltip{
@@ -4473,6 +4481,122 @@ let invFilter='all', invSort='default';
 function setInvFilter(f){invFilter=f;renderKarakter();}
 function setInvSort(s){invSort=s;renderKarakter();}
 
+/* ── Envanter sürükle-bırak + toplu seçim ── */
+const ITEM_SLOT_MAP={
+  'Kılıç':'weapon','Asa':'weapon','Hançer':'weapon','Yay':'weapon','Bıçak':'weapon','Sopa':'weapon',
+  'Göğüslük':'chest','Zırh':'chest',
+  'Kask':'helmet',
+  'Eldiven':'gloves',
+  'Bot':'boots',
+  'Yüzük':'ring'
+};
+function slotForItem(item){ return ITEM_SLOT_MAP[item.type]||null; }
+
+let bulkMode=null; // null | 'trash' | 'sell'
+let bulkSelected=new Set();
+function toggleBulkMode(mode){
+  bulkMode = bulkMode===mode ? null : mode;
+  bulkSelected.clear();
+  renderKarakter();
+}
+function cancelBulkMode(){ bulkMode=null; bulkSelected.clear(); renderKarakter(); }
+function toggleBulkSelect(itemId){
+  if(bulkSelected.has(itemId)) bulkSelected.delete(itemId);
+  else bulkSelected.add(itemId);
+  renderKarakter();
+}
+
+function bulkTrashConfirm(){
+  if(!bulkSelected.size) return;
+  const items=G.inventory.filter(x=>bulkSelected.has(x.id));
+  showGModal(`
+    <div style="text-align:center;margin-bottom:14px;">
+      <div style="font-size:36px;margin-bottom:6px;">🗑</div>
+      <div style="font-family:var(--font-head);font-size:14px;color:var(--gold2);">${items.length} eşya</div>
+      <div style="font-size:11px;color:#f08080;margin-top:8px;">Seçilen eşyalar kalıcı olarak yok edilecek. Emin misin?</div>
+    </div>
+    <button class="btn btn-danger" style="width:100%;margin-bottom:8px;" onclick="bulkTrashConfirmed()">🗑 Evet, Hepsini At</button>
+    <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal()">Vazgeç</button>`);
+}
+function bulkTrashConfirmed(){
+  const n=bulkSelected.size;
+  G.inventory=G.inventory.filter(x=>!bulkSelected.has(x.id));
+  closeGModal();
+  toast(`${n} eşya çöpe atıldı.`);
+  bulkMode=null; bulkSelected.clear();
+  renderKarakter();
+  if(currentUser) sbSave();
+}
+
+function bulkSellConfirm(){
+  if(!bulkSelected.size) return;
+  const items=G.inventory.filter(x=>bulkSelected.has(x.id));
+  const total=items.reduce((s,i)=>s+getNPCSellPrice(i),0);
+  showGModal(`
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="font-size:42px;margin-bottom:8px;">🏪</div>
+      <div style="font-family:var(--font-head);font-size:14px;color:var(--gold2);">${items.length} eşya satılacak</div>
+      <div style="margin-top:12px;font-size:15px;color:var(--gold2);font-family:var(--font-head);">Toplam: ${total.toLocaleString('tr-TR')}🪙</div>
+      <div style="font-size:9px;color:var(--ink3);margin-top:3px;">NPC, piyasa değerinin %40'ını öder</div>
+    </div>
+    <button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;font-size:14px;" onclick="bulkSellConfirmed()">✅ Sat (+${total.toLocaleString('tr-TR')}🪙)</button>
+    <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal()">Vazgeç</button>`);
+}
+function bulkSellConfirmed(){
+  const items=G.inventory.filter(x=>bulkSelected.has(x.id));
+  const total=items.reduce((s,i)=>s+getNPCSellPrice(i),0);
+  G.gold+=total;
+  G.inventory=G.inventory.filter(x=>!bulkSelected.has(x.id));
+  trackAch('market');
+  closeGModal();
+  toast(`🏪 ${items.length} eşya satıldı! +${total.toLocaleString('tr-TR')}🪙`);
+  bulkMode=null; bulkSelected.clear();
+  updateHUD(); renderKarakter();
+  if(currentUser) sbSave();
+}
+
+let draggedItemId=null;
+function dragStartItem(ev,itemId){
+  draggedItemId=itemId;
+  ev.dataTransfer.setData('text/plain',String(itemId));
+  ev.dataTransfer.effectAllowed='move';
+  ev.currentTarget.classList.add('dragging');
+}
+function dropOnInvSlot(ev,targetId){
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('drag-over');
+  const sourceId=Number(ev.dataTransfer.getData('text/plain'))||draggedItemId;
+  draggedItemId=null;
+  if(!sourceId) return;
+  if(invSort!=='default'){ toast('Sıralama aktifken taşınamaz. Önce "Sırala: Varsayılan" seç.'); return; }
+  reorderInventory(sourceId, targetId);
+}
+function reorderInventory(sourceId, targetId){
+  const arr=G.inventory;
+  const srcIdx=arr.findIndex(x=>x.id===sourceId);
+  if(srcIdx===-1) return;
+  const [moved]=arr.splice(srcIdx,1);
+  if(targetId==null){ arr.push(moved); }
+  else{
+    const tgtIdx=arr.findIndex(x=>x.id===targetId);
+    if(tgtIdx===-1){ arr.push(moved); }
+    else arr.splice(tgtIdx,0,moved);
+  }
+  renderKarakter();
+  if(currentUser) sbSave();
+}
+function dropOnEqSlot(ev,slotKey){
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('drag-over');
+  const itemId=Number(ev.dataTransfer.getData('text/plain'))||draggedItemId;
+  draggedItemId=null;
+  if(!itemId) return;
+  const item=G.inventory.find(x=>x.id===itemId);
+  if(!item) return;
+  if(slotForItem(item)!==slotKey){ toast('Bu eşya bu slota kuşanılamaz.'); return; }
+  equipItem(itemId, slotKey);
+}
+
 /* ── KARAKTER ── */
 function renderKarakter(){
   const cls=CLASSES.find(c=>c.id===G.classId)||CLASSES[0];
@@ -4543,6 +4667,9 @@ function renderKarakter(){
     const slotGlowCls=glowN?` enh-slot-${glowN}`:'';
     return `<div class="eq-slot ${item?'eq-filled '+rqClass(item):'eq-empty'}${slotGlowCls}"
       onclick="openInvModal(null,'${s.key}')"
+      ondragover="event.preventDefault();this.classList.add('drag-over');"
+      ondragleave="this.classList.remove('drag-over');"
+      ondrop="dropOnEqSlot(event,'${s.key}')"
       title="${item?item.name:s.lbl+' slotu'}">
       ${animDiv}
       <div class="eq-slot-lbl">${s.lbl}</div>
@@ -4618,6 +4745,8 @@ function renderKarakter(){
   if(invTb) invTb.innerHTML=`
     <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:6px 0 8px;">
       ${INV_FILTERS.map(f=>`<button onclick="setInvFilter('${f.k}')" style="padding:3px 9px;border-radius:4px;border:1px solid ${invFilter===f.k?'var(--gold)':'var(--border2)'};background:${invFilter===f.k?'#2a1e08':'var(--panel)'};color:${invFilter===f.k?'var(--gold2)':'var(--ink3)'};font-family:var(--font-head);font-size:clamp(8px,.9vw,11px);cursor:pointer;">${f.lbl}</button>`).join('')}
+      <button onclick="toggleBulkMode('trash')" title="Toplu çöpe at" style="padding:3px 8px;border-radius:4px;border:1px solid ${bulkMode==='trash'?'#c04a4a':'var(--border2)'};background:${bulkMode==='trash'?'#3a1414':'var(--panel)'};color:${bulkMode==='trash'?'#f08080':'var(--ink3)'};font-size:clamp(10px,.9vw,13px);cursor:pointer;">🗑</button>
+      <button onclick="toggleBulkMode('sell')" title="Toplu NPC'ye sat" style="padding:3px 8px;border-radius:4px;border:1px solid ${bulkMode==='sell'?'var(--g-green)':'var(--border2)'};background:${bulkMode==='sell'?'#122a10':'var(--panel)'};color:${bulkMode==='sell'?'#7aaa5a':'var(--ink3)'};font-size:clamp(10px,.9vw,13px);cursor:pointer;">🏪</button>
       <select onchange="setInvSort(this.value)" style="margin-left:auto;background:var(--panel);border:1px solid var(--border);color:var(--perg2);font-family:var(--font-head);font-size:clamp(8px,.9vw,11px);padding:3px 6px;border-radius:4px;outline:none;">
         <option value="default" ${invSort==='default'?'selected':''}>Sırala</option>
         <option value="grade" ${invSort==='grade'?'selected':''}>Nadirlik ↓</option>
@@ -4625,7 +4754,16 @@ function renderKarakter(){
         <option value="level" ${invSort==='level'?'selected':''}>Sv. ↓</option>
         <option value="name" ${invSort==='name'?'selected':''}>İsim A-Z</option>
       </select>
-    </div>`;
+    </div>
+    ${bulkMode?`<div class="inv-bulk-bar">
+      <span style="font-size:11px;color:var(--ink3);flex:1;">${bulkSelected.size} eşya seçili</span>
+      <button class="btn btn-ghost" style="padding:4px 10px;font-size:10px;" onclick="cancelBulkMode()">İptal</button>
+      <button class="btn" style="padding:4px 10px;font-size:10px;${bulkMode==='trash'?'background:linear-gradient(180deg,#3a1414,#220a0a);border-color:#c04a4a;color:#f08080;':'background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;'}"
+        ${bulkSelected.size===0?'disabled':''}
+        onclick="${bulkMode==='trash'?'bulkTrashConfirm()':'bulkSellConfirm()'}">
+        ${bulkMode==='trash'?'🗑 Seçilenleri Çöpe At':"🏪 Seçilenleri Sat"}
+      </button>
+    </div>`:''}`;
   const INV_W_TYPES=['Kılıç','Asa','Hançer','Yay','Bıçak','Sopa'];
   const INV_A_TYPES=['Göğüslük','Zırh','Kask','Eldiven','Bot'];
   const invCatOf=i=>(i.cat==='weapon'||INV_W_TYPES.includes(i.type))?'weapon'
@@ -4641,13 +4779,25 @@ function renderKarakter(){
   const slots=Array(cap).fill(null);
   invList.forEach((item,i)=>{if(i<cap)slots[i]=item;});
   grid.innerHTML=slots.map((item,i)=>{
-    if(!item) return `<div class="inv-slot"></div>`;
+    if(!item) return `<div class="inv-slot"
+      ondragover="event.preventDefault();this.classList.add('drag-over');"
+      ondragleave="this.classList.remove('drag-over');"
+      ondrop="dropOnInvSlot(event,null)"></div>`;
     const iconHtml=item.img
       ?`<img src="images/${item.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:72%;height:72%;object-fit:contain;"/><span style="display:none;font-size:18px;">${item.icon}</span>`
       :`<span style="font-size:18px;">${item.icon}</span>`;
     const qtyBadge=(item.qty&&item.qty>1)?`<div style="position:absolute;bottom:2px;right:2px;font-size:8px;font-weight:700;background:rgba(0,0,0,0.82);color:var(--gold);padding:0 3px;border-radius:3px;line-height:1.5;font-family:var(--font-head);">x${item.qty}</div>`:'';
-    return `<div class="inv-slot has-item ${rqClass(item)}" onclick="openInvModal(${item.id})" style="position:relative;">
-      ${iconHtml}${qtyBadge}
+    const selected=bulkSelected.has(item.id);
+    const bulkCheck=bulkMode?`<div class="inv-bulk-check">${selected?'✓':''}</div>`:'';
+    const clickAttr=bulkMode?`onclick="toggleBulkSelect(${item.id})"`:`onclick="openInvModal(${item.id})"`;
+    const dragAttrs=bulkMode?'':`draggable="true"
+      ondragstart="dragStartItem(event,${item.id})"
+      ondragend="this.classList.remove('dragging')"
+      ondragover="event.preventDefault();this.classList.add('drag-over');"
+      ondragleave="this.classList.remove('drag-over');"
+      ondrop="dropOnInvSlot(event,${item.id})"`;
+    return `<div class="inv-slot has-item ${rqClass(item)}${bulkMode?' bulk-pick':''}${selected?' bulk-selected':''}" ${clickAttr} ${dragAttrs} style="position:relative;">
+      ${bulkCheck}${iconHtml}${qtyBadge}
       <div class="inv-tooltip">
         <div class="tt-name">${item.name}${item.enhPlus?' <span style="color:var(--gold)">+'+item.enhPlus+'</span>':''}${item.qty&&item.qty>1?' x'+item.qty:''}</div>
         <div class="tt-type">${rollGradeLabel(item)?rollGradeLabel(item)+' · ':''}${item.type}${item.reqLv>1?' · Sv.'+item.reqLv:''}</div>
@@ -4686,15 +4836,7 @@ function openInvModal(itemId, eqSlotKey=null){
   if(!item)return;
 
   // Eşya tipi → hangi slot?
-  const slotMap={
-    'Kılıç':'weapon','Asa':'weapon','Hançer':'weapon','Yay':'weapon','Bıçak':'weapon','Sopa':'weapon',
-    'Göğüslük':'chest','Zırh':'chest',
-    'Kask':'helmet',
-    'Eldiven':'gloves',
-    'Bot':'boots',
-    'Yüzük':'ring'
-  };
-  const targetSlot=slotMap[item.type]||null;
+  const targetSlot=slotForItem(item);
 
   // Level kontrolü
   const canEquip = G.level >= (item.reqLv||1);
