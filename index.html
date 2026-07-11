@@ -586,7 +586,7 @@ html,body{
 
 /* Savaş günlüğü */
 .zd-log{
-  max-height:120px;overflow-y:auto;
+  max-height:220px;overflow-y:auto;
   background:var(--panel3);border:1px solid var(--border);
   border-radius:6px;padding:8px;margin-top:10px;
   font-size:10px;line-height:1.7;
@@ -6642,7 +6642,7 @@ function zdBattleHTML(){
   const hpColor = pHpPct>50?'#7aaa5a':pHpPct>25?'#c9a646':'#f87171';
   const cls = CLASSES.find(c=>c.id===G.classId)||CLASSES[0];
   const hasMagic = G.classId==='mage'||G.classId==='paladin';
-  const logHTML = b.log.slice(-6).map(l=>
+  const logHTML = b.log.slice(-14).reverse().map(l=>
     `<div class="zd-log-line ${l.type}">${l.text}</div>`
   ).join('');
 
@@ -6938,8 +6938,8 @@ function zdUpdateBattleUI(){
   if(pEl){ pEl.style.width=pPct+'%'; pEl.style.background=`linear-gradient(90deg,#8b1e1e,${hpColor})`; }
   if(pVal) pVal.textContent=`${b.playerHp}/${pMax}`;
   if(logEl){
-    logEl.innerHTML=b.log.slice(-6).map(l=>`<div class="zd-log-line ${l.type}">${l.text}</div>`).join('');
-    logEl.scrollTop=logEl.scrollHeight;
+    logEl.innerHTML=b.log.slice(-14).reverse().map(l=>`<div class="zd-log-line ${l.type}">${l.text}</div>`).join('');
+    logEl.scrollTop=0;
   }
   // Savunma göstergesi yeniden yaz
   if(b.defending){
