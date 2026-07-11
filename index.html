@@ -159,9 +159,9 @@ html,body{
   .input-field{font-size:16px !important;padding:12px 14px !important;}
 
   /* Market */
-  .listing-card{padding:10px 7px !important;}
-  .market-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr)) !important;}
-  .item-icon{width:48px !important;height:48px !important;font-size:23px !important;}
+  .listing-card{padding:12px 9px !important;}
+  .market-grid{grid-template-columns:repeat(auto-fill,minmax(165px,1fr)) !important;}
+  .item-icon{width:54px !important;height:54px !important;font-size:26px !important;}
 
   /* Stat barlar */
   .stat-row{margin-bottom:10px !important;}
@@ -995,15 +995,15 @@ html,body{
 /* ═══════════════════════════════
    MARKET
 ═══════════════════════════════ */
-.listing-card{background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:12px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:filter .15s;box-shadow:inset 0 1px 0 #ffffff05;text-align:center;}
+.listing-card{background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;transition:filter .15s;box-shadow:inset 0 1px 0 #ffffff05;text-align:center;}
 .listing-card:hover{filter:brightness(1.08);}
 .listing-card.gray{border-top:3px solid var(--g-gray);}
 .listing-card.green{border-top:3px solid var(--g-green);}
 .listing-card.blue{border-top:3px solid var(--g-blue);}
 .listing-card.purple{border-top:3px solid var(--g-purple);}
 .listing-card.orange{border-top:3px solid var(--g-orange);}
-.market-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
-.item-icon{width:50px;height:50px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;position:relative;box-shadow:inset 0 1px 0 #ffffff08;}
+.market-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;align-items:stretch;}
+.item-icon{width:60px;height:60px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;position:relative;box-shadow:inset 0 1px 0 #ffffff08;}
 .item-icon.gray{background:var(--g-gray-bg);border:1px solid var(--g-gray-b);}
 .item-icon.green{background:var(--g-green-bg);border:1px solid var(--g-green-b);}
 .item-icon.blue{background:var(--g-blue-bg);border:1px solid var(--g-blue-b);}
@@ -3855,30 +3855,30 @@ const MARKET_ITEMS=[
   /* ══════════════════════════════════════
      KAYNAK
   ══════════════════════════════════════ */
-  {id:501,name:'Ham Demir',       icon:'⛏',cat:'resource',grade:'gray',  price:1, qty:999,seller:'npc',sellerName:'Maden Ocağı', type:'Materyal',reqLv:1,material:null,desc:'+1 geliştirme için gerekli.',      stats:{}, img:null,classBonus:null,isMat:true,matKey:'ham_demir'},
-  {id:502,name:'Meşe Odunu',      icon:'🪵',cat:'resource',grade:'gray',  price:1, qty:999,seller:'npc',sellerName:'Kereste',     type:'Materyal',reqLv:1,material:null,desc:'İnşaat malzemesi.',               stats:{craft_wood:1}, img:null,classBonus:null},
-  {id:504,name:'Güç Rünesi',      icon:'🔶',cat:'resource',grade:'green', price:1, qty:999,seller:'npc',sellerName:'Rune Ustası', type:'Materyal',reqLv:1,material:null,desc:'+2 geliştirme için gerekli.',      stats:{}, img:null,classBonus:null,isMat:true,matKey:'guc_runesi'},
-  {id:505,name:'Ejderha Pulu',    icon:'🐉',cat:'resource',grade:'blue',  price:1, qty:999,seller:'npc',sellerName:'Ejderha Avcı',type:'Materyal',reqLv:1,material:null,desc:'+3–+5 geliştirme için gerekli.',  stats:{}, img:null,classBonus:null,isMat:true,matKey:'ejderha_pulu'},
-  {id:506,name:'Anka Külü',       icon:'🔥',cat:'resource',grade:'purple',price:1, qty:99, seller:'npc',sellerName:'Mistik Ocak', type:'Materyal',reqLv:1,material:null,desc:'+6 geliştirme için gerekli.', stats:{}, img:null,classBonus:null,isMat:true,matKey:'anka_kulu'},
-  {id:507,name:'Ruh Kristali',    icon:'💎',cat:'resource',grade:'purple',price:1, qty:99, seller:'npc',sellerName:'Mistik Ocak', type:'Materyal',reqLv:1,material:null,desc:'+7 geliştirme için gerekli.', stats:{}, img:null,classBonus:null,isMat:true,matKey:'ruh_kristali'},
-  {id:508,name:'İblis Kanı',      icon:'🩸',cat:'resource',grade:'purple',price:1, qty:99, seller:'npc',sellerName:'Mistik Ocak', type:'Materyal',reqLv:1,material:null,desc:'+8 geliştirme için gerekli.', stats:{}, img:null,classBonus:null,isMat:true,matKey:'iblis_kani'},
-  {id:509,name:'Semavi Öz',       icon:'✨',cat:'resource',grade:'orange',price:1, qty:99, seller:'npc',sellerName:'Mistik Ocak', type:'Materyal',reqLv:1,material:null,desc:'+9 geliştirme için gerekli.', stats:{}, img:null,classBonus:null,isMat:true,matKey:'semavi_oz'},
+  {id:501,name:'Ham Demir',       icon:'⛏',cat:'resource',grade:'gray',  price:1, qty:999,seller:'npc',sellerName:'Maden Ocağı', type:'Materyal',reqLv:1,material:null,desc:'+1 geliştirme için gerekli.',      stats:{}, img:'ham_demir',classBonus:null,isMat:true,matKey:'ham_demir'},
+  {id:502,name:'Meşe Odunu',      icon:'🪵',cat:'resource',grade:'gray',  price:1, qty:999,seller:'npc',sellerName:'Kereste',     type:'Materyal',reqLv:1,material:null,desc:'İnşaat malzemesi.',               stats:{craft_wood:1}, img:'mese_odunu',classBonus:null},
+  {id:504,name:'Güç Rünesi',      icon:'🔶',cat:'resource',grade:'green', price:1, qty:999,seller:'npc',sellerName:'Rune Ustası', type:'Materyal',reqLv:1,material:null,desc:'+2 geliştirme için gerekli.',      stats:{}, img:'guc_runesi',classBonus:null,isMat:true,matKey:'guc_runesi'},
+  {id:505,name:'Ejderha Pulu',    icon:'🐉',cat:'resource',grade:'blue',  price:1, qty:999,seller:'npc',sellerName:'Ejderha Avcı',type:'Materyal',reqLv:1,material:null,desc:'+3–+5 geliştirme için gerekli.',  stats:{}, img:'ejderha_pulu',classBonus:null,isMat:true,matKey:'ejderha_pulu'},
+  {id:506,name:'Anka Külü',       icon:'🔥',cat:'resource',grade:'purple',price:1, qty:99, seller:'npc',sellerName:'Mistik Ocak', type:'Materyal',reqLv:1,material:null,desc:'+6 geliştirme için gerekli.', stats:{}, img:'anka_kulu',classBonus:null,isMat:true,matKey:'anka_kulu'},
+  {id:507,name:'Ruh Kristali',    icon:'💎',cat:'resource',grade:'purple',price:1, qty:99, seller:'npc',sellerName:'Mistik Ocak', type:'Materyal',reqLv:1,material:null,desc:'+7 geliştirme için gerekli.', stats:{}, img:'ruh_kristali',classBonus:null,isMat:true,matKey:'ruh_kristali'},
+  {id:508,name:'İblis Kanı',      icon:'🩸',cat:'resource',grade:'purple',price:1, qty:99, seller:'npc',sellerName:'Mistik Ocak', type:'Materyal',reqLv:1,material:null,desc:'+8 geliştirme için gerekli.', stats:{}, img:'iblis_kani',classBonus:null,isMat:true,matKey:'iblis_kani'},
+  {id:509,name:'Semavi Öz',       icon:'✨',cat:'resource',grade:'orange',price:1, qty:99, seller:'npc',sellerName:'Mistik Ocak', type:'Materyal',reqLv:1,material:null,desc:'+9 geliştirme için gerekli.', stats:{}, img:'semavi_oz',classBonus:null,isMat:true,matKey:'semavi_oz'},
 
   /* ══════════════════════════════════════
      TOHUMLAR (NPC)
   ══════════════════════════════════════ */
-  {id:601,name:'Buğday',          icon:'🌾',cat:'resource',grade:'gray',  price:10, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:1, material:null,desc:'Tarlada ekilebilir. Kendisi de tohum.',          stats:{},img:null,classBonus:null,isSeed:true,seedKey:'bugday'},
-  {id:602,name:'Arpa',            icon:'🌱',cat:'resource',grade:'gray',  price:15, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:2, material:null,desc:'Tarlada ekilebilir. Kendisi de tohum.',          stats:{},img:null,classBonus:null,isSeed:true,seedKey:'arpa'},
-  {id:603,name:'Patates Tohumu',  icon:'🌱',cat:'resource',grade:'gray',  price:20, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:3, material:null,desc:'Patates yetiştirmek için tohum.',               stats:{},img:null,classBonus:null,isSeed:true,seedKey:'patates_tohum'},
-  {id:604,name:'Çiçek Tohumu',    icon:'🌱',cat:'resource',grade:'green', price:25, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:5, material:null,desc:'Arı kovanı için çiçek yetiştirir.',             stats:{},img:null,classBonus:null,isSeed:true,seedKey:'cicek_tohum'},
-  {id:605,name:'Domates Tohumu',  icon:'🌱',cat:'resource',grade:'green', price:30, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:6, material:null,desc:'Domates yetiştirmek için tohum.',               stats:{},img:null,classBonus:null,isSeed:true,seedKey:'domates_tohum'},
-  {id:606,name:'Yonca Tohumu',    icon:'🌱',cat:'resource',grade:'green', price:35, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:7, material:null,desc:'Yonca yetiştirmek için. Bol saman verir.',       stats:{},img:null,classBonus:null,isSeed:true,seedKey:'yonca_tohum'},
-  {id:607,name:'Çilek Tohumu',    icon:'🌱',cat:'resource',grade:'green', price:40, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:8, material:null,desc:'Çilek yetiştirmek için. Aşevinde kullanılır.',   stats:{},img:null,classBonus:null,isSeed:true,seedKey:'cilek_tohum'},
+  {id:601,name:'Buğday',          icon:'🌾',cat:'resource',grade:'gray',  price:10, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:1, material:null,desc:'Tarlada ekilebilir. Kendisi de tohum.',          stats:{},img:'bugday',classBonus:null,isSeed:true,seedKey:'bugday'},
+  {id:602,name:'Arpa',            icon:'🌱',cat:'resource',grade:'gray',  price:15, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:2, material:null,desc:'Tarlada ekilebilir. Kendisi de tohum.',          stats:{},img:'arpa',classBonus:null,isSeed:true,seedKey:'arpa'},
+  {id:603,name:'Patates Tohumu',  icon:'🌱',cat:'resource',grade:'gray',  price:20, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:3, material:null,desc:'Patates yetiştirmek için tohum.',               stats:{},img:'patates_tohum',classBonus:null,isSeed:true,seedKey:'patates_tohum'},
+  {id:604,name:'Çiçek Tohumu',    icon:'🌱',cat:'resource',grade:'green', price:25, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:5, material:null,desc:'Arı kovanı için çiçek yetiştirir.',             stats:{},img:'cicek_tohum',classBonus:null,isSeed:true,seedKey:'cicek_tohum'},
+  {id:605,name:'Domates Tohumu',  icon:'🌱',cat:'resource',grade:'green', price:30, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:6, material:null,desc:'Domates yetiştirmek için tohum.',               stats:{},img:'domates_tohum',classBonus:null,isSeed:true,seedKey:'domates_tohum'},
+  {id:606,name:'Yonca Tohumu',    icon:'🌱',cat:'resource',grade:'green', price:35, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:7, material:null,desc:'Yonca yetiştirmek için. Bol saman verir.',       stats:{},img:'yonca_tohum',classBonus:null,isSeed:true,seedKey:'yonca_tohum'},
+  {id:607,name:'Çilek Tohumu',    icon:'🌱',cat:'resource',grade:'green', price:40, qty:999,seller:'npc',sellerName:'Tohum Tüccarı',type:'Tohum',reqLv:8, material:null,desc:'Çilek yetiştirmek için. Aşevinde kullanılır.',   stats:{},img:'cilek_tohum',classBonus:null,isSeed:true,seedKey:'cilek_tohum'},
   // ── Hayvanlar ──
-  {id:700,name:'Tavuk',icon:'🐔',cat:'livestock',grade:'gray', price:30, qty:99,seller:'npc',sellerName:'Çiftçi',type:'Hayvan',reqLv:1,material:null,desc:'Yumurta ve tüy verir. Çiftliğe eklenir.',stats:{},img:null,classBonus:null,isAnimal:true,animalKey:'tavuk'},
-  {id:701,name:'Koyun',icon:'🐑',cat:'livestock',grade:'gray', price:80, qty:99,seller:'npc',sellerName:'Çiftçi',type:'Hayvan',reqLv:3,material:null,desc:'Yün ve süt verir. Çiftliğe eklenir.',     stats:{},img:null,classBonus:null,isAnimal:true,animalKey:'koyun'},
-  {id:702,name:'İnek', icon:'🐄',cat:'livestock',grade:'green',price:150,qty:99,seller:'npc',sellerName:'Çiftçi',type:'Hayvan',reqLv:5,material:null,desc:'Bol süt verir. Çiftliğe eklenir.',         stats:{},img:null,classBonus:null,isAnimal:true,animalKey:'inek'},
-  {id:703,name:'Arı Kovanı',icon:'🐝',cat:'livestock',grade:'green',price:200,qty:99,seller:'npc',sellerName:'Çiftçi',type:'Hayvan',reqLv:6,material:null,desc:'Bal üretir. Çiftliğe eklenir.',             stats:{},img:null,classBonus:null,isAnimal:true,animalKey:'ari'},
+  {id:700,name:'Tavuk',icon:'🐔',cat:'livestock',grade:'gray', price:30, qty:99,seller:'npc',sellerName:'Çiftçi',type:'Hayvan',reqLv:1,material:null,desc:'Yumurta ve tüy verir. Çiftliğe eklenir.',stats:{},img:'tavuk',classBonus:null,isAnimal:true,animalKey:'tavuk'},
+  {id:701,name:'Koyun',icon:'🐑',cat:'livestock',grade:'gray', price:80, qty:99,seller:'npc',sellerName:'Çiftçi',type:'Hayvan',reqLv:3,material:null,desc:'Yün ve süt verir. Çiftliğe eklenir.',     stats:{},img:'koyun',classBonus:null,isAnimal:true,animalKey:'koyun'},
+  {id:702,name:'İnek', icon:'🐄',cat:'livestock',grade:'green',price:150,qty:99,seller:'npc',sellerName:'Çiftçi',type:'Hayvan',reqLv:5,material:null,desc:'Bol süt verir. Çiftliğe eklenir.',         stats:{},img:'inek',classBonus:null,isAnimal:true,animalKey:'inek'},
+  {id:703,name:'Arı Kovanı',icon:'🐝',cat:'livestock',grade:'green',price:200,qty:99,seller:'npc',sellerName:'Çiftçi',type:'Hayvan',reqLv:6,material:null,desc:'Bal üretir. Çiftliğe eklenir.',             stats:{},img:'ari',classBonus:null,isAnimal:true,animalKey:'ari'},
 ];
 
 /* ══════════════════════════════════════
@@ -7291,15 +7291,15 @@ function renderMaterialMarket(q, sort){
       const canBuy=G.gold>=item.price;
       const lvBadge=item.reqLv>1?`<span style="font-size:14px;padding:2px 6px;border-radius:3px;background:var(--panel);border:1px solid ${G.level>=item.reqLv?'var(--gold)':'#8b1e1e'};color:${G.level>=item.reqLv?'var(--gold2)':'#c87070'};">Sv.${item.reqLv}</span>`:'';
       const iconContent=item.img
-        ?`<img src="images/${item.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:42px;height:42px;object-fit:contain;"/><span style="display:none;font-size:26px;">${item.icon}</span>`
-        :`<span style="font-size:26px;">${item.icon}</span>`;
+        ?`<img src="images/${item.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:50px;height:50px;object-fit:contain;"/><span style="display:none;font-size:30px;">${item.icon}</span>`
+        :`<span style="font-size:30px;">${item.icon}</span>`;
       return `<div class="listing-card ${item.grade}" onclick="buyMarketItem('${item.id}')">
         <div class="item-icon ${item.grade}" style="margin-bottom:2px;">${iconContent}</div>
         <div class="item-name ${item.grade}" style="font-family:var(--font-head);font-size:20px;line-height:1.3;">${item.name}</div>
         <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">${lvBadge}<span style="font-size:14px;color:var(--ink3);">${item.type}</span></div>
         <div style="font-size:16px;color:var(--ink3);">🤖 NPC</div>
         <div style="font-family:var(--font-head);font-size:22px;color:var(--gold);">${item.price.toLocaleString('tr')}🪙</div>
-        <button class="buy-btn-sm" style="width:100%;margin-top:3px;" onclick="event.stopPropagation();buyMarketItem('${item.id}')" ${canBuy?'':'disabled'}>Satın Al</button>
+        <button class="buy-btn-sm" style="width:100%;margin-top:auto;" onclick="event.stopPropagation();buyMarketItem('${item.id}')" ${canBuy?'':'disabled'}>Satın Al</button>
       </div>`;
     }).join('');
     html+=`<div class="sec" style="margin-top:0;">🧪 NPC İksirleri</div><div class="market-grid" style="margin-bottom:16px;">${npcCards}</div>`;
@@ -7321,16 +7321,16 @@ function renderMaterialMarket(q, sort){
     const canAfford=G.gold>=l.unitPrice;
     return `<div class="listing-card gray" style="cursor:${mine?'default':'pointer'};" ${mine?'':`onclick="openMaterialBuy('${l.id}')"`}>
       <div class="item-icon gray" style="margin-bottom:2px;">
-        <img src="${IMG_BASE}${l.img}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" style="width:42px;height:42px;object-fit:contain;"/>
-        <span style="display:none;font-size:26px;">${l.icon}</span>
+        <img src="${IMG_BASE}${l.img}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" style="width:50px;height:50px;object-fit:contain;"/>
+        <span style="display:none;font-size:30px;">${l.icon}</span>
       </div>
       <div class="item-name gray" style="font-family:var(--font-head);font-size:20px;line-height:1.3;">${l.label}</div>
       <div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);">${l.stock.toLocaleString('tr')} adet</div>
       <div style="font-size:16px;color:var(--ink3);">👤 ${mine?'<span style="color:var(--gold);">Sen</span>':l.sellerName}</div>
       <div style="font-family:var(--font-head);font-size:18px;color:var(--gold);">${l.unitPrice.toLocaleString('tr')}🪙<span style="font-size:14px;color:var(--ink3);">/adet</span></div>
       ${mine
-        ? `<button class="buy-btn-sm" style="width:100%;margin-top:3px;background:var(--panel3);" onclick="event.stopPropagation();withdrawMaterial('${l.id}')">Geri Çek</button>`
-        : `<button class="buy-btn-sm" style="width:100%;margin-top:3px;" onclick="event.stopPropagation();openMaterialBuy('${l.id}')" ${canAfford?'':'disabled'}>Satın Al</button>`}
+        ? `<button class="buy-btn-sm" style="width:100%;margin-top:auto;background:var(--panel3);" onclick="event.stopPropagation();withdrawMaterial('${l.id}')">Geri Çek</button>`
+        : `<button class="buy-btn-sm" style="width:100%;margin-top:auto;" onclick="event.stopPropagation();openMaterialBuy('${l.id}')" ${canAfford?'':'disabled'}>Satın Al</button>`}
     </div>`;
   }).join('');
   html+=`<div class="market-grid">${cards}</div>`;
@@ -7542,8 +7542,8 @@ function renderMarket(){
     const canEquipLv=G.level>=(item.reqLv||1);
     const lvBadge=item.reqLv>1?`<span style="font-size:14px;padding:2px 6px;border-radius:3px;background:var(--panel);border:1px solid ${canEquipLv?'var(--gold)':'#8b1e1e'};color:${canEquipLv?'var(--gold2)':'#c87070'};">Sv.${item.reqLv}</span>`:'';
     const iconContent=item.img
-      ?`<img src="images/${item.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:42px;height:42px;object-fit:contain;"/><span style="display:none;font-size:26px;">${item.icon}</span>`
-      :`<span style="font-size:26px;">${item.icon}</span>`;
+      ?`<img src="images/${item.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:50px;height:50px;object-fit:contain;"/><span style="display:none;font-size:30px;">${item.icon}</span>`
+      :`<span style="font-size:30px;">${item.icon}</span>`;
     const enhBadge=item.enhPlus>0?`<span style="font-size:14px;padding:2px 6px;border-radius:3px;background:#1a1200;border:1px solid var(--gold);color:var(--gold);font-family:var(--font-head);">+${item.enhPlus}</span>`:'';
     const clickFn=item.cat==='premium'?`openPremiumConfirm(${item.id})`:`buyMarketItem('${item.id}')`;
     return `<div class="listing-card ${item.grade}" onclick="${clickFn}" style="${rg?`border-color:${ROLL_GRADES[rg].color};`:''}">
@@ -7553,8 +7553,8 @@ function renderMarket(){
       ${statsP?`<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">${statsP}</div>`:''}
       <div style="font-size:16px;color:var(--ink3);">${isBoss?'⚔ Boss':item.seller==='npc'?('🤖 NPC'+(npcLimited?` · <span style="color:${soldOut?'#f08080':'var(--gold2)'};">Stok: ${item.qty}</span>`:'')):'👤 '+item.sellerName}${isOwnListing?' <span style="color:var(--gold);">(Sen)</span>':''}</div>
       <div style="font-family:var(--font-head);font-size:22px;color:${isBoss?'var(--g-orange)':'var(--gold)'};">${isBoss?'Boss Drop':item.price.toLocaleString('tr')+'🪙'}</div>
-      ${!isBoss&&!isOwnListing?`<button class="buy-btn-sm" style="width:100%;margin-top:3px;" onclick="event.stopPropagation();${clickFn}" ${!canBuy?'disabled':''}>${item.cat==='premium'?'✨ Etkinleştir':soldOut?'Tükendi':'Satın Al'}</button>`:''}
-      ${isOwnListing?`<div style="font-size:16px;color:var(--ink3);margin-top:2px;">Satışta</div>`:''}
+      ${!isBoss&&!isOwnListing?`<button class="buy-btn-sm" style="width:100%;margin-top:auto;" onclick="event.stopPropagation();${clickFn}" ${!canBuy?'disabled':''}>${item.cat==='premium'?'✨ Etkinleştir':soldOut?'Tükendi':'Satın Al'}</button>`:''}
+      ${isOwnListing?`<div style="font-size:16px;color:var(--ink3);margin-top:auto;">Satışta</div>`:''}
     </div>`;
   }).join('');
   document.getElementById('market-content').innerHTML=items.length
