@@ -4021,9 +4021,9 @@ const PROD_RECIPES={
     {id:'balli_kaymak',    name:'Ballı Kaymak',     icon:'🍯', minLv:7, dur:150, inputs:{kaymak:1,bal:1},               outputs:{balli_kaymak:{base:1}}},
   ],
   insaa:[
-    {id:'lumber', name:'Kereste Yap', icon:'🪵', minLv:1, dur:300, inputs:{meseLodunu:1}, outputs:{kereste:{base:1,chance:0}}},
-    {id:'smelt',  name:'Çivi Yap',    icon:'🔩', minLv:1, dur:300, inputs:{demir:1},      outputs:{civi:{base:1,chance:0}}},
-    {id:'bake',   name:'Tuğla Yap',   icon:'🧱', minLv:1, dur:300, inputs:{kil:1},        outputs:{tugla:{base:1,chance:0}}},
+    {id:'lumber', name:'Kereste Yap', icon:'🪵', minLv:1, dur:150, inputs:{meseLodunu:1}, outputs:{kereste:{base:3,chance:0}}},
+    {id:'smelt',  name:'Çivi Yap',    icon:'🔩', minLv:1, dur:150, inputs:{demir:1},      outputs:{civi:{base:3,chance:0}}},
+    {id:'bake',   name:'Tuğla Yap',   icon:'🧱', minLv:1, dur:150, inputs:{kil:1},        outputs:{tugla:{base:3,chance:0}}},
   ],
 };
 const FOOD_VALUE={bugday:1,arpa:1,sebze:2,saman:0,un:0,arpa_unu:0,tuy:0,yumurta:2,yun:0,sut:2,ekmek:0,corba:0,kek:0,patates:1,domates:2,cicek:0,yonca:0,cilek:3,bugday_unu:0,patates_puresi:3,kaymak:4,cilek_puresi:4,domates_puresi:3,bal:2,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0};
@@ -4032,22 +4032,24 @@ const ITEM_LABELS={bugday:'Buğday',saman:'Saman',arpa:'Arpa',sebze:'Sebze',un:'
 
 /* ══════════════════════════════════════
    BİNA YÜKSELTME MALZEMELERİ (kereste/çivi/tuğla)
-   Sv1→2 taban değerler. Sonraki her seviye ×1.5 (yukarı yuvarlanır).
+   Sv1→2 taban değerler. Sonraki her seviye ×1.3 (yukarı yuvarlanır).
    tuglaStart: tuğlanın devreye girdiği seviye (surlarda 4 → tahta siperden taşa geçiş).
+   İnşaa Yeri'nin kendi geliştirmesi (prod_insaa) malzeme istemez, sadece altınla yükselir —
+   aksi halde malzeme üretim binasını yükseltmek için o binanın ürettiği malzemeler gerekirdi.
 ══════════════════════════════════════ */
 const BUILDING_MATS = {
   // Kale binaları
-  walls:    {kereste:500, civi:1000, tugla:0,   tuglaStart:4, tuglaBase:200}, // tahta siper → taş
-  towers:   {kereste:300, civi:400,  tugla:200, tuglaStart:1},
-  barracks: {kereste:150, civi:300,  tugla:100, tuglaStart:1}, // senin örneğin
-  farm:     {kereste:200, civi:150,  tugla:20,  tuglaStart:1}, // az tuğla
-  market:   {kereste:250, civi:300,  tugla:50,  tuglaStart:1},
+  walls:    {kereste:80, civi:150, tugla:0,  tuglaStart:4, tuglaBase:30}, // tahta siper → taş
+  towers:   {kereste:50, civi:70,  tugla:30, tuglaStart:1},
+  barracks: {kereste:30, civi:50,  tugla:20, tuglaStart:1}, // senin örneğin
+  farm:     {kereste:35, civi:25,  tugla:5,  tuglaStart:1}, // az tuğla
+  market:   {kereste:40, civi:50,  tugla:10, tuglaStart:1},
   // Üretim binaları
-  prod_farm:    {kereste:150, civi:100, tugla:15, tuglaStart:1},
-  prod_mill:    {kereste:200, civi:250, tugla:40, tuglaStart:1},
-  prod_kitchen: {kereste:200, civi:250, tugla:40, tuglaStart:1},
-  prod_ranch:   {kereste:250, civi:200, tugla:30, tuglaStart:1},
-  prod_insaa:   {kereste:150, civi:200, tugla:30, tuglaStart:1},
+  prod_farm:    {kereste:25, civi:20, tugla:4, tuglaStart:1},
+  prod_mill:    {kereste:35, civi:40, tugla:8, tuglaStart:1},
+  prod_kitchen: {kereste:35, civi:40, tugla:8, tuglaStart:1},
+  prod_ranch:   {kereste:40, civi:35, tugla:6, tuglaStart:1},
+  prod_insaa:   {kereste:0,  civi:0,  tugla:0, tuglaStart:1}, // sadece altın
 };
 
 // Bir binayı 'fromLevel'den (fromLevel+1)'e yükseltmenin malzeme maliyeti.
@@ -4055,7 +4057,7 @@ const BUILDING_MATS = {
 function buildingMatCost(key, fromLevel){
   const m = BUILDING_MATS[key];
   if(!m) return {};
-  const mult = Math.pow(1.5, Math.max(0, fromLevel-1)); // Sv1→2'de ×1, Sv2→3'te ×1.5...
+  const mult = Math.pow(1.3, Math.max(0, fromLevel-1)); // Sv1→2'de ×1, Sv2→3'te ×1.3...
   const cost = {};
   if(m.kereste) cost.kereste = Math.ceil(m.kereste * mult);
   if(m.civi)    cost.civi    = Math.ceil(m.civi * mult);
@@ -4494,9 +4496,10 @@ function renderGame(s){
 }
 
 /* ── ENVANTER FİLTRE & SIRALAMA ── */
-let invFilter='all', invSort='default';
+let invFilter='all', invSort='default', invSortDir=1;
 function setInvFilter(f){invFilter=f;renderKarakter();}
 function setInvSort(s){invSort=s;renderKarakter();}
+function toggleInvSortDir(){ invSortDir*=-1; renderKarakter(); }
 
 /* ── Envanter sürükle-bırak + toplu seçim ── */
 const ITEM_SLOT_MAP={
@@ -4762,15 +4765,17 @@ function renderKarakter(){
   if(invTb) invTb.innerHTML=`
     <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:6px 0 8px;">
       ${INV_FILTERS.map(f=>`<button onclick="setInvFilter('${f.k}')" style="padding:3px 9px;border-radius:4px;border:1px solid ${invFilter===f.k?'var(--gold)':'var(--border2)'};background:${invFilter===f.k?'#2a1e08':'var(--panel)'};color:${invFilter===f.k?'var(--gold2)':'var(--ink3)'};font-family:var(--font-head);font-size:clamp(8px,.9vw,11px);cursor:pointer;">${f.lbl}</button>`).join('')}
-      <button onclick="toggleBulkMode('trash')" title="Toplu çöpe at" style="padding:3px 8px;border-radius:4px;border:1px solid ${bulkMode==='trash'?'#c04a4a':'var(--border2)'};background:${bulkMode==='trash'?'#3a1414':'var(--panel)'};color:${bulkMode==='trash'?'#f08080':'var(--ink3)'};font-size:clamp(10px,.9vw,13px);cursor:pointer;">🗑</button>
-      <button onclick="toggleBulkMode('sell')" title="Toplu NPC'ye sat" style="padding:3px 8px;border-radius:4px;border:1px solid ${bulkMode==='sell'?'var(--g-green)':'var(--border2)'};background:${bulkMode==='sell'?'#122a10':'var(--panel)'};color:${bulkMode==='sell'?'#7aaa5a':'var(--ink3)'};font-size:clamp(10px,.9vw,13px);cursor:pointer;">🏪</button>
+      <button onclick="toggleBulkMode('trash')" title="Toplu çöpe at" style="padding:3px 9px;border-radius:4px;border:1px solid ${bulkMode==='trash'?'#c04a4a':'var(--border2)'};background:${bulkMode==='trash'?'#3a1414':'var(--panel)'};color:${bulkMode==='trash'?'#f08080':'var(--ink3)'};font-family:var(--font-head);font-size:clamp(8px,.9vw,11px);cursor:pointer;white-space:nowrap;">🗑 Çöpe At</button>
+      <button onclick="toggleBulkMode('sell')" title="Toplu NPC'ye sat" style="padding:3px 9px;border-radius:4px;border:1px solid ${bulkMode==='sell'?'var(--g-green)':'var(--border2)'};background:${bulkMode==='sell'?'#122a10':'var(--panel)'};color:${bulkMode==='sell'?'#7aaa5a':'var(--ink3)'};font-family:var(--font-head);font-size:clamp(8px,.9vw,11px);cursor:pointer;white-space:nowrap;">🏪 NPC'ye Sat</button>
       <select onchange="setInvSort(this.value)" style="margin-left:auto;background:var(--panel);border:1px solid var(--border);color:var(--perg2);font-family:var(--font-head);font-size:clamp(8px,.9vw,11px);padding:3px 6px;border-radius:4px;outline:none;">
         <option value="default" ${invSort==='default'?'selected':''}>Sırala</option>
-        <option value="grade" ${invSort==='grade'?'selected':''}>Nadirlik ↓</option>
-        <option value="plus" ${invSort==='plus'?'selected':''}>+ Seviye ↓</option>
-        <option value="level" ${invSort==='level'?'selected':''}>Sv. ↓</option>
+        <option value="grade" ${invSort==='grade'?'selected':''}>Nadirlik</option>
+        <option value="plus" ${invSort==='plus'?'selected':''}>+ Seviyesi</option>
+        <option value="level" ${invSort==='level'?'selected':''}>Eşya Seviyesi</option>
+        <option value="type" ${invSort==='type'?'selected':''}>Tür</option>
         <option value="name" ${invSort==='name'?'selected':''}>İsim A-Z</option>
       </select>
+      <button onclick="toggleInvSortDir()" ${invSort==='default'?'disabled':''} title="Sıralama yönünü ters çevir" style="padding:3px 8px;border-radius:4px;border:1px solid var(--border2);background:var(--panel);color:${invSort==='default'?'var(--border3)':'var(--gold2)'};font-family:var(--font-head);font-size:clamp(10px,1vw,13px);cursor:${invSort==='default'?'not-allowed':'pointer'};">${invSortDir===1?'↓':'↑'}</button>
     </div>
     ${bulkMode?`<div class="inv-bulk-bar">
       <span style="font-size:11px;color:var(--ink3);flex:1;">${bulkSelected.size} eşya seçili</span>
@@ -4788,10 +4793,11 @@ function renderKarakter(){
     :(i.cat==='consumable'||i.type==='İksir')?'consumable':'other';
   let invList=G.inventory.filter(i=>invFilter==='all'||invCatOf(i)===invFilter);
   const gradeOrder={gray:0,green:1,blue:2,purple:3,orange:4};
-  if(invSort==='grade')      invList=[...invList].sort((a,b)=>(gradeOrder[b.grade]||0)-(gradeOrder[a.grade]||0));
-  else if(invSort==='plus')  invList=[...invList].sort((a,b)=>(b.enhPlus||0)-(a.enhPlus||0));
-  else if(invSort==='level') invList=[...invList].sort((a,b)=>(b.reqLv||0)-(a.reqLv||0));
-  else if(invSort==='name')  invList=[...invList].sort((a,b)=>String(a.name).localeCompare(String(b.name),'tr'));
+  if(invSort==='grade')      invList=[...invList].sort((a,b)=>invSortDir*((gradeOrder[b.grade]||0)-(gradeOrder[a.grade]||0)));
+  else if(invSort==='plus')  invList=[...invList].sort((a,b)=>invSortDir*((b.enhPlus||0)-(a.enhPlus||0)));
+  else if(invSort==='level') invList=[...invList].sort((a,b)=>invSortDir*((b.reqLv||0)-(a.reqLv||0)));
+  else if(invSort==='type')  invList=[...invList].sort((a,b)=>invSortDir*String(a.type||'').localeCompare(String(b.type||''),'tr'));
+  else if(invSort==='name')  invList=[...invList].sort((a,b)=>invSortDir*String(a.name).localeCompare(String(b.name),'tr'));
   const grid=document.getElementById('inv-grid');
   const slots=Array(cap).fill(null);
   invList.forEach((item,i)=>{if(i<cap)slots[i]=item;});
@@ -9844,7 +9850,7 @@ async function sbLoadProdTimers(){
 
 /* ── İNŞAA YERİ ── */
 function insaaSlots(){return 3+(PROD_BUILDINGS.insaa.level-1);}
-function insaaDur(){return Math.floor(300*Math.pow(0.95,PROD_BUILDINGS.insaa.level-1));}
+function insaaDur(){return Math.floor(150*Math.pow(0.95,PROD_BUILDINGS.insaa.level-1));}
 
 function renderInsaa(){
   const bld=PROD_BUILDINGS.insaa;
@@ -9872,7 +9878,7 @@ function renderInsaa(){
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px;flex-wrap:wrap;">
         <span class="mat-chip${!hasInput?' missing':''}" style="display:flex;align-items:center;gap:4px;">${itemImg(inputKey,'20px')} ${ITEM_LABELS[inputKey]||inputKey} ×1 <span style="font-size:8px;color:var(--ink3);">(${G.prodInv[inputKey]||0})</span></span>
         <span style="color:var(--ink3);">→</span>
-        <span class="mat-chip output" style="display:flex;align-items:center;gap:4px;">${itemImg(outputKey,'20px')} ${ITEM_LABELS[outputKey]||outputKey} ×1</span>
+        <span class="mat-chip output" style="display:flex;align-items:center;gap:4px;">${itemImg(outputKey,'20px')} ${ITEM_LABELS[outputKey]||outputKey} ×${r.outputs[outputKey].base||1}</span>
       </div>
       <button class="btn btn-xs" style="width:100%;" onclick="startInsaaProd('${r.id}')" ${canStart?'':'disabled'}>
         ${!hasInput?'Malzeme Eksik':!slotsAvail?'Slot Dolu':'▶ Başlat'}
@@ -9937,7 +9943,7 @@ async function startInsaaProd(rId){
   const outputKey=Object.keys(r.outputs)[0];
   if((G.prodInv[inputKey]||0)<1){toast('Malzeme eksik!');return;}
   G.prodInv[inputKey]--;
-  const outputs={[outputKey]:{amount:1,bonus:false}};
+  const outputs={[outputKey]:{amount:r.outputs[outputKey].base||1,bonus:false}};
   let dbId=null;
   if(currentUser){
     const {data,error}=await supa.from('production_timers').insert({
