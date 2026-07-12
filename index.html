@@ -4137,14 +4137,19 @@ function trackAch(key, n=1){
 function checkAchievements(){
   if(!G.ach) G.ach={};
   if(!Array.isArray(G.ach._done)) G.ach._done=[];
+  let newlyUnlocked=false;
   ACHIEVEMENTS.forEach(a=>{
     if(G.ach._done.includes(a.key)) return;
     if(a.cur()>=a.max){
       G.ach._done.push(a.key);
       slideNotif('🏅','Başarım kazanıldı!',`${a.icon} ${a.name}`);
-      if(currentUser) sbSave();
+      newlyUnlocked=true;
     }
   });
+  // Normal kayıt 800ms geciktirilir (debounce) — ama "_done" listesi tam o
+  // pencerede kaybolursa (ör. bildirim görülür görülmez sayfa yenilenirse)
+  // aynı başarım bir daha bildirilir. Bu yüzden burada kaydı hemen zorla.
+  if(newlyUnlocked && currentUser){ sbSave(); _sbFlush(); }
 }
 
 /* ══════════════════════════════════════
