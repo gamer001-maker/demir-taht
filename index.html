@@ -3823,7 +3823,7 @@ const MARKET_ITEMS=[
   /* ══════════════════════════════════════
      AKSESUAR
   ══════════════════════════════════════ */
-  {id:301,name:'Bakır Yüzük',     icon:'💍',cat:'accessory',grade:'gray',  price:50,  qty:99,seller:'npc',sellerName:'Mücevherci',  type:'Yüzük',reqLv:1, material:null,desc:'Sıradan bakır yüzük.',                stats:{mgc:3,wis:2},   img:null,classBonus:null,tplId:'bakiryuzuk'},
+  {id:301,name:'Bakır Yüzük',     icon:'💍',cat:'accessory',grade:'gray',  price:50,  qty:99,seller:'npc',sellerName:'Mücevherci',  type:'Yüzük',reqLv:1, material:null,desc:'Sıradan bakır yüzük.',                stats:{mgc:3,wis:2},   img:'bakiryuzuk',classBonus:null,tplId:'bakiryuzuk'},
 
   /* ══════════════════════════════════════
      NEKRO SET (Mağara Girişi boss dropu)
@@ -5121,7 +5121,12 @@ async function confirmSellItem(itemId){
 }
 
 function getCatFromType(type){
-  const map={Kılıç:'weapon',Asa:'weapon',Hançer:'weapon',Yay:'weapon',Bıçak:'weapon',Sopa:'weapon','Deri Zırh':'armor',Plaka:'armor',Yüzük:'accessory',İksir:'consumable'};
+  const map={
+    Kılıç:'weapon',Asa:'weapon',Hançer:'weapon',Yay:'weapon',Bıçak:'weapon',Sopa:'weapon',
+    Göğüslük:'armor',Zırh:'armor',Kask:'armor',Eldiven:'armor',Bot:'armor',
+    Yüzük:'accessory',
+    İksir:'consumable',
+  };
   return map[type]||'resource';
 }
 function addStat(k){
@@ -7461,6 +7466,7 @@ async function initSaleWatcher(){
     .on('postgres_changes',{event:'DELETE',schema:'public',table:'marketplace'},({old:row})=>{
       const rec=_myListings.market.get(row?.id); if(!rec) return;
       _myListings.market.delete(row.id);
+      if(_withdrawnListings.has('mk_'+row.id)) return;
       _creditSale('mk_'+row.id, rec.price, rec.name);
     })
     // Yığın ilanından kısmi alım (stok azaldı)
@@ -7528,14 +7534,11 @@ function renderMarket(){
       ? Object.entries(tpl.statRanges).slice(0,3).map(([k,[mn,mx]])=>`<span style="font-size:14px;padding:2px 6px;border-radius:3px;background:var(--panel);color:var(--perg2);border:1px solid var(--border);">${STAT_LABELS[k]||k} ${mn}–${mx}</span>`)
       : Object.entries(item.stats||{}).slice(0,3).map(([k,v])=>`<span style="font-size:14px;padding:2px 6px;border-radius:3px;background:var(--panel);color:var(--perg2);border:1px solid var(--border);">+${v} ${STAT_LABELS[k]||k}</span>`)
     ).join('');
-    const gradePip=isNpcRoll
-      ? `<div class="grade-pip" style="background:#1a1408;border:1px solid var(--border2);color:var(--gold2);">🎲 Şans</div>`
-      : rg
-        ? `<div class="grade-pip" style="background:#14100a;border:1px solid ${ROLL_GRADES[rg].color};color:${ROLL_GRADES[rg].color};">${ROLL_GRADES[rg].label}</div>`
-        : `<div class="grade-pip gp-${item.grade}">${GRADES[item.grade]?.name||''}</div>`;
-    const npcLimited=item.seller==='npc'&&typeof item.qty==='number'&&item.qty<99;
-    const soldOut=npcLimited&&item.qty<=0;
-    const canBuy=item.seller!=='boss'&&G.gold>=item.price&&item.sellerId!==currentUser?.id&&!soldOut;
+    // NPC eşyaları artık zar/şans rozeti göstermez — hepsi sabit temel nadirliğini gösterir
+    const gradePip=rg
+      ? `<div class="grade-pip" style="background:#14100a;border:1px solid ${ROLL_GRADES[rg].color};color:${ROLL_GRADES[rg].color};">${ROLL_GRADES[rg].label}</div>`
+      : `<div class="grade-pip gp-${item.grade}">${GRADES[item.grade]?.name||''}</div>`;
+    const canBuy=item.seller!=='boss'&&G.gold>=item.price&&item.sellerId!==currentUser?.id;
     const isBoss=item.seller==='boss';
     const isOwnListing=item.sellerId===currentUser?.id;
     const canEquipLv=G.level>=(item.reqLv||1);
@@ -7550,10 +7553,10 @@ function renderMarket(){
       <div class="item-name ${item.grade}" style="font-family:var(--font-head);font-size:20px;line-height:1.3;word-break:break-word;">${item.name}${enhBadge?'&nbsp;'+enhBadge:''}</div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">${lvBadge}${item.type?`<span style="font-size:14px;color:var(--ink3);">${item.type}</span>`:''}</div>
       ${statsP?`<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">${statsP}</div>`:''}
-      <div style="font-size:16px;color:var(--ink3);">${isBoss?'⚔ Boss':item.seller==='npc'?('🤖 NPC'+(npcLimited?` · <span style="color:${soldOut?'#f08080':'var(--gold2)'};">Stok: ${item.qty}</span>`:'')):'👤 '+item.sellerName}${isOwnListing?' <span style="color:var(--gold);">(Sen)</span>':''}</div>
-      <div style="font-family:var(--font-head);font-size:22px;color:${isBoss?'var(--g-orange)':'var(--gold)'};">${isBoss?'Boss Drop':item.price.toLocaleString('tr')+'🪙'}</div>
-      ${!isBoss&&!isOwnListing?`<button class="buy-btn-sm" style="width:100%;margin-top:auto;" onclick="event.stopPropagation();${clickFn}" ${!canBuy?'disabled':''}>${item.cat==='premium'?'✨ Etkinleştir':soldOut?'Tükendi':'Satın Al'}</button>`:''}
-      ${isOwnListing?`<div style="font-size:16px;color:var(--ink3);margin-top:auto;">Satışta</div>`:''}
+      <div style="font-size:16px;color:var(--ink3);">${isBoss?'⚔ Boss':item.seller==='npc'?'🤖 NPC':'👤 '+item.sellerName}${isOwnListing?' <span style="color:var(--gold);">(Sen)</span>':''}</div>
+      <div style="font-family:var(--font-head);font-size:22px;margin-top:auto;color:${isBoss?'var(--g-orange)':'var(--gold)'};">${isBoss?'Boss Drop':item.price.toLocaleString('tr')+'🪙'}</div>
+      ${!isBoss&&!isOwnListing?`<button class="buy-btn-sm" style="width:100%;margin-top:4px;" onclick="event.stopPropagation();${clickFn}" ${!canBuy?'disabled':''}>${item.cat==='premium'?'✨ Etkinleştir':'Satın Al'}</button>`:''}
+      ${isOwnListing?`<button class="buy-btn-sm" style="width:100%;margin-top:4px;background:linear-gradient(180deg,#3a1414,#220a0a);border-color:#c04a4a;color:#f08080;" onclick="event.stopPropagation();withdrawListing('${item.id}')">🗑 Satıştan Kaldır</button>`:''}
     </div>`;
   }).join('');
   document.getElementById('market-content').innerHTML=items.length
@@ -7564,9 +7567,8 @@ function buyItem(id){
   const item=MARKET_ITEMS.find(x=>x.id===id);
   if(!item)return;
   if(item.seller==='boss'){toast("Bu eşya sadece Boss savaşından düşer!");return;}
-  // Sınırlı NPC stoğu: qty<99 olan NPC ürünleri tükenebilir (99+ = sınırsız)
-  const limitedStock=item.seller==='npc'&&typeof item.qty==='number'&&item.qty<99;
-  if(limitedStock&&item.qty<=0){toast('Stok tükendi!');return;}
+  // NPC stoğu şimdilik sınırsız — daha sonra tekrar düzenlenecek
+  const limitedStock=false;
   if(G.gold<item.price){toast('Yeterli altın yok!');return;}
   G.gold-=item.price;
   if(limitedStock) item.qty--;
@@ -7735,14 +7737,59 @@ async function buyMarketItem(id){
     renderKarakter();
   }
   renderMarket(); // Cache temizlendiği için item anında kaybolur
-  
+
   // 2 saniye sonra sunucudan güncel listeyi çek
-  setTimeout(async () => { 
-    await loadPlayerMarketItems(); 
-    renderMarket(); 
+  setTimeout(async () => {
+    await loadPlayerMarketItems();
+    renderMarket();
   }, 2000);
-  
+
   if (currentUser) sbSave();
+}
+
+// Kendi pazar ilanını geri çek (satıştan kaldır → envantere iade)
+async function withdrawListing(id){
+  const listing = G_PLAYER_LISTINGS.find(x=>x.id===id);
+  if(!listing || listing.sellerId!==currentUser?.id) return;
+  if(invCount()>=invCap()){ toast('Envanter dolu! Eşyayı geri alamıyorsun.'); return; }
+
+  _withdrawnListings.add('mk_'+listing.dbId); // sale watcher bunu satış sanmasın
+  const {error}=await supa.from('marketplace').delete().eq('id',listing.dbId).eq('seller_id',currentUser.id);
+  if(error){ _withdrawnListings.delete('mk_'+listing.dbId); toast('Geri çekme hatası: '+error.message); return; }
+  _myListings.market.delete(listing.dbId);
+
+  const invItem = {
+    id: newItemId(),
+    name: listing.name,
+    icon: listing.icon,
+    cat: listing.cat,
+    type: listing.type,
+    grade: listing.grade,
+    price: listing.price,
+    stats: listing.stats || {},
+    baseStats: listing.baseStats || undefined,
+    tplId: listing.tplId || null,
+    desc: listing.desc || '',
+    seller: 'player',
+    sellerName: listing.sellerName,
+    img: listing.img || null,
+    reqLv: listing.reqLv || 1,
+    material: listing.material || null,
+    classBonus: listing.classBonus || null,
+    enhPlus: listing.enhPlus || 0
+  };
+
+  if(listing.type==='Hayvan' && listing.stats?.animalKey){
+    if(!G.animals) G.animals={tavuk:0,koyun:0,inek:0,ari:0};
+    G.animals[listing.stats.animalKey]=(G.animals[listing.stats.animalKey]||0)+1;
+  } else {
+    G.inventory.push(invItem);
+  }
+
+  G_PLAYER_LISTINGS = G_PLAYER_LISTINGS.filter(x => x.id !== id);
+  toast(`${listing.name} pazardan geri alındı.`);
+  updateHUD(); renderKarakter(); renderMarket();
+  if(currentUser) sbSave();
 }
 
 function glgo(t) {
