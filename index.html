@@ -1952,6 +1952,7 @@ html,body{
       <div class="tab active" id="glt-home"    onclick="glgo('home')">   <span class="tab-icon">🏰</span>Ana</div>
       <div class="tab"        id="glt-members" onclick="glgo('members')"><span class="tab-icon">👥</span>Üyeler</div>
       <div class="tab"        id="glt-war"     onclick="glgo('war')">    <span class="tab-icon">⚔</span>Savaş</div>
+      <div class="tab"        id="glt-storage" onclick="glgo('storage')"><span class="tab-icon">📦</span>Depo</div>
       <div class="tab"        id="glt-chat"    onclick="glgo('chat')">   <span class="tab-icon">🍺</span>Taverna</div>
       <div class="tab"        id="glt-search"  onclick="glgo('search')"> <span class="tab-icon">🔍</span>Ara</div>
     </div>
@@ -7814,7 +7815,7 @@ async function withdrawListing(id){
 
 function glgo(t) {
   G.guildTab = t;
-  ['home', 'members', 'war', 'chat', 'search'].forEach(x => {
+  ['home', 'members', 'war', 'storage', 'chat', 'search'].forEach(x => {
     document.getElementById('glt-' + x).classList.toggle('active', x === t);
   });
   renderGuild(t);
@@ -7829,6 +7830,7 @@ function renderGuild(t) {
   if (t === 'home') renderGuildHome();
   else if (t === 'members') renderGuildMembers();
   else if (t === 'war') renderGuildWar();
+  else if (t === 'storage') renderGuildStorage();
   else if (t === 'chat') renderGuildChat();
   else renderGuildSearch();
 }
@@ -7931,6 +7933,181 @@ async function treasuryAction(type){
   const el=document.getElementById('t-amount');if(el)el.value='';
   const td=document.getElementById('treasury-display');if(td)td.textContent=G.guildTreasury.toLocaleString('tr')+' 🪙';
 }
+
+/* ══════════════════════════════════════
+   LONCA DEPOSU — tek tablo (guild_storage), owner_id ile ayrılır:
+   owner_id = NULL   → Ortak Depo (loncadaki herkes alabilir)
+   owner_id = kişi   → Kişisel Kasa (sadece o kişi alabilir, kiralık kasa mantığı)
+   Çekme işlemi DELETE...RETURNING ile atomik yapılır — iki kişi aynı
+   ortak eşyayı aynı anda almaya çalışırsa, sadece biri başarılı olur.
+══════════════════════════════════════ */
+const GUILD_STORAGE_PERSONAL_CAP = 20;
+const GUILD_STORAGE_SHARED_CAP   = 40;
+let G_GUILD_STORAGE = { personal: [], shared: [] };
+let guildStorageTab = 'personal';
+
+function _mapGuildStorageRow(row){
+  const stats={};
+  Object.entries(row.item_stats||{}).forEach(([k,v])=>{ if(typeof v==='number'&&isFinite(v)) stats[sani(k)]=v; });
+  const baseStats={};
+  Object.entries(row.item_base_stats||{}).forEach(([k,v])=>{ if(typeof v==='number'&&isFinite(v)) baseStats[sani(k)]=v; });
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    depositorName: sani(row.depositor_name||'Bilinmeyen'),
+    name: sani(row.item_name),
+    icon: sani(row.item_icon||'📦'),
+    type: sani(row.item_type||''),
+    grade: ['gray','green','blue','purple','orange'].includes(row.item_grade)?row.item_grade:'gray',
+    stats,
+    baseStats: Object.keys(baseStats).length?baseStats:null,
+    tplId: row.item_tpl_id?sani(row.item_tpl_id):null,
+    desc: sani(row.item_desc||''),
+    img: row.item_img?sani(row.item_img):null,
+    reqLv: Number(row.item_req_lv)||1,
+    material: row.item_material?sani(row.item_material):null,
+    classBonus: row.item_class_bonus||null,
+    enhPlus: Number(row.item_enh_plus)||0,
+  };
+}
+async function loadGuildStorage(){
+  if(!G.guildId||!currentUser){ G_GUILD_STORAGE={personal:[],shared:[]}; return; }
+  const {data,error}=await supa.from('guild_storage').select('*').eq('guild_id',G.guildId).order('created_at',{ascending:false});
+  if(error||!data){ G_GUILD_STORAGE={personal:[],shared:[]}; return; }
+  G_GUILD_STORAGE.personal=data.filter(r=>r.owner_id===currentUser.id).map(_mapGuildStorageRow);
+  G_GUILD_STORAGE.shared=data.filter(r=>r.owner_id===null).map(_mapGuildStorageRow);
+}
+function setGuildStorageTab(t){ guildStorageTab=t; paintGuildStorage(); }
+function renderGuildStorage(){
+  if(!G.guildId){document.getElementById('guild-content').innerHTML=`<div style="text-align:center;padding:30px;font-size:13px;color:var(--ink3);">Önce bir loncaya katıl.</div>`;return;}
+  document.getElementById('guild-content').innerHTML=`<div style="text-align:center;padding:20px;font-size:13px;color:var(--ink3);">Depo yükleniyor...</div>`;
+  loadGuildStorage().then(paintGuildStorage);
+}
+function paintGuildStorage(){
+  const wrap=document.getElementById('guild-content');
+  if(!wrap||!G.guildId) return;
+  const list = guildStorageTab==='personal' ? G_GUILD_STORAGE.personal : G_GUILD_STORAGE.shared;
+  const cap  = guildStorageTab==='personal' ? GUILD_STORAGE_PERSONAL_CAP : GUILD_STORAGE_SHARED_CAP;
+  const cards = list.map(it=>{
+    const iconHtml = it.img
+      ? `<img src="${IMG_BASE}${it.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:50px;height:50px;object-fit:contain;"/><span style="display:none;font-size:30px;">${it.icon}</span>`
+      : `<span style="font-size:30px;">${it.icon}</span>`;
+    const statsTxt=Object.entries(it.stats||{}).slice(0,3).map(([k,v])=>`+${v} ${STAT_LABELS[k]||k}`).join(' · ');
+    return `<div class="listing-card ${it.grade}">
+      <div class="item-icon ${it.grade}" style="margin-bottom:2px;">${iconHtml}</div>
+      <div class="item-name ${it.grade}" style="font-family:var(--font-head);font-size:16px;line-height:1.3;word-break:break-word;">${it.name}${it.enhPlus>0?` <span style="color:var(--gold);">+${it.enhPlus}</span>`:''}</div>
+      <div style="font-size:13px;color:var(--ink3);">${it.type}${it.reqLv>1?' · Sv.'+it.reqLv:''}</div>
+      ${statsTxt?`<div style="font-size:12px;color:var(--ink3);">${statsTxt}</div>`:''}
+      ${guildStorageTab==='shared'?`<div style="font-size:12px;color:var(--ink3);margin-top:auto;">👤 ${it.depositorName}</div>`:''}
+      <button class="buy-btn-sm" style="width:100%;margin-top:${guildStorageTab==='shared'?'4px':'auto'};" onclick="withdrawGuildStorage(${it.id})">${guildStorageTab==='personal'?'📤 Al':'✋ Kap'}</button>
+    </div>`;
+  }).join('');
+  wrap.innerHTML = `
+    <div style="display:flex;gap:6px;margin-bottom:10px;">
+      <button class="btn btn-sm ${guildStorageTab==='personal'?'':'btn-ghost'}" style="flex:1;" onclick="setGuildStorageTab('personal')">🔒 Kişisel Kasam</button>
+      <button class="btn btn-sm ${guildStorageTab==='shared'?'':'btn-ghost'}" style="flex:1;" onclick="setGuildStorageTab('shared')">🌐 Ortak Depo</button>
+    </div>
+    <div style="font-size:11px;color:var(--ink3);margin-bottom:8px;text-align:center;">
+      ${guildStorageTab==='personal'
+        ? 'Buraya koyduğun eşyaları sadece sen alabilirsin — kiralık kasa gibi.'
+        : 'Buraya koyulan eşyayı loncadaki herkes alabilir — ilk gelen alır.'}
+    </div>
+    <div class="row-between" style="margin-bottom:8px;">
+      <span style="font-size:11px;color:var(--gold2);font-family:var(--font-head);">${list.length}/${cap}</span>
+      <div style="display:flex;gap:5px;">
+        <button class="btn btn-xs btn-ghost" onclick="renderGuildStorage()">🔄 Yenile</button>
+        <button class="btn btn-xs" onclick="openGuildStorageDepositPicker()">📥 Eşya Koy</button>
+      </div>
+    </div>
+    ${list.length?`<div class="market-grid">${cards}</div>`:`<div style="text-align:center;padding:24px;color:var(--ink3);font-size:12px;">Depo boş.</div>`}
+  `;
+}
+function openGuildStorageDepositPicker(){
+  if(!G.guildId){toast('Önce bir loncaya katıl!');return;}
+  const cap = guildStorageTab==='personal' ? GUILD_STORAGE_PERSONAL_CAP : GUILD_STORAGE_SHARED_CAP;
+  const curCount = guildStorageTab==='personal' ? G_GUILD_STORAGE.personal.length : G_GUILD_STORAGE.shared.length;
+  if(curCount>=cap){toast('Depo dolu!');return;}
+  if(!G.inventory.length){toast('Envanterinde eşya yok!');return;}
+  const rows = G.inventory.map(it=>{
+    const statsTxt=Object.entries(it.stats||{}).slice(0,3).map(([k,v])=>`+${v} ${STAT_LABELS[k]||k}`).join(' · ');
+    return `<div onclick="depositToGuildStorage(${it.id})" style="display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:6px;border-radius:8px;border:1px solid var(--border2);background:var(--panel2);cursor:pointer;">
+      <span style="font-size:22px;">${it.icon}</span>
+      <div style="flex:1;text-align:left;">
+        <div style="font-size:14px;color:var(--perg);">${it.name}${it.enhPlus>0?' +'+it.enhPlus:''}</div>
+        <div style="font-size:11px;color:var(--ink3);">${statsTxt}</div>
+      </div>
+    </div>`;
+  }).join('');
+  showGModal(`
+    <div style="text-align:center;margin-bottom:10px;">
+      <div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);">📥 ${guildStorageTab==='personal'?'KASANA KOY':'ORTAK DEPOYA KOY'}</div>
+    </div>
+    ${rows}
+    <button class="btn btn-ghost" style="width:100%;margin-top:6px;" onclick="closeGModal()">Vazgeç</button>
+  `, {width:420});
+}
+async function depositToGuildStorage(itemId){
+  const idx=G.inventory.findIndex(x=>x.id===itemId);
+  if(idx<0) return;
+  const item=G.inventory[idx];
+  closeGModal();
+  const payload={
+    guild_id: G.guildId,
+    owner_id: guildStorageTab==='personal' ? currentUser.id : null,
+    depositor_id: currentUser.id,
+    depositor_name: G.heroName||G.username,
+    item_name: item.name,
+    item_icon: item.icon,
+    item_type: item.type,
+    item_grade: item.grade||'gray',
+    item_stats: item.stats||{},
+    item_base_stats: item.baseStats||null,
+    item_tpl_id: item.tplId||null,
+    item_desc: item.desc||'',
+    item_img: item.img||null,
+    item_req_lv: item.reqLv||1,
+    item_material: item.material||null,
+    item_class_bonus: item.classBonus||null,
+    item_enh_plus: item.enhPlus||0,
+  };
+  const {error}=await supa.from('guild_storage').insert(payload);
+  if(error){ toast('Depoya koyulamadı: '+error.message); return; }
+  G.inventory.splice(idx,1);
+  toast(`${item.name} depoya kondu.`);
+  renderKarakter();
+  if(currentUser) sbSave();
+  renderGuildStorage();
+}
+async function withdrawGuildStorage(storageId){
+  if(invCount()>=invCap()){toast('Envanter dolu!');return;}
+  const {data,error}=await supa.from('guild_storage').delete().eq('id',storageId).select();
+  if(error){ toast('Alınamadı: '+error.message); return; }
+  if(!data||!data.length){ toast('Bu eşya başkası tarafından alınmış.'); renderGuildStorage(); return; }
+  const row=data[0];
+  const invItem={
+    id: newItemId(),
+    name: sani(row.item_name),
+    icon: sani(row.item_icon||'📦'),
+    cat: getCatFromType(row.item_type),
+    type: sani(row.item_type||''),
+    grade: ['gray','green','blue','purple','orange'].includes(row.item_grade)?row.item_grade:'gray',
+    stats: row.item_stats||{},
+    baseStats: row.item_base_stats||null,
+    tplId: row.item_tpl_id||null,
+    desc: sani(row.item_desc||''),
+    img: row.item_img||null,
+    reqLv: Number(row.item_req_lv)||1,
+    material: row.item_material||null,
+    classBonus: row.item_class_bonus||null,
+    enhPlus: Number(row.item_enh_plus)||0,
+  };
+  G.inventory.push(invItem);
+  toast(`${invItem.name} envantere alındı!`);
+  renderKarakter();
+  if(currentUser) sbSave();
+  renderGuildStorage();
+}
+
 function renderGuildMembers(){
   if(!G.guildId){document.getElementById('guild-content').innerHTML=`<div style="text-align:center;padding:30px;font-size:13px;color:var(--ink3);">Önce bir loncaya katıl.</div>`;return;}
   document.getElementById('guild-content').innerHTML=`<div style="text-align:center;padding:20px;font-size:13px;color:var(--ink3);">Üyeler yükleniyor...</div>`;
