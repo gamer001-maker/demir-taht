@@ -1022,6 +1022,11 @@ html,body{
 .item-name.orange{color:var(--g-orange);}
 .buy-btn-sm{background:linear-gradient(180deg,#3a2a18,#221608);border:1px solid var(--border2);color:var(--gold);font-family:var(--font-head);font-size:16px;padding:5px 10px;border-radius:3px;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .buy-btn-sm:hover{background:linear-gradient(180deg,#4a3828,#2e1e0c);border-color:var(--gold);}
+
+/* ── Birlik kartları (Halk sekmesi) ── */
+.troop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;align-items:stretch;margin-bottom:8px;}
+.troop-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:7px;}
+.troop-card-icon{width:96px;height:96px;border-radius:10px;background:var(--panel);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;margin-bottom:2px;}
 .buy-btn-sm:disabled{background:var(--panel);border-color:var(--border);color:var(--ink3);cursor:not-allowed;}
 
 /* ═══════════════════════════════
@@ -5732,9 +5737,9 @@ function renderTroops(){
       ${capCards}
     </div>`;
   }
-  // Mevcut birlikler
+  // Mevcut birlikler — masaüstünde kart ızgarası (4'lü sıra)
   if(cnt>0){
-    html += (G.companions||[]).map(c=>{
+    const troopCards = (G.companions||[]).map(c=>{
       const t=TROOP_TYPES[c.type]||{name:c.type,icon:'❓',desc:''};
       const dmg=troopAttackDmg(c);
       const equipChips=TROOP_EQ_SLOTS.map(k=>{
@@ -5742,23 +5747,24 @@ function renderTroops(){
         const col=k==='weapon'
           ?{bg:'#2a1e08',bd:'#7a5a18',fg:'#d4a843'}
           :{bg:'#0a1e28',bd:'#2a5a6a',fg:'#6adfff'};
-        return `<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:${col.bg};border:1px solid ${col.bd};color:${col.fg};">${it.icon} ${it.name}${it.enhPlus>0?' +'+it.enhPlus:''}</span>`;
+        return `<span style="font-size:11px;padding:2px 6px;border-radius:3px;background:${col.bg};border:1px solid ${col.bd};color:${col.fg};">${it.icon} ${it.name}${it.enhPlus>0?' +'+it.enhPlus:''}</span>`;
       }).filter(Boolean).join(' ');
-      return `<div class="card-sm" style="margin-bottom:6px;">
-        <div style="display:flex;align-items:center;gap:10px;">
-          ${troopIconHtml(c.type,t.icon,34)}
-          <div style="flex:1;">
-            <div style="font-family:var(--font-head);font-size:15px;color:var(--perg);">${t.name} <span style="font-size:12px;color:var(--gold);">Sv.${troopLevel(c)}</span>${dmg>0?` <span style="font-size:12px;color:#f08080;">⚔${dmg}</span>`:''}</div>
-            <div style="font-size:11px;color:var(--ink3);line-height:1.3;">${t.desc}</div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0;">
-            <button class="btn btn-xs" style="padding:3px 8px;" onclick="openEquipTroopModal('${c.tid}')">⚔ Donat</button>
-            <button class="btn btn-xs btn-ghost" style="padding:3px 8px;" onclick="dismissTroop('${c.tid}')">Azat</button>
-          </div>
+      return `<div class="troop-card">
+        <div class="troop-card-icon">${troopIconHtml(c.type,t.icon,84)}</div>
+        <div style="font-family:var(--font-head);font-size:16px;color:var(--perg);">${t.name}</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-family:var(--font-head);font-size:13px;color:var(--gold);">Sv.${troopLevel(c)}</span>
+          ${dmg>0?`<span style="font-family:var(--font-head);font-size:13px;color:#f08080;">⚔ ${dmg}</span>`:''}
         </div>
-        ${equipChips?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">${equipChips}</div>`:''}
+        <div style="font-size:12px;color:var(--ink3);line-height:1.4;">${t.desc}</div>
+        ${equipChips?`<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:2px;">${equipChips}</div>`:''}
+        <div style="display:flex;gap:6px;width:100%;margin-top:auto;padding-top:10px;">
+          <button class="btn btn-xs" style="flex:1;" onclick="openEquipTroopModal('${c.tid}')">⚔ Donat</button>
+          <button class="btn btn-xs btn-ghost" style="flex:1;" onclick="dismissTroop('${c.tid}')">Azat</button>
+        </div>
       </div>`;
     }).join('');
+    html += `<div class="troop-grid">${troopCards}</div>`;
   } else {
     html += `<div style="font-size:11px;color:var(--ink3);margin-bottom:8px;">Henüz birliğin yok. Kışladan piyade işe al ya da harita keşfinde özel birim bul (Rehber, Rahip, Şövalye, Tabip).</div>`;
   }
