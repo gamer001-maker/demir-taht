@@ -2936,7 +2936,7 @@ function openPremiumConfirm(id){
     </div>
     <div style="font-family:var(--font-head);font-size:13px;color:var(--gold);text-align:center;margin-bottom:12px;">Maliyet: ${item.price}🪙</div>
     ${canBuy
-      ?`<button class="btn" style="width:100%;margin-bottom:8px;" onclick="closeGModal();buyItem(${id})">✨ Etkinleştir</button>`
+      ?`<button class="btn" style="width:100%;margin-bottom:8px;" onclick="closeGModal();buyItem(${id})">${item.premiumKey==='stall'?'🏪 Satın Al':'✨ Etkinleştir'}</button>`
       :`<button class="btn" disabled style="width:100%;margin-bottom:8px;opacity:.5;">Yeterli Altın Yok</button>`}
     <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal()">Vazgeç</button>
   `);
@@ -3861,6 +3861,7 @@ const MARKET_ITEMS=[
   {id:904,name:'Ruh Aynası',        icon:'🪞',cat:'premium',grade:'orange',price:1,qty:99,seller:'npc',sellerName:'Kraliyet Tüccarı',type:'Parşömen',reqLv:1,material:null,desc:'Sınıfını değiştir (örn. Avcı→Büyücü). Puanların iade edilir.',stats:{},img:null,classBonus:null,premiumKey:'classChange'},
   {id:905,name:'Çıraklık Fermanı',  icon:'⏩',cat:'premium',grade:'purple',price:1,qty:99,seller:'npc',sellerName:'Kraliyet Tüccarı',type:'İksir',   reqLv:1,material:null,desc:'7 gün boyunca tüm üretim ve işleme süreleri %10 kısalır.',stats:{},img:null,classBonus:null,premiumKey:'prodSpeed'},
   {id:906,name:'Şans Muskası',      icon:'🍀',cat:'premium',grade:'purple',price:1,qty:99,seller:'npc',sellerName:'Kraliyet Tüccarı',type:'İksir',   reqLv:1,material:null,desc:'7 gün boyunca geliştirme başarı şansın +%5 artar.',stats:{},img:null,classBonus:null,premiumKey:'luckCharm'},
+  {id:907,name:'Tezgah',            icon:'🏪',cat:'premium',grade:'purple',price:1,qty:99,seller:'npc',sellerName:'Kraliyet Tüccarı',type:'Tezgah',  reqLv:1,material:null,desc:'Envantere düşer. Kullanınca istediğin bir isimle Pazar\'da 7 gün boyunca kendi tezgahını açarsın.',stats:{},img:null,classBonus:null,premiumKey:'stall'},
 
   /* ══════════════════════════════════════
      KAYNAK
@@ -4908,6 +4909,7 @@ function openInvModal(itemId, eqSlotKey=null){
 
 function useConsumable(itemId){
   const item=G.inventory.find(x=>x.id===itemId);if(!item)return;
+  if(item.isStallItem){ openStallNameModal(itemId); return; }
   const eff=getEffectiveStats();
   let msg='';
 
@@ -4934,6 +4936,41 @@ function useConsumable(itemId){
   toast(`${item.icon} ${msg}`);
   updateHUD();renderKarakter();
   if(currentUser) sbSave();
+}
+
+/* ── TEZGAH: Pazar'da 7 gün görünür bir tezgah adı belirleme ── */
+function openStallNameModal(itemId){
+  const item=G.inventory.find(x=>x.id===itemId); if(!item) return;
+  closeGModal();
+  const already=perkActive('stallUntil');
+  showGModal(`
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="font-size:36px;margin-bottom:6px;">🏪</div>
+      <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);">Tezgahını Aç</div>
+      <div style="font-size:11px;color:var(--ink3);margin-top:4px;line-height:1.5;">Pazar'da görünecek tezgah adını yaz (en fazla 10 karakter).${already?' Tezgahın zaten aktif — süre üstüne eklenecek.':''}</div>
+    </div>
+    <input class="input-field" id="stall-name-inp" maxlength="10" placeholder="ör. Zırhçı" style="width:100%;text-align:center;font-family:var(--font-head);font-size:15px;margin-bottom:10px;box-sizing:border-box;" value="${esc(G.stallName||'')}"/>
+    <button class="btn" style="width:100%;margin-bottom:8px;" onclick="confirmStallOpen(${itemId})">🏪 Tezgahı Kur (+${PERK_DURATION_DAYS} gün)</button>
+    <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal()">Vazgeç</button>
+  `);
+}
+async function confirmStallOpen(itemId){
+  const inp=document.getElementById('stall-name-inp');
+  const name=(inp?.value||'').trim().slice(0,10);
+  if(!name){ toast('Bir tezgah adı yaz!'); return; }
+  const idx=G.inventory.findIndex(x=>x.id===itemId);
+  if(idx<0){ closeGModal(); return; }
+  G.inventory.splice(idx,1);
+  G.stallName=name;
+  activatePerk('stallUntil', PERK_DURATION_DAYS);
+  closeGModal();
+  celebrate('🏪','TEZGAH AÇILDI!',`"${name}" — ${PERK_DURATION_DAYS} gün boyunca Pazar'da görünürsün`,'gold');
+  renderKarakter();
+  if(currentUser){
+    const {error}=await supa.from('profiles').update({stall_name:name, stall_until:G.perks.stallUntil}).eq('id',currentUser.id);
+    if(error) console.warn('[stall] profil güncellenemedi:', error.message);
+    sbSave();
+  }
 }
 
 function equipItem(itemId, slot){
@@ -7228,6 +7265,7 @@ function setSrc(s){G.marketSrc=s;document.querySelectorAll('.src-btn').forEach(e
 function setCat(c){G.marketCat=c;document.querySelectorAll('.cat-tab').forEach(el=>{const active=el.id==='cat-'+c;el.style.color=active?'var(--gold2)':'var(--ink3)';el.style.borderBottom=active?'2px solid var(--gold2)':'2px solid transparent';});if(c==='materials'){loadMaterialListings().then(()=>renderMarket());}else{renderMarket();}}
 // Supabase'den gelen gerçek player ilanları (belleğe cache)
 let G_PLAYER_LISTINGS = [];
+let G_STALLS = {}; // sellerId -> {name, heroName} (aktif Tezgahı olan satıcılar)
 
 async function loadPlayerMarketItems(){
   if(!currentUser) return;
@@ -7273,6 +7311,21 @@ async function loadPlayerMarketItems(){
       isMarketplace: true,
     };
   });
+
+  // Aktif Tezgahı olan satıcıları çek (Pazar'da gruplu gösterim için)
+  G_STALLS={};
+  const sellerIds=[...new Set(G_PLAYER_LISTINGS.map(l=>l.sellerId).filter(Boolean))];
+  if(sellerIds.length){
+    const {data:stalls}=await supa.from('profiles')
+      .select('id,hero_name,stall_name,stall_until')
+      .in('id',sellerIds)
+      .not('stall_until','is',null);
+    (stalls||[]).forEach(p=>{
+      if(p.stall_until && new Date(p.stall_until).getTime()>Date.now() && p.stall_name){
+        G_STALLS[p.id]={name:sani(p.stall_name), heroName:sani(p.hero_name||'Oyuncu')};
+      }
+    });
+  }
 }
 
 // Yığın malzeme/ürün ilanlarını yükle
@@ -7547,7 +7600,8 @@ function renderMarket(){
   if(sort==='price_desc') items.sort((a,b)=>b.price-a.price);
   if(sort==='grade_desc') items.sort((a,b)=>go[b.grade]-go[a.grade]);
   const cnt=document.getElementById('market-count');if(cnt) cnt.textContent=items.length+' ilan';
-  const cards=items.map(item=>{
+
+  const cardHtml=(item)=>{
     const tpl=getItemTemplate(item);
     const isNpcRoll=tpl&&item.seller==='npc';           // NPC'den alınırken zar atılacak → aralık göster
     const rg=item.seller==='player'?getRollGrade(item):null; // oyuncu ilanı → gelen kalite belli
@@ -7576,12 +7630,34 @@ function renderMarket(){
       ${statsP?`<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">${statsP}</div>`:''}
       <div style="font-size:16px;color:var(--ink3);">${isBoss?'⚔ Boss':item.seller==='npc'?'🤖 NPC':'👤 '+item.sellerName}${isOwnListing?' <span style="color:var(--gold);">(Sen)</span>':''}</div>
       <div style="font-family:var(--font-head);font-size:22px;margin-top:auto;color:${isBoss?'var(--g-orange)':'var(--gold)'};">${isBoss?'Boss Drop':item.price.toLocaleString('tr')+'🪙'}</div>
-      ${!isBoss&&!isOwnListing?`<button class="buy-btn-sm" style="width:100%;margin-top:4px;" onclick="event.stopPropagation();${clickFn}" ${!canBuy?'disabled':''}>${item.cat==='premium'?'✨ Etkinleştir':'Satın Al'}</button>`:''}
+      ${!isBoss&&!isOwnListing?`<button class="buy-btn-sm" style="width:100%;margin-top:4px;" onclick="event.stopPropagation();${clickFn}" ${!canBuy?'disabled':''}>${item.cat==='premium'&&item.premiumKey!=='stall'?'✨ Etkinleştir':'Satın Al'}</button>`:''}
       ${isOwnListing?`<button class="buy-btn-sm" style="width:100%;margin-top:4px;background:linear-gradient(180deg,#3a1414,#220a0a);border-color:#c04a4a;color:#f08080;" onclick="event.stopPropagation();withdrawListing('${item.id}')">🗑 Satıştan Kaldır</button>`:''}
     </div>`;
-  }).join('');
+  };
+
+  // Aktif Tezgahı olan satıcıların ilanlarını kendi başlıklı bölümlerinde topla,
+  // geri kalanı her zamanki karışık/rastgele gridde göster.
+  const stallGroups={};
+  const regularItems=[];
+  items.forEach(item=>{
+    const stall = item.seller==='player' ? G_STALLS[item.sellerId] : null;
+    if(stall){
+      if(!stallGroups[item.sellerId]) stallGroups[item.sellerId]={...stall, items:[]};
+      stallGroups[item.sellerId].items.push(item);
+    } else {
+      regularItems.push(item);
+    }
+  });
+  const stallSectionsHtml=Object.values(stallGroups).map(g=>`
+    <div style="margin-bottom:14px;padding:10px 12px;border:1px solid var(--gold);border-radius:10px;background:#1a1408;">
+      <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);">🏪 ${esc(g.name)}</div>
+      <div style="font-size:11px;color:var(--ink3);margin-bottom:8px;">${esc(g.heroName)}'in tezgahı</div>
+      <div class="market-grid">${g.items.map(cardHtml).join('')}</div>
+    </div>`).join('');
+  const regularGridHtml = regularItems.length?`<div class="market-grid">${regularItems.map(cardHtml).join('')}</div>`:'';
+
   document.getElementById('market-content').innerHTML=items.length
-    ?`<div class="market-grid">${cards}</div>`
+    ?stallSectionsHtml+regularGridHtml
     :`<div style="text-align:center;padding:30px;font-size:12px;color:var(--ink3);font-style:italic;">İlan bulunamadı.</div>`;
 }
 function buyItem(id){
@@ -7622,6 +7698,19 @@ function buyItem(id){
     gainXP(3);
     toast(`${item.name} materyal deposuna eklendi! -${item.price}🪙`);
     updateHUD();renderMarket();
+    if(currentUser) sbSave();
+    return;
+  }
+
+  // Tezgah: diğer Kraliyet eşyaları gibi anında uygulanmaz — envantere düşer,
+  // "Kullan" dediğinde isim sorup Pazar'da tezgah açar
+  if(item.premiumKey==='stall'){
+    if(invCount()>=invCap()){toast('Envanter dolu! Önce bir eşya sat.');G.gold+=item.price;return;}
+    const sInv={id:newItemId(),name:item.name,icon:item.icon,type:item.type||'Tezgah',grade:item.grade||'purple',price:item.price,stats:{},desc:item.desc||'',seller:'player',sellerName:G.heroName||G.username,img:item.img||null,reqLv:1,material:null,classBonus:null,tplId:item.id,cat:'consumable',isStallItem:true};
+    G.inventory.push(sInv);
+    gainXP(5);
+    toast(`${item.name} envantere eklendi! -${item.price}🪙`);
+    updateHUD();renderMarket();renderKarakter();
     if(currentUser) sbSave();
     return;
   }
@@ -10605,6 +10694,7 @@ async function sbLoadProfile() {
   if(p.last_login_date) G.lastLoginDate = p.last_login_date;
   if(p.perks) { try{ G.perks = typeof p.perks==='string'?JSON.parse(p.perks):p.perks; }catch(e){} }
   if(!G.perks) G.perks = { prodSpeedUntil:'', luckCharmUntil:'', chatGlowUntil:'' };
+  if(p.stall_name) G.stallName = sani(p.stall_name);
   if(p.inv_bonus !== undefined) G.invBonus = p.inv_bonus;
   if(p.companions) { try{ G.companions = typeof p.companions==='string'?JSON.parse(p.companions):p.companions; }catch(e){ G.companions=[]; } }
   if(!Array.isArray(G.companions)) G.companions=[];
