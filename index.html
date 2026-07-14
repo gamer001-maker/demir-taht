@@ -5395,7 +5395,7 @@ function renderGelistirme(){
       <div style="font-size:14px;color:var(--ink3);text-align:center;margin-top:6px;">
         Başarı şansı: <span style="color:var(--gold2);font-family:var(--font-head);font-size:18px;">%${displayChance}</span>${luckActive?` <span style="color:#9bd17a;font-size:13px;">(%${baseDisplayChance} +%5 🍀)</span>`:''}
         ${isNekro
-          ?`<span style="color:#f87171;font-size:12px;display:block;margin-top:3px;">💀 Başarısız olursa eşya <b>yok edilir!</b></span>`
+          ?`<span style="color:#f87171;font-size:12px;display:block;margin-top:3px;">💀 Başarısız olursa eşya <b>yok olur!</b></span>`
           :curPlus>0?`<span style="color:#f87171;font-size:12px;display:block;margin-top:3px;">⚠ Başarısız olursa +${curPlus} → +${curPlus-1} düşer</span>`:''
         }
       </div>`;
@@ -7968,6 +7968,7 @@ function _mapGuildStorageRow(row){
     material: row.item_material?sani(row.item_material):null,
     classBonus: row.item_class_bonus||null,
     enhPlus: Number(row.item_enh_plus)||0,
+    qty: Number(row.item_qty)||1,
   };
 }
 async function loadGuildStorage(){
@@ -7995,11 +7996,11 @@ function paintGuildStorage(){
     const statsTxt=Object.entries(it.stats||{}).slice(0,3).map(([k,v])=>`+${v} ${STAT_LABELS[k]||k}`).join(' · ');
     return `<div class="listing-card ${it.grade}">
       <div class="item-icon ${it.grade}" style="margin-bottom:2px;">${iconHtml}</div>
-      <div class="item-name ${it.grade}" style="font-family:var(--font-head);font-size:16px;line-height:1.3;word-break:break-word;">${it.name}${it.enhPlus>0?` <span style="color:var(--gold);">+${it.enhPlus}</span>`:''}</div>
+      <div class="item-name ${it.grade}" style="font-family:var(--font-head);font-size:16px;line-height:1.3;word-break:break-word;">${it.name}${it.enhPlus>0?` <span style="color:var(--gold);">+${it.enhPlus}</span>`:''}${it.qty>1?` <span style="color:var(--gold);">x${it.qty}</span>`:''}</div>
       <div style="font-size:13px;color:var(--ink3);">${it.type}${it.reqLv>1?' · Sv.'+it.reqLv:''}</div>
       ${statsTxt?`<div style="font-size:12px;color:var(--ink3);">${statsTxt}</div>`:''}
       ${guildStorageTab==='shared'?`<div style="font-size:12px;color:var(--ink3);margin-top:auto;">👤 ${it.depositorName}</div>`:''}
-      <button class="buy-btn-sm" style="width:100%;margin-top:${guildStorageTab==='shared'?'4px':'auto'};" onclick="withdrawGuildStorage(${it.id})">${guildStorageTab==='personal'?'📤 Al':'✋ Kap'}</button>
+      <button class="buy-btn-sm" style="width:100%;margin-top:${guildStorageTab==='shared'?'4px':'auto'};" onclick="withdrawGuildStorage(${it.id})">${guildStorageTab==='personal'?'📤 Al':'Eşyayı Al'}</button>
     </div>`;
   }).join('');
   wrap.innerHTML = `
@@ -8069,6 +8070,7 @@ async function depositToGuildStorage(itemId){
     item_material: item.material||null,
     item_class_bonus: item.classBonus||null,
     item_enh_plus: item.enhPlus||0,
+    item_qty: item.qty||1,
   };
   const {error}=await supa.from('guild_storage').insert(payload);
   if(error){ toast('Depoya koyulamadı: '+error.message); return; }
@@ -8100,9 +8102,10 @@ async function withdrawGuildStorage(storageId){
     material: row.item_material||null,
     classBonus: row.item_class_bonus||null,
     enhPlus: Number(row.item_enh_plus)||0,
+    qty: Number(row.item_qty)||1,
   };
   G.inventory.push(invItem);
-  toast(`${invItem.name} envantere alındı!`);
+  toast(`${invItem.name}${invItem.qty>1?' x'+invItem.qty:''} envantere alındı!`);
   renderKarakter();
   if(currentUser) sbSave();
   renderGuildStorage();
