@@ -3894,6 +3894,7 @@ const MARKET_ITEMS=[
   {id:701,name:'Koyun',icon:'🐑',cat:'livestock',grade:'gray', price:80, qty:99,seller:'npc',sellerName:'Çiftçi',type:'Hayvan',reqLv:3,material:null,desc:'Yün ve süt verir. Çiftliğe eklenir.',     stats:{},img:'koyun',classBonus:null,isAnimal:true,animalKey:'koyun'},
   {id:702,name:'İnek', icon:'🐄',cat:'livestock',grade:'green',price:150,qty:99,seller:'npc',sellerName:'Çiftçi',type:'Hayvan',reqLv:5,material:null,desc:'Bol süt verir. Çiftliğe eklenir.',         stats:{},img:'inek',classBonus:null,isAnimal:true,animalKey:'inek'},
   {id:703,name:'Arı Kovanı',icon:'🐝',cat:'livestock',grade:'green',price:200,qty:99,seller:'npc',sellerName:'Çiftçi',type:'Hayvan',reqLv:6,material:null,desc:'Bal üretir. Çiftliğe eklenir.',             stats:{},img:'ari',classBonus:null,isAnimal:true,animalKey:'ari'},
+  {id:704,name:'At',   icon:'🐴',cat:'livestock',grade:'green',price:250,qty:99,seller:'npc',sellerName:'Çiftçi',type:'Hayvan',reqLv:7,material:null,desc:'Beslenirse az süt verir. İleride süvari birliği kurmak için gerekli.',stats:{},img:'at',classBonus:null,isAnimal:true,animalKey:'at'},
 ];
 
 /* ══════════════════════════════════════
@@ -4017,6 +4018,7 @@ const PROD_RECIPES={
     {id:'koyun', name:'Koyun Besle',  icon:'🐑', minLv:3, dur:150, inputs:{arpa:1,saman:2}, outputs:{sut:{base:1},yun:{base:1}}},
     {id:'inek',  name:'İnek Besle',   icon:'🐄', minLv:5, dur:180, inputs:{arpa:1,saman:2}, outputs:{sut:{base:2}}},
     {id:'ari',   name:'Arı Kovanı',   icon:'🍯', minLv:6, dur:120, inputs:{cicek:2},        outputs:{bal:{base:1}}},
+    {id:'at',    name:'At Besle',     icon:'🐴', minLv:7, dur:180, inputs:{arpa:2},         outputs:{sut:{base:1}}},
   ],
   kitchen:[
     {id:'ekmek',           name:'Ekmek Pişir',     icon:'🍞', minLv:1, dur:120, inputs:{bugday_unu:2},                  outputs:{ekmek:{base:1}}},
@@ -4182,7 +4184,11 @@ const G={
   invBonus:0, // envanter genişlemesi (+20'şer, kalıcı)
   companions:[], // birlikler (Aşama 1): [{tid, type, equip:{weapon,armor}}]
   capturedTroops:[], // esir havuzu: [{cid, type, foundAt(ms)}] — 5dk içinde karar verilmezse kaçar
-  animals:{tavuk:1,koyun:1,inek:1,ari:1},
+  animals:{tavuk:0,koyun:0,inek:0,ari:0,at:0}, // bedava hayvan yok — Pazar'dan alınır
+  animalBabies:{},  // yavrular: {civciv:[fedCount,...], kuzu:[...], ...}
+  animalStore:{},   // birikmiş pasif ürün: {tavuk:N(yumurta), koyun:N(yün), ...}
+  animalProdTs:{},  // pasif üretim sayacı (tür → son işlenen server-ms)
+  animalBreedTs:{}, // üreme sayacı (tür → son 24s zarının server-ms'i)
   explored:new Set([21,22,27,28,14,15,20]),
   selectedCell:null,
   prodTimers:[],prodTimerId:1,
@@ -7284,7 +7290,7 @@ async function loadPlayerMarketItems(){
     const stats={};
     Object.entries(row.item_stats||{}).forEach(([k,v])=>{
       if(typeof v==='number'&&isFinite(v)) stats[sani(k)]=v;
-      else if(k==='animalKey'&&['tavuk','koyun','inek','ari'].includes(v)) stats[k]=v;
+      else if(k==='animalKey'&&['tavuk','koyun','inek','ari','at'].includes(v)) stats[k]=v;
       else if(k==='isAnimal') stats[k]=!!v;
     });
     return {
@@ -7681,7 +7687,7 @@ function buyItem(id){
 
   // Hayvan ise G.animals'a ekle
   if(item.isAnimal && item.animalKey){
-    if(!G.animals) G.animals={tavuk:0,koyun:0,inek:0,ari:0};
+    if(!G.animals) G.animals={tavuk:0,koyun:0,inek:0,ari:0,at:0};
     G.animals[item.animalKey]=(G.animals[item.animalKey]||0)+1;
     gainXP(5);
     toast(`${item.name} çiftliğine eklendi! -${item.price}🪙`);
@@ -7839,7 +7845,7 @@ async function buyMarketItem(id){
   
   // Hayvan ise envanter yerine G.animals'a ekle
   if(listing.type==='Hayvan' && listing.stats?.animalKey){
-    if(!G.animals) G.animals={tavuk:0,koyun:0,inek:0,ari:0};
+    if(!G.animals) G.animals={tavuk:0,koyun:0,inek:0,ari:0,at:0};
     G.animals[listing.stats.animalKey]=(G.animals[listing.stats.animalKey]||0)+1;
     gainXP(5);
     toast(`${listing.name} çiftliğine eklendi! -${listing.price}🪙`);
@@ -7898,7 +7904,7 @@ async function withdrawListing(id){
   };
 
   if(listing.type==='Hayvan' && listing.stats?.animalKey){
-    if(!G.animals) G.animals={tavuk:0,koyun:0,inek:0,ari:0};
+    if(!G.animals) G.animals={tavuk:0,koyun:0,inek:0,ari:0,at:0};
     G.animals[listing.stats.animalKey]=(G.animals[listing.stats.animalKey]||0)+1;
   } else {
     G.inventory.push(invItem);
@@ -9363,10 +9369,131 @@ function ranchGetBonus(lv){
 }
 function ranchMaxProd(lv){return 4+lv;}
 
+/* ══════════════════════════════════════
+   HAYVANCILIK — pasif üretim + üreme + yavru büyütme
+   Server saatiyle işler (çevrimdışı da birikir, applyHpRegen gibi).
+   - Pasif üretim: tür başına aralıklı, en fazla 24 saatlik birikim.
+   - Üreme: 2+ yetişkin varsa her 24 saatte %50 şansla 1 yavru.
+   - Yavru: 3 kez beslenince yetişkin olur (cooldown yok).
+══════════════════════════════════════ */
+const ANIMAL_DEFS={
+  tavuk:{name:'Tavuk',      icon:'🐔', img:'tavuk', baby:'civciv', npcPrice:20,  suggested:40},
+  koyun:{name:'Koyun',      icon:'🐑', img:'koyun', baby:'kuzu',   npcPrice:55,  suggested:100},
+  inek: {name:'İnek',       icon:'🐄', img:'inek',  baby:'buzagi', npcPrice:100, suggested:180},
+  ari:  {name:'Arı Kovanı', icon:'🐝', img:'ari',   baby:'ogul',   npcPrice:60,  suggested:220},
+  at:   {name:'At',         icon:'🐴', img:'at',    baby:'tay',    npcPrice:150, suggested:300},
+};
+const BABY_DEFS={
+  civciv:{name:'Civciv', icon:'🐣', img:'civciv', adult:'tavuk', feed:{key:'arpa',qty:1}},
+  kuzu:  {name:'Kuzu',   icon:'🐑', img:'kuzu',   adult:'koyun', feed:{key:'arpa',qty:1}},
+  buzagi:{name:'Buzağı', icon:'🐮', img:'buzagi', adult:'inek',  feed:{key:'arpa',qty:1}},
+  ogul:  {name:'Oğul',   icon:'🐝', img:'ogul',   adult:'ari',   feed:{key:'bal',qty:1}},
+  tay:   {name:'Tay',    icon:'🐴', img:'tay',    adult:'at',    feed:{key:'arpa',qty:1}},
+};
+const ANIMAL_PASSIVE={
+  tavuk:{out:'yumurta', intervalH:8},
+  koyun:{out:'yun',     intervalH:1},
+  inek: {out:'sut',     intervalH:2},
+  ari:  {out:'bal',     intervalH:4},
+  // at: pasif üretimi yok — sadece besleme tarifiyle süt verir
+};
+const ANIMAL_ACCRUE_CAP_H=24; // en fazla 24 saatlik üretim birikir
+const BABY_GROW_FEEDS=3;
+
+function _ensureAnimalState(){
+  if(!G.animals) G.animals={tavuk:0,koyun:0,inek:0,ari:0,at:0};
+  if(!G.animalBabies||typeof G.animalBabies!=='object') G.animalBabies={};
+  if(!G.animalStore||typeof G.animalStore!=='object') G.animalStore={};
+  if(!G.animalProdTs||typeof G.animalProdTs!=='object') G.animalProdTs={};
+  if(!G.animalBreedTs||typeof G.animalBreedTs!=='object') G.animalBreedTs={};
+}
+/* Pasif üretim + üreme sayaçlarını şimdiki server zamanına kadar işlet */
+function accrueAnimals(){
+  _ensureAnimalState();
+  const now=_now();
+  // Pasif üretim
+  Object.entries(ANIMAL_PASSIVE).forEach(([k,def])=>{
+    const count=G.animals[k]||0;
+    if(!G.animalProdTs[k]) G.animalProdTs[k]=now;
+    if(count<1){ G.animalProdTs[k]=now; return; }
+    const interval=def.intervalH*3600e3;
+    const elapsed=Math.min(now-G.animalProdTs[k], ANIMAL_ACCRUE_CAP_H*3600e3);
+    const units=Math.floor(elapsed/interval);
+    if(units>0){
+      const cap=count*Math.floor(ANIMAL_ACCRUE_CAP_H/def.intervalH);
+      G.animalStore[k]=Math.min((G.animalStore[k]||0)+units*count, cap);
+      // Kısmi ilerlemeyi koru: sayaç tam üretim dilimlerine göre ilerler
+      G.animalProdTs[k]=now-(elapsed-units*interval);
+    }
+  });
+  // Üreme: 2+ yetişkin → her 24 saatte %50 şans, 1 yavru
+  const DAY=86400e3;
+  const born=[];
+  Object.entries(ANIMAL_DEFS).forEach(([k,def])=>{
+    const count=G.animals[k]||0;
+    if(!G.animalBreedTs[k]) G.animalBreedTs[k]=now;
+    if(count<2){ G.animalBreedTs[k]=now; return; }
+    const rolls=Math.floor((now-G.animalBreedTs[k])/DAY);
+    if(rolls>0){
+      for(let i=0;i<rolls;i++){
+        if(Math.random()<0.5){
+          if(!Array.isArray(G.animalBabies[def.baby])) G.animalBabies[def.baby]=[];
+          G.animalBabies[def.baby].push(0);
+          born.push(BABY_DEFS[def.baby].name);
+        }
+      }
+      G.animalBreedTs[k]+=rolls*DAY;
+    }
+  });
+  if(born.length){
+    celebrate('🐣','YENİ YAVRU!',born.join(', ')+' doğdu! Çiftliğe bak.','gold');
+    if(currentUser) sbSave();
+  }
+}
+/* Birikmiş pasif ürünü topla */
+function collectAnimalProd(key){
+  accrueAnimals();
+  const def=ANIMAL_PASSIVE[key]; if(!def) return;
+  const amt=G.animalStore[key]||0;
+  if(amt<1){ toast('Henüz birikmiş ürün yok.'); return; }
+  G.prodInv[def.out]=(G.prodInv[def.out]||0)+amt;
+  const fv=(FOOD_VALUE[def.out]||0)*amt;
+  if(fv>0) G.food+=fv;
+  G.animalStore[key]=0;
+  trackAch('harvest');
+  toast(`${ITEM_ICONS[def.out]||'📦'} ${amt}x ${ITEM_LABELS[def.out]||def.out} toplandı!${fv>0?' 🍖 +'+fv+' yemek':''}`);
+  updateHUD();updateInvStrip();renderRanch();
+  if(currentUser) sbSave();
+}
+/* Yavru besle — 3 kez beslenen yavru yetişkin olur (en çok beslenmişten başlar) */
+function feedBaby(babyKey){
+  accrueAnimals();
+  const def=BABY_DEFS[babyKey]; if(!def) return;
+  const babies=G.animalBabies[babyKey];
+  if(!Array.isArray(babies)||!babies.length){ toast('Beslenecek yavru yok.'); return; }
+  if((G.prodInv[def.feed.key]||0)<def.feed.qty){
+    toast(`${ITEM_LABELS[def.feed.key]||def.feed.key} yok! (${def.feed.qty} gerekli)`);
+    return;
+  }
+  G.prodInv[def.feed.key]-=def.feed.qty;
+  let bi=0; babies.forEach((f,i)=>{ if(f>babies[bi]) bi=i; });
+  babies[bi]++;
+  if(babies[bi]>=BABY_GROW_FEEDS){
+    babies.splice(bi,1);
+    G.animals[def.adult]=(G.animals[def.adult]||0)+1;
+    celebrate('🎉','YETİŞKİN OLDU!',`${def.name} büyüdü → ${ANIMAL_DEFS[def.adult].name} sayısı: ${G.animals[def.adult]}`,'gold');
+  } else {
+    toast(`${def.icon} ${def.name} beslendi (${babies[bi]}/${BABY_GROW_FEEDS})`);
+  }
+  updateInvStrip();renderRanch();
+  if(currentUser) sbSave();
+}
+
 function renderRanch(){
   const el=document.getElementById('prod-content');
   const bld=PROD_BUILDINGS.ranch;
   const lv=bld.level;
+  accrueAnimals();
   const fmtT=s=>{const m=Math.floor(s/60),sc=s%60;return `${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;};
 
   if(lv===0){
@@ -9423,16 +9550,18 @@ function renderRanch(){
   let recipesHtml=`<div class="sec" style="margin-top:0;">TARİFLER</div>`;
   recipes.forEach(r=>{
     const locked=r.minLv>lv;
-    const full=!locked&&usedSlots>=maxProd;
-    const canAfford=!locked&&!full&&Object.entries(r.inputs).every(([k,v])=>(G.prodInv[k]||0)>=v);
+    const ac=(G.animals||{})[r.id]||0;
+    const noAnimal=!locked&&ac<1;
+    const full=!locked&&!noAnimal&&usedSlots>=maxProd;
+    const canAfford=!locked&&!noAnimal&&!full&&Object.entries(r.inputs).every(([k,v])=>(G.prodInv[k]||0)>=v);
     const inChips=Object.entries(r.inputs).map(([k,v])=>{
       const has=(G.prodInv[k]||0)>=v;
       return `<span class="mat-chip${!has?' missing':''}"><span style="font-size:10px;">${ITEM_ICONS[k]||'📦'}</span>${ITEM_LABELS[k]||k} ×${v}</span>`;
     }).join('');
-    const ac=Math.max(1,(G.animals||{})[r.id]||1);
-    const outChips=Object.entries(r.outputs).map(([k,o])=>`<span class="mat-chip output"><span style="font-size:10px;">${ITEM_ICONS[k]||'📦'}</span>${ITEM_LABELS[k]||k} ×${o.base*ac} <span style="font-size:7px;color:var(--g-purple);">%${Math.round(chance*100)} ×${mult}✨</span></span>`).join('');
+    const outChips=Object.entries(r.outputs).map(([k,o])=>`<span class="mat-chip output"><span style="font-size:10px;">${ITEM_ICONS[k]||'📦'}</span>${ITEM_LABELS[k]||k} ×${o.base*Math.max(1,ac)} <span style="font-size:7px;color:var(--g-purple);">%${Math.round(chance*100)} ×${mult}✨</span></span>`).join('');
     let btnLabel='▶ Başlat',btnDisabled=false;
     if(locked){btnDisabled=true;btnLabel=`🔒 Sv.${r.minLv}`;}
+    else if(noAnimal){btnDisabled=true;btnLabel=`🐾 ${ANIMAL_DEFS[r.id]?.name||'Hayvan'} yok — Pazar'dan al`;}
     else if(full){btnDisabled=true;btnLabel='Kapasite Dolu';}
     else if(!canAfford){btnDisabled=true;btnLabel='Malzeme Eksik';}
     recipesHtml+=`<div class="recipe" style="${locked?'opacity:.45;':''}">
@@ -9447,27 +9576,44 @@ function renderRanch(){
     </div>`;
   });
 
-  // Hayvan sayıları paneli
-  const animals=G.animals||{tavuk:1,koyun:1,inek:1,ari:1};
-  const animalDefs=[
-    {key:'tavuk',icon:'🐔',name:'Tavuk',      npcPrice:20,  img:'tavuk'},
-    {key:'koyun',icon:'🐑',name:'Koyun',      npcPrice:55,  img:'koyun'},
-    {key:'inek', icon:'🐄',name:'İnek',       npcPrice:100, img:'inek'},
-    {key:'ari',  icon:'🐝',name:'Arı Kovanı', npcPrice:60,  img:'ari'},
-  ];
+  // Hayvan kartları: yetişkin sayısı + birikmiş pasif ürün + yavrular
+  const animals=G.animals||{};
   const animalPanel=`<div class="sec" style="margin-top:0;">HAYVANLAR</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-  ${animalDefs.map(a=>{const cnt=animals[a.key]||1;return `<div class="card" style="text-align:center;padding:10px 6px;">
-    <img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/${a.img}.webp" style="width:100%;height:90px;object-fit:contain;border-radius:6px;margin-bottom:6px;" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+  ${Object.entries(ANIMAL_DEFS).map(([key,a])=>{
+    const cnt=animals[key]||0;
+    const passive=ANIMAL_PASSIVE[key];
+    const stored=G.animalStore[key]||0;
+    const babies=G.animalBabies[a.baby]||[];
+    const bDef=BABY_DEFS[a.baby];
+    const maxFed=babies.length?Math.max(...babies):0;
+    const prodLine=passive
+      ? (cnt>0
+        ? `<div style="font-size:10px;color:${stored>0?'var(--g-green)':'var(--ink3)'};margin:2px 0;">${ITEM_ICONS[passive.out]||'📦'} Birikmiş: <b>${stored}</b> <span style="color:var(--ink3);">(${passive.intervalH} saatte 1/${a.name.split(' ')[0].toLowerCase()})</span></div>`
+        : `<div style="font-size:10px;color:var(--ink3);margin:2px 0;">${passive.intervalH} saatte 1 ${ITEM_LABELS[passive.out]||passive.out} üretir</div>`)
+      : `<div style="font-size:10px;color:var(--ink3);margin:2px 0;">Pasif üretimi yok — beslenirse süt verir</div>`;
+    const babyLine=babies.length
+      ? `<div style="display:flex;align-items:center;justify-content:center;gap:4px;margin:3px 0;">
+          <img src="${IMG_BASE}${bDef.img}.webp" style="width:22px;height:22px;object-fit:contain;" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"/><span style="display:none;font-size:14px;">${bDef.icon}</span>
+          <span style="font-size:10px;color:var(--gold2);">${bDef.name} ×${babies.length} <span style="color:var(--ink3);">(🍼 ${maxFed}/${BABY_GROW_FEEDS})</span></span>
+        </div>
+        <button class="btn btn-xs" style="width:100%;margin-bottom:3px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;" onclick="feedBaby('${a.baby}')">🍼 Besle (${bDef.feed.qty} ${ITEM_LABELS[bDef.feed.key]})</button>`
+      : '';
+    return `<div class="card" style="text-align:center;padding:10px 6px;">
+    <img src="${IMG_BASE}${a.img}.webp" style="width:100%;height:90px;object-fit:contain;border-radius:6px;margin-bottom:6px;" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
     <div style="font-size:36px;display:none;">${a.icon}</div>
     <div style="font-family:var(--font-head);font-size:10px;color:var(--perg);">${a.name}</div>
     <div style="font-size:14px;font-family:var(--font-head);color:var(--gold);margin:3px 0;">${cnt}</div>
+    ${prodLine}
+    ${passive&&stored>0?`<button class="btn btn-xs" style="width:100%;margin-bottom:3px;" onclick="collectAnimalProd('${key}')">🎁 Topla (${stored})</button>`:''}
+    ${babyLine}
     <div style="display:flex;gap:3px;justify-content:center;">
-      <button class="btn btn-xs" style="font-size:8px;padding:2px 4px;" onclick="sellAnimalNpc('${a.key}',${a.npcPrice})" ${cnt<=1?'disabled':''}>NPC ${a.npcPrice}🪙</button>
-      <button class="btn btn-xs btn-ghost" style="font-size:8px;padding:2px 4px;" onclick="openSellAnimalModal('${a.key}')" ${cnt<=1?'disabled':''}>Pazar</button>
+      <button class="btn btn-xs" style="font-size:8px;padding:2px 4px;" onclick="sellAnimalNpc('${key}',${a.npcPrice})" ${cnt<1?'disabled':''}>NPC ${a.npcPrice}🪙</button>
+      <button class="btn btn-xs btn-ghost" style="font-size:8px;padding:2px 4px;" onclick="openSellAnimalModal('${key}')" ${cnt<1?'disabled':''}>Pazar</button>
     </div>
   </div>`;}).join('')}
-  </div>`;
+  </div>
+  <div style="font-size:10px;color:var(--ink3);text-align:center;margin-bottom:10px;">Birikim en fazla 24 saatliktir · Bir türden 2+ hayvanın varsa her 24 saatte %50 şansla yavru doğar</div>`;
 
   let rightHtml=animalPanel+`<div class="sec" style="margin-top:4px;">AKTİF ÜRETİM (${usedSlots}/${maxProd})</div>`;
   if(activeTimers.length){
@@ -9514,10 +9660,11 @@ async function startRanchProd(rId){
   const maxProd=ranchMaxProd(lv);
   const usedSlots=G.prodTimers.filter(x=>x.building==='ranch').length;
   if(usedSlots>=maxProd){toast('Kapasite dolu! Önce mevcut ürünleri topla.');return;}
+  const animalCount=(G.animals||{})[rId]||0;
+  if(animalCount<1){toast(`${ANIMAL_DEFS[rId]?.name||'Bu hayvan'} yok! Önce Pazar'dan satın al.`);return;}
   if(!Object.entries(r.inputs).every(([k,v])=>(G.prodInv[k]||0)>=v)){toast('Malzeme eksik!');return;}
   Object.entries(r.inputs).forEach(([k,v])=>{G.prodInv[k]-=v;});
   const {chance,mult}=ranchGetBonus(lv);
-  const animalCount=Math.max(1,(G.animals||{})[rId]||1);
   const outputs={};
   Object.entries(r.outputs).forEach(([k,o])=>{
     const bonus=Math.random()<chance;
@@ -10014,18 +10161,8 @@ async function collectProd(id){
     const fv=t.building==='kitchen'?(KITCHEN_FOOD_VALUES[k]||0)*v.amount:(FOOD_VALUE[k]||0)*v.amount;
     if(fv>0){G.food+=fv;foodGained+=fv;}
   });
-  // Çiftlik: %5 yavru doğumu
-  if(t.building==='ranch' && t.recipe){
-    if(!G.animals) G.animals={tavuk:1,koyun:1,inek:1,ari:1};
-    if(Math.random()<0.05){
-      G.animals[t.recipe]=(G.animals[t.recipe]||1)+1;
-      const aIcon={tavuk:'🐔',koyun:'🐑',inek:'🐄',ari:'🐝'}[t.recipe]||'🐾';
-      const aName={tavuk:'Tavuk',koyun:'Koyun',inek:'İnek',ari:'Arı Kovanı'}[t.recipe]||t.recipe;
-      const el=document.createElement('div');el.className='bonus-flash';
-      el.innerHTML=`<span style="font-size:32px;display:block;margin-bottom:4px;">${aIcon}</span><div style="font-family:var(--font-head);font-size:13px;color:var(--g-green);">YENİ YAVRU!</div><div style="font-size:11px;color:var(--perg2);margin-top:3px;">${aName} sayısı: ${G.animals[t.recipe]}</div>`;
-      document.body.appendChild(el);setTimeout(()=>el.remove(),2500);
-    }
-  }
+  // (Eski %5 besleme-yavrusu mekaniği kaldırıldı — üreme artık 24 saatlik
+  //  zamanlayıcıyla accrueAnimals() içinde işliyor)
   // Supabase'den sil
   if(currentUser&&t.dbId){
     await supa.from('production_timers').delete().eq('id',t.dbId);
@@ -10045,22 +10182,24 @@ async function collectProd(id){
 }
 
 function sellAnimalNpc(key,price){
-  const animals=G.animals||{tavuk:1,koyun:1,inek:1,ari:1};
-  if((animals[key]||1)<=1){toast('En az 1 hayvan kalmalı!');return;}
-  const name={tavuk:'Tavuk',koyun:'Koyun',inek:'İnek',ari:'Arı Kovanı'}[key]||key;
+  _ensureAnimalState();
+  const animals=G.animals;
+  if((animals[key]||0)<1){toast('Satacak hayvanın yok!');return;}
+  const name=ANIMAL_DEFS[key]?.name||key;
   animals[key]--;G.gold+=price;
   toast(`${name} NPC'ye ${price}🪙'a satıldı!`);
   updateHUD();renderRanch();if(currentUser) sbSave();
 }
 
 function openSellAnimalModal(key){
-  const animals=G.animals||{tavuk:1,koyun:1,inek:1,ari:1};
-  const cnt=animals[key]||1;
-  if(cnt<=1){toast('En az 1 hayvan kalmalı!');return;}
+  _ensureAnimalState();
+  const animals=G.animals;
+  const cnt=animals[key]||0;
+  if(cnt<1){toast('Satacak hayvanın yok!');return;}
   if(!currentUser){toast('Satış için giriş yapmalısın!');return;}
-  const icon={tavuk:'🐔',koyun:'🐑',inek:'🐄',ari:'🐝'}[key]||'🐾';
-  const name={tavuk:'Tavuk',koyun:'Koyun',inek:'İnek',ari:'Arı Kovanı'}[key]||key;
-  const suggested={tavuk:40,koyun:100,inek:180,ari:220}[key]||50;
+  const icon=ANIMAL_DEFS[key]?.icon||'🐾';
+  const name=ANIMAL_DEFS[key]?.name||key;
+  const suggested=ANIMAL_DEFS[key]?.suggested||50;
   showGModal(`
     <div style="text-align:center;margin-bottom:12px;">
       <div style="font-size:36px;">${icon}</div>
@@ -10073,19 +10212,20 @@ function openSellAnimalModal(key){
 }
 
 async function confirmSellAnimal(key){
-  const animals=G.animals||{tavuk:1,koyun:1,inek:1,ari:1};
-  if((animals[key]||1)<=1){toast('En az 1 hayvan kalmalı!');closeGModal();return;}
+  _ensureAnimalState();
+  const animals=G.animals;
+  if((animals[key]||0)<1){toast('Satacak hayvanın yok!');closeGModal();return;}
   const price=parseInt(document.getElementById('sell-animal-price')?.value)||1;
   if(price<1){toast('Geçersiz fiyat!');return;}
-  const icon={tavuk:'🐔',koyun:'🐑',inek:'🐄',ari:'🐝'}[key]||'🐾';
-  const name={tavuk:'Tavuk',koyun:'Koyun',inek:'İnek',ari:'Arı Kovanı'}[key]||key;
+  const icon=ANIMAL_DEFS[key]?.icon||'🐾';
+  const name=ANIMAL_DEFS[key]?.name||key;
   animals[key]--;
   closeGModal();renderRanch();if(currentUser) sbSave();
   const {data:newListing,error}=await supa.from('marketplace').insert({
     seller_id:currentUser.id,seller_name:G.heroName||G.username,
     item_name:name,item_icon:icon,item_type:'Hayvan',item_grade:'gray',
     item_stats:{isAnimal:true,animalKey:key},item_desc:`${name} — çiftliğe eklenir.`,
-    item_img:null,item_req_lv:1,item_material:null,item_class_bonus:null,item_enh_plus:0,
+    item_img:ANIMAL_DEFS[key]?.img||null,item_req_lv:1,item_material:null,item_class_bonus:null,item_enh_plus:0,
     price,created_at:new Date().toISOString(),
   }).select().single();
   if(error){animals[key]++;renderRanch();toast('Listeleme hatası: '+error.message);return;}
@@ -10664,7 +10804,16 @@ async function sbLoadProfile() {
   // Oyuncu envanteri ve kuşanılan eşyalar
   if(p.inventory && Array.isArray(p.inventory)) G.inventory = p.inventory;
   if(p.equipped  && typeof p.equipped==='object') G.equipped  = {...G.equipped, ...p.equipped};
-  if(p.animals   && typeof p.animals==='object')  G.animals   = {...G.animals,  ...p.animals};
+  if(p.animals   && typeof p.animals==='object'){
+    // Hayvancılık durumu tek jsonb'de: _ önekli anahtarlar alt-sistemler, kalanı yetişkin sayıları
+    const a={...p.animals};
+    G.animalBabies = (a._babies  && typeof a._babies ==='object') ? a._babies  : {};
+    G.animalStore  = (a._store   && typeof a._store  ==='object') ? a._store   : {};
+    G.animalProdTs = (a._prodTs  && typeof a._prodTs ==='object') ? a._prodTs  : {};
+    G.animalBreedTs= (a._breedTs && typeof a._breedTs==='object') ? a._breedTs : {};
+    delete a._babies; delete a._store; delete a._prodTs; delete a._breedTs;
+    G.animals = {...G.animals, ...a};
+  }
   // Eski eşyalarda cat eksikse, isim/tür eşleşmesiyle geri doldur (zırh giydirme bug fix)
   let catFixed=false;
   const inferCat=(item)=>{
@@ -10736,6 +10885,9 @@ async function sbLoadProfile() {
   // Çevrimdışı can yenilenmesi — son kayıttan bu yana geçen süre kadar dolar
   G.lastHpAt = p.last_hp_at ? new Date(p.last_hp_at).getTime() : _now();
   applyHpRegen();
+
+  // Çevrimdışı hayvancılık: pasif üretim birikimi + üreme zarları
+  accrueAnimals();
 
   // Başarım sayaçları
   if(p.ach_counters && typeof p.ach_counters==='object') G.ach={...p.ach_counters};
@@ -10817,7 +10969,7 @@ async function _sbSaveNow() {
       companions: G.companions,
       captured_troops: G.capturedTroops,
       explored_json: [...G.explored],
-      animals:      G.animals,
+      animals:      {...G.animals, _babies:G.animalBabies||{}, _store:G.animalStore||{}, _prodTs:G.animalProdTs||{}, _breedTs:G.animalBreedTs||{}},
     };
     let { error: e1 } = await supa.from('profiles').update(profilePayload).eq('id', currentUser.id);
     // Güvenlik ağı: bir sütun veritabanında yoksa (SQL henüz çalıştırılmadıysa),
