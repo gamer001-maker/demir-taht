@@ -778,8 +778,22 @@ html,body{
 .gd-vault{border:1px solid #4a3a6a;border-radius:12px;padding:14px;background:linear-gradient(180deg,#1c1428,#140e1e);box-shadow:inset 0 1px 0 #ffffff08,0 2px 10px #00000050;margin-bottom:10px;}
 .gd-vault-amt{font-family:var(--font-head);font-size:clamp(20px,2.4vw,28px);color:var(--g-green);text-align:center;text-shadow:0 0 12px #3a6a2a60;margin-bottom:2px;}
 .gd-vault-lbl{font-size:clamp(9px,.9vw,11px);color:#9a8ab0;text-align:center;margin-bottom:10px;letter-spacing:1px;}
-.gd-tavern-head{font-family:var(--font-head);font-size:clamp(13px,1.4vw,16px);color:var(--gold2);letter-spacing:2px;text-align:center;padding:10px;border:1px solid #4a3a6a;border-radius:10px;background:radial-gradient(ellipse at 50% 0%,#2a1a3a,#161020);margin-bottom:10px;box-shadow:inset 0 0 16px #00000070;}
+.gd-tavern-head{font-family:var(--font-head);font-size:clamp(13px,1.4vw,16px);color:var(--gold2);letter-spacing:2px;text-align:center;padding:10px;border:1px solid #4a3a6a;border-radius:10px;background:radial-gradient(ellipse at 50% 0%,rgba(42,26,58,.6),rgba(22,16,32,.6));backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);margin-bottom:10px;box-shadow:inset 0 0 16px #00000070;}
 .gd-tavern-head small{display:block;font-family:var(--font-body);font-size:clamp(8px,.9vw,10px);color:#9a8ab0;font-style:italic;letter-spacing:0;margin-top:2px;}
+
+/* ── Lonca sekme arkaplan görselleri (Taverna/Depo/Üyeler) ──
+   .gd-bgpanel: konumu relative, yüksekliği içeriğe göre şekillenir.
+   İçindeki img+shade absolute (inset:0) olduğu için akışa girmez —
+   panel'in boyu .gd-bgpanel-content'in doğal yüksekliğinden gelir,
+   görsel de o kutuyu "cover" ile tam kaplar (üstte kırpılmadan). */
+.gd-bgpanel{position:relative;border-radius:12px;overflow:hidden;box-shadow:0 4px 18px #00000060;}
+.gd-bgpanel-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;z-index:0;}
+.gd-bgpanel-shade{position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,rgba(10,7,15,.5) 0%,rgba(10,7,15,.74) 100%);}
+.gd-bgpanel-content{position:relative;z-index:1;padding:12px;min-height:360px;}
+/* Geniş kartlar (üye/depo eşyası) — üstteki görsel görünsün diye hafif saydam.
+   .listing-card/.member-card Pazar'da da kullanıldığından ONLARA dokunulmaz;
+   bu ek sınıf sadece lonca ekranlarında eklenir. */
+.listing-card.gd-card-t,.member-card.gd-card-t{background:rgba(38,28,18,.62);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}
 
 /* ── PROFİL SIRALAMA PANOSU ── */
 .rank-row{display:flex;align-items:center;gap:10px;padding:10px 13px;background:linear-gradient(180deg,var(--panel2),var(--panel3));border:1px solid var(--border2);border-radius:9px;margin-bottom:6px;cursor:pointer;transition:border-color .15s,box-shadow .15s;box-shadow:inset 0 1px 0 #ffffff06;}
@@ -8399,7 +8413,7 @@ async function treasuryAction(type){
 /* ══════════════════════════════════════
    LONCA DEPOSU — tek tablo (guild_storage), owner_id ile ayrılır:
    owner_id = NULL   → Ortak Depo (loncadaki herkes alabilir)
-   owner_id = kişi   → Kişisel Kasa (sadece o kişi alabilir, kiralık kasa mantığı)
+   owner_id = kişi   → Kişisel Depo (sadece o kişi alabilir, kiralık kasa mantığı)
    Çekme işlemi DELETE...RETURNING ile atomik yapılır — iki kişi aynı
    ortak eşyayı aynı anda almaya çalışırsa, sadece biri başarılı olur.
 ══════════════════════════════════════ */
@@ -8456,7 +8470,7 @@ function paintGuildStorage(){
       ? `<img src="${IMG_BASE}${it.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:50px;height:50px;object-fit:contain;"/><span style="display:none;font-size:30px;">${it.icon}</span>`
       : `<span style="font-size:30px;">${it.icon}</span>`;
     const statsTxt=Object.entries(it.stats||{}).slice(0,3).map(([k,v])=>`+${v} ${STAT_LABELS[k]||k}`).join(' · ');
-    return `<div class="listing-card ${it.grade}">
+    return `<div class="listing-card gd-card-t ${it.grade}">
       <div class="item-icon ${it.grade}" style="margin-bottom:2px;">${iconHtml}</div>
       <div class="item-name ${it.grade}" style="font-family:var(--font-head);font-size:16px;line-height:1.3;word-break:break-word;">${it.name}${it.enhPlus>0?` <span style="color:var(--gold);">+${it.enhPlus}</span>`:''}${it.qty>1?` <span style="color:var(--gold);">x${it.qty}</span>`:''}</div>
       <div style="font-size:13px;color:var(--ink3);">${it.type}${it.reqLv>1?' · Sv.'+it.reqLv:''}</div>
@@ -8465,24 +8479,31 @@ function paintGuildStorage(){
       <button class="buy-btn-sm" style="width:100%;margin-top:${guildStorageTab==='shared'?'4px':'auto'};" onclick="withdrawGuildStorage(${it.id})">${guildStorageTab==='personal'?'📤 Al':'Eşyayı Al'}</button>
     </div>`;
   }).join('');
+  const bgImg = guildStorageTab==='personal' ? 'kisiseldepo' : 'ortakdepo';
   wrap.innerHTML = `
     <div style="display:flex;gap:6px;margin-bottom:10px;">
-      <button class="btn btn-sm ${guildStorageTab==='personal'?'':'btn-ghost'}" style="flex:1;" onclick="setGuildStorageTab('personal')">🔒 Kişisel Kasam</button>
+      <button class="btn btn-sm ${guildStorageTab==='personal'?'':'btn-ghost'}" style="flex:1;" onclick="setGuildStorageTab('personal')">🔒 Kişisel Depo</button>
       <button class="btn btn-sm ${guildStorageTab==='shared'?'':'btn-ghost'}" style="flex:1;" onclick="setGuildStorageTab('shared')">🌐 Ortak Depo</button>
     </div>
-    <div style="font-size:11px;color:var(--ink3);margin-bottom:8px;text-align:center;">
-      ${guildStorageTab==='personal'
-        ? 'Buraya koyduğun eşyaları sadece sen alabilirsin — kiralık kasa gibi.'
-        : 'Buraya koyulan eşyayı loncadaki herkes alabilir — ilk gelen alır.'}
-    </div>
-    <div class="row-between" style="margin-bottom:8px;">
-      <span style="font-size:11px;color:var(--gold2);font-family:var(--font-head);">${list.length}/${cap}</span>
-      <div style="display:flex;gap:5px;">
-        <button class="btn btn-xs btn-ghost" onclick="renderGuildStorage()">🔄 Yenile</button>
-        <button class="btn btn-xs" onclick="openGuildStorageDepositPicker()">📥 Eşya Koy</button>
+    <div class="gd-bgpanel">
+      <img class="gd-bgpanel-img" src="${IMG_BASE}${bgImg}.webp" onerror="this.style.display='none'"/>
+      <div class="gd-bgpanel-shade"></div>
+      <div class="gd-bgpanel-content">
+        <div style="font-size:11px;color:var(--ink3);margin-bottom:8px;text-align:center;">
+          ${guildStorageTab==='personal'
+            ? 'Buraya koyduğun eşyaları sadece sen alabilirsin — kiralık kasa gibi.'
+            : 'Buraya koyulan eşyayı loncadaki herkes alabilir — ilk gelen alır.'}
+        </div>
+        <div class="row-between" style="margin-bottom:8px;">
+          <span style="font-size:11px;color:var(--gold2);font-family:var(--font-head);">${list.length}/${cap}</span>
+          <div style="display:flex;gap:5px;">
+            <button class="btn btn-xs btn-ghost" onclick="renderGuildStorage()">🔄 Yenile</button>
+            <button class="btn btn-xs" onclick="openGuildStorageDepositPicker()">📥 Eşya Koy</button>
+          </div>
+        </div>
+        ${list.length?`<div class="market-grid">${cards}</div>`:`<div style="text-align:center;padding:24px;color:var(--ink3);font-size:12px;">Depo boş.</div>`}
       </div>
     </div>
-    ${list.length?`<div class="market-grid">${cards}</div>`:`<div style="text-align:center;padding:24px;color:var(--ink3);font-size:12px;">Depo boş.</div>`}
   `;
 }
 function openGuildStorageDepositPicker(){
@@ -8600,7 +8621,7 @@ async function sbLoadGuildMembers(){
     const prof=profMap[m.profile_id]||{};
     const displayName = sani(prof.hero_name || prof.username || '(İsimsiz)');
     const cls=CLASSES.find(c=>c.id===prof.class_id);
-    return `<div class="member-card">
+    return `<div class="member-card gd-card-t">
       <div class="m-av">${cls?.icon||'⚔'}</div>
       <div style="flex:1;">
         <div style="font-family:var(--font-head);font-size:12px;font-weight:600;color:var(--perg);">${displayName}${m.profile_id===currentUser?.id?' <span style="font-size:9px;color:var(--gold);">(Sen)</span>':''}</div>
@@ -8612,10 +8633,16 @@ async function sbLoadGuildMembers(){
   const leaders  = members.filter(m=>m.role==='leader');
   const officers = members.filter(m=>m.role==='officer');
   const mems     = members.filter(m=>m.role==='member');
-  document.getElementById('guild-content').innerHTML=
+  const rows =
     (leaders.length  ? `<div class="sec" style="margin-top:0;">Lider</div>${leaders.map(mc).join('')}`  : '')
     +(officers.length? `<div class="sec">Subaylar</div>${officers.map(mc).join('')}` : '')
     +(mems.length    ? `<div class="sec">Üyeler</div>${mems.map(mc).join('')}`       : '');
+  document.getElementById('guild-content').innerHTML=`
+    <div class="gd-bgpanel">
+      <img class="gd-bgpanel-img" src="${IMG_BASE}uyeler.webp" onerror="this.style.display='none'"/>
+      <div class="gd-bgpanel-shade"></div>
+      <div class="gd-bgpanel-content">${rows}</div>
+    </div>`;
 }
 /* ══════════════════════════════════════
    LONCA BOSS SAVAŞ SİSTEMİ v3
@@ -9300,11 +9327,17 @@ async function fetchMyRanks(){
 function renderGuildChat(){
   if(!G.guildId){document.getElementById('guild-content').innerHTML=`<div style="text-align:center;padding:30px;font-size:13px;color:var(--ink3);">Tavernaya girmek için önce bir loncaya katıl.</div>`;return;}
   document.getElementById('guild-content').innerHTML=`
-    <div class="gd-tavern-head">🍺 TAVERNA<small>ocak çıtırdıyor, yoldaşlar masada — söz sende</small></div>
-    <div id="chat-msgs" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;min-height:200px;"></div>
-    <div style="display:flex;gap:6px;">
-      <input class="input-field" style="flex:1;" id="chat-inp" placeholder="Tavernada söz al..." onkeydown="if(event.key==='Enter') gSend()"/>
-      <button class="btn btn-sm" onclick="gSend()">➤</button>
+    <div class="gd-bgpanel">
+      <img class="gd-bgpanel-img" src="${IMG_BASE}taverna.webp" onerror="this.style.display='none'"/>
+      <div class="gd-bgpanel-shade"></div>
+      <div class="gd-bgpanel-content">
+        <div class="gd-tavern-head">🍺 TAVERNA<small>ocak çıtırdıyor, yoldaşlar masada — söz sende</small></div>
+        <div id="chat-msgs" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;min-height:200px;"></div>
+        <div style="display:flex;gap:6px;">
+          <input class="input-field" style="flex:1;" id="chat-inp" placeholder="Tavernada söz al..." onkeydown="if(event.key==='Enter') gSend()"/>
+          <button class="btn btn-sm" onclick="gSend()">➤</button>
+        </div>
+      </div>
     </div>`;
   sbLoadChatHistory();sbSubscribeChat();
 }
