@@ -1023,6 +1023,36 @@ html,body{
 .buy-btn-sm{background:linear-gradient(180deg,#3a2a18,#221608);border:1px solid var(--border2);color:var(--gold);font-family:var(--font-head);font-size:16px;padding:5px 10px;border-radius:3px;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .buy-btn-sm:hover{background:linear-gradient(180deg,#4a3828,#2e1e0c);border-color:var(--gold);}
 
+/* ── Kale haritası (masaüstü görsel görünüm) ── */
+#castle-map-view{display:none;}
+@media(min-width:900px){
+  #castle-list-view{display:none;}
+  #castle-map-view{display:block;}
+}
+#castle-map-scene{
+  position:relative;width:100%;aspect-ratio:2400/1792;
+  background:url('https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/kalearkaplan.webp') center/cover no-repeat,#1a2008;
+  border-radius:12px;border:1px solid var(--border2);overflow:hidden;
+  box-shadow:inset 0 0 60px #00000070,0 4px 16px #00000060;
+}
+.cmap-spot{
+  position:absolute;transform:translate(-50%,-50%);
+  cursor:pointer;text-align:center;
+  transition:filter .15s;z-index:2;
+}
+.cmap-spot:hover{filter:brightness(1.3) drop-shadow(0 0 14px #d4af37cc);z-index:5;}
+.cmap-spot img{width:100%;height:auto;display:block;pointer-events:none;}
+.cmap-spot.unbuilt{filter:grayscale(.9) brightness(.55);}
+.cmap-spot.unbuilt:hover{filter:grayscale(.5) brightness(.85) drop-shadow(0 0 12px #d4af3788);}
+.cmap-lbl{
+  position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
+  white-space:nowrap;font-family:var(--font-head);font-size:12px;
+  background:rgba(10,7,3,0.85);border:1px solid var(--border2);border-radius:5px;
+  padding:2px 8px;color:var(--perg);pointer-events:none;
+}
+.cmap-lbl b{color:var(--gold);}
+#castle-map-extras{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px;}
+
 /* ── Birlik kartları (Halk sekmesi) ── */
 .troop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;align-items:stretch;margin-bottom:8px;}
 .troop-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:7px;}
@@ -1783,13 +1813,21 @@ html,body{
           <div style="font-family:var(--font-head);font-size:clamp(9px,1.1vw,14px);color:var(--gold);letter-spacing:1px;margin-bottom:9px;">KALE İSTATİSTİKLERİ</div>
           <div id="castle-bars-wrap"></div>
         </div>
-        <div class="card">
-          <div style="font-family:var(--font-head);font-size:clamp(9px,1.1vw,14px);color:var(--gold);letter-spacing:1px;margin-bottom:8px;">BİNALAR</div>
-          <div id="castle-buildings-wrap"></div>
+        <!-- Masaüstü: görsel kale haritası (≥900px) -->
+        <div id="castle-map-view">
+          <div id="castle-map-scene"></div>
+          <div id="castle-map-extras"></div>
         </div>
-        <div class="card">
-          <div style="font-family:var(--font-head);font-size:clamp(9px,1.1vw,14px);color:var(--gold);letter-spacing:1px;margin-bottom:8px;">🏭 ÜRETİM BİNALARI</div>
-          <div id="castle-prod-wrap"></div>
+        <!-- Mobil / dar ekran: klasik liste -->
+        <div id="castle-list-view">
+          <div class="card">
+            <div style="font-family:var(--font-head);font-size:clamp(9px,1.1vw,14px);color:var(--gold);letter-spacing:1px;margin-bottom:8px;">BİNALAR</div>
+            <div id="castle-buildings-wrap"></div>
+          </div>
+          <div class="card">
+            <div style="font-family:var(--font-head);font-size:clamp(9px,1.1vw,14px);color:var(--gold);letter-spacing:1px;margin-bottom:8px;">🏭 ÜRETİM BİNALARI</div>
+            <div id="castle-prod-wrap"></div>
+          </div>
         </div>
       </div>
       <!-- GELİŞTİRME -->
@@ -5334,6 +5372,124 @@ function renderKale(){
       return `<div style="margin-bottom:10px;padding:8px;background:var(--panel2);border-radius:8px;border:1px solid var(--border);"><div class="row-between" style="margin-bottom:${mx?'0':'5px'};"><span>${bld.icon}</span><span style="font-family:var(--font-head);font-size:clamp(11px,1.2vw,15px);color:var(--perg2);flex:1;margin:0 7px;">${bld.name} <span style="color:var(--ink3);">Sv.${lv}</span></span><button class="btn btn-xs" onclick="upgProd('${key}',${uc})" ${canUpg?'':'disabled'}>${mx?'Max':uc+'🪙'}</button></div>${mx?'':`<div style="display:flex;flex-wrap:wrap;gap:2px;">${matCostHTML(matCost)}</div>`}</div>`;
     }).join('');
   }
+  renderCastleMap();
+}
+
+/* ══════════════════════════════════════
+   KALE HARİTASI (masaüstü görsel görünüm)
+   Koordinatlar arka planın (2400×1792) yüzdesi — her ekranda aynı yerde durur.
+   x/y = bina merkezinin konumu, w = genişlik (%). Konum modu ile ayarlanır.
+══════════════════════════════════════ */
+const CASTLE_MAP_SPOTS=[
+  // Kale binaları (upgBld ile yükselir)
+  {key:'kisla',   kind:'castle', bkey:'barracks', img:'bina_kisla1',   x:47,   y:22, w:24},
+  {key:'kuleler', kind:'castle', bkey:'towers',   img:'bina_kuleler1', x:6.5,  y:46, w:8},
+  {key:'kuleler2',kind:'castle', bkey:'towers',   img:'bina_kuleler1', x:93.5, y:43, w:8, noLabel:true},
+  {key:'pazar',   kind:'castle', bkey:'market',   img:'bina_pazar1',   x:30,   y:64, w:19},
+  // Üretim binaları (upgProd ile yükselir + üretim sekmesine gider)
+  {key:'ciftlik', kind:'prod',   bkey:'ranch',    img:'bina_ciftlik1', x:68,   y:46, w:30},
+  {key:'insaa',   kind:'prod',   bkey:'insaa',    img:'bina_insaa1',   x:33,   y:41, w:17},
+  {key:'asevi',   kind:'prod',   bkey:'kitchen',  img:'bina_asevi1',   x:23,   y:49, w:13},
+];
+// Haritada görseli olmayan yapılar — harita altında küçük rozetler olarak erişilir
+const CASTLE_MAP_EXTRAS=[
+  {kind:'castle', bkey:'walls',  icon:'🧱', name:'Surlar'},
+  {kind:'castle', bkey:'farm',   icon:'🌾', name:'Kale Çiftliği'},
+  {kind:'prod',   bkey:'farm',   icon:'🌾', name:'Tarla'},
+  {kind:'prod',   bkey:'mill',   icon:'⚙',  name:'Değirmen'},
+];
+const CASTLE_BLD_META={ // kale binası tanımları (renderKale'deki blds ile aynı değerler)
+  walls:{n:'Surlar',max:5,icon:'🧱',cost:80}, towers:{n:'Kuleler',max:4,icon:'🗼',cost:60},
+  barracks:{n:'Kışla',max:10,icon:'⚔',cost:70}, farm:{n:'Kale Çiftliği',max:5,icon:'🌾',cost:50},
+  market:{n:'Pazar',max:4,icon:'🏪',cost:90},
+};
+let _cmapPickMode=false;
+
+function renderCastleMap(){
+  const scene=document.getElementById('castle-map-scene');
+  const extras=document.getElementById('castle-map-extras');
+  if(!scene) return;
+  scene.innerHTML=CASTLE_MAP_SPOTS.map(s=>{
+    const lv = s.kind==='castle' ? (G.castle[s.bkey]||0) : (PROD_BUILDINGS[s.bkey]?.level||0);
+    const name = s.kind==='castle' ? CASTLE_BLD_META[s.bkey].n : PROD_BUILDINGS[s.bkey].name;
+    const unbuilt = s.kind==='prod' && lv===0;
+    return `<div class="cmap-spot${unbuilt?' unbuilt':''}" style="left:${s.x}%;top:${s.y}%;width:${s.w}%;"
+      onclick="event.stopPropagation();openCastleSpotModal('${s.key}')" title="${name} Sv.${lv}">
+      <img src="${IMG_BASE}${s.img}.webp" onerror="this.style.display='none';this.parentElement.style.minHeight='40px'"/>
+      ${s.noLabel?'':`<div class="cmap-lbl">${name} <b>Sv.${lv}</b></div>`}
+    </div>`;
+  }).join('');
+  scene.onclick=(e)=>{ // Konum modu: tıklanan noktanın yüzde koordinatını göster
+    if(!_cmapPickMode) return;
+    const r=scene.getBoundingClientRect();
+    const px=((e.clientX-r.left)/r.width*100).toFixed(1);
+    const py=((e.clientY-r.top)/r.height*100).toFixed(1);
+    toast(`📍 x:${px}  y:${py}`);
+    console.log(`[kale harita] x:${px}, y:${py}`);
+  };
+  if(extras){
+    extras.innerHTML=CASTLE_MAP_EXTRAS.map(x=>{
+      const lv = x.kind==='castle' ? (G.castle[x.bkey]||0) : (PROD_BUILDINGS[x.bkey]?.level||0);
+      const spotKey='extra_'+x.kind+'_'+x.bkey;
+      return `<button class="btn btn-xs btn-ghost" onclick="openCastleSpotModal('${spotKey}')">${x.icon} ${x.name} <span style="color:var(--gold);">Sv.${lv}</span></button>`;
+    }).join('')+`
+      <button class="btn btn-xs btn-ghost" style="margin-left:auto;color:${_cmapPickMode?'var(--gold)':'var(--ink3)'};" onclick="_cmapPickMode=!_cmapPickMode;renderCastleMap();toast(_cmapPickMode?'📍 Konum modu AÇIK — haritaya tıkla, koordinat görürsün':'Konum modu kapandı');">📍</button>`;
+  }
+}
+
+/* Haritadaki binaya tıklanınca açılan yükseltme penceresi */
+function openCastleSpotModal(spotKey){
+  let kind,bkey;
+  if(spotKey.startsWith('extra_')){
+    const p=spotKey.split('_'); kind=p[1]; bkey=p.slice(2).join('_');
+  } else {
+    const s=CASTLE_MAP_SPOTS.find(x=>x.key===spotKey); if(!s) return;
+    kind=s.kind; bkey=s.bkey;
+  }
+  const isCastle=kind==='castle';
+  const meta=isCastle?CASTLE_BLD_META[bkey]:null;
+  const bld=isCastle?null:PROD_BUILDINGS[bkey];
+  const lv=isCastle?(G.castle[bkey]||0):(bld.level||0);
+  const name=isCastle?meta.n:bld.name;
+  const icon=isCastle?meta.icon:bld.icon;
+  const max=isCastle?meta.max:bld.max;
+  const mx=lv>=max;
+  // Üretim binası henüz inşa edilmemişse → İnşa Et
+  if(!isCastle&&lv===0){
+    showGModal(`
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:40px;margin-bottom:6px;">${icon}</div>
+        <div style="font-family:var(--font-head);font-size:17px;color:var(--gold2);">${name}</div>
+        <div style="font-size:12px;color:var(--ink3);margin-top:6px;">Henüz inşa edilmedi.</div>
+      </div>
+      <button class="btn" style="width:100%;margin-bottom:8px;" onclick="closeGModal();buildProd('${bkey}');renderKale();" ${G.gold>=bld.cost?'':'disabled'}>🏗 İnşa Et — ${bld.cost}🪙</button>
+      <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal()">Kapat</button>
+    `);
+    return;
+  }
+  const uc=isCastle?Math.floor(meta.cost*Math.pow(1.4,lv)):Math.floor(bld.cost*Math.pow(1.6,lv));
+  const matCost=mx?{}:buildingMatCost(isCastle?bkey:'prod_'+bkey,lv);
+  const canUpg=!mx&&G.gold>=uc&&canAffordMats(matCost);
+  const upgFn=isCastle?`upgBld('${bkey}',${uc})`:`upgProd('${bkey}',${uc})`;
+  const prodTabBtn=!isCastle&&['farm','mill','ranch','kitchen','insaa'].includes(bkey)
+    ?`<button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;" onclick="closeGModal();showPage('prod');pgo('${bkey}');">🏭 Üretimi Aç</button>`
+    :'';
+  showGModal(`
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="font-size:40px;margin-bottom:6px;">${icon}</div>
+      <div style="font-family:var(--font-head);font-size:17px;color:var(--gold2);">${name} <span style="font-size:13px;color:var(--gold);">Sv.${lv}${mx?' (Max)':''}</span></div>
+    </div>
+    ${mx?'<div style="text-align:center;font-size:12px;color:var(--g-green);margin-bottom:10px;">✨ Bu yapı en yüksek seviyede.</div>':`
+      <div style="background:var(--panel3);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;margin-bottom:10px;">
+        <div style="font-family:var(--font-head);font-size:12px;color:var(--perg2);margin-bottom:6px;">Sv.${lv} → Sv.${lv+1}</div>
+        <div style="font-family:var(--font-head);font-size:14px;color:${G.gold>=uc?'var(--gold2)':'#c87070'};margin-bottom:6px;">${uc.toLocaleString('tr')}🪙 <span style="font-size:10px;color:var(--ink3);">(sende ${Math.floor(G.gold).toLocaleString('tr')})</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:2px;">${matCostHTML(matCost)}</div>
+      </div>
+      <button class="btn" style="width:100%;margin-bottom:8px;" onclick="closeGModal();${upgFn};" ${canUpg?'':'disabled'}>⬆ Geliştir</button>
+    `}
+    ${prodTabBtn}
+    <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal()">Kapat</button>
+  `);
 }
 function upgBld(key,cost){
   if(G.gold<cost){toast('Yeterli altın yok!');return;}
