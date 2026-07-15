@@ -1044,6 +1044,8 @@ html,body{
 .cmap-spot img{width:100%;height:auto;display:block;pointer-events:none;}
 .cmap-spot.unbuilt{filter:grayscale(.9) brightness(.55);}
 .cmap-spot.unbuilt:hover{filter:grayscale(.5) brightness(.85) drop-shadow(0 0 12px #d4af3788);}
+.cmap-spot.editing{cursor:grab;outline:2px dashed #d4af3788;outline-offset:4px;border-radius:8px;}
+.cmap-spot.editing:active{cursor:grabbing;}
 .cmap-lbl{
   position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
   white-space:nowrap;font-family:var(--font-head);font-size:12px;
@@ -4260,6 +4262,7 @@ const G={
   invBonus:0, // envanter genişlemesi (+20'şer, kalıcı)
   companions:[], // birlikler (Aşama 1): [{tid, type, equip:{weapon,armor}}]
   capturedTroops:[], // esir havuzu: [{cid, type, foundAt(ms)}] — 5dk içinde karar verilmezse kaçar
+  castleLayout:{}, // kale haritası bina yerleşimi: {spotKey:{x,y}} — oyuncuya özel, DB'de saklanır
   animals:{tavuk:0,koyun:0,inek:0,ari:0,at:0}, // bedava hayvan yok — Pazar'dan alınır
   animalBabies:{},  // yavrular: {civciv:[fedCount,...], kuzu:[...], ...}
   animalStore:{},   // birikmiş pasif ürün: {tavuk:N(yumurta), koyun:N(yün), ...}
@@ -5403,38 +5406,73 @@ const CASTLE_BLD_META={ // kale binası tanımları (renderKale'deki blds ile ay
   barracks:{n:'Kışla',max:10,icon:'⚔',cost:70}, farm:{n:'Kale Çiftliği',max:5,icon:'🌾',cost:50},
   market:{n:'Pazar',max:4,icon:'🏪',cost:90},
 };
-let _cmapPickMode=false;
+let _cmapEditMode=false;
 
 function renderCastleMap(){
   const scene=document.getElementById('castle-map-scene');
   const extras=document.getElementById('castle-map-extras');
   if(!scene) return;
+  const layout=G.castleLayout||{};
   scene.innerHTML=CASTLE_MAP_SPOTS.map(s=>{
     const lv = s.kind==='castle' ? (G.castle[s.bkey]||0) : (PROD_BUILDINGS[s.bkey]?.level||0);
     const name = s.kind==='castle' ? CASTLE_BLD_META[s.bkey].n : PROD_BUILDINGS[s.bkey].name;
     const unbuilt = s.kind==='prod' && lv===0;
-    return `<div class="cmap-spot${unbuilt?' unbuilt':''}" style="left:${s.x}%;top:${s.y}%;width:${s.w}%;"
-      onclick="event.stopPropagation();openCastleSpotModal('${s.key}')" title="${name} Sv.${lv}">
+    const ov=layout[s.key]||{};
+    const sx=typeof ov.x==='number'?ov.x:s.x;
+    const sy=typeof ov.y==='number'?ov.y:s.y;
+    return `<div class="cmap-spot${unbuilt?' unbuilt':''}${_cmapEditMode?' editing':''}" style="left:${sx}%;top:${sy}%;width:${s.w}%;"
+      onpointerdown="cmapDragStart(event,'${s.key}')"
+      onclick="if(_cmapEditMode){event.stopPropagation();return;}event.stopPropagation();openCastleSpotModal('${s.key}')" title="${name} Sv.${lv}">
       <img src="${IMG_BASE}${s.img}.webp" onerror="this.style.display='none';this.parentElement.style.minHeight='40px'"/>
       ${s.noLabel?'':`<div class="cmap-lbl">${name} <b>Sv.${lv}</b></div>`}
     </div>`;
   }).join('');
-  scene.onclick=(e)=>{ // Konum modu: tıklanan noktanın yüzde koordinatını göster
-    if(!_cmapPickMode) return;
-    const r=scene.getBoundingClientRect();
-    const px=((e.clientX-r.left)/r.width*100).toFixed(1);
-    const py=((e.clientY-r.top)/r.height*100).toFixed(1);
-    toast(`📍 x:${px}  y:${py}`);
-    console.log(`[kale harita] x:${px}, y:${py}`);
-  };
   if(extras){
     extras.innerHTML=CASTLE_MAP_EXTRAS.map(x=>{
       const lv = x.kind==='castle' ? (G.castle[x.bkey]||0) : (PROD_BUILDINGS[x.bkey]?.level||0);
       const spotKey='extra_'+x.kind+'_'+x.bkey;
       return `<button class="btn btn-xs btn-ghost" onclick="openCastleSpotModal('${spotKey}')">${x.icon} ${x.name} <span style="color:var(--gold);">Sv.${lv}</span></button>`;
     }).join('')+`
-      <button class="btn btn-xs btn-ghost" style="margin-left:auto;color:${_cmapPickMode?'var(--gold)':'var(--ink3)'};" onclick="_cmapPickMode=!_cmapPickMode;renderCastleMap();toast(_cmapPickMode?'📍 Konum modu AÇIK — haritaya tıkla, koordinat görürsün':'Konum modu kapandı');">📍</button>`;
+      <button class="btn btn-xs ${_cmapEditMode?'':'btn-ghost'}" style="margin-left:auto;${_cmapEditMode?'border-color:var(--gold);color:var(--gold2);':''}" onclick="toggleCmapEdit()">🖱 ${_cmapEditMode?'Düzenlemeyi Bitir':'Binaları Taşı'}</button>
+      ${_cmapEditMode?`<button class="btn btn-xs btn-ghost" onclick="resetCastleLayout()">↺ Varsayılan Yerleşim</button>`:''}`;
   }
+}
+function toggleCmapEdit(){
+  _cmapEditMode=!_cmapEditMode;
+  renderCastleMap();
+  toast(_cmapEditMode?'🖱 Düzenleme modu AÇIK — binaları sürükleyip bırak':'Düzenleme bitti, yerleşim kaydedildi');
+}
+function resetCastleLayout(){
+  G.castleLayout={};
+  renderCastleMap();
+  toast('↺ Binalar varsayılan yerlerine döndü.');
+  if(currentUser) sbSave();
+}
+/* Düzenleme modunda bina sürükleme — bırakınca G.castleLayout'a yazılır ve kaydedilir */
+function cmapDragStart(e,key){
+  if(!_cmapEditMode) return;
+  e.preventDefault(); e.stopPropagation();
+  const scene=document.getElementById('castle-map-scene');
+  const spot=e.currentTarget;
+  const r=scene.getBoundingClientRect();
+  let lx=null,ly=null;
+  const move=(ev)=>{
+    lx=Math.max(0,Math.min(100,(ev.clientX-r.left)/r.width*100));
+    ly=Math.max(0,Math.min(100,(ev.clientY-r.top)/r.height*100));
+    spot.style.left=lx+'%';
+    spot.style.top=ly+'%';
+  };
+  const up=()=>{
+    document.removeEventListener('pointermove',move);
+    document.removeEventListener('pointerup',up);
+    if(lx!=null){
+      if(!G.castleLayout) G.castleLayout={};
+      G.castleLayout[key]={x:+lx.toFixed(1), y:+ly.toFixed(1)};
+      if(currentUser) sbSave();
+    }
+  };
+  document.addEventListener('pointermove',move);
+  document.addEventListener('pointerup',up);
 }
 
 /* Haritadaki binaya tıklanınca açılan yükseltme penceresi */
@@ -11162,6 +11200,15 @@ async function sbLoadProfile() {
   if(p.perks) { try{ G.perks = typeof p.perks==='string'?JSON.parse(p.perks):p.perks; }catch(e){} }
   if(!G.perks) G.perks = { prodSpeedUntil:'', luckCharmUntil:'', chatGlowUntil:'' };
   if(p.stall_name) G.stallName = sani(p.stall_name);
+  // Kale haritası yerleşimi — sadece sayısal x/y değerleri kabul edilir
+  if(p.castle_layout && typeof p.castle_layout==='object'){
+    G.castleLayout={};
+    Object.entries(p.castle_layout).forEach(([k,v])=>{
+      if(v && typeof v.x==='number' && typeof v.y==='number' && isFinite(v.x) && isFinite(v.y)){
+        G.castleLayout[sani(k)]={x:Math.max(0,Math.min(100,v.x)), y:Math.max(0,Math.min(100,v.y))};
+      }
+    });
+  }
   if(p.inv_bonus !== undefined) G.invBonus = p.inv_bonus;
   if(p.companions) { try{ G.companions = typeof p.companions==='string'?JSON.parse(p.companions):p.companions; }catch(e){ G.companions=[]; } }
   if(!Array.isArray(G.companions)) G.companions=[];
@@ -11280,6 +11327,7 @@ async function _sbSaveNow() {
       captured_troops: G.capturedTroops,
       explored_json: [...G.explored],
       animals:      {...G.animals, _babies:G.animalBabies||{}, _store:G.animalStore||{}, _prodTs:G.animalProdTs||{}, _breedTs:G.animalBreedTs||{}},
+      castle_layout: G.castleLayout||{},
     };
     let { error: e1 } = await supa.from('profiles').update(profilePayload).eq('id', currentUser.id);
     // Güvenlik ağı: bir sütun veritabanında yoksa (SQL henüz çalıştırılmadıysa),
