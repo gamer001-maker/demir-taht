@@ -2491,11 +2491,14 @@ function troopCount(){ return (G.companions||[]).length; }
 // Birim türleri — buff'lar Aşama 2'de devreye girecek, burada sadece tanımlı
 const TROOP_TYPES = {
   piyade:   {name:'Piyade',   icon:'🗡', desc:'Kışladan toplanan temel asker. Saldırıda yanında çarpışır.', hireGold:50, kind:'basic'},
+  suvari:   {name:'Süvari',   icon:'🐴', desc:'Atlı asker — silahıyla %50 daha sert vurur.', kind:'basic'},
   rehber:   {name:'Rehber',   icon:'🧭', desc:'Keşif süresini %5 azaltır, %10 ekstra kaynak getirir.', kind:'special'},
   rahip:    {name:'Rahip',    icon:'⛪', desc:'Karizmana %5 katkı sağlar (kritik şansı).', kind:'special'},
   sovalye:  {name:'Şövalye',  icon:'🛡', desc:'Saldırına %5, savunmana %5 katkı sağlar.', kind:'special'},
   tabip:    {name:'Tabip',    icon:'⚕', desc:'Savaşta tur başına %10 şansla canının %5\'ini yeniler.', kind:'special'},
 };
+const SUVARI_MIN_LEVEL = 5;   // piyade bu seviyede süvariye terfi edebilir
+const SUVARI_DMG_MULT  = 1.5; // süvari hasar çarpanı
 
 // Birlik türü görseli (varsa images/<type>.webp), yoksa emoji ikonuna düşer
 function troopIconHtml(typeKey, icon, size){
@@ -2588,7 +2591,42 @@ function troopAttackDmg(troop){
   if(wAtk<=0) return 0;
   // Geliştirme (+) bonusu: her + için %15 daha hasar
   const plus=w.enhPlus||0;
-  return Math.max(1, Math.floor(wAtk*(1+plus*0.15)));
+  let dmg=wAtk*(1+plus*0.15);
+  if(troop.type==='suvari') dmg*=SUVARI_DMG_MULT; // atlı birlik bonusu
+  return Math.max(1, Math.floor(dmg));
+}
+
+// Sv.5+ piyade + çiftlikte 1 at → Süvari terfisi (at tüketilir, seviye/ekipman korunur)
+function promoteToSuvari(tid){
+  const troop=(G.companions||[]).find(c=>c.tid===tid);
+  if(!troop||troop.type!=='piyade') return;
+  if(troopLevel(troop)<SUVARI_MIN_LEVEL){ toast(`Süvari için piyade Sv.${SUVARI_MIN_LEVEL} olmalı!`); return; }
+  if((G.animals?.at||0)<1){ toast('Çiftlikte at yok! Önce Pazar\'dan bir at al.'); return; }
+  showGModal(`
+    <div style="text-align:center;margin-bottom:14px;">
+      <div style="font-size:40px;margin-bottom:6px;">🐴</div>
+      <div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);">Süvari Terfisi</div>
+      <div style="font-size:12px;color:var(--perg2);margin-top:8px;line-height:1.6;">
+        Sv.${troopLevel(troop)} Piyaden ata binip <b style="color:var(--gold2);">Süvari</b> olacak.<br>
+        Seviyesi ve ekipmanı korunur, saldırı hasarı <b style="color:#f08080;">%50 artar</b>.
+      </div>
+      <div style="font-size:11px;color:#c8a25a;margin-top:8px;">🐴 Çiftlikten 1 at kullanılır (At: ${G.animals?.at||0})</div>
+    </div>
+    <button class="btn" style="width:100%;margin-bottom:8px;" onclick="confirmPromoteSuvari('${tid}')">🐴 Terfi Ettir</button>
+    <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal()">Vazgeç</button>
+  `);
+}
+function confirmPromoteSuvari(tid){
+  const troop=(G.companions||[]).find(c=>c.tid===tid);
+  if(!troop||troop.type!=='piyade'){ closeGModal(); return; }
+  if(troopLevel(troop)<SUVARI_MIN_LEVEL||(G.animals?.at||0)<1){ closeGModal(); toast('Şartlar sağlanmıyor.'); return; }
+  G.animals.at--;
+  troop.type='suvari';
+  closeGModal();
+  celebrate('🐴','SÜVARİ!',`Piyaden ata bindi — artık %50 daha sert vuruyor!`,'gold');
+  renderHalk();
+  if(PROD_BUILDINGS.ranch.level>0&&G.prodTab==='ranch') renderRanch();
+  if(currentUser) sbSave();
 }
 // Birlik ekipman slotları — oyuncuyla aynı 6 slot (anatomik dizilim)
 const TROOP_EQ_SLOTS=['weapon','helmet','chest','gloves','boots','ring','ring2'];
@@ -5818,6 +5856,14 @@ function renderTroops(){
         </div>
         <div style="font-size:12px;color:var(--ink3);line-height:1.4;">${t.desc}</div>
         ${equipChips?`<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:2px;">${equipChips}</div>`:''}
+        ${c.type==='piyade'&&troopLevel(c)>=SUVARI_MIN_LEVEL?(()=>{
+          const hasHorse=(G.animals?.at||0)>=1;
+          return `<button class="btn btn-xs" style="width:100%;margin-top:4px;${hasHorse?'background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;':'opacity:.55;'}"
+            onclick="promoteToSuvari('${c.tid}')" title="${hasHorse?'Çiftlikten 1 at kullanılır':'Çiftlikte at yok — Pazardan al'}">
+            🐴 Süvari Yap${hasHorse?'':' (at gerekli)'}
+          </button>`;
+        })():''}
+        ${c.type==='piyade'&&troopLevel(c)<SUVARI_MIN_LEVEL?`<div style="font-size:10px;color:var(--ink3);margin-top:2px;">🐴 Sv.${SUVARI_MIN_LEVEL}'te süvari olabilir (şu an Sv.${troopLevel(c)})</div>`:''}
         <div style="display:flex;gap:6px;width:100%;margin-top:auto;padding-top:10px;">
           <button class="btn btn-xs" style="flex:1;" onclick="openEquipTroopModal('${c.tid}')">⚔ Donat</button>
           <button class="btn btn-xs btn-ghost" style="flex:1;" onclick="dismissTroop('${c.tid}')">Azat</button>
@@ -6753,6 +6799,7 @@ function zdBattleHTML(){
           <button class="zd-overlay-btn" onclick="zdAction('defend')" style="border-color:#1a3a5a;${defendActive?'background:rgba(26,58,90,0.55);color:#6a9abf;':''}">🛡<br>Savun</button>
           <button class="zd-overlay-btn${!hasMagic?' zd-ob-disabled':''}" onclick="${hasMagic?`zdAction('magic')`:'void(0)'}" style="border-color:#4a2a5a;">✨<br>Büyü</button>
           <button class="zd-overlay-btn" onclick="zdAction('dodge')" style="border-color:#5a4418;">💨<br>Sıyrıl</button>
+          <button class="zd-overlay-btn" onclick="zdOpenPotionPicker()" style="border-color:#1a4a2a;">🧪<br>İksir</button>
         </div>
 
         <!-- Sağ: Düşman -->
@@ -6875,7 +6922,35 @@ function zdEnterRoom(idx){
 }
 
 /* ── TUR BAZLI SAVAŞ ── */
-function zdAction(action){
+/* Savaşta iksir seçme penceresi — kullanmak bir tur harcar */
+function zdOpenPotionPicker(){
+  if(!ZD.battle) return;
+  const potions=G.inventory.filter(i=>(i.cat==='consumable'||i.type==='İksir')&&(i.stats?.hp_restore||i.stats?.hp_restore_pct));
+  if(!potions.length){ toast('🧪 Envanterinde can iksiri yok!'); return; }
+  const eff=getEffectiveStats();
+  const rows=potions.map(p=>{
+    const healTxt=p.stats.hp_restore_pct
+      ? `Max canın %${p.stats.hp_restore_pct}'i (+${Math.floor(eff.maxhp*p.stats.hp_restore_pct/100)})`
+      : `+${p.stats.hp_restore} can`;
+    return `<div onclick="closeGModal();zdAction('potion',${p.id})" style="display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:6px;border-radius:8px;border:1px solid var(--border2);background:var(--panel2);cursor:pointer;">
+      <span style="font-size:24px;">${p.icon}</span>
+      <div style="flex:1;text-align:left;">
+        <div style="font-size:14px;color:var(--perg);">${p.name}${p.qty&&p.qty>1?` <span style="color:var(--gold);">x${p.qty}</span>`:''}</div>
+        <div style="font-size:11px;color:var(--g-green);">${healTxt}</div>
+      </div>
+    </div>`;
+  }).join('');
+  showGModal(`
+    <div style="text-align:center;margin-bottom:10px;">
+      <div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);">🧪 İKSİR KULLAN</div>
+      <div style="font-size:11px;color:#f0a050;margin-top:4px;">⚠ İksir içmek bir tur harcar — düşman sana vurur!</div>
+    </div>
+    ${rows}
+    <button class="btn btn-ghost" style="width:100%;margin-top:6px;" onclick="closeGModal()">Vazgeç</button>
+  `);
+}
+
+function zdAction(action, itemId){
   if(!ZD.battle) return;
   const b=ZD.battle;
   const eff=getEffectiveStats();
@@ -6916,6 +6991,21 @@ function zdAction(action){
       b.dodging=false;
       log('💨 Sıyrılma başarısız! Saldırıya açıksın.','bad');
     }
+  }
+  else if(action==='potion'){
+    const item=G.inventory.find(x=>x.id===itemId);
+    if(!item||!(item.stats?.hp_restore||item.stats?.hp_restore_pct)){ toast('İksir bulunamadı!'); return; }
+    const heal=item.stats.hp_restore_pct
+      ? Math.floor(eff.maxhp*(item.stats.hp_restore_pct/100))
+      : item.stats.hp_restore;
+    const before=b.playerHp;
+    b.playerHp=Math.min(eff.maxhp, b.playerHp+heal);
+    // Yığından düş / son taneyse kaldır
+    if(item.qty&&item.qty>1) item.qty--;
+    else G.inventory=G.inventory.filter(x=>x.id!==itemId);
+    log(`🧪 ${item.name} içtin: +${b.playerHp-before} can. Sıran geçti!`,'good');
+    renderKarakter();
+    if(currentUser) sbSave();
   }
 
   if(playerDmg>0){
