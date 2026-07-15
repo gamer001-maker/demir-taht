@@ -7825,10 +7825,10 @@ async function confirmMaterialBuy(listingId){
   const total=qty*l.unitPrice;
   if(G.gold<total){ toast('Yeterli altın yok!'); return; }
   document.getElementById('depo-pop-ov')?.remove();
-  // Atomik RPC ile satın al
+  // Atomik RPC ile satın al — alıcı auth.uid()'den, fiyat/stok satırdan okunur
+  await syncGold(); // bekleyen yerel fark önce işlensin ki sunucu bakiyesi güncel olsun
   const {data,error}=await supa.rpc('buy_material',{
     listing_id: listingId,
-    buyer_id: currentUser.id,
     qty: qty
   });
   if(error || !data?.ok){
@@ -7836,8 +7836,8 @@ async function confirmMaterialBuy(listingId){
     await loadMaterialListings(); renderMarket();
     return;
   }
-  // Başarılı: altını düş, malzemeyi envantere ekle
-  G.gold-=total;
+  // Başarılı: sunucu altını düştü → yerele yansıt, malzemeyi envantere ekle
+  applyServerGoldDelta(-(Number(data.total)||total));
   trackAch('market');
   const key=data.item_key;
   G.prodInv[key]=(G.prodInv[key]||0)+qty;
@@ -7865,11 +7865,11 @@ async function withdrawMaterial(listingId){
 
 /* ══════════════════════════════════════
    SATIŞ TAHSİLATI (sale watcher)
-   Sorun: alıcının RPC'si satıcının altınını DB'de artırsa bile, satıcının
-   açık oturumu bir sonraki sbSave'de eski (düşük) altını üzerine yazıyordu
-   → satış geliri kayboluyordu.
-   Çözüm: satıcı kendi ilanlarını Realtime ile izler; ilan satılınca altını
-   YEREL olarak ekler (sbSave artık doğru değeri yazar) ve bildirim gösterir.
+   Alıcının RPC'si (buy_market_item / buy_material) satıcının altınını
+   DB'de artırır — gerçek tahsilat sunucudadır. Satıcı çevrimiçiyse bu
+   watcher Realtime ile satışı görür, bakiyeyi applyServerGoldDelta ile
+   yerele yansıtır ve bildirim gösterir. Çevrimdışıysa parayı zaten bir
+   sonraki girişte profille birlikte yüklenmiş bulur (bildirim çıkmaz).
    Not: marketplace + material_listings tablolarında Realtime açık olmalı.
 ══════════════════════════════════════ */
 let _saleChannel=null;
@@ -7890,7 +7890,10 @@ async function _refreshMyListingCache(){
 function _creditSale(key, amount, label){
   if(amount<=0 || _creditedSales.has(key)) return;
   _creditedSales.add(key);
-  G.gold+=amount;
+  // Yeni dünyada satış geliri sunucuda eklendi → sadece yerele yansıt.
+  // Geçiş döneminde (RPC'ler migre edilmeden) eski usul yerel tahsilat.
+  if(_goldRpcMissing) G.gold+=amount;
+  else applyServerGoldDelta(amount);
   updateHUD();
   celebrate('🪙','İLANIN SATILDI!',`${label} → +${amount.toLocaleString('tr')}🪙`,'gold');
   if(currentUser) sbSave();
@@ -8148,22 +8151,23 @@ async function buyMarketItem(id){
   if(invCount()>=invCap()){ toast('Envanter dolu!'); return; }
 
   // --- GÜVENLİ VERİTABANI İŞLEMİ (RPC) ---
-  const { error } = await supa.rpc('buy_market_item', {
-    buyer_id: currentUser.id,
-    item_db_id: listing.dbId,
-    item_price: listing.price
+  // Alıcı kimliği auth.uid()'den, fiyat ilan satırından okunur (istemciye güvenilmez).
+  // Önce bekleyen yerel altın farkı sunucuya işlenir ki bakiye güncel olsun.
+  await syncGold();
+  const { data, error } = await supa.rpc('buy_market_item', {
+    item_db_id: listing.dbId
   });
 
-  if (error) {
-    toast('İşlem başarısız: ' + error.message);
+  if (error || !data?.ok) {
+    toast('İşlem başarısız: ' + (data?.error || error?.message || 'bilinmeyen hata'));
     // Hata varsa listeyi yenileyip duruyoruz
     await loadPlayerMarketItems();
     renderMarket();
     return;
   }
 
- // İşlem başarılıysa yerel verileri güncelle
-  G.gold -= listing.price;
+ // İşlem başarılıysa yerel verileri güncelle (sunucu bakiyeden düştü → yansıt)
+  applyServerGoldDelta(-(Number(data.price) || listing.price));
   trackAch('market');
   
   // Cache'den anında çıkar — sunucudan yeniden çekene kadar tekrar görünmesin
@@ -8363,6 +8367,8 @@ async function treasuryAction(type){
   if(!currentUser||!G.guildId){toast('Önce bir loncaya katıl!');return;}
   if(type==='deposit'&&G.gold<amt){toast('Yeterli altın yok!');return;}
   if(type==='withdraw'&&(G.guildTreasury||0)<amt){toast('Hazinede yeterli altın yok!');return;}
+  // RPC oyuncu altınını da sunucuda taşır — önce bekleyen yerel fark işlensin
+  await syncGold();
   const {data,error}=await supa.rpc('guild_treasury_tx',{
     p_guild_id:String(G.guildId), p_amount:amt, p_action:type
   });
@@ -8371,11 +8377,11 @@ async function treasuryAction(type){
     return;
   }
   if(type==='deposit'){
-    G.gold-=amt;
+    applyServerGoldDelta(-amt);
     toast(amt.toLocaleString('tr')+'🪙 hazineye yatırıldı!');
     if(amt>=100) trackQuest('treasuryDeposit100');
   } else {
-    G.gold+=amt;
+    applyServerGoldDelta(amt);
     toast(amt.toLocaleString('tr')+'🪙 hazineden çekildi!');
   }
   G.guildTreasury=Number(data.treasury)||0;
@@ -11051,6 +11057,7 @@ async function sbCreateProfile(username) {
     toast('Profil hatası: ' + error.message);
     return;
   }
+  _goldSynced = 500; _goldTx = null; // yeni profilin altın taban çizgisi
 
   // Kale
   const castleRes = await supa.from('castles').insert({
@@ -11085,7 +11092,9 @@ async function sbLoadProfile() {
   G.level     = p.level;
   G.xp        = p.xp;
   G.skillPoints = p.skill_points;
-  G.gold      = p.gold;
+  G.gold      = Math.floor(Number(p.gold)||0);
+  _goldSynced = G.gold; _goldTx = null; // altın senkron taban çizgisi
+  _probeGoldRpc();
   G.food      = p.food || 80;
   G.morale    = p.morale || 72;
   G.arenaScore= p.arena_score;
@@ -11254,6 +11263,90 @@ async function sbLoadProfile() {
   return true;
 }
 
+/* ── ALTIN SENKRONU (sunucu-otoriter) ──
+   profiles.gold artık istemciden yazılmaz (DB trigger'ı değişikliği yok
+   sayar). Yerel G.gold serbestçe değişir; kayıt anında fark (delta)
+   game_gold_tx RPC'siyle sunucuya işlenir, dönen bakiye gerçek kabul edilir.
+   Bekleyen işlem (_goldTx) onaylanana dek AYNI tx_id ile yeniden denenir —
+   cevap ağda kaybolursa sunucu idempotens sayesinde iki kez uygulamaz.
+   Sunucunun kendi yaptığı değişiklikler (pazar satışı, hazine) yerele
+   applyServerGoldDelta() ile yansıtılır ki delta senkronuna tekrar girmesin. */
+const GOLD_TX_CAP=100000; // tek işlem sınırı — gold_migration.sql'deki c_per_call ile aynı tutulmalı
+let _goldSynced=null;      // sunucunun onayladığı son bakiye (null = profil yüklenmedi)
+let _goldTx=null;          // bekleyen işlem {id, delta}
+let _goldRpcMissing=false; // migrasyon henüz çalıştırılmadıysa eski usule düşülür
+let _goldSyncP=null;       // aynı anda tek senkron çalışsın (çift delta önlemi)
+
+function _genGoldTxId(){
+  return crypto.randomUUID ? crypto.randomUUID()
+    : 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g,()=>((Math.random()*16)|0).toString(16));
+}
+
+/* Sunucunun ZATEN uyguladığı bir altın değişikliğini yerele yansıt.
+   _goldSynced de aynı miktar kaydığı için delta senkronuna ikinci kez girmez. */
+function applyServerGoldDelta(d){
+  G.gold+=d;
+  if(_goldSynced!=null) _goldSynced+=d;
+  updateHUD();
+}
+
+async function syncGold(){
+  if(_goldSyncP) await _goldSyncP;
+  if(!currentUser||_goldSynced==null) return;
+  if(_goldTx||Math.floor(G.gold)!==_goldSynced){
+    _goldSyncP=_syncGoldInner().finally(()=>{_goldSyncP=null;});
+    await _goldSyncP;
+  }
+}
+
+async function _syncGoldInner(){
+  if(!_goldTx){
+    let delta=Math.floor(G.gold)-_goldSynced;
+    if(!delta) return;
+    delta=Math.max(-GOLD_TX_CAP,Math.min(GOLD_TX_CAP,delta)); // kalan varsa sonraki kayıtta gider
+    _goldTx={id:_genGoldTxId(),delta};
+  }
+  if(_goldRpcMissing){
+    // GEÇİŞ DÖNEMİ: migrasyon SQL'i çalıştırılmadıysa eski usul mutlak yazım
+    const local=_goldSynced+_goldTx.delta;
+    const {error}=await supa.from('profiles').update({gold:local}).eq('id',currentUser.id);
+    if(!error){ _goldSynced=local; _goldTx=null; }
+    else if(error.code==='42501'||/permission/i.test(error.message||'')){ _goldRpcMissing=false; } // izin kapalı → RPC kurulu demektir
+    return;
+  }
+  const {data,error}=await supa.rpc('game_gold_tx',{p_delta:_goldTx.delta,p_tx_id:_goldTx.id});
+  if(error){
+    if(error.code==='PGRST202'||/game_gold_tx/i.test(error.message||'')){ _goldRpcMissing=true; return _syncGoldInner(); }
+    console.warn('[gold] senkron hatası, sonraki kayıtta denenecek:',error.message);
+    return; // _goldTx bekler — aynı tx_id ile tekrar denenir
+  }
+  if(!data?.ok){
+    console.warn('[gold] sunucu reddetti:',data?.error);
+    if(/yetersiz/i.test(data?.error||'')){
+      // Sunucu bakiyesi bu harcamayı karşılamıyor → sunucuya hizalan, deltayı düşür
+      _goldTx=null;
+      const {data:d2}=await supa.rpc('game_gold_tx',{p_delta:0,p_tx_id:null});
+      const srv=Number(d2?.gold);
+      if(isFinite(srv)){ G.gold=srv; _goldSynced=srv; updateHUD(); }
+    }
+    return;
+  }
+  const server=Number(data.gold);
+  if(isFinite(server)){
+    const kalan=Math.floor(G.gold)-(_goldSynced+_goldTx.delta); // RPC beklenirken oluşan yerel değişim
+    _goldSynced=server;
+    _goldTx=null;
+    G.gold=server+kalan;
+  }
+}
+
+/* Açılışta RPC kurulu mu diye yokla — kurulu değilse geçiş dönemi moduna geç */
+function _probeGoldRpc(){
+  supa.rpc('game_gold_tx',{p_delta:0,p_tx_id:null}).then(({error})=>{
+    if(error&&(error.code==='PGRST202'||/game_gold_tx/i.test(error.message||''))) _goldRpcMissing=true;
+  }).catch(()=>{});
+}
+
 /* ── VERİ KAYDET ──
    sbSave() artık debounce'lu: 800ms içinde gelen çağrılar TEK kayda
    birleşir (her aksiyonda 4+ tablo yazmayı önler). Sekme kapanırken
@@ -11284,6 +11377,8 @@ async function _sbSaveNow() {
   if (!currentUser) { console.warn('[sbSave] currentUser yok — kayıt atlandı'); return; }
   console.log('[sbSave] başladı, user:', currentUser.id);
   try {
+    // Altın farkı RPC ile sunucuya işlenir — payload'da gold YOK
+    await syncGold();
     const profilePayload = {
       hero_name:    G.heroName,
       class_id:     G.classId,
@@ -11291,7 +11386,6 @@ async function _sbSaveNow() {
       level:        G.level,
       xp:           G.xp,
       skill_points: G.skillPoints,
-      gold:         Math.floor(G.gold),
       food:         Math.floor(G.food),
       army:         troopCount(),
       morale:       Math.floor(G.morale),
