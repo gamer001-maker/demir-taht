@@ -782,14 +782,16 @@ html,body{
 .gd-tavern-head small{display:block;font-family:var(--font-body);font-size:clamp(8px,.9vw,10px);color:#9a8ab0;font-style:italic;letter-spacing:0;margin-top:2px;}
 
 /* ── Lonca sekme arkaplan görselleri (Taverna/Depo/Üyeler) ──
-   .gd-bgpanel: konumu relative, yüksekliği içeriğe göre şekillenir.
-   İçindeki img+shade absolute (inset:0) olduğu için akışa girmez —
-   panel'in boyu .gd-bgpanel-content'in doğal yüksekliğinden gelir,
-   görsel de o kutuyu "cover" ile tam kaplar (üstte kırpılmadan). */
-.gd-bgpanel{position:relative;border-radius:12px;overflow:hidden;box-shadow:0 4px 18px #00000060;}
+   #guild-content (.scroll) flex:1 ile zaten tam ekran yüksekliğinde —
+   .gd-bgpanel de min-height:100% ile en az o kadar uzar (kısa içerikte
+   bile ekranı doldurur), içerik daha uzunsa doğal olarak büyümeye devam
+   eder ve #guild-content içeride kayar. İçindeki img+shade absolute
+   (inset:0) olduğu için panel'in boyunu etkilemez, sadece kutuyu
+   "cover" ile tam kaplar. */
+.gd-bgpanel{position:relative;min-height:100%;border-radius:12px;overflow:hidden;box-shadow:0 4px 18px #00000060;}
 .gd-bgpanel-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;z-index:0;}
 .gd-bgpanel-shade{position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,rgba(10,7,15,.5) 0%,rgba(10,7,15,.74) 100%);}
-.gd-bgpanel-content{position:relative;z-index:1;padding:12px;min-height:360px;}
+.gd-bgpanel-content{position:relative;z-index:1;padding:12px;}
 /* Geniş kartlar (üye/depo eşyası) — üstteki görsel görünsün diye hafif saydam.
    .listing-card/.member-card Pazar'da da kullanıldığından ONLARA dokunulmaz;
    bu ek sınıf sadece lonca ekranlarında eklenir. */
@@ -8709,7 +8711,7 @@ function renderGuildWar(){
       @keyframes bossSlideUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
       .boss-hunter-row{animation:bossSlideUp .35s ease both;}
     </style>
-    <div class="gd-bgpanel" style="border-radius:0;box-shadow:none;margin-bottom:0;">
+    <div class="gd-bgpanel" style="border-radius:0;box-shadow:none;margin-bottom:0;min-height:0;">
       <img class="gd-bgpanel-img" src="${IMG_BASE}${boss.img}.webp" onerror="this.src='${IMG_BASE}${boss.img}.jpg';this.onerror=()=>this.style.display='none';"/>
     <div style="min-height:480px;display:flex;flex-direction:column;background:linear-gradient(to bottom,rgba(0,0,0,0.15) 0%,rgba(0,0,0,0.05) 25%,rgba(15,8,4,0.82) 60%,rgba(15,8,4,1) 100%);position:relative;z-index:1;">
 
