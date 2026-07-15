@@ -797,6 +797,18 @@ html,body{
    bu ek sınıf sadece lonca ekranlarında eklenir. */
 .listing-card.gd-card-t,.member-card.gd-card-t{background:rgba(38,28,18,.62);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}
 
+/* Lonca sayfasının düz temel rengi (hdr/tabs/guild-content) — diğer sayfalarda
+   kullanılan .hdr/.tabs/.scroll'a DOKUNULMAZ, sadece #p-guild kapsamında geçersiz
+   kılınır. Katmanlı repeating-linear-gradient'lerle (hafif açılı, iki farklı
+   periyotta) ahşap tahta/damar hissi verir — görsel dosyası gerektirmez. */
+#p-guild.page,#p-guild .hdr,#p-guild .tabs,#p-guild #guild-content{
+  background-color:#140d07;
+  background-image:
+    repeating-linear-gradient(112deg,rgba(0,0,0,.22) 0px,rgba(0,0,0,.22) 2px,transparent 2px,transparent 13px),
+    repeating-linear-gradient(112deg,rgba(140,95,45,.05) 0px,rgba(140,95,45,.05) 1px,transparent 1px,transparent 21px),
+    linear-gradient(180deg,#1c130a 0%,#100a05 100%);
+}
+
 /* ── PROFİL SIRALAMA PANOSU ── */
 .rank-row{display:flex;align-items:center;gap:10px;padding:10px 13px;background:linear-gradient(180deg,var(--panel2),var(--panel3));border:1px solid var(--border2);border-radius:9px;margin-bottom:6px;cursor:pointer;transition:border-color .15s,box-shadow .15s;box-shadow:inset 0 1px 0 #ffffff06;}
 .rank-row:hover{border-color:var(--gold);box-shadow:inset 0 1px 0 #ffffff08,0 0 10px #b08d5730;}
@@ -8643,7 +8655,9 @@ async function sbLoadGuildMembers(){
     <div class="gd-bgpanel">
       <img class="gd-bgpanel-img" src="${IMG_BASE}uyeler.webp" onerror="this.style.display='none'"/>
       <div class="gd-bgpanel-shade"></div>
-      <div class="gd-bgpanel-content">${rows}</div>
+      <div class="gd-bgpanel-content">
+        <div style="max-width:520px;margin:0 auto;">${rows}</div>
+      </div>
     </div>`;
 }
 /* ══════════════════════════════════════
