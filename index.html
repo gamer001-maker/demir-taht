@@ -1003,7 +1003,7 @@ html,body{
 .listing-card.purple{border-top:3px solid var(--g-purple);}
 .listing-card.orange{border-top:3px solid var(--g-orange);}
 .market-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;align-items:stretch;}
-.item-icon{width:60px;height:60px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;position:relative;box-shadow:inset 0 1px 0 #ffffff08;}
+.item-icon{width:60px;height:60px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;position:relative;box-shadow:inset 0 1px 0 #ffffff08;background:var(--g-gray-bg);border:1px solid var(--g-gray-b);}
 .item-icon.gray{background:var(--g-gray-bg);border:1px solid var(--g-gray-b);}
 .item-icon.green{background:var(--g-green-bg);border:1px solid var(--g-green-b);}
 .item-icon.blue{background:var(--g-blue-bg);border:1px solid var(--g-blue-b);}
@@ -3715,14 +3715,19 @@ function getRollGrade(item){
   const q=(val-minS)/(maxS-minS);
   return q<0.25?'siradan':q<0.5?'iyi':q<0.75?'epik':'efsanevi';
 }
+// Nadirlik sadece silah/zırhta (ileride takı ve birliklerde) gösterilir —
+// materyal/hayvan/iksir gibi eşyalar hep "sıradan" olduğundan rozet taşımaz.
+function rarityEligible(item){ return item?.cat==='weapon' || item?.cat==='armor'; }
 function rollGradeLabel(item){
   const g=getRollGrade(item);
-  return g?ROLL_GRADES[g].label:(GRADES[item?.grade]?.name||'');
+  if(g) return ROLL_GRADES[g].label;
+  return rarityEligible(item) ? (GRADES[item?.grade]?.name||'') : '';
 }
-/* Çerçeve sınıfı: şablonlu eşyada zar kalitesi, diğerlerinde eski grade */
+/* Çerçeve sınıfı: şablonlu eşyada zar kalitesi, diğerlerinde eski grade — ama sadece nadirliğe uygun eşyalarda */
 function rqClass(item){
   const g=getRollGrade(item);
-  return g?'rq-'+g:'rarity-'+(item?.grade||'gray');
+  if(g) return 'rq-'+g;
+  return rarityEligible(item) ? 'rarity-'+(item?.grade||'gray') : '';
 }
 
 /* Envanterden bir silahın şablonunu bul */
@@ -7371,9 +7376,9 @@ function renderMaterialMarket(q, sort){
       const iconContent=item.img
         ?`<img src="${IMG_BASE}${item.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:50px;height:50px;object-fit:contain;"/><span style="display:none;font-size:30px;">${item.icon}</span>`
         :`<span style="font-size:30px;">${item.icon}</span>`;
-      return `<div class="listing-card ${item.grade}" onclick="buyMarketItem('${item.id}')">
-        <div class="item-icon ${item.grade}" style="margin-bottom:2px;">${iconContent}</div>
-        <div class="item-name ${item.grade}" style="font-family:var(--font-head);font-size:20px;line-height:1.3;">${item.name}</div>
+      return `<div class="listing-card" onclick="buyMarketItem('${item.id}')">
+        <div class="item-icon" style="margin-bottom:2px;">${iconContent}</div>
+        <div class="item-name" style="font-family:var(--font-head);font-size:20px;line-height:1.3;">${item.name}</div>
         <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">${lvBadge}<span style="font-size:14px;color:var(--ink3);">${item.type}</span></div>
         <div style="font-size:16px;color:var(--ink3);">🤖 NPC</div>
         <div style="font-family:var(--font-head);font-size:22px;color:var(--gold);">${item.price.toLocaleString('tr')}🪙</div>
@@ -7397,12 +7402,12 @@ function renderMaterialMarket(q, sort){
   const cards=listings.map(l=>{
     const mine=l.sellerId===currentUser?.id;
     const canAfford=G.gold>=l.unitPrice;
-    return `<div class="listing-card gray" style="cursor:${mine?'default':'pointer'};" ${mine?'':`onclick="openMaterialBuy('${l.id}')"`}>
-      <div class="item-icon gray" style="margin-bottom:2px;">
+    return `<div class="listing-card" style="cursor:${mine?'default':'pointer'};" ${mine?'':`onclick="openMaterialBuy('${l.id}')"`}>
+      <div class="item-icon" style="margin-bottom:2px;">
         <img src="${IMG_BASE}${l.img}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" style="width:50px;height:50px;object-fit:contain;"/>
         <span style="display:none;font-size:30px;">${l.icon}</span>
       </div>
-      <div class="item-name gray" style="font-family:var(--font-head);font-size:20px;line-height:1.3;">${l.label}</div>
+      <div class="item-name" style="font-family:var(--font-head);font-size:20px;line-height:1.3;">${l.label}</div>
       <div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);">${l.stock.toLocaleString('tr')} adet</div>
       <div style="font-size:16px;color:var(--ink3);">👤 ${mine?'<span style="color:var(--gold);">Sen</span>':l.sellerName}</div>
       <div style="font-family:var(--font-head);font-size:18px;color:var(--gold);">${l.unitPrice.toLocaleString('tr')}🪙<span style="font-size:14px;color:var(--ink3);">/adet</span></div>
@@ -7609,10 +7614,13 @@ function renderMarket(){
       ? Object.entries(tpl.statRanges).slice(0,3).map(([k,[mn,mx]])=>`<span style="font-size:14px;padding:2px 6px;border-radius:3px;background:var(--panel);color:var(--perg2);border:1px solid var(--border);">${STAT_LABELS[k]||k} ${mn}–${mx}</span>`)
       : Object.entries(item.stats||{}).slice(0,3).map(([k,v])=>`<span style="font-size:14px;padding:2px 6px;border-radius:3px;background:var(--panel);color:var(--perg2);border:1px solid var(--border);">+${v} ${STAT_LABELS[k]||k}</span>`)
     ).join('');
-    // NPC eşyaları artık zar/şans rozeti göstermez — hepsi sabit temel nadirliğini gösterir
-    const gradePip=rg
+    // Nadirlik rozeti/çerçevesi sadece silah ve zırhta gösterilir — materyal,
+    // hayvan, iksir gibi eşyalar hep sıradan olduğundan hiç rozet taşımaz.
+    const showRarity=rarityEligible(item);
+    const gradeCls=showRarity?item.grade:'';
+    const gradePip=!showRarity?'':(rg
       ? `<div class="grade-pip" style="background:#14100a;border:1px solid ${ROLL_GRADES[rg].color};color:${ROLL_GRADES[rg].color};">${ROLL_GRADES[rg].label}</div>`
-      : `<div class="grade-pip gp-${item.grade}">${GRADES[item.grade]?.name||''}</div>`;
+      : `<div class="grade-pip gp-${item.grade}">${GRADES[item.grade]?.name||''}</div>`);
     const canBuy=item.seller!=='boss'&&G.gold>=item.price&&item.sellerId!==currentUser?.id;
     const isBoss=item.seller==='boss';
     const isOwnListing=item.sellerId===currentUser?.id;
@@ -7623,9 +7631,9 @@ function renderMarket(){
       :`<span style="font-size:30px;">${item.icon}</span>`;
     const enhBadge=item.enhPlus>0?`<span style="font-size:14px;padding:2px 6px;border-radius:3px;background:#1a1200;border:1px solid var(--gold);color:var(--gold);font-family:var(--font-head);">+${item.enhPlus}</span>`:'';
     const clickFn=item.cat==='premium'?`openPremiumConfirm(${item.id})`:`buyMarketItem('${item.id}')`;
-    return `<div class="listing-card ${item.grade}" onclick="${clickFn}" style="${rg?`border-color:${ROLL_GRADES[rg].color};`:''}">
-      <div class="item-icon ${item.grade}" style="margin-bottom:2px;${rg?`border-color:${ROLL_GRADES[rg].color};`:''}">${iconContent}${gradePip}</div>
-      <div class="item-name ${item.grade}" style="font-family:var(--font-head);font-size:20px;line-height:1.3;word-break:break-word;">${item.name}${enhBadge?'&nbsp;'+enhBadge:''}</div>
+    return `<div class="listing-card ${gradeCls}" onclick="${clickFn}" style="${showRarity&&rg?`border-color:${ROLL_GRADES[rg].color};`:''}">
+      <div class="item-icon ${gradeCls}" style="margin-bottom:2px;${showRarity&&rg?`border-color:${ROLL_GRADES[rg].color};`:''}">${iconContent}${gradePip}</div>
+      <div class="item-name ${gradeCls}" style="font-family:var(--font-head);font-size:20px;line-height:1.3;word-break:break-word;">${item.name}${enhBadge?'&nbsp;'+enhBadge:''}</div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">${lvBadge}${item.type?`<span style="font-size:14px;color:var(--ink3);">${item.type}</span>`:''}</div>
       ${statsP?`<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">${statsP}</div>`:''}
       <div style="font-size:16px;color:var(--ink3);">${isBoss?'⚔ Boss':item.seller==='npc'?'🤖 NPC':'👤 '+item.sellerName}${isOwnListing?' <span style="color:var(--gold);">(Sen)</span>':''}</div>
