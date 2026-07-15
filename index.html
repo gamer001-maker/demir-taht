@@ -4950,10 +4950,79 @@ function openInvModal(itemId, eqSlotKey=null){
     ${targetSlot&&canEquip?`<button class="btn" style="width:100%;margin-bottom:8px;" onclick="equipItem(${item.id},'${targetSlot}')">⚔ Kuşan</button>`:''}
     ${targetSlot&&!canEquip?`<button class="btn" disabled style="width:100%;margin-bottom:8px;">🔒 Seviye ${item.reqLv} Gerekli</button>`:''}
     ${item.cat==='consumable'||item.type==='İksir'?`<button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#0a2a1a,#051408);border-color:var(--g-green);color:#7aaa5a;" onclick="useConsumable(${item.id})">⚗ Kullan${item.qty&&item.qty>1?' ('+item.qty+' adet)':''}</button>`:''}
+    ${item.qty>1?`<button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="openSplitStackModal(${item.id})">✂ Yığını Ayır</button>`:''}
+    ${(()=>{const k=stackKeyOf(item);return k&&G.inventory.some(x=>x.id!==item.id&&stackKeyOf(x)===k)?`<button class="btn btn-ghost" style="width:100%;margin-bottom:8px;border-color:var(--gold);color:var(--gold2);" onclick="mergeStacks(${item.id})">🔗 Aynı Türleri Birleştir</button>`:'';})()}
     <button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:#3a6a18;color:#7aaa5a;" onclick="sellToNPC(${item.id})">🏪 NPC'ye Sat (${getNPCSellPrice(item).toLocaleString('tr-TR')}🪙)</button>
     <button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="openSellModal(${item.id})">🪙 Pazara Sat</button>
     <button class="btn btn-danger" style="width:100%;" onclick="dropItem(${item.id})">🗑 At</button>`;
   showGModal(html);
+}
+
+/* ── YIĞIN (STACK) SİSTEMİ ──
+   İksir gibi tüketilebilirler aynı yığında birleşir. Anahtar tplId (yoksa isim);
+   String() şart — DB'den dönen tplId metin (örn "401"), NPC'ninki sayı (401). */
+function stackKeyOf(item){
+  if(!item) return null;
+  if(!(item.cat==='consumable'||item.type==='İksir')) return null;
+  if(item.isStallItem) return null; // Tezgah yığılmaz
+  return String(item.tplId??item.name);
+}
+/* Envantere yığın-farkındalıklı ekle: aynı anahtarlı yığın varsa üstüne koyar */
+function addItemStacked(invItem){
+  const key=stackKeyOf(invItem);
+  if(key){
+    const exist=G.inventory.find(x=>stackKeyOf(x)===key);
+    if(exist){ exist.qty=(exist.qty||1)+(invItem.qty||1); return exist; }
+  }
+  G.inventory.push(invItem);
+  return invItem;
+}
+/* Envanterdeki aynı türden tüm yığınları bu eşyada birleştir */
+function mergeStacks(itemId){
+  const item=G.inventory.find(x=>x.id===itemId);if(!item)return;
+  const key=stackKeyOf(item);if(!key)return;
+  let merged=0;
+  G.inventory=G.inventory.filter(x=>{
+    if(x.id!==item.id&&stackKeyOf(x)===key){ merged+=(x.qty||1); return false; }
+    return true;
+  });
+  closeGModal();
+  if(merged>0){
+    item.qty=(item.qty||1)+merged;
+    toast(`🔗 Yığınlar birleştirildi: ${item.name} x${item.qty}`);
+    renderKarakter();
+    if(currentUser) sbSave();
+  }
+}
+/* Yığını ikiye ayır */
+function openSplitStackModal(itemId){
+  const item=G.inventory.find(x=>x.id===itemId);
+  if(!item||!(item.qty>1))return;
+  if(invFull()){ toast('Envanter dolu! Ayırmak için boş slot gerekli.'); return; }
+  showGModal(`
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="font-size:36px;margin-bottom:6px;">${item.icon}</div>
+      <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);">${item.name} <span style="color:var(--gold);">x${item.qty}</span></div>
+      <div style="font-size:11px;color:var(--ink3);margin-top:6px;">Yeni yığına kaç adet ayrılsın? (1–${item.qty-1})</div>
+    </div>
+    <input class="input-field" id="split-qty-inp" type="number" min="1" max="${item.qty-1}" value="${Math.floor(item.qty/2)}" style="width:100%;text-align:center;font-size:15px;margin-bottom:10px;box-sizing:border-box;"/>
+    <button class="btn" style="width:100%;margin-bottom:8px;" onclick="confirmSplitStack(${item.id})">✂ Ayır</button>
+    <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal();openInvModal(${item.id})">Vazgeç</button>
+  `);
+}
+function confirmSplitStack(itemId){
+  const item=G.inventory.find(x=>x.id===itemId);
+  if(!item||!(item.qty>1)){ closeGModal(); return; }
+  const n=parseInt(document.getElementById('split-qty-inp')?.value);
+  if(!n||n<1||n>=item.qty){ toast(`1 ile ${item.qty-1} arasında bir sayı gir!`); return; }
+  if(invFull()){ toast('Envanter dolu!'); closeGModal(); return; }
+  item.qty-=n;
+  const copy={...item, id:newItemId(), qty:n, stats:{...(item.stats||{})}};
+  G.inventory.push(copy); // bilerek push — addItemStacked kullanılırsa geri birleşir
+  closeGModal();
+  toast(`✂ ${item.name} ayrıldı: x${item.qty} + x${n}`);
+  renderKarakter();
+  if(currentUser) sbSave();
 }
 
 function useConsumable(itemId){
@@ -7828,21 +7897,16 @@ function buyItem(id){
     return;
   }
 
-  // Tüketilebilir → envanterde yığ
+  // Tüketilebilir → envanterde yığ (stackKeyOf ile — DB'den dönen metin tplId'lerle de eşleşir)
   if(item.cat==='consumable'){
-    const exist=G.inventory.find(x=>x.tplId===item.id&&x.cat==='consumable');
-    if(exist){
-      exist.qty=(exist.qty||1)+1;
-      gainXP(5);
-      toast(`${item.name} x${exist.qty} (yığıldı) -${item.price}🪙`);
-      updateHUD();renderMarket();renderKarakter();
-      if(currentUser) sbSave();
-      return;
-    }
-    if(invCount()>=invCap()){toast('Envanter dolu! Önce bir eşya sat.');G.gold+=item.price;if(limitedStock)item.qty++;return;}
     const cInv={id: newItemId(),name:item.name,icon:item.icon,type:item.type||'İksir',grade:item.grade||'gray',price:item.price,stats:{...item.stats||{}},desc:item.desc||'',seller:'player',sellerName:G.heroName||G.username,img:item.img||null,reqLv:item.reqLv||1,material:null,classBonus:null,tplId:item.id,qty:1,cat:'consumable'};
-    G.inventory.push(cInv);
-    gainXP(10);toast(`${item.name} envantere eklendi! -${item.price}🪙`);trackQuest('marketBuy1');
+    const key=stackKeyOf(cInv);
+    const exist=key?G.inventory.find(x=>stackKeyOf(x)===key):null;
+    if(!exist&&invCount()>=invCap()){toast('Envanter dolu! Önce bir eşya sat.');G.gold+=item.price;if(limitedStock)item.qty++;return;}
+    const placed=addItemStacked(cInv);
+    gainXP(exist?5:10);
+    toast(exist?`${item.name} x${placed.qty} (yığıldı) -${item.price}🪙`:`${item.name} envantere eklendi! -${item.price}🪙`);
+    trackQuest('marketBuy1');
     updateHUD();renderMarket();renderKarakter();
     if(currentUser) sbSave();
     return;
@@ -7942,7 +8006,7 @@ async function buyMarketItem(id){
     updateHUD();renderMarket();if(PROD_BUILDINGS.ranch.level>0) renderRanch();
     if(currentUser) sbSave();
   } else {
-    G.inventory.push(invItem);
+    addItemStacked(invItem); // iksir gibi yığılabilirler mevcut yığına eklenir
     gainXP(10);
     const enhLabel = (listing.enhPlus > 0) ? ` +${listing.enhPlus}` : '';
     toast(`${listing.name}${enhLabel} satın alındı! -${listing.price}🪙`);
@@ -7997,7 +8061,7 @@ async function withdrawListing(id){
     if(!G.animals) G.animals={tavuk:0,koyun:0,inek:0,ari:0,at:0};
     G.animals[listing.stats.animalKey]=(G.animals[listing.stats.animalKey]||0)+1;
   } else {
-    G.inventory.push(invItem);
+    addItemStacked(invItem);
   }
 
   G_PLAYER_LISTINGS = G_PLAYER_LISTINGS.filter(x => x.id !== id);
@@ -8297,7 +8361,7 @@ async function withdrawGuildStorage(storageId){
     enhPlus: Number(row.item_enh_plus)||0,
     qty: Number(row.item_qty)||1,
   };
-  G.inventory.push(invItem);
+  addItemStacked(invItem); // aynı iksir yığını varsa üstüne eklenir
   toast(`${invItem.name}${invItem.qty>1?' x'+invItem.qty:''} envantere alındı!`);
   renderKarakter();
   if(currentUser) sbSave();
