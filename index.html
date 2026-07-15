@@ -9186,18 +9186,15 @@ async function sendGlobalChat(){
   const isGlow=perkActive('chatGlowUntil');
   const {error}=await supa.from('global_chat').insert({
     profile_id:currentUser.id,
-    username:G.username||currentUser.email?.split('@')[0]||'?',
+    username:G.username||'?', // e-posta önekine DÜŞME — herkese açık sohbete sızmasın
     hero_name:G.heroName||'Kahraman',
     class_icon:cls?.icon||'⚔',
     message:msg,
     is_glow:isGlow,
   });
   if(error){toast('Mesaj gönderilemedi: '+error.message);return;}
-  const {count}=await supa.from('global_chat').select('*',{count:'exact',head:true});
-  if(count>100){
-    const {data:oldest}=await supa.from('global_chat').select('id').order('created_at',{ascending:true}).limit(1).single();
-    if(oldest) await supa.from('global_chat').delete().eq('id',oldest.id);
-  }
+  // Eski mesaj temizliği DB trigger'ında (chat_migration.sql) — istemci silmez,
+  // RLS'te kimsenin DELETE izni yok.
 }
 
 /* ── SIRALAMALAR ── */
@@ -9332,7 +9329,8 @@ async function gSend(){
   if(!inp||!inp.value.trim()) return;
   if(!G.guildId){toast('Loncaya katıl!');return;}
   const cls=CLASSES.find(c=>c.id===G.classId);
-  const msg=inp.value.trim();inp.value='';
+  const msg=inp.value.trim().slice(0,500); // RLS'teki uzunluk sınırıyla eş
+  inp.value='';
   await supa.from('guild_chat').insert({guild_id:G.guildId,profile_id:currentUser?.id,hero_name:G.heroName||G.username,class_icon:cls?.icon||'⚔',message:msg});
 }
 function renderGuildSearch(){
