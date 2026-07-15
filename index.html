@@ -8699,17 +8699,19 @@ function renderGuildWar(){
   }
   const boss = getCurrentBoss();
   const gc = document.getElementById('guild-content');
-  gc.style.backgroundImage=`url('${IMG_BASE}${boss.img}.webp'),url('${IMG_BASE}${boss.img}.jpg')`;
-  gc.style.backgroundSize='cover';
-  gc.style.backgroundPosition='center top';
-  gc.style.backgroundRepeat='no-repeat';
-
+  // ÖNEMLİ: görsel #guild-content'in KENDİ innerHTML'i içine (gd-bgpanel deseni)
+  // gömülür — gc.style.background* ARTIK KULLANILMIYOR. Eski haliyle bu satırlar
+  // #guild-content'e kalıcı stil basıyordu ve hiçbir başka renderGuild* fonksiyonu
+  // bunu temizlemediği için, Savaş sekmesi bir kez açıldıktan sonra o anki boss
+  // görseli TÜM lonca sekmelerinde arkada yapışık kalıyordu.
   gc.innerHTML=`
     <style>
       @keyframes bossSlideUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
       .boss-hunter-row{animation:bossSlideUp .35s ease both;}
     </style>
-    <div style="min-height:480px;display:flex;flex-direction:column;background:linear-gradient(to bottom,rgba(0,0,0,0.15) 0%,rgba(0,0,0,0.05) 25%,rgba(15,8,4,0.82) 60%,rgba(15,8,4,1) 100%);">
+    <div class="gd-bgpanel" style="border-radius:0;box-shadow:none;margin-bottom:0;">
+      <img class="gd-bgpanel-img" src="${IMG_BASE}${boss.img}.webp" onerror="this.src='${IMG_BASE}${boss.img}.jpg';this.onerror=()=>this.style.display='none';"/>
+    <div style="min-height:480px;display:flex;flex-direction:column;background:linear-gradient(to bottom,rgba(0,0,0,0.15) 0%,rgba(0,0,0,0.05) 25%,rgba(15,8,4,0.82) 60%,rgba(15,8,4,1) 100%);position:relative;z-index:1;">
 
       <!-- Üst: Boss görseli + adı -->
       <div style="text-align:center;padding:28px 16px 0;flex-shrink:0;">
@@ -8738,6 +8740,7 @@ function renderGuildWar(){
         <!-- Sağ: katıl butonu -->
         <div id="boss-join-col" style="flex-shrink:0;"></div>
       </div>
+    </div>
     </div>
 
     <!-- Ödüller şeridi -->
