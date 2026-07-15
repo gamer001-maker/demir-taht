@@ -2348,14 +2348,21 @@ function refreshLoginStreak(){
 }
 
 // Bugünkü ödülü ver
-function claimLoginReward(){
+async function claimLoginReward(){
   if(G.loginClaimedToday){ toast('Bugünkü ödülü zaten aldın!'); return; }
   const idx=Math.max(1,Math.min(7,G.loginStreak||1))-1;
   const r=LOGIN_REWARDS[idx];
   let msg='';
   if(r.type==='gold'){ G.gold+=r.val; msg=`+${r.val}🪙`; if(r.bonusXp){ gainXP(r.bonusXp); msg+=` +${r.bonusXp}XP`; } }
   else if(r.type==='xp'){ gainXP(r.val); msg=`+${r.val} XP`; }
-  else if(r.type==='ticket'){ G.zdTickets=Math.min(ZD_MAX_TICKETS,(G.zdTickets||0)+r.val); msg=`+${r.val} 🎟 Zindan Hakkı`; }
+  else if(r.type==='ticket'){
+    // Bilet sunucuda verilir — RPC günde bir kez sınırlar (zd_ticket_bonus_date),
+    // istemciden tekrar tekrar çağrılsa da ikinci seferden itibaren reddeder.
+    const {data,error}=await supa.rpc('zd_claim_daily_ticket_bonus');
+    if(error || !data?.ok){ toast('Ödül alınamadı: '+(data?.error||error?.message||'bilinmeyen hata')); return; }
+    G.zdTickets=data.tickets_left;
+    msg=`+${r.val} 🎟 Zindan Hakkı`;
+  }
   G.loginClaimedToday=true;
   celebrate('🎁', `${G.loginStreak}. GÜN ÖDÜLÜ!`, msg, 'gold');
   updateHUD();
@@ -3667,10 +3674,10 @@ const ARENA_OPPONENTS={
   ],
 };
 const ARENA_MAX_TICKETS=100;
-function arenaTicketKey(){const d=new Date();return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;}
-function arenaGetTickets(){try{const s=JSON.parse(localStorage.getItem('arena_state')||'{}');return s.date===arenaTicketKey()?s.tickets??ARENA_MAX_TICKETS:ARENA_MAX_TICKETS;}catch(e){return ARENA_MAX_TICKETS;}}
-function arenaSaveTickets(n){localStorage.setItem('arena_state',JSON.stringify({date:arenaTicketKey(),tickets:n}));}
-let ARENA_TICKETS=arenaGetTickets();
+// Bilet durumu artık sunucuda (profiles.arena_tickets/arena_ticket_date, trigger korumalı).
+// ARENA_TICKETS burada sadece EKRAN durumu — gerçek tüketim arena_consume_ticket RPC'sinde,
+// sunucu tarihine göre atomik yapılır (localStorage/cihaz saati oynanamaz).
+let ARENA_TICKETS=ARENA_MAX_TICKETS; // profil yüklenene dek iyimser varsayılan
 /* ══════════════════════════════════════
    SİLAH ŞABLONLARİ — min/max aralıklı random stat sistemi
 ══════════════════════════════════════ */
@@ -6347,10 +6354,11 @@ function _playerSprFrames(){
    YENİLMEZ GOLATH BOSS SAVAŞI
 ══════════════════════════════════════ */
 let _GB=null;
-function openGoliathBattle(){
+async function openGoliathBattle(){
   if(ARENA_TICKETS<=0){toast('⚡ Arena hakkın yok! Yarın yenilenir.');return;}
-  ARENA_TICKETS=Math.max(0,ARENA_TICKETS-1);
-  arenaSaveTickets(ARENA_TICKETS);
+  const {data,error}=await supa.rpc('arena_consume_ticket');
+  if(error || !data?.ok){toast('⚡ Arena hakkın yok! Yarın yenilenir.');ARENA_TICKETS=0;renderArena();return;}
+  ARENA_TICKETS=data.tickets_left;
   const eff=getEffectiveStats();
   _GB={
     playerHp:eff.maxhp,playerMaxHp:eff.maxhp,
@@ -6502,13 +6510,14 @@ function closeGoliathBattle(){
 ══════════════════════════════════════ */
 let _AB=null;
 
-function openArenaBattle(oppName){
+async function openArenaBattle(oppName){
   if(ARENA_TICKETS<=0){toast('⚡ Arena hakkın yok! Yarın yenilenir.');return;}
   const lg=arenaGetLeague();
   const opps=ARENA_OPPONENTS[lg.id]||ARENA_OPPONENTS.bronz;
   const opp=opps.find(o=>o.name===oppName);if(!opp)return;
-  ARENA_TICKETS=Math.max(0,ARENA_TICKETS-1);
-  arenaSaveTickets(ARENA_TICKETS);
+  const {data,error}=await supa.rpc('arena_consume_ticket');
+  if(error || !data?.ok){toast('⚡ Arena hakkın yok! Yarın yenilenir.');ARENA_TICKETS=0;renderArena();return;}
+  ARENA_TICKETS=data.tickets_left;
   const eff=getEffectiveStats();
   const oppMaxHp=Math.max(50,opp.power*2);
   _AB={playerHp:eff.maxhp,playerMaxHp:eff.maxhp,oppHp:oppMaxHp,oppMaxHp,opp,eff,busy:false};
@@ -6818,31 +6827,16 @@ let ZD = {
   battle: null,         // {enemy, enemyHp, playerHp, defending, log}
 };
 
-function zdGetTicketKey(){ return new Date().toISOString().slice(0,10); }
+function zdGetTicketKey(){ try{ return getServerNow().toISOString().slice(0,10); }catch(e){ return new Date().toISOString().slice(0,10); } }
 
+/* Sadece EKRAN tahmini — gerçek sıfırlama/tüketim sunucuda zd_consume_ticket
+   RPC'sinde olur (sunucu tarihine göre atomik). Burada amaç, gün döndüğünde
+   sunucuya hiç sormadan pip'lerin 20/20 görünmesini sağlamak; cihaz saati
+   oynansa bile gerçek bakiye RPC'nin kendi CURRENT_DATE kontrolüyle korunur. */
 function zdCheckTicketReset(){
   const today = zdGetTicketKey();
-  // Tarih değiştiyse veya hiç ayarlanmadıysa sıfırla
-  if(G.zdTicketDate !== today){
-    G.zdTickets = ZD_MAX_TICKETS;
-    G.zdTicketDate = today;
-  }
-  // Maksimumun altındaysa ve eski limit 3'tü ise güncelle (migration fix)
-  if(G.zdTickets < ZD_MAX_TICKETS && G.zdTicketDate === today){
-    // Bugünkü tarihle kayıtlıysa bile limit artmışsa tavan uygula
-    // (eski limit 3'ten 20'ye çıktığında mevcut kullanıcıları güncelle)
-    if(G.zdTickets === 0 || G.zdTickets === 3){
-      G.zdTickets = ZD_MAX_TICKETS;
-    }
-  }
-  ZD.tickets = G.zdTickets;
-  ZD.ticketResetDate = G.zdTicketDate;
-}
-
-function zdSaveTickets(){
-  G.zdTickets = ZD.tickets;
-  G.zdTicketDate = ZD.ticketResetDate;
-  if(currentUser) sbSave();
+  ZD.tickets = (G.zdTicketDate === today) ? (G.zdTickets??ZD_MAX_TICKETS) : ZD_MAX_TICKETS;
+  ZD.ticketResetDate = today;
 }
 
 // Kat için oda dizisi üret — canavarlar zindan kademesinin kadrosundan gelir
@@ -7088,11 +7082,22 @@ function zdBattleHTML(){
 }
 
 /* ── AKSİYONLAR ── */
-function zdEnter(){
-  zdCheckTicketReset();
+async function zdEnter(){
+  zdCheckTicketReset(); // hızlı UX ön-kontrolü — gerçek karar RPC'de
   if(ZD.tickets<=0){toast('Bugün hakkın kalmadı!');return;}
+  const uc=troopUpkeepCost();
   if(!payTroopUpkeep('zindan')) return;
-  ZD.tickets--;
+  // Bilet sunucuda atomik tüketilir (sunucu tarihine göre) — istemci artık
+  // ne bilet sayısını ne de "yeni gün" kararını kendi kendine veremez.
+  const {data,error}=await supa.rpc('zd_consume_ticket');
+  if(error || !data?.ok){
+    if(uc.count>0){ G.food+=uc.food; G.gold+=uc.gold; } // besleme ücreti iade — zindana girilmedi
+    toast(data?.error==='no_tickets' ? 'Bugün hakkın kalmadı!' : 'Zindana giriş başarısız.');
+    renderZindan();
+    return;
+  }
+  G.zdTickets=data.tickets_left; G.zdTicketDate=data.ticket_date;
+  ZD.tickets=data.tickets_left;
   ZD.active=true;
   ZD.tier=zdPlayerTier(); // kademe girişte kilitlenir (içeride seviye atlansa da değişmez)
   ZD.floor=1;
@@ -7101,9 +7106,9 @@ function zdEnter(){
   ZD.totalGold=0;
   ZD.totalXP=0;
   ZD.battle=null;
-  zdSaveTickets();
+  updateHUD();
+  if(currentUser) sbSave();
   renderZindan();
-  const uc=troopUpkeepCost();
   const upNote = uc.count>0 ? ` (Birlik beslemesi: ${uc.food}🌾 ${uc.gold}🪙)` : '';
   toast(`Zindana girdin! 🗝${upNote}`);
 }
@@ -11047,6 +11052,8 @@ async function sbCreateProfile(username) {
     equipped:    {},
     zd_tickets:  20,
     zd_ticket_date: '',
+    arena_tickets: ARENA_MAX_TICKETS,
+    arena_ticket_date: '',
     guild_id:    null,
     guild_name:  null,
   });
@@ -11200,8 +11207,15 @@ async function sbLoadProfile() {
     }
   });
   if(needsSave) setTimeout(()=>sbSave(), 1500);
-  if(p.zd_tickets !== undefined) G.zdTickets = p.zd_tickets;
+  // Bilet durumu — gerçek kaynak sunucu (zd_consume_ticket / arena_consume_ticket RPC'leri).
+  // Burada sadece profil yüklenir yüklenmez ekranın doğru görünmesi için tahmini gösterim yapılır;
+  // gün sunucuya göre değiştiyse ekran iyimser tavanı gösterir, gerçek tüketim yine RPC'den geçer.
+  const _todayTicket = (()=>{ try{ return getServerNow().toISOString().slice(0,10); }catch(e){ return new Date().toISOString().slice(0,10); } })();
+  if(p.zd_tickets !== undefined) G.zdTickets = (p.zd_ticket_date===_todayTicket) ? p.zd_tickets : ZD_MAX_TICKETS;
   if(p.zd_ticket_date) G.zdTicketDate = p.zd_ticket_date;
+  ARENA_TICKETS = (p.arena_tickets !== undefined)
+    ? ((p.arena_ticket_date===_todayTicket) ? p.arena_tickets : ARENA_MAX_TICKETS)
+    : ARENA_MAX_TICKETS; // kolon henüz yoksa (migration çalıştırılmadıysa) iyimser varsayılan
   if(p.login_streak !== undefined) G.loginStreak = p.login_streak;
   if(p.last_login_date) G.lastLoginDate = p.last_login_date;
   if(p.perks) { try{ G.perks = typeof p.perks==='string'?JSON.parse(p.perks):p.perks; }catch(e){} }
@@ -11408,8 +11422,9 @@ async function _sbSaveNow() {
       mat_inv:      G.matInv,
       inventory:    G.inventory,
       equipped:     G.equipped,
-      zd_tickets:   G.zdTickets,
-      zd_ticket_date: G.zdTicketDate,
+      // zd_tickets / zd_ticket_date / arena_tickets / arena_ticket_date BİLEREK YOK —
+      // trigger korumalı, sadece zd_consume_ticket/arena_consume_ticket/zd_claim_daily_ticket_bonus
+      // RPC'leri yazabilir (sql/ticket_migration.sql)
       login_streak: G.loginStreak,
       last_login_date: G.lastLoginDate,
       perks: G.perks,
