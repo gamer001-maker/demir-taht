@@ -795,7 +795,7 @@ html,body{
 /* Geniş kartlar (üye/depo eşyası) — üstteki görsel görünsün diye hafif saydam.
    .listing-card/.member-card Pazar'da da kullanıldığından ONLARA dokunulmaz;
    bu ek sınıf sadece lonca ekranlarında eklenir. */
-.listing-card.gd-card-t,.member-card.gd-card-t{background:rgba(38,28,18,.62);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}
+.listing-card.gd-card-t,.member-card.gd-card-t{background:rgba(38,28,18,.38);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);}
 
 /* Lonca sayfasının düz temel rengi (hdr/tabs/guild-content) — diğer sayfalarda
    kullanılan .hdr/.tabs/.scroll'a DOKUNULMAZ, sadece #p-guild kapsamında geçersiz
@@ -8638,8 +8638,8 @@ async function sbLoadGuildMembers(){
     return `<div class="member-card gd-card-t">
       <div class="m-av">${cls?.icon||'⚔'}</div>
       <div style="flex:1;">
-        <div style="font-family:var(--font-head);font-size:12px;font-weight:600;color:var(--perg);">${displayName}${m.profile_id===currentUser?.id?' <span style="font-size:9px;color:var(--gold);">(Sen)</span>':''}</div>
-        <div style="font-size:10px;color:var(--ink3);">Sv.${prof.level||1} ${cls?.name||''}</div>
+        <div style="font-family:var(--font-head);font-size:14px;font-weight:600;color:var(--perg);">${displayName}${m.profile_id===currentUser?.id?' <span style="font-size:10px;color:var(--gold);">(Sen)</span>':''}</div>
+        <div style="font-size:13px;color:var(--perg2);">Sv.${prof.level||1} ${cls?.name||''}</div>
       </div>
       <span class="rb ${m.role==='leader'?'rb-leader':m.role==='officer'?'rb-officer':'rb-member'}">${m.role==='leader'?'👑 Lider':m.role==='officer'?'🔷 Subay':'👤 Üye'}</span>
     </div>`;
@@ -8656,7 +8656,7 @@ async function sbLoadGuildMembers(){
       <img class="gd-bgpanel-img" src="${IMG_BASE}uyeler.webp" onerror="this.style.display='none'"/>
       <div class="gd-bgpanel-shade"></div>
       <div class="gd-bgpanel-content">
-        <div style="max-width:520px;margin:0 auto;">${rows}</div>
+        <div style="max-width:420px;margin:0 auto;">${rows}</div>
       </div>
     </div>`;
 }
