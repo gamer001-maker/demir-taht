@@ -1020,6 +1020,114 @@ html,body{
 .rc-xp{background:#1a1408;color:var(--copper);border:1px solid #4a2a08;}
 .rc-item{background:#1a1008;color:#c8a070;border:1px solid #4a2a10;}
 
+
+/* ═══════════════════════════════
+   GÖREV SİSTEMİ v2
+═══════════════════════════════ */
+#p-quest{position:relative;}
+.q-bg{position:absolute;inset:0;background-position:center;background-size:cover;background-repeat:no-repeat;z-index:0;pointer-events:none;}
+.q-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,#0f0b08e6 0%,#0f0b08c4 35%,#0f0b08f2 100%);}
+#p-quest>*:not(.q-bg){position:relative;z-index:1;}
+
+/* ── Geri butonu ── */
+.q-back{display:flex;align-items:center;gap:7px;cursor:pointer;font-family:var(--font-head);font-size:12px;letter-spacing:1px;color:var(--perg2);padding:2px 0;}
+.q-back:hover{color:var(--gold2);}
+.q-back-ar{font-size:19px;line-height:1;}
+
+/* ── HUB (kategori listesi) ── */
+.qhub-row{display:flex;align-items:center;gap:11px;padding:13px 13px;border-bottom:1px solid #ffffff0f;cursor:pointer;transition:background .15s;}
+.qhub-row:hover{background:#ffffff09;}
+.qhub-row.qlock{opacity:.42;cursor:not-allowed;}
+.qhub-ico{width:46px;height:46px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 2px 5px #000000cc);}
+.qhub-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;box-shadow:0 0 6px currentColor;}
+.qhub-t{font-family:var(--font-head);font-size:14px;font-weight:600;color:var(--perg);letter-spacing:.3px;}
+.qhub-d{font-size:11px;color:var(--perg2);line-height:1.5;margin-top:2px;}
+.qhub-ar{font-size:19px;color:var(--ink3);flex-shrink:0;}
+
+/* ── Görev satırı ── */
+.qrow{display:flex;gap:10px;padding:12px 12px;border-bottom:1px solid #ffffff0d;align-items:flex-start;}
+.qrow.qdim{opacity:.4;}
+.qrow.qrun{background:#1a140880;}
+.qrow-ico{width:52px;height:52px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 2px 4px #000000aa);}
+.qrow-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.qrow-t{font-family:var(--font-head);font-size:13px;font-weight:600;color:var(--perg);}
+.qrow-dur{font-size:10px;color:var(--ink3);white-space:nowrap;flex-shrink:0;padding-top:2px;}
+.qrow-d{font-size:11px;color:var(--perg2);line-height:1.5;margin:3px 0 5px;}
+.qreq{font-size:11px;line-height:1.5;color:var(--gold);}
+.qreq b{font-weight:600;}
+.qreq .qno{color:#d9705f;}
+.qrew{display:flex;gap:11px;flex-wrap:wrap;align-items:center;margin-top:6px;}
+.qrew i{font-style:normal;display:inline-flex;align-items:center;gap:3px;font-family:var(--font-head);font-size:12px;color:var(--perg);}
+.qskill{display:inline-block;margin-top:7px;background:#2a1e08;border:1px solid var(--border2);color:var(--gold2);
+  font-family:var(--font-head);font-size:11px;padding:3px 11px;border-radius:13px;}
+.qgo{margin-top:8px;}
+
+/* ── Çalışan görev sayacı ── */
+.qtimer{margin-top:7px;}
+.qtimer-t{display:flex;justify-content:space-between;font-size:10px;color:var(--gold2);margin-bottom:3px;font-family:var(--font-head);}
+
+/* ── Zaman dilimi çubuğu ── */
+.qphase{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 13px;
+  background:#150f08f0;border-top:1px solid var(--border2);flex-shrink:0;}
+.qphase-l{display:flex;align-items:center;gap:9px;}
+.qphase-ico{font-size:21px;line-height:1;}
+.qphase-n{font-family:var(--font-head);font-size:13px;color:var(--perg);}
+.qphase-c{font-size:10px;color:var(--ink3);margin-top:1px;}
+.qphase-d{font-size:10.5px;color:var(--perg3);text-align:right;}
+
+/* ── Grup görev kartları ── */
+.qg-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:11px;}
+.qg-card{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--border);cursor:pointer;
+  background-color:#1a120a;background-position:center;background-size:cover;min-height:152px;transition:border-color .15s;}
+.qg-card:hover{border-color:var(--gold);}
+.qg-card::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,#00000022 0%,#000000b8 62%,#000000e0 100%);}
+.qg-in{position:relative;z-index:2;height:100%;min-height:152px;display:flex;flex-direction:column;justify-content:flex-end;padding:9px;gap:4px;}
+.qg-t{font-family:var(--font-head);font-size:13.5px;font-weight:600;color:#fff;text-shadow:0 2px 6px #000;line-height:1.2;}
+.qg-cap{align-self:flex-start;font-family:var(--font-head);font-size:10px;padding:2px 8px;border-radius:5px;background:#e8dcc0;color:#1a120a;font-weight:700;}
+.qg-cap.qg-open{background:#3d8a4c;color:#fff;}
+.qg-cap.qg-full{background:#b8443a;color:#fff;}
+.qg-loc{font-size:10.5px;color:#e0d4b8;text-shadow:0 1px 4px #000;line-height:1.35;}
+.qg-flag{position:absolute;top:7px;right:7px;z-index:3;background:#b8443a;color:#fff;font-family:var(--font-head);font-size:9px;padding:2px 7px;border-radius:4px;letter-spacing:.5px;}
+
+/* ── Grup görev detayı ── */
+.qslots{position:relative;background-color:#1a120a;background-position:center;background-size:cover;
+  display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:22px 16px;align-content:center;min-height:180px;}
+.qslots::before{content:'';position:absolute;inset:0;background:#0f0b0866;}
+.qslot{position:relative;z-index:2;background:#00000077;border:1px solid #ffffff26;border-radius:7px;padding:9px 5px;
+  text-align:center;font-family:var(--font-head);font-size:12px;color:var(--perg3);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.qslot.qs-full{background:#2f6b3ae6;border-color:#54a163;color:#fff;}
+.qslot.qs-me{background:#8a6a1ee6;border-color:var(--gold2);color:#fff;}
+.qteam{background:#efe3c8;color:#241a10;padding:12px 14px;}
+.qteam-hd{display:flex;justify-content:space-between;align-items:center;font-family:var(--font-head);font-size:13px;margin-bottom:7px;}
+.qteam-bar{height:7px;background:#cbbb9a;border-radius:4px;overflow:hidden;}
+.qteam-fill{height:100%;background:linear-gradient(90deg,#6b6f9a,#8d92c4);border-radius:4px;transition:width .4s;}
+.qteam-tx{font-size:12px;line-height:1.6;margin-top:11px;}
+.qcheck{margin:9px 0 0;padding-left:19px;}
+.qcheck li{font-size:12px;line-height:1.75;}
+.qcheck li.qok{color:#2f7a3c;}
+.qcheck li.qno{color:#c0453a;}
+.qlore{padding:16px 15px 20px;font-size:12px;line-height:1.8;color:var(--perg2);text-align:justify;position:relative;}
+.qlore b{color:var(--perg);}
+.qlore::before{content:'“';position:absolute;left:9px;top:2px;font-size:32px;color:var(--perg3);opacity:.6;line-height:1;}
+
+@media(min-width:900px){
+  .qhub-row{padding:17px 22px;gap:15px;}
+  .qhub-ico{width:58px;height:58px;}
+  .qhub-t{font-size:17px;}
+  .qhub-d{font-size:13.5px;}
+  .qrow{padding:15px 20px;gap:14px;}
+  .qrow-ico{width:64px;height:64px;}
+  .qrow-t{font-size:16px;}
+  .qrow-d,.qreq{font-size:13.5px;}
+  .qrew i{font-size:14px;}
+  .qg-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;padding:16px;}
+  .qg-card,.qg-in{min-height:200px;}
+  .qg-t{font-size:17px;}
+  .qslots{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));min-height:230px;}
+  .qlore,.qteam-tx,.qcheck li{font-size:14px;}
+}
+
 /* ═══════════════════════════════
    MARKET
 ═══════════════════════════════ */
@@ -1958,17 +2066,22 @@ html,body{
        GÖREVLER
   ════════════════════════════ -->
   <div class="page" id="p-quest">
+    <div class="q-bg" id="quest-bg"></div>
     <div class="hdr">
-      <div><div class="hdr-title">📜 GÖREVLER</div><div class="hdr-sub" id="quest-hdr-sub">Kral · Seviye 1</div></div>
-      <div style="text-align:right;"><div style="font-family:var(--font-head);font-size:11px;color:var(--daily2);" id="daily-timer">--:--:--</div><div style="font-size:9px;color:var(--ink3);">Sıfırlanma</div></div>
+      <div style="display:flex;align-items:center;gap:11px;min-width:0;">
+        <div class="q-back" id="quest-back" style="display:none;" onclick="qBack()"><span class="q-back-ar">←</span>GERİ</div>
+        <div style="min-width:0;">
+          <div class="hdr-title" id="quest-title">📜 GÖREVLER</div>
+          <div class="hdr-sub" id="quest-hdr-sub">Kral · Seviye 1</div>
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-family:var(--font-head);font-size:11px;color:var(--daily2);" id="daily-timer">--:--:--</div>
+        <div style="font-size:9px;color:var(--ink3);">Sıfırlanma</div>
+      </div>
     </div>
-    <div class="tabs">
-      <div class="tab active" id="qt-story"  onclick="qgo('story')"> <span class="tab-icon">📖</span>Hikaye</div>
-      <div class="tab"        id="qt-daily"  onclick="qgo('daily')"> <span class="tab-icon">🌅</span>Günlük</div>
-      <div class="tab"        id="qt-side"   onclick="qgo('side')">  <span class="tab-icon">⚡</span>Yan</div>
-      <div class="tab"        id="qt-guild"  onclick="qgo('guild')"> <span class="tab-icon">🛡</span>Lonca</div>
-    </div>
-    <div class="scroll pad" id="quest-content"></div>
+    <div class="scroll" id="quest-content"></div>
+    <div class="qphase" id="quest-phase"></div>
   </div>
 
   <!-- ════════════════════════════
@@ -2435,7 +2548,7 @@ function loginCalendarHTML(){
 const COACH_TIPS={
   // Ana sayfalar
   'g:karakter':  {icon:'⚡', title:'Karakterin', text:'Buradan kahramanını yönetirsin. Nitelik ve özelliklerin üstüne dokunarak ne işe yaradıklarını öğren; seviye atladıkça gelen puanları (+) dağıtarak güçlen.'},
-  'page:quest':  {icon:'📜', title:'Görevler', text:'Hikâye ve günlük görevleri buradan takip et. Günlük sekmesindeki giriş serini kaçırma — her gün artan ödüller seni bekliyor.'},
+  'page:quest':  {icon:'📜', title:'Görevler', text:'Görev türünü seç, şartları tut ve başlat. Yeşil nokta o kategoride şu an yapabileceğin bir görev olduğunu gösterir.'},
   'page:market': {icon:'🛒', title:'Pazar', text:'Silah, zırh ve eşya alıp satabilirsin. Diğer oyuncuların ilanlarına da buradan ulaşırsın. İyi ekipman savaşta fark yaratır.'},
   'page:guild':  {icon:'🛡', title:'Lonca', text:'Bir loncaya katıl, sohbet et ve lonca savaşlarına gir. Birlikte güçlü düşmanları (boss) devirip ortak ödüller kazanırsınız.'},
   'page:prod':   {icon:'🌾', title:'Üretim', text:'Çiftlik, değirmen, mutfak ve hayvanlarla hammadde üret. Ürünler zamanla olgunlaşır — sık sık uğrayıp topla, sonra işleyip sat ya da kullan.'},
@@ -4313,7 +4426,10 @@ const G={
   guildTreasury:0,
   chatMsgs:[],
   marketSrc:'all',marketCat:'all',
-  questTab:'story',guildTab:'home',profileTab:'profile',prodTab:'farm',
+  questTab:'hub',questSel:null,guildTab:'home',profileTab:'profile',prodTab:'farm',
+  skills:{},        // kazanılan yetenekler: {avcilik:1.4, demircilik:2, ...}
+  questRuns:{},     // süren görevler: {questId:{end:ms, cat, bonus}}
+  questCd:{},       // görev yorgunluğu: {questId: hazırOlmaZamanı_ms}
   ach:{}, // başarım sayaçları (explore, market, build, harvest, zdboss + _done listesi)
   notifCount:0,
   arenaLog:[],
@@ -7544,6 +7660,7 @@ function questSave(){
       dailyQp:G.dailyQp,
       completedQuests:[...G.completedQuests],
       dailyCollected:{date:questDateKey(),ids:[...G.dailyCollected]},
+      skills:G.skills, questRuns:G.questRuns, questCd:G.questCd,
     }));
   }catch(e){}
 }
@@ -7565,7 +7682,12 @@ function questLoad(){
       if(s.dailyQp) Object.keys(G.dailyQp).forEach(k=>{if(s.dailyQp[k]!==undefined) G.dailyQp[k]=Math.max(G.dailyQp[k]||0,s.dailyQp[k]);});
     }
     // Farklı gün → dailyQp ve dailyCollected sıfır kalır (otomatik reset)
+    if(s.skills)    G.skills={...G.skills,...s.skills};
+    if(s.questRuns) G.questRuns={...G.questRuns,...s.questRuns};
+    if(s.questCd)   G.questCd={...G.questCd,...s.questCd};
   }catch(e){}
+  // Oyun kapalıyken biten görevlerin ödülünü sessizce ver
+  try{ if(typeof qSweep==='function') qSweep(true); }catch(e){}
 }
 function trackQuest(key,val=1){
   if(!(key in G.qp)) return;
@@ -7622,12 +7744,414 @@ function collectDailyReward(qid){
   renderQuest('daily');
 }
 
-function qgo(t){G.questTab=t;['story','daily','side','guild'].forEach(x=>{document.getElementById('qt-'+x).classList.toggle('active',x===t);});renderQuest(t);}
+/* ══════════════════════════════════════════════════════════════
+   GÖREV SİSTEMİ v2
+   ─────────────────────────────────────────────────────────────
+   Hub → kategori → görev satırı yapısı.
+   Görevler süreli çalışır (başlat → sayaç → ödül). Gereksinimler
+   coğrafya / rütbe / yetenek / zaman dilimi / altın / can / birlik
+   üzerinden kontrol edilir. Hikaye, Günlük ve Lonca sekmeleri eski
+   hedef takipli sistemle (trackQuest) çalışmaya devam eder.
+══════════════════════════════════════════════════════════════ */
 
-function renderQuest(t){
-  document.getElementById('quest-hdr-sub').textContent=`${G.heroName||'Kral'} · Seviye ${G.level}`;
+/* Görev ekranı arka planı — images/ altına başka bir dosya koyup değiştirebilirsin */
+const QUEST_BG = IMG_BASE+'kalearkaplan.webp';
+const QUEST_SLOTS = 3;               // aynı anda sürdürülebilir görev sayısı
+const KRAKEN_EVERY = 3*3600*1000;    // kraken avı periyodu
+const KRAKEN_LEN   = 30*60*1000;     // kraken avı süresi
+
+/* ── COĞRAFYA ── haritadaki keşfedilmiş hücre tiplerinden türetilir */
+const QGEO={
+  sehir: {lbl:'Şehir Coğrafyası',  kisa:'Şehir',   t:['castle','village']},
+  orman: {lbl:'Orman Coğrafyası',  kisa:'Orman',   t:['forest']},
+  ova:   {lbl:'Ova Coğrafyası',    kisa:'Ova',     t:['plains']},
+  deniz: {lbl:'Deniz Coğrafyası',  kisa:'Deniz',   t:['water']},
+  dag:   {lbl:'Dağ Coğrafyası',    kisa:'Dağlar',  t:['mountain']},
+  harabe:{lbl:'Harabe Coğrafyası', kisa:'Harabe',  t:['ruins']},
+  magara:{lbl:'Mağara Coğrafyası', kisa:'Mağara',  t:['cave']},
+};
+function qHasGeo(k){
+  const g=QGEO[k]; if(!g) return true;
+  if(g.t.includes('castle')) return true;               // kalen her zaman var
+  return (G_MAP||[]).some(c=>c&&G.explored.has(c.idx)&&g.t.includes(c.t));
+}
+
+/* ── RÜTBE ── seviyeden türetilir, ayrı veri tutmaz */
+const QRANKS=[
+  {lv:1,n:'Köylü'},{lv:5,n:'Acemi'},{lv:10,n:'Asker'},{lv:15,n:'Gezgin'},
+  {lv:20,n:'Avcı'},{lv:30,n:'Şövalye'},{lv:45,n:'Komutan'},
+];
+function qRankAt(lv){let r=QRANKS[0];QRANKS.forEach(x=>{if(lv>=x.lv)r=x;});return r.n;}
+function qRankName(){return qRankAt(G.level);}
+
+/* ── YETENEKLER ──
+   Şimdilik görevlerden kazanılır ve gereksinim olarak okunur.
+   İleride üretim / avcılık / hayvancılık sistemlerine bağlanacak. */
+const QSKILLS={
+  avcilik:    {lbl:'Avcılık',     ico:'🏹'},
+  balikcilik: {lbl:'Balıkçılık',  ico:'🎣'},
+  hayvancilik:{lbl:'Hayvancılık', ico:'🐄'},
+  ciftcilik:  {lbl:'Çiftçilik',   ico:'🌾'},
+  demircilik: {lbl:'Demircilik',  ico:'🔨'},
+  madencilik: {lbl:'Madencilik',  ico:'⛏'},
+  sifacilik:  {lbl:'Şifacılık',   ico:'🧪'},
+  izcilik:    {lbl:'İzcilik',     ico:'🧭'},
+};
+function qSkillVal(k){return Math.round((((G.skills||{})[k])||0)*10)/10;}
+function qAddSkill(k,v){ if(!G.skills)G.skills={}; G.skills[k]=Math.round((((G.skills[k]||0)+v))*10)/10; }
+
+/* Ödül olarak verilen malzemelerin görünen adı */
+const QITEM={meseLodunu:'Odun',demir:'Demir',kereste:'Kereste',kil:'Kil',tugla:'Tuğla',
+  civi:'Çivi',saman:'Saman',bugday:'Buğday',arpa:'Arpa',tuy:'Tüy',yun:'Yün',sut:'Süt'};
+
+/* ── ZAMAN DİLİMİ ── sunucu saatinden hesaplanır */
+const QPHASES=[
+  {k:'gece',  n:'Gece',  ico:'🌙', from:0,  to:6},
+  {k:'sabah', n:'Sabah', ico:'🌅', from:6,  to:12},
+  {k:'ogle',  n:'Öğle',  ico:'☀',  from:12, to:18},
+  {k:'aksam', n:'Akşam', ico:'🌆', from:18, to:24},
+];
+function qPhase(){const h=getServerNow().getHours();return QPHASES.find(p=>h>=p.from&&h<p.to)||QPHASES[0];}
+function qPhaseLeft(){
+  const now=getServerNow(), p=qPhase(), end=new Date(now);
+  if(p.to>=24){ end.setHours(0,0,0,0); end.setDate(end.getDate()+1); }
+  else end.setHours(p.to,0,0,0);
+  return Math.max(0,Math.floor((end-now)/1000));
+}
+function qFmt(s){
+  s=Math.max(0,Math.floor(s));
+  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),x=s%60;
+  return h>0?`${h}:${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`
+            :`${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`;
+}
+function qDurLbl(s){ return s>=3600 ? `${Math.round(s/3600*10)/10} sa` : `${Math.round(s/60)} dk`; }
+
+/* ── GÖREV VERİSİ ────────────────────────────────────────────
+   dur : süre (sn)   cd : bitişten sonra yorgunluk (sn)
+   req : gereksinim listesi   cost:{gold}
+   rew : {gold, xp, hp, items:{prodInv anahtarı:adet}, skill:{k,v}}
+   fight: {pow} → başarı zarı atılır (saldırı görevleri)
+────────────────────────────────────────────────────────────── */
+const QUESTS={
+
+  /* ── SALDIRI ── ork, goblin ve haydut birliklerine baskın */
+  saldiri:[
+    {id:'a_goblin', t:'Goblin Yağmacıları', d:'Ova köylerini basan küçük bir goblin çetesi. Yeni başlayanlar için iyi bir hedef.',
+     ico:'👺', img:'goblin.webp', dur:600, cd:900, req:[{geo:'ova'},{troop:1},{hp:30}],
+     fight:{pow:12}, rew:{gold:35, xp:60}},
+    {id:'a_haydut', t:'Haydut Pususu', d:'Tüccar yolunu kesen haydutları kendi pusularında yakala.',
+     ico:'🗡', img:'haydut.webp', dur:900, cd:900, req:[{geo:'ova'},{troop:2},{hp:40}],
+     fight:{pow:22}, rew:{gold:60, xp:110}},
+    {id:'a_goblin_ocak', t:'Goblin Ocakları', d:'Goblinler mağaradaki ocakları ele geçirmiş. Ocakları geri al.',
+     ico:'⛏', img:'goblin.webp', dur:1800, cd:1800, req:[{geo:'magara'},{troop:3},{rank:10}],
+     fight:{pow:38}, rew:{gold:110, xp:220, items:{demir:6}}},
+    {id:'a_ork_karakol', t:'Ork Karakolu', d:'Ork savaşçıları dağ geçidine karakol kurmuş. Geçidi açman gerek.',
+     ico:'👹', img:'orksavasci.webp', dur:2700, cd:3600, req:[{geo:'dag'},{troop:5},{rank:15},{hp:70}],
+     fight:{pow:60}, rew:{gold:180, xp:380}},
+    {id:'a_ork_kabile', t:'Ork Kabilesi', d:'Kabile şefi harabelerde toplanmış. Büyük bir birlik ve cesaret ister.',
+     ico:'🏴', img:'devsef.webp', dur:3600, cd:7200, req:[{geo:'harabe'},{troop:8},{rank:20},{hp:90}],
+     fight:{pow:95}, rew:{gold:320, xp:650}},
+  ],
+
+  /* ── ŞEHİR-İÇİ GÖREVLER ── */
+  sehir:[
+    {id:'c_topla', t:'Toplayıcı', d:'Terk edilmiş arazilerden ot, odun ve demir toplarsın.',
+     ico:'🌿', img:'odun.webp', dur:480, cd:600, req:[{geo:'orman'}],
+     rew:{xp:15, items:{meseLodunu:1, demir:1}}},
+    {id:'c_seyis', t:'Seyis', d:'Savaş atlarına bakarak sabrı ve dengeyi öğrenirsin.',
+     ico:'🐴', img:'at.webp', dur:3600, cd:1800, req:[{geo:'sehir'}],
+     rew:{gold:5, xp:100, skill:{k:'hayvancilik', v:1}}},
+    {id:'c_kilic', t:'Kılıç Hocası', d:'Genç askerleri eğiterek hem saygı hem altın kazanırsın.',
+     ico:'🗡', img:'demirkilic.webp', dur:1800, cd:1800, req:[{geo:'sehir'},{rank:5}],
+     rew:{gold:5, xp:65}},
+    {id:'c_kutup', t:'Şehir Kütüphanesi', d:'Kadim bilgilerin izini sürer, altın karşılığı bilgelik edinirsin.',
+     ico:'📚', img:'', dur:900, cd:900, req:[{geo:'sehir'},{rank:15},{gold:5}],
+     cost:{gold:5}, rew:{xp:65, skill:{k:'izcilik', v:0.2}}},
+    {id:'c_demir', t:'Demircilik', d:'Şehrin ocaklarında çıraklık yapar, kas gücünü ve ustalığını artırırsın.',
+     ico:'🔨', img:'demir.webp', dur:3600, cd:1800, req:[{geo:'sehir'},{rank:20}],
+     rew:{gold:5, xp:100, items:{demir:4}, skill:{k:'demircilik', v:1}}},
+    {id:'c_taverna', t:'Taverna İşleri', d:'Handa sofra kurar, gezginlerin dedikodularını dinlersin.',
+     ico:'🍺', img:'taverna.webp', dur:600, cd:600, req:[{geo:'sehir'}],
+     rew:{gold:8, xp:20}},
+    {id:'c_hamal', t:'Pazar Hamalı', d:'Tüccarların yükünü taşır, günün sonunda cebini doldurursun.',
+     ico:'📦', img:'pazaryeri.png', dur:900, cd:600, req:[{geo:'sehir'},{hp:20}],
+     rew:{gold:12, xp:25}},
+  ],
+
+  /* ── ZAMANA BAĞLI GÖREVLER ── */
+  zaman:[
+    {id:'t_sifa', t:'Şifalı Eller', d:'Şifa evlerinde gönüllü olarak çalışarak hem deneyim kazanırsın hem de altın.',
+     ico:'🧪', img:'tabip.webp', dur:1800, cd:1800, req:[{geo:'sehir'},{time:['sabah','aksam']}],
+     rew:{gold:5, xp:25, skill:{k:'sifacilik', v:0.2}}},
+    {id:'t_sinir', t:'Sınır Gözetleme', d:'Ormanın denizle buluştuğu sınırlarda devriye gezerek sızmaları önlersin.',
+     ico:'🗺', img:'rehber.webp', dur:3600, cd:1800, req:[{geo:'orman'},{time:['sabah','ogle']}],
+     rew:{gold:3, xp:100, skill:{k:'izcilik', v:0.3}}},
+    {id:'t_elci', t:'Diplomatik Elçi', d:'Öğle kalabalığında krallık mühürlü önemli mesajları müttefiklerine ulaştırırsın.',
+     ico:'📜', img:'', dur:900, cd:900, req:[{geo:'sehir'},{time:['ogle']}],
+     rew:{xp:25}},
+    {id:'t_kervan', t:'Kervan Muhafızı', d:'Cüce tüccarların değerli maden yüklü kervanlarını şehre ulaşana kadar koru.',
+     ico:'🛞', img:'', dur:1800, cd:1800, req:[{geo:'ova'},{time:['sabah','ogle']}],
+     rew:{gold:5, xp:25}},
+    {id:'t_nobet', t:'Gece Nöbeti', d:'Surların üstünde sabaha kadar nöbet tutar, karanlıkta hareketlenenleri sayarsın.',
+     ico:'🔦', img:'bina_kuleler1.webp', dur:2700, cd:3600, req:[{geo:'sehir'},{time:['gece']}],
+     rew:{gold:12, xp:60, skill:{k:'izcilik', v:0.2}}},
+    {id:'t_safak', t:'Şafak Balıkçısı', d:'Gün doğmadan ağları atarsın; sabahın ilk avı hep en bereketlisidir.',
+     ico:'🎣', img:'', dur:1200, cd:1800, req:[{geo:'deniz'},{time:['sabah']}],
+     rew:{gold:10, xp:35, skill:{k:'balikcilik', v:0.3}}},
+    {id:'t_ay', t:'Ay Işığı Otçusu', d:'Yalnızca gece açan otları toplarsın. Şifacılar bu otlara iyi para verir.',
+     ico:'🌿', img:'', dur:1800, cd:3600, req:[{geo:'orman'},{time:['gece']}],
+     rew:{gold:18, xp:45, skill:{k:'sifacilik', v:0.3}}},
+  ],
+
+  /* ── AVLANMA GÖREVLERİ ── */
+  av:[
+    {id:'h_fare', t:'Fare', d:'Fareler kolay avlardır. Ancak onları yakalamak sana hem altın hem de tecrübe puanı kazandırır.',
+     ico:'🐁', img:'devsican.webp', dur:480, cd:300, req:[{geo:'sehir'}],
+     rew:{gold:3, xp:15, skill:{k:'avcilik', v:0.1}}},
+    {id:'h_balik', t:'Balıkçılık', d:'Bölgendeki deniz veya göllerde balık tutarak hem altın, hem sağlık hem de tecrübe puanı kazanırsın.',
+     ico:'🐟', img:'', dur:480, cd:300, req:[{geo:'deniz'}],
+     rew:{gold:3, xp:15, hp:1, skill:{k:'balikcilik', v:0.1}}},
+    {id:'h_tavsan', t:'Tavşan Avı', d:'Ormanlık alanlarda avlayabileceğin birkaç tavşan bulabilir; altın, sağlık ve tecrübe puanı kazanırsın.',
+     ico:'🐇', img:'', dur:900, cd:600, req:[{geo:'orman'},{skill:'avcilik',v:2}],
+     rew:{gold:8, xp:15, hp:3, skill:{k:'avcilik', v:0.2}}},
+    {id:'h_ordek', t:'Ördek Avı', d:'Ördek avlamak için açıklık bir alana ve sıkı bir yaya ihtiyacın var. Karşılığında altın, sağlık ve tecrübe puanı kazanırsın.',
+     ico:'🦆', img:'', dur:900, cd:600, req:[{geo:'ova'},{skill:'avcilik',v:5}],
+     rew:{gold:3, xp:40, hp:3, skill:{k:'avcilik', v:0.2}}},
+    {id:'h_geyik', t:'Geyik Avı', d:'Sabır isteyen bir iz sürme. Postu ve eti şehirde iyi para eder.',
+     ico:'🦌', img:'', dur:1800, cd:1800, req:[{geo:'orman'},{skill:'avcilik',v:8}],
+     rew:{gold:20, xp:80, hp:5, skill:{k:'avcilik', v:0.3}}},
+    {id:'h_domuz', t:'Yaban Domuzu', d:'Saldırgan bir av. Yaralanmayı göze alırsan bol et ve tecrübe getirir.',
+     ico:'🐗', img:'', dur:1800, cd:1800, req:[{geo:'orman'},{skill:'avcilik',v:12},{hp:40}],
+     rew:{gold:30, xp:120, skill:{k:'avcilik', v:0.4}}},
+    {id:'h_kurt', t:'Bozkurt Sürüsü', d:'Dağ eteklerindeki sürüyü dağıtırsın. Tek başına gitmek cesaret ister.',
+     ico:'🐺', img:'bozkurt.webp', dur:2700, cd:3600, req:[{geo:'dag'},{skill:'avcilik',v:16},{hp:60}],
+     rew:{gold:50, xp:200, skill:{k:'avcilik', v:0.5}}},
+    {id:'h_ayi', t:'Boz Ayı', d:'Kışlağından çıkmış yaşlı bir ayı. En tecrübeli avcıların işi.',
+     ico:'🐻', img:'bozayi.webp', dur:3600, cd:7200, req:[{geo:'dag'},{skill:'avcilik',v:22},{hp:80}],
+     rew:{gold:90, xp:350, skill:{k:'avcilik', v:0.8}}},
+  ],
+
+  /* ── DEV KRAKEN AVI ── (qKrakenJoin ile başlar, satır olarak listelenmez) */
+  kraken:[
+    {id:'kraken', t:'Dev Kraken Avı', d:'Derinlerden çıkan kraken kıyıyı basmış.',
+     ico:'🐙', img:'', dur:KRAKEN_LEN/1000, cd:0, req:[{geo:'deniz'}],
+     rew:{gold:80, xp:200, skill:{k:'balikcilik', v:0.5}}},
+  ],
+};
+
+/* ── HUB KATEGORİLERİ ── */
+const QCATS=[
+  {k:'saldiri', t:'Saldırı',               d:'Ork ve goblin gibi düşman birliklerini hedef alabilirsin.', ico:'🗡', img:'demirkilic.webp'},
+  {k:'sehir',   t:'Şehir-içi Görevler',    d:'Bulunduğun bölgedeki işler burada listelenir.',             ico:'📜', img:'kasaba.png'},
+  {k:'zaman',   t:'Zamana Bağlı Görevler', d:'Belirli zamanlarda yapabileceğin görevler burada listelenir.', ico:'⏳', img:''},
+  {k:'av',      t:'Avlanma Görevleri',     d:'En yakın ormana kendini atıp avlanabilir veya organize avcı gruplarına katılabilirsin.', ico:'🦌', img:'avci.webp'},
+  {k:'story',   t:'Hikaye Görevleri',      d:"Demir Taht'ın hikayesinde sana biçilen görevlerdir.",        ico:'📖', img:''},
+  {k:'grup',    t:'Grup Görevleri',        d:'Belirli bölgelerde güçlü bir ekiple yapılabilen görevler.',  ico:'🛡', img:'sovalye.webp'},
+  {k:'kraken',  t:'Dev Kraken Avı',        d:'Kraken avı 30 dakika sürer ve genellikle avın başından beri orada olanlar asıl ganimeti elde eder.', ico:'🐙', img:''},
+  {k:'daily',   t:'Günlük Görevler',       d:'Her gün sıfırlanır. Giriş serini kaçırma.',                  ico:'🌅', img:''},
+  {k:'guild',   t:'Lonca Görevleri',       d:'Loncanla birlikte tamamlanan görevler.',                     ico:'🏰', img:'lonca.png'},
+];
+
+/* ── GRUP GÖREVLERİ ── */
+const GROUP_QUESTS=[
+  {key:'baskin', t:'Baskın', cap:2, geo:'ova', img:'ova.png', dur:900,
+   req:[{rank:1},{hp:30}], rew:{gold:60, xp:150},
+   lore:'Ova köylerine inen yağmacılar şafakla birlikte geri çekiliyor. İki atlı, doğru anda vurursa kervanı kurtarabilir.'},
+  {key:'pusu', t:'Pusu', cap:3, geo:'orman', img:'orman.png', dur:1200,
+   req:[{rank:5},{hp:40}], rew:{gold:90, xp:240, skill:{k:'izcilik',v:0.3}},
+   lore:'Ormanda ilerleyen goblin kolunu yoldan çıkarmak için üç okçu yeterli. Ağaçların arasında sabırla bekleyeceksiniz.'},
+  {key:'kurtarma', t:'Kurtarma', cap:3, geo:'sehir', img:'kasaba.png', dur:1200,
+   req:[{rank:5},{gold:20}], rew:{gold:120, xp:260},
+   lore:'Kasabanın ahırları yakıldı, savaş atları kafeslerde kaldı. Ekip halinde girip hayvanları çıkarmanız gerekiyor.'},
+  {key:'ocaklar', t:'Karanlık Ocaklar', cap:4, geo:'magara', img:'magaragirisi.webp', dur:1800,
+   req:[{rank:10},{gold:50},{hp:50}], rew:{gold:200, xp:420, items:{demir:8}, skill:{k:'demircilik',v:0.5}},
+   lore:'Bölgede yaşayan tarafsız goblinler madencileri pusuya düşürmek için beklemekte. Bu yüzden ocaklara ekip halinde girebilirsiniz. Görev esnasında şansınız varsa goblinleri atlatır ve ocağa varırsınız. Ayrıca ocaklara girebilen askerler <b>demircilik</b> yeteneği kazanmakta.'},
+  {key:'ork_evi', t:'Ork Şefinin Evi', cap:5, geo:'harabe', img:'harabeler.png', dur:2400,
+   req:[{rank:15},{hp:70}], rew:{gold:340, xp:700},
+   lore:'Harabelerin altındaki salonda ork şefi ganimetini saklıyor. Beş kişiden az giren geri dönmedi.'},
+  {key:'ejder', t:'Ejder Avı', cap:5, geo:'dag', img:'daglar.png', dur:3000,
+   req:[{rank:20},{gold:100},{hp:90}], rew:{gold:500, xp:1100},
+   lore:'Dağ geçidinin üstünde dolanan genç ejder sürüleri kaçırıyor. Yayları hazırlayın; kanat gölgesi göründüğünde vakit kalmayacak.'},
+];
+
+/* ══ GEREKSİNİM MOTORU ══ */
+function qReqEval(r){
+  if(r.geo) return {ok:qHasGeo(r.geo), tx:QGEO[r.geo]?.lbl||r.geo};
+  if(r.rank!==undefined) return {ok:G.level>=r.rank, tx:qRankAt(r.rank)+' seviyesinde olmalısın'};
+  if(r.skill!==undefined){
+    const m=QSKILLS[r.skill]||{lbl:r.skill};
+    return {ok:qSkillVal(r.skill)>=r.v, tx:`${m.lbl}: ${r.v}`};
+  }
+  if(r.time) return {ok:r.time.includes(qPhase().k), tx:r.time.map(k=>'Zaman: '+(QPHASES.find(p=>p.k===k)?.n||k)).join(', ')};
+  if(r.gold!==undefined)  return {ok:G.gold>=r.gold,        tx:`${r.gold} altın getirmelisin`};
+  if(r.hp!==undefined)    return {ok:G.stats.hp>=r.hp,      tx:`${r.hp} canın olmalı`};
+  if(r.troop!==undefined) return {ok:troopCount()>=r.troop, tx:`${r.troop} birliğin olmalı`};
+  return {ok:true, tx:''};
+}
+function qReqAll(q){
+  const list=(q.req||[]).map(qReqEval);
+  const cd=qCdLeft(q.id);
+  if(cd>0) list.push({ok:false, tx:`Yorgunsun. ${qFmt(cd)} beklemelisin.`});
+  return list;
+}
+function qReady(q){ return qReqAll(q).every(r=>r.ok); }
+
+/* ══ ÇALIŞAN GÖREVLER ══ */
+function qNow(){ return getServerNow().getTime(); }
+function qRun(id){ return (G.questRuns||{})[id]; }
+function qLeft(id){ const r=qRun(id); return r?Math.max(0,Math.ceil((r.end-qNow())/1000)):0; }
+function qCdLeft(id){ const t=(G.questCd||{})[id]; return t?Math.max(0,Math.ceil((t-qNow())/1000)):0; }
+function qFind(id){ for(const k in QUESTS){ const q=QUESTS[k].find(x=>x.id===id); if(q) return {q,cat:k}; } return null; }
+function qActiveCount(){ return Object.keys(G.questRuns||{}).length; }
+
+function qStart(id){
+  const f=qFind(id); if(!f) return;
+  const q=f.q;
+  if(qRun(id)){ toast('Bu görev zaten sürüyor.'); return; }
+  if(qActiveCount()>=QUEST_SLOTS){ toast(`Aynı anda en fazla ${QUEST_SLOTS} görev yapabilirsin.`); return; }
+  const bad=qReqAll(q).find(r=>!r.ok);
+  if(bad){ toast(bad.tx); return; }
+  if(q.cost?.gold){ G.gold-=q.cost.gold; updateHUD(); }
+  if(!G.questRuns) G.questRuns={};
+  G.questRuns[id]={end:qNow()+q.dur*1000, cat:f.cat};
+  questSave(); if(typeof currentUser!=='undefined'&&currentUser) sbSave();
+  toast(`${q.t} başladı — ${qDurLbl(q.dur)}`);
+  qRender();
+}
+
+function qGrant(rew, mult){
+  mult=mult||1;
+  const parts=[];
+  if(rew.gold){ const v=Math.round(rew.gold*mult); G.gold+=v; parts.push(`+${v}🪙`); }
+  if(rew.xp){ const v=Math.round(rew.xp*mult); gainXP(v); parts.push(`+${v} XP`); }
+  if(rew.hp){
+    const eff=(typeof getEffectiveStats==='function')?getEffectiveStats():{maxhp:G.stats.maxhp};
+    G.stats.hp=Math.min(eff.maxhp, G.stats.hp+rew.hp); parts.push(`+${rew.hp}❤`);
+  }
+  if(rew.items) Object.entries(rew.items).forEach(([k,v])=>{
+    if(k in G.prodInv) G.prodInv[k]=(G.prodInv[k]||0)+v;
+    else if(k in G.matInv) G.matInv[k]=(G.matInv[k]||0)+v;
+    parts.push(`+${v} ${QITEM[k]||k}`);
+  });
+  if(rew.skill){ qAddSkill(rew.skill.k, rew.skill.v); parts.push(`+${rew.skill.v} ${QSKILLS[rew.skill.k]?.lbl||rew.skill.k}`); }
+  return parts;
+}
+
+function qFinish(id, silent){
+  const run=(G.questRuns||{})[id];
+  const f=qFind(id);
+  delete G.questRuns[id];
+  if(!f) return;
+  const q=f.q;
+  if(q.cd){ if(!G.questCd) G.questCd={}; G.questCd[id]=qNow()+q.cd*1000; }
+
+  /* Saldırı görevleri: birlik gücüne göre başarı zarı */
+  let win=true;
+  if(q.fight){
+    const power=troopCount()*6 + G.level*2 + (G.stats.str||0) + (G.stats.def||0);
+    win = Math.random() < Math.max(0.25, Math.min(0.92, power/(power+q.fight.pow)));
+  }
+
+  let parts=[];
+  if(win){
+    parts=qGrant(q.rew||{}, run?.bonus?(1+run.bonus/100):1);
+  } else {
+    const loss=Math.max(5, Math.floor(G.stats.hp*0.15));
+    G.stats.hp=Math.max(1, G.stats.hp-loss);
+    parts=[`-${loss}❤`];
+  }
+
+  if(typeof updateHUD==='function') updateHUD();
+  questSave(); if(typeof currentUser!=='undefined'&&currentUser) sbSave();
+  if(!silent){
+    if(win) celebrate('✅','GÖREV TAMAM!', `${q.t}${parts.length?' · '+parts.join('  '):''}`, 'gold');
+    else    slideNotif('💀','Görev başarısız', `${q.t} — ${parts.join(' ')}`);
+  }
+  if(typeof renderKarakter==='function' && document.getElementById('gs-karakter')) renderKarakter();
+}
+
+/* Süresi dolmuş görevleri işle — oyun kapalıyken bitenler dahil */
+function qSweep(silent){
+  const runs=G.questRuns||{};
+  Object.keys(runs).forEach(id=>{ if(runs[id].end<=qNow()) qFinish(id, silent); });
+}
+
+/* ══ NAVİGASYON ══ */
+function qOpen(cat){
+  G.questTab=cat; G.questSel=null; qgUnsub();
+  if(cat==='grup') qgLoadList();
+  qRender();
+  const sc=document.getElementById('quest-content'); if(sc) sc.scrollTop=0;
+}
+function qBack(){
+  if(G.questTab==='grup'&&G.questSel){ G.questSel=null; qgUnsub(); qgLoadList(); }
+  else G.questTab='hub';
+  qRender();
+}
+
+/* ══ RENDER ══ */
+function qIcoHtml(ico,img,cls){
+  if(img) return `<img class="${cls}" src="${IMG_BASE}${img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>`
+                +`<span class="${cls}" style="display:none;align-items:center;justify-content:center;font-size:28px;">${ico}</span>`;
+  return `<span class="${cls}" style="display:flex;align-items:center;justify-content:center;font-size:28px;">${ico}</span>`;
+}
+
+function qHubHTML(){
+  return QCATS.map(c=>{
+    let open=false;
+    if(c.k==='kraken')      open=qKrakenActive();
+    else if(QUESTS[c.k])    open=QUESTS[c.k].some(qReady);
+    else if(c.k==='grup')   open=true;
+    else if(c.k==='daily')  open=QUEST_DATA.daily.some(q=>!G.dailyCollected.has(q.id));
+    else if(c.k==='story')  open=QUEST_DATA.story.some(q=>q.status!=='locked'&&!G.completedQuests.has(q.id));
+    else if(c.k==='guild')  open=!!G.guildId;
+    return `<div class="qhub-row" onclick="qOpen('${c.k}')">
+      ${qIcoHtml(c.ico,c.img,'qhub-ico')}
+      <span class="qhub-dot" style="background:${open?'#4caf50':'#e57373'};color:${open?'#4caf50':'#e57373'};"></span>
+      <div style="flex:1;min-width:0;">
+        <div class="qhub-t">${c.t}</div>
+        <div class="qhub-d">${c.d}</div>
+      </div>
+      <span class="qhub-ar">›</span>
+    </div>`;
+  }).join('');
+}
+
+function qRowHTML(q){
+  const reqs=qReqAll(q);
+  const running=qRun(q.id);
+  const ready=reqs.every(r=>r.ok);
+  const r=q.rew||{};
+  const rew=[
+    r.gold?`<i>🪙 ${r.gold}</i>`:'',
+    r.xp?`<i>⭐ ${r.xp}</i>`:'',
+    r.hp?`<i>❤ ${r.hp}</i>`:'',
+    ...(r.items?Object.entries(r.items).map(([k,v])=>`<i>📦 ${v} ${QITEM[k]||k}</i>`):[]),
+  ].filter(Boolean).join('');
+  const reqTx=reqs.length
+    ? `<div class="qreq">Gerekli : ${reqs.map(x=>`<b class="${x.ok?'':'qno'}">${x.tx}</b>`).join(', ')}</div>` : '';
+  const skill=r.skill?`<div class="qskill">+${r.skill.v} ${QSKILLS[r.skill.k]?.lbl||r.skill.k}</div>`:'';
+  const body = running
+    ? `<div class="qtimer">
+         <div class="qtimer-t"><span>Sürüyor</span><span id="qcd-${q.id}">${qFmt(qLeft(q.id))}</span></div>
+         <div class="prog-bar-bg"><div class="prog-bar guild-bar" id="qbar-${q.id}" style="width:${Math.round((1-qLeft(q.id)/q.dur)*100)}%"></div></div>
+       </div>`
+    : `${reqTx}<div class="qrew">${rew}</div>${skill}
+       ${ready?`<button class="btn btn-sm qgo" onclick="qStart('${q.id}')">Başla</button>`:''}`;
+  return `<div class="qrow ${running?'qrun':(ready?'':'qdim')}">
+    ${qIcoHtml(q.ico,q.img,'qrow-ico')}
+    <div style="flex:1;min-width:0;">
+      <div class="qrow-hd"><div class="qrow-t">${q.t}</div><div class="qrow-dur">${qDurLbl(q.dur)}</div></div>
+      <div class="qrow-d">${q.d}</div>
+      ${body}
+    </div>
+  </div>`;
+}
+
+/* ── Hikaye / Günlük / Lonca — eski hedef takipli kartlar ── */
+function qLegacyHTML(t){
   const data=QUEST_DATA[t]||[];
-  const accentColor=t==='story'?'var(--story2)':t==='daily'?'var(--daily2)':t==='side'?'var(--side2)':'var(--guild2)';
+  const accent=t==='story'?'var(--story2)':t==='daily'?'var(--daily2)':'var(--guild2)';
   const rr=q=>{
     const isCompleted=G.completedQuests.has(q.id);
     const isLocked=q.status==='locked';
@@ -7636,24 +8160,289 @@ function renderQuest(t){
     const allDone=objectives.every(o=>o.cur>=o.max);
     const cardCls=isCompleted||isDailyCollected?'done-card':isLocked?'locked-card':t+'-card';
     const barCls=isCompleted||isDailyCollected?'done-bar':t+'-bar';
-    const oBars=objectives.map(o=>{const p=Math.round(o.cur/o.max*100);return `<div style="margin-bottom:5px;"><div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span style="font-size:10px;color:var(--perg2);">${o.cur>=o.max?'✓ ':''}${o.text}</span><span style="font-family:var(--font-head);font-size:9px;color:${o.cur>=o.max?'var(--g-green)':accentColor};">${o.cur}/${o.max}</span></div><div class="prog-bar-bg"><div class="prog-bar ${barCls}" style="width:${p}%;"></div></div></div>`;}).join('');
-    const rws=q.rewards.map(r=>`<span class="reward-chip rc-${r.t==='gold'?'gold':r.t==='xp'?'xp':'item'}">${r.t==='gold'?r.v+'🪙':r.t==='xp'?r.v+' XP':r.v}</span>`).join('');
+    const oBars=objectives.map(o=>{const p=Math.round(o.cur/o.max*100);return `<div style="margin-bottom:5px;"><div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span style="font-size:10px;color:var(--perg2);">${o.cur>=o.max?'✓ ':''}${o.text}</span><span style="font-family:var(--font-head);font-size:9px;color:${o.cur>=o.max?'var(--g-green)':accent};">${o.cur}/${o.max}</span></div><div class="prog-bar-bg"><div class="prog-bar ${barCls}" style="width:${p}%;"></div></div></div>`;}).join('');
+    const rws=q.rewards.map(x=>`<span class="reward-chip rc-${x.t==='gold'?'gold':x.t==='xp'?'xp':'item'}">${x.t==='gold'?x.v+'🪙':x.t==='xp'?x.v+' XP':x.v}</span>`).join('');
     const actionBtn=t==='daily'&&allDone&&!isDailyCollected
       ?`<button class="btn btn-sm" style="width:100%;margin-top:6px;background:var(--g-green);border-color:var(--g-green);color:var(--panel3);" onclick="event.stopPropagation();collectDailyReward('${q.id}')">🎁 Ödül Al!</button>`
       :isDailyCollected?`<div style="font-size:10px;color:var(--g-green);margin-top:5px;">✓ Ödül alındı</div>`:'';
     return `<div class="qcard ${cardCls}">
       <div style="display:flex;align-items:flex-start;gap:9px;margin-bottom:7px;">
-        <div class="q-icon" style="background:${t==='story'?'#2a0a4a':t==='daily'?'#0a1a38':t==='side'?'#0a1030':'var(--panel2)'}">${q.icon}</div>
-        <div style="flex:1;"><div style="font-family:var(--font-head);font-size:9px;font-weight:600;color:${accentColor};margin-bottom:1px;">${q.num||''}</div><div style="font-family:var(--font-head);font-size:12px;font-weight:600;color:var(--perg);">${q.title}</div>${isCompleted||isDailyCollected?'<div style="font-size:9px;color:var(--g-green);">✓ Tamamlandı</div>':''}</div>
+        <div class="q-icon" style="background:${t==='story'?'#2a0a4a':t==='daily'?'#0a1a38':'var(--panel2)'}">${q.icon}</div>
+        <div style="flex:1;"><div style="font-family:var(--font-head);font-size:9px;font-weight:600;color:${accent};margin-bottom:1px;">${q.num||''}</div><div style="font-family:var(--font-head);font-size:12px;font-weight:600;color:var(--perg);">${q.title}</div>${isCompleted||isDailyCollected?'<div style="font-size:9px;color:var(--g-green);">✓ Tamamlandı</div>':''}</div>
       </div>
       ${isLocked?`<div style="font-size:10px;color:var(--ink3);">🔒 ${q.lockReason}</div>`:oBars}
       ${!isLocked?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;">${rws}</div>`:''}
       ${actionBtn}
     </div>`;
   };
-  const calHTML = t==='daily' ? loginCalendarHTML() : '';
-  document.getElementById('quest-content').innerHTML=calHTML+data.map(rr).join('');
+  if(t==='guild'&&!G.guildId)
+    return `<div class="pad"><div class="card" style="text-align:center;font-size:12px;color:var(--perg2);">Lonca görevleri için önce bir loncaya katılmalısın.</div></div>`;
+  const cal=t==='daily'?loginCalendarHTML():'';
+  return `<div class="pad">${cal}${data.map(rr).join('')}</div>`;
 }
+
+/* ── DEV KRAKEN AVI ── her 3 saatte bir açılır, 30 dakika sürer */
+function qKrakenWin(){
+  const now=qNow(), start=Math.floor(now/KRAKEN_EVERY)*KRAKEN_EVERY;
+  return {start, end:start+KRAKEN_LEN, next:start+KRAKEN_EVERY};
+}
+function qKrakenActive(){ const w=qKrakenWin(), n=qNow(); return n>=w.start&&n<w.end; }
+function qKrakenHTML(){
+  const w=qKrakenWin(), n=qNow(), active=qKrakenActive(), joined=!!qRun('kraken'), geoOk=qHasGeo('deniz');
+  return `<div class="pad">
+    <div class="card" style="text-align:center;">
+      <div style="font-size:52px;line-height:1;margin-bottom:8px;">🐙</div>
+      <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);">Dev Kraken</div>
+      <div style="font-size:11.5px;color:var(--perg2);line-height:1.6;margin:8px 0 12px;">
+        Kraken avı 30 dakika sürer ve genellikle avın başından beri orada olanlar asıl ganimeti elde eder.
+        Ava katılan herkes payını alır; erken katılan daha fazlasını götürür.
+      </div>
+      <div class="qreq" style="text-align:left;">Gerekli : <b class="${geoOk?'':'qno'}">Deniz Coğrafyası</b></div>
+      <div style="margin:12px 0 10px;font-family:var(--font-head);font-size:13px;color:${active?'#7aaa5a':'var(--ink3)'};">
+        ${active?`Av sürüyor · ${qFmt((w.end-n)/1000)} kaldı`:`Sonraki av: ${qFmt((w.next-n)/1000)}`}
+      </div>
+      ${joined
+        ? `<div style="font-size:11px;color:var(--gold2);">Avdasın — ${qFmt(qLeft('kraken'))}</div>`
+        : `<button class="btn" style="width:100%;" ${active&&geoOk?'':'disabled'} onclick="qKrakenJoin()">AVA KATIL</button>`}
+    </div>
+  </div>`;
+}
+function qKrakenJoin(){
+  if(!qKrakenActive()){ toast('Av şu anda kapalı.'); return; }
+  if(!qHasGeo('deniz')){ toast('Deniz Coğrafyası gerekli.'); return; }
+  const w=qKrakenWin();
+  const bonus=Math.round((w.end-qNow())/KRAKEN_LEN*100); // erken katılan daha çok pay alır
+  if(!G.questRuns) G.questRuns={};
+  G.questRuns['kraken']={end:w.end, cat:'kraken', bonus};
+  questSave(); toast('Ava katıldın! 🐙'); qRender();
+}
+
+function qRender(){
+  const box=document.getElementById('quest-content'); if(!box) return;
+  const hdrSub=document.getElementById('quest-hdr-sub');
+  const title=document.getElementById('quest-title');
+  const back=document.getElementById('quest-back');
+  const bg=document.getElementById('quest-bg');
+  if(bg&&!bg.dataset.set){ bg.style.backgroundImage=`url('${QUEST_BG}')`; bg.dataset.set='1'; }
+  if(hdrSub) hdrSub.textContent=`${G.heroName||'Kral'} · ${qRankName()} · Seviye ${G.level}`;
+
+  const t=G.questTab||'hub';
+  const cat=QCATS.find(c=>c.k===t);
+  if(back) back.style.display=(t==='hub')?'none':'flex';
+  if(title) title.textContent=(t==='hub')
+    ? '📜 GÖREVLER'
+    : (G.questSel ? (GROUP_QUESTS.find(g=>g.key===G.questSel)?.t || cat?.t || 'GÖREV') : (cat?.t || 'GÖREVLER'));
+
+  let html='';
+  if(t==='hub') html=qHubHTML();
+  else if(t==='kraken') html=qKrakenHTML();
+  else if(t==='grup') html=G.questSel?qgDetailHTML():qgListHTML();
+  else if(QUESTS[t]){
+    const list=QUESTS[t].slice().sort((a,b)=>(qReady(b)?1:0)-(qReady(a)?1:0));
+    html=list.map(qRowHTML).join('');
+  }
+  else html=qLegacyHTML(t);
+  box.innerHTML=html;
+  qPhaseBar();
+}
+
+function qPhaseBar(){
+  const el=document.getElementById('quest-phase'); if(!el) return;
+  const p=qPhase(), d=getServerNow();
+  const ay=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  el.innerHTML=`<div class="qphase-l">
+      <span class="qphase-ico">${p.ico}</span>
+      <div><div class="qphase-n">${p.n} · ${qFmt(qPhaseLeft())}</div>
+      <div class="qphase-c">Aktif görev: ${qActiveCount()}/${QUEST_SLOTS}</div></div>
+    </div>
+    <div class="qphase-d">${d.getDate()} ${ay[d.getMonth()]} ${d.getFullYear()}</div>`;
+}
+
+/* Eski çağrılarla uyum */
+function renderQuest(){ qRender(); }
+function qgo(t){ qOpen(t); }
+
+/* Saniyelik sayaç — görünen satırların metnini yerinde günceller */
+setInterval(()=>{
+  qSweep(false);
+  const page=document.getElementById('p-quest');
+  if(!page||!page.classList.contains('active')) return;
+  let redraw=false;
+  Object.keys(G.questRuns||{}).forEach(id=>{
+    const el=document.getElementById('qcd-'+id);
+    if(el){
+      el.textContent=qFmt(qLeft(id));
+      const f=qFind(id), bar=document.getElementById('qbar-'+id);
+      if(f&&bar) bar.style.width=Math.round((1-qLeft(id)/f.q.dur)*100)+'%';
+    } else if(G.questTab===(G.questRuns[id]||{}).cat) redraw=true;
+  });
+  if(redraw) qRender(); else qPhaseBar();
+},1000);
+
+/* ══════════════════════════════════════════════════════════════
+   GRUP GÖREVLERİ (çok oyunculu)
+   sql/group_quests.sql çalıştırılmadan çalışmaz.
+══════════════════════════════════════════════════════════════ */
+let _qgState=null, _qgChannel=null, _qgErr=null, _qgCounts={}, _qgClaiming=false;
+
+async function qgLoadList(){
+  if(typeof currentUser==='undefined'||!currentUser){ _qgErr='giriş gerekli'; return; }
+  const {data,error}=await supa.from('group_quests').select('id,quest_key').eq('status','lobby');
+  _qgErr = error ? (error.message||'tablo bulunamadı') : null;
+  _qgCounts={};
+  if(!error&&data&&data.length){
+    const {data:mem}=await supa.from('group_quest_members').select('quest_key').in('quest_id',data.map(d=>d.id));
+    (mem||[]).forEach(m=>{ _qgCounts[m.quest_key]=(_qgCounts[m.quest_key]||0)+1; });
+  }
+  if(G.questTab==='grup'&&!G.questSel) qRender();
+}
+
+function qgListHTML(){
+  if(_qgErr) return `<div class="pad"><div class="card" style="font-size:11.5px;color:var(--perg2);line-height:1.7;">
+    Grup görevleri sunucuya bağlı çalışır ve şu an ulaşılamıyor.<br>
+    <b style="color:var(--gold2);">sql/group_quests.sql</b> dosyasını Supabase'de çalıştırdıktan sonra bu ekran açılacak.
+    <div style="font-size:10px;color:var(--ink3);margin-top:6px;">(${sani(_qgErr).slice(0,70)})</div></div></div>`;
+  return `<div class="qg-grid">${GROUP_QUESTS.map(g=>{
+    const n=_qgCounts[g.key]||0, full=n>=g.cap;
+    const badge = n>0
+      ? `<span class="qg-cap ${full?'qg-full':'qg-open'}">${n}/${g.cap} Doluluk</span>`
+      : `<span class="qg-cap">${g.cap} Kişilik</span>`;
+    return `<div class="qg-card" style="background-image:url('${IMG_BASE}${g.img}')" onclick="qgSelect('${g.key}')">
+      <div class="qg-in">
+        <div class="qg-t">${g.t}</div>
+        ${badge}
+        <div class="qg-loc">${QGEO[g.geo]?.kisa} bölgesinde yapılabilir.</div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+async function qgSelect(key){
+  G.questSel=key; _qgState=null;
+  qRender();
+  await qgRefresh();
+  qgSub(key);
+}
+
+async function qgRefresh(){
+  if(typeof currentUser==='undefined'||!currentUser||!G.questSel) return;
+  const g=GROUP_QUESTS.find(x=>x.key===G.questSel); if(!g) return;
+  const {data:sess,error}=await supa.from('group_quests')
+    .select('*').eq('quest_key',g.key).in('status',['lobby','running'])
+    .order('created_at',{ascending:true}).limit(1);
+  if(error){ _qgErr=error.message; qRender(); return; }
+  _qgErr=null;
+  const s=sess&&sess[0];
+  if(!s){ _qgState={session:null,members:[]}; qRender(); return; }
+  const {data:mem}=await supa.from('group_quest_members')
+    .select('profile_id,joined_at,claimed').eq('quest_id',s.id).order('joined_at');
+  const ids=(mem||[]).map(m=>m.profile_id);
+  let profs=[];
+  if(ids.length){
+    const {data:p}=await supa.from('profiles').select('id,hero_name,username,level').in('id',ids);
+    profs=p||[];
+  }
+  _qgState={session:s, members:(mem||[]).map(m=>{
+    const p=profs.find(x=>x.id===m.profile_id)||{};
+    return {id:m.profile_id, name:sani(p.hero_name||p.username||'Gezgin'), level:p.level||1,
+            claimed:!!m.claimed, me:m.profile_id===currentUser.id};
+  })};
+  qgTryClaim(g);
+  qRender();
+}
+
+/* Görev süresi dolduysa payını al */
+async function qgTryClaim(g){
+  const st=_qgState; if(!st?.session||_qgClaiming) return;
+  const me=st.members.find(m=>m.me);
+  if(!me||me.claimed) return;
+  if(st.session.status!=='running') return;
+  if(new Date(st.session.ends_at).getTime()>qNow()) return;
+  _qgClaiming=true;
+  const {data,error}=await supa.rpc('gq_claim',{p_key:g.key});
+  _qgClaiming=false;
+  if(error||!data?.ok) return;
+  const parts=qGrant(g.rew||{});
+  if(typeof updateHUD==='function') updateHUD();
+  questSave(); if(currentUser) sbSave();
+  celebrate('🏆','GRUP GÖREVİ TAMAM!', `${g.t}${parts.length?' · '+parts.join('  '):''}`, 'gold');
+  qgLoadList();
+}
+
+function qgSub(key){
+  qgUnsub();
+  _qgChannel=supa.channel('gq_'+key)
+    .on('postgres_changes',{event:'*',schema:'public',table:'group_quest_members',filter:`quest_key=eq.${key}`},()=>qgRefresh())
+    .on('postgres_changes',{event:'*',schema:'public',table:'group_quests',filter:`quest_key=eq.${key}`},()=>qgRefresh())
+    .subscribe();
+}
+function qgUnsub(){ if(_qgChannel){ supa.removeChannel(_qgChannel); _qgChannel=null; } }
+
+function qgDetailHTML(){
+  const g=GROUP_QUESTS.find(x=>x.key===G.questSel); if(!g) return '';
+  if(_qgErr) return `<div class="pad"><div class="card" style="font-size:11.5px;color:var(--perg2);">Sunucuya ulaşılamadı: ${sani(_qgErr).slice(0,60)}</div></div>`;
+  const st=_qgState, members=st?.members||[];
+  const mine=members.some(m=>m.me);
+  const running=st?.session?.status==='running';
+  const endsIn=running&&st.session.ends_at?Math.max(0,(new Date(st.session.ends_at).getTime()-qNow())/1000):0;
+
+  const slots=Array.from({length:g.cap},(_,i)=>{
+    const m=members[i];
+    return `<div class="qslot ${m?(m.me?'qs-me':'qs-full'):''}">${m?m.name:'Boş'}</div>`;
+  }).join('');
+
+  /* Ekip kalitesi: doluluk + katılanların seviyesinin gereken rütbeye oranı */
+  const need=(g.req.find(r=>r.rank!==undefined)?.rank)||1;
+  const avg=members.length?members.reduce((a,m)=>a+m.level,0)/members.length:0;
+  const quality=Math.max(5,Math.min(100,Math.round((members.length/g.cap)*60 + Math.min(40,(avg/Math.max(1,need))*40))));
+
+  const reqs=[{ok:qHasGeo(g.geo), tx:`<b>${QGEO[g.geo]?.kisa}</b> bölgesinde olmalısın`}, ...g.req.map(qReqEval)];
+  const canJoin=reqs.every(r=>r.ok)&&!mine&&members.length<g.cap&&!running;
+
+  return `
+  <div class="qslots" style="background-image:url('${IMG_BASE}${g.img}')">${slots}</div>
+  <div class="qteam">
+    <div class="qteam-hd"><span>Ekip Kalitesi</span><span>${quality}%</span></div>
+    <div class="qteam-bar"><div class="qteam-fill" style="width:${quality}%"></div></div>
+    <div class="qteam-tx">
+      ${running
+        ? `<b>Görev başladı.</b> Ekip yolda — bitişine ${qFmt(endsIn)} kaldı.`
+        : `Şuanda <b>${g.cap} kişilik bir ekip</b> toplanıyor${members.length<g.cap?' ancak ekipte eksik var':''}. Katılmak istersen şartlar şöyle:`}
+    </div>
+    ${running?'':`<ol class="qcheck">${reqs.map(r=>`<li class="${r.ok?'qok':'qno'}">${r.tx}</li>`).join('')}</ol>`}
+  </div>
+  <div class="pad">
+    ${mine&&!running
+      ? `<button class="btn" style="width:100%;" onclick="qgLeave()">EKİPTEN AYRIL</button>`
+      : `<button class="btn" style="width:100%;" ${canJoin?'':'disabled'} onclick="qgJoin()">EKİBE KATIL</button>`}
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;justify-content:center;font-family:var(--font-head);font-size:12px;color:var(--perg);">
+      ${g.rew.gold?`<span>🪙 ${g.rew.gold}</span>`:''}
+      ${g.rew.xp?`<span>⭐ ${g.rew.xp}</span>`:''}
+      ${g.rew.items?Object.entries(g.rew.items).map(([k,v])=>`<span>📦 ${v} ${QITEM[k]||k}</span>`).join(''):''}
+      ${g.rew.skill?`<span style="color:var(--gold2);">+${g.rew.skill.v} ${QSKILLS[g.rew.skill.k]?.lbl}</span>`:''}
+    </div>
+  </div>
+  <div class="qlore">${g.lore}</div>`;
+}
+
+async function qgJoin(){
+  if(typeof currentUser==='undefined'||!currentUser){ toast('Giriş yapmalısın.'); return; }
+  const g=GROUP_QUESTS.find(x=>x.key===G.questSel); if(!g) return;
+  const bad=[{ok:qHasGeo(g.geo),tx:`${QGEO[g.geo]?.lbl} gerekli`}, ...g.req.map(qReqEval)].find(r=>!r.ok);
+  if(bad){ toast(String(bad.tx).replace(/<[^>]*>/g,'')); return; }
+  const {data,error}=await supa.rpc('gq_join',{p_key:g.key, p_cap:g.cap, p_dur:g.dur});
+  if(error){ toast('Katılamadın: '+(error.message||'').slice(0,50)); return; }
+  toast(data?.started?'Ekip tamamlandı, görev başladı! ⚔':'Ekibe katıldın.');
+  qgRefresh();
+}
+async function qgLeave(){
+  const g=GROUP_QUESTS.find(x=>x.key===G.questSel); if(!g) return;
+  const {error}=await supa.rpc('gq_leave',{p_key:g.key});
+  if(error){ toast('Çıkılamadı.'); return; }
+  toast('Ekipten ayrıldın.');
+  qgRefresh();
+}
+
 
 /* ══════════════════════════════════════
    MARKET
@@ -11321,6 +12110,12 @@ async function sbLoadProfile() {
 
   // Başarım sayaçları
   if(p.ach_counters && typeof p.ach_counters==='object') G.ach={...p.ach_counters};
+  // Görev sistemi v2 — sütunlar yoksa sessizce atlanır
+  if(p.skills_json && typeof p.skills_json==='object') G.skills={...G.skills,...p.skills_json};
+  if(p.quest_state && typeof p.quest_state==='object'){
+    G.questRuns={...G.questRuns,...(p.quest_state.runs||{})};
+    G.questCd={...G.questCd,...(p.quest_state.cd||{})};
+  }
   if(!G.ach) G.ach={};
   checkAchievements(); // canlı değerlerden (seviye, zafer) hak edilenleri işle
 
@@ -11482,6 +12277,8 @@ async function _sbSaveNow() {
       perks: G.perks,
       inv_bonus: G.invBonus,
       ach_counters: G.ach,
+      skills_json:  G.skills||{},
+      quest_state:  {runs:G.questRuns||{}, cd:G.questCd||{}},
       companions: G.companions,
       captured_troops: G.capturedTroops,
       explored_json: [...G.explored],
