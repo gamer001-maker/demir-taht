@@ -7652,7 +7652,10 @@ setInterval(()=>{
   el.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 },1000);
 
-function questDateKey(){const d=new Date();return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;}
+function questDateKey(){
+  let d; try{ d=getServerNow(); }catch(e){ d=new Date(); }
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+}
 function questSave(){
   try{
     localStorage.setItem('quest_v1',JSON.stringify({
@@ -8041,7 +8044,9 @@ function qFinish(id, silent){
   const run=(G.questRuns||{})[id];
   const f=qFind(id);
   delete G.questRuns[id];
-  if(!f) return;
+  // run yoksa bu görev hiç başlatılmamış — konsoldan doğrudan qFinish(id) çağrısıyla
+  // gereksinim/süre/bekleme atlanıp ödül almayı engeller
+  if(!f || !run) return;
   const q=f.q;
   if(q.cd){ if(!G.questCd) G.questCd={}; G.questCd[id]=qNow()+q.cd*1000; }
 
@@ -12113,8 +12118,20 @@ async function sbLoadProfile() {
   // Görev sistemi v2 — sütunlar yoksa sessizce atlanır
   if(p.skills_json && typeof p.skills_json==='object') G.skills={...G.skills,...p.skills_json};
   if(p.quest_state && typeof p.quest_state==='object'){
-    G.questRuns={...G.questRuns,...(p.quest_state.runs||{})};
-    G.questCd={...G.questCd,...(p.quest_state.cd||{})};
+    const qs=p.quest_state;
+    G.questRuns={...G.questRuns,...(qs.runs||{})};
+    G.questCd={...G.questCd,...(qs.cd||{})};
+    // Hikaye/Günlük/Lonca ilerlemesi de sunucudan gelsin — sadece localStorage'da
+    // tutulursa site verisi temizlenince (localStorage.clear() vb.) zaten tamamlanmış
+    // görevler/toplanmış günlük ödüller sıfırlanıp tekrar alınabiliyordu.
+    // questLoad() birazdan localStorage'daki değerleri de Math.max/Set birleşimiyle
+    // üzerine ekleyecek — hangi kaynakta daha çoksa o kazanır, veri kaybı olmaz.
+    if(qs.qp) Object.keys(G.qp).forEach(k=>{ if(qs.qp[k]!==undefined) G.qp[k]=Math.max(G.qp[k]||0,qs.qp[k]); });
+    if(Array.isArray(qs.completed)) qs.completed.forEach(id=>G.completedQuests.add(id));
+    if(qs.dailyCollected && qs.dailyCollected.date===questDateKey()){
+      (qs.dailyCollected.ids||[]).forEach(id=>G.dailyCollected.add(id));
+      if(qs.dailyQp) Object.keys(G.dailyQp).forEach(k=>{ if(qs.dailyQp[k]!==undefined) G.dailyQp[k]=Math.max(G.dailyQp[k]||0,qs.dailyQp[k]); });
+    }
   }
   if(!G.ach) G.ach={};
   checkAchievements(); // canlı değerlerden (seviye, zafer) hak edilenleri işle
@@ -12278,7 +12295,12 @@ async function _sbSaveNow() {
       inv_bonus: G.invBonus,
       ach_counters: G.ach,
       skills_json:  G.skills||{},
-      quest_state:  {runs:G.questRuns||{}, cd:G.questCd||{}},
+      quest_state:  {
+        runs:G.questRuns||{}, cd:G.questCd||{},
+        qp:G.qp||{}, dailyQp:G.dailyQp||{},
+        completed:[...(G.completedQuests||[])],
+        dailyCollected:{date:questDateKey(), ids:[...(G.dailyCollected||[])]},
+      },
       companions: G.companions,
       captured_troops: G.capturedTroops,
       explored_json: [...G.explored],
