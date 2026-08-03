@@ -4267,11 +4267,14 @@ function farmMaxSlots(lv){ return Math.min(16, 3 + lv); } // Sv.1→4, Sv.2→5 
 /* Satır geometrisi — arka plan görselinin yüzdesi olarak (izometrik: alt satır
    daha büyük ve daha geniş aralıklı). Görsel değişirse buradan ayarlanır. */
 const FARM_CX = 48;   // grid merkezinin yatay konumu (%)
+/* y  = satırın dikey merkezi (%)      w  = kare genişliği (%)
+   h  = kare yüksekliği (%)            sp = sütunlar arası yatay aralık (%)
+   Kare zemine oturmuyorsa buradan ayarla — hepsi arka plan görselinin yüzdesi. */
 const FARM_ROWS = [
-  {y:21.00, w:12.00, h:10.6, sp:19.25},
-  {y:35.50, w:15.00, h:12.0, sp:20.50},
-  {y:51.25, w:18.75, h:13.5, sp:21.90},
-  {y:68.50, w:23.50, h:15.2, sp:23.50},
+  {y:21.00, w:15.50, h:11.0, sp:19.25},
+  {y:35.50, w:17.50, h:12.3, sp:20.50},
+  {y:51.25, w:19.50, h:13.6, sp:21.90},
+  {y:68.50, w:21.50, h:15.0, sp:23.50},
 ];
 const FARM_CENTER_PLOTS = [5,6,9,10];  // Sv.1'de açık gelen merkez 2×2
 
