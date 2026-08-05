@@ -11312,7 +11312,11 @@ function farmOpenSeedPicker(idx){
     const samanOut=c.saman+samanBonus;
     return `<div class="card" style="text-align:center;padding:10px 6px;cursor:${has?'pointer':'not-allowed'};border-color:${has?'var(--border2)':'var(--border)'};opacity:${has?'1':'.45'};"
       ${has?`onclick="closeGModal();startFarmCrop('${c.id}',${idx})"`:''} title="${has?'':'Tohum yok!'}">
-      <div style="font-size:26px;margin-bottom:4px;">${c.icon}</div>
+      <div style="height:52px;display:flex;align-items:center;justify-content:center;margin-bottom:4px;">
+        <img src="${IMG_BASE}${c.id}.webp" style="width:48px;height:48px;object-fit:contain;"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+        <span style="display:none;font-size:26px;">${c.icon}</span>
+      </div>
       <div style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${c.name}</div>
       <div style="font-size:9px;color:${has?'var(--gold)':'var(--hp)'};margin-top:2px;">${(c.id==='bugday'||c.id==='arpa')?`${seedCount} adet`:`Tohum: ${seedCount}`}</div>
       <div style="font-size:9px;color:var(--ink3);">${samanOut>0?`🌿${samanOut}`:(c.id==='cicek'?'🌸':(c.id==='cilek'?'🍓':''))}</div>
@@ -11338,7 +11342,11 @@ function farmPlotInfo(idx){
   const out=Object.entries(t.outputs||{}).map(([k,v])=>`${ITEM_ICONS[k]||'📦'} ${ITEM_LABELS[k]||k} ×${v.amount}${v.bonus?' ✨':''}`).join('<br>');
   showGModal(`
     <div style="text-align:center;">
-      <div style="font-size:40px;margin-bottom:6px;">${crop?crop.icon:'🌱'}</div>
+      <div style="height:72px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;">
+        <img src="${IMG_BASE}${t.recipe}.webp" style="width:68px;height:68px;object-fit:contain;"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+        <span style="display:none;font-size:40px;">${crop?crop.icon:'🌱'}</span>
+      </div>
       <div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);">${crop?crop.name:'Ekim'}</div>
       <div style="font-family:var(--font-head);font-size:20px;color:var(--gold);margin:10px 0;">${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</div>
       <div style="font-size:12px;color:var(--perg2);line-height:1.7;">${out||'—'}</div>
