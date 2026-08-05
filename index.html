@@ -809,6 +809,19 @@ html,body{
     linear-gradient(180deg,#1c130a 0%,#100a05 100%);
 }
 
+/* ── KARAKTER YETENEKLERİ (Avcılık, Çiftçilik, Demircilik…) ── */
+.skill-row{display:flex;align-items:center;gap:9px;padding:7px 9px;border-bottom:1px solid #ffffff08;}
+.skill-row:last-child{border-bottom:none;}
+.skill-row.sk-off{opacity:.42;}
+.skill-ico{font-size:19px;width:24px;text-align:center;flex-shrink:0;}
+.skill-mid{flex:1;min-width:0;}
+.skill-name{font-family:var(--font-head);font-size:clamp(10px,1.1vw,12px);color:var(--perg);}
+.skill-fx{font-size:clamp(8px,.95vw,10px);color:var(--ink3);margin-top:1px;}
+.skill-fx b{color:#9bd17a;font-weight:400;}
+.skill-val{font-family:var(--font-head);font-size:clamp(11px,1.2vw,14px);color:var(--gold2);flex-shrink:0;min-width:42px;text-align:right;}
+.skill-bar-bg{height:3px;background:#00000055;border-radius:2px;margin-top:3px;overflow:hidden;}
+.skill-bar{height:100%;background:linear-gradient(90deg,var(--copper),var(--gold2));border-radius:2px;transition:width .3s;}
+
 /* ── PROFİL SIRALAMA PANOSU ── */
 .rank-row{display:flex;align-items:center;gap:10px;padding:10px 13px;background:linear-gradient(180deg,var(--panel2),var(--panel3));border:1px solid var(--border2);border-radius:9px;margin-bottom:6px;cursor:pointer;transition:border-color .15s,box-shadow .15s;box-shadow:inset 0 1px 0 #ffffff06;}
 .rank-row:hover{border-color:var(--gold);box-shadow:inset 0 1px 0 #ffffff08,0 0 10px #b08d5730;}
@@ -1955,6 +1968,15 @@ html,body{
               <div id="g-active-perks"></div>
             </div>
 
+            <!-- Yetenekler -->
+            <div class="parchment-section">
+              <div class="parch-header">
+                <span class="parch-title">🛠 YETENEKLER</span>
+                <span class="parch-sp">En fazla 100</span>
+              </div>
+              <div id="g-skills"></div>
+            </div>
+
           </div><!-- /sol sütun -->
 
           <!-- ══ SAĞ SÜTUN ══ -->
@@ -2774,7 +2796,9 @@ function troopBuffs(){
 }
 // Keşif süresi — Rehber buff'ı uygular
 function effectiveExploreDur(dur){
-  return Math.max(5, Math.round(dur * troopBuffs().exploreSpeedMult));
+  // Rehber birliği + İzcilik yeteneği birlikte hızlandırır
+  const skillMult = (typeof scoutSpeedMult==='function') ? scoutSpeedMult() : 1;
+  return Math.max(5, Math.round(dur * troopBuffs().exploreSpeedMult * skillMult));
 }
 
 /* ── BİRLİK EKİPMANI (Aşama 3) ── */
@@ -3458,7 +3482,7 @@ async function finishExplore(idx,dbId){
   const cell=G_MAP[idx];if(!cell)return;
   G.explored.add(idx);
   // Keşif bonusları
-  if(cell.t==='ruins'){const rb=troopBuffs();let b=Math.floor(Math.random()*40)+20;b=Math.floor(b*rb.resourceMult);G.gold+=b;const bonusNote=rb.rehber>0?` (Rehber +%${Math.round((rb.resourceMult-1)*100)})`:'';toast(`Harabeler keşfedildi! ${b}🪙 hazine bulundu!${bonusNote} 💰`);trackQuest('exploreRuin');trackQuest('exploreRuin2',Math.min(2,[...G.explored].filter(i=>G_MAP[i]?.t==='ruins').length));}
+  if(cell.t==='ruins'){const rb=troopBuffs();let b=Math.floor(Math.random()*40)+20;b=Math.floor(b*rb.resourceMult*scoutLootMult());G.gold+=b;const scoutPct=Math.round((scoutLootMult()-1)*100);const bonusNote=(rb.rehber>0?` (Rehber +%${Math.round((rb.resourceMult-1)*100)}`:(scoutPct>0?' (':''))+(scoutPct>0?`${rb.rehber>0?', ':''}İzcilik +%${scoutPct}`:'')+((rb.rehber>0||scoutPct>0)?')':'');toast(`Harabeler keşfedildi! ${b}🪙 hazine bulundu!${bonusNote} 💰`);trackQuest('exploreRuin');trackQuest('exploreRuin2',Math.min(2,[...G.explored].filter(i=>G_MAP[i]?.t==='ruins').length));}
   else if(cell.t==='village'){G.folk.population+=20;toast(`${cell.n} keşfedildi! +20 nüfus 🏘`);trackQuest('exploreVillage3',Math.min(3,[...G.explored].filter(i=>G_MAP[i]?.t==='village').length));}
   else toast(`${cell.n} keşfedildi! 🗺`);
   // Özel birim keşfi — araziye göre tematik, TEST: %50 şans
@@ -3476,6 +3500,7 @@ async function finishExplore(idx,dbId){
   }
   trackQuest('exploreDaily');trackQuest('explore5',Math.min(5,G.explored.size-7));
   trackAch('explore');
+  qAddSkill('izcilik', 0.05); // her tamamlanan keşif izcilik kazandırır
   gainXP(10);updateHUD();
   // Supabase'den timer'ı sil
   if(dbId&&currentUser) await supa.from('explore_timers').delete().eq('id',dbId);
@@ -3533,6 +3558,14 @@ function finishGather(idx, type){
     const amt=Math.floor(Math.random()*4)+3;
     G.prodInv.kil=(G.prodInv.kil||0)+amt;
     toast(`🪣 ${amt} Kil topladın!`);
+  } else if(type==='fish'){
+    // Balıkçılık yeteneği tutulan balık miktarını artırır
+    const amt=Math.max(1, Math.round((Math.floor(Math.random()*4)+3) * fishAmountMult()));
+    G.prodInv.balik=(G.prodInv.balik||0)+amt;
+    const fv=(FOOD_VALUE.balik||0)*amt;
+    if(fv>0) G.food+=fv;
+    qAddSkill('balikcilik', 0.05);
+    toast(`🐟 ${amt} Balık tuttun!${fv>0?` 🍖 +${fv} yemek`:''}`);
   } else if(type==='gold'){
     const amt=Math.floor(Math.random()*16)+15;
     G.gold+=amt;
@@ -3555,6 +3588,8 @@ function finishGather(idx, type){
       const b=Math.floor(Math.random()*20)+10;G.gold+=b;toast(`💰 Boş harabeler. ${b}🪙 kalıntı buldun.`);
     }
   }
+  // Her saha çalışması izcilik kazandırır (balık kendi yeteneğini zaten verdi)
+  qAddSkill('izcilik', 0.05);
   // Kareyi hasat edildi olarak işaretle ve kaydet
   G_MAP[idx].harvested=true;
   if(currentUser) supa.from('player_maps').upsert({profile_id:currentUser.id,cells:G_MAP},{onConflict:'profile_id'});
@@ -4255,6 +4290,8 @@ function farmGetBonus(lv){
   if(lv >= 9)  chance = 0.30;
   if(lv >= 10) chance = 0.60;
   const mult = lv >= 4 ? 3 : 2;
+  // Çiftçilik yeteneği bonus şansını yükseltir (puan başına +%1)
+  chance = Math.min(1, chance + farmChanceBonus());
   return {chance, mult};
 }
 
@@ -4271,8 +4308,8 @@ const FARM_CX = 48;   // grid merkezinin yatay konumu (%)
    h  = kare yüksekliği (%)            sp = sütunlar arası yatay aralık (%)
    Kare zemine oturmuyorsa buradan ayarla — hepsi arka plan görselinin yüzdesi. */
 const FARM_ROWS = [
-  {y:21.00, w:15.50, h:11.0, sp:19.25},
-  {y:35.50, w:17.50, h:12.3, sp:20.50},
+  {y:21.00, w:17.50, h:11.0, sp:19.25},
+  {y:35.50, w:19.50, h:12.3, sp:20.50},
   {y:51.25, w:19.50, h:13.6, sp:21.90},
   {y:68.50, w:21.50, h:15.0, sp:23.50},
 ];
@@ -4337,6 +4374,10 @@ const PROD_RECIPES={
     {id:'domates_corbasi', name:'Domates Çorbası', icon:'🥣', minLv:5, dur:120, inputs:{domates:2,arpa:1},              outputs:{domates_corbasi:{base:1}}},
     {id:'cilekli_turta',   name:'Çilekli Turta',    icon:'🍓', minLv:6, dur:180, inputs:{cilek:2,bugday_unu:2},         outputs:{cilekli_turta:{base:1}}},
     {id:'balli_kaymak',    name:'Ballı Kaymak',     icon:'🍯', minLv:7, dur:150, inputs:{kaymak:1,bal:1},               outputs:{balli_kaymak:{base:1}}},
+    // ── İksirler ── çıktı prodInv'e değil ENVANTERE gider (POTION_CRAFTS), İksircilik kazandırır
+    {id:'iksir_kucuk',     name:'Küçük Can İksiri', icon:'🧪', minLv:3, dur:180, inputs:{cicek:2,bal:1},                outputs:{iksir_kucuk:{base:1}}, potion:true},
+    {id:'iksir_orta',      name:'Orta Can İksiri',  icon:'🧪', minLv:6, dur:240, inputs:{cicek:3,bal:2,sut:1},          outputs:{iksir_orta:{base:1}},  potion:true},
+    {id:'iksir_buyuk',     name:'Büyük Can İksiri', icon:'🧪', minLv:9, dur:300, inputs:{cicek:4,bal:3,kaymak:1},       outputs:{iksir_buyuk:{base:1}}, potion:true},
   ],
   insaa:[
     {id:'lumber', name:'Kereste Yap', icon:'🪵', minLv:1, dur:150, inputs:{meseLodunu:1}, outputs:{kereste:{base:3,chance:0}}},
@@ -4344,9 +4385,9 @@ const PROD_RECIPES={
     {id:'bake',   name:'Tuğla Yap',   icon:'🧱', minLv:1, dur:150, inputs:{kil:1},        outputs:{tugla:{base:3,chance:0}}},
   ],
 };
-const FOOD_VALUE={bugday:1,arpa:1,sebze:2,saman:0,un:0,arpa_unu:0,tuy:0,yumurta:2,yun:0,sut:2,ekmek:0,corba:0,kek:0,patates:1,domates:2,cicek:0,yonca:0,cilek:3,bugday_unu:0,patates_puresi:3,kaymak:4,cilek_puresi:4,domates_puresi:3,bal:2,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0};
+const FOOD_VALUE={bugday:1,arpa:1,sebze:2,saman:0,un:0,arpa_unu:0,tuy:0,yumurta:2,yun:0,sut:2,ekmek:0,corba:0,kek:0,patates:1,domates:2,cicek:0,yonca:0,cilek:3,bugday_unu:0,patates_puresi:3,kaymak:4,cilek_puresi:4,domates_puresi:3,bal:2,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0,balik:4};
 const KITCHEN_FOOD_VALUES={domates_corbasi:10,patates_corbasi:12,ekmek:12,salcali_ekmek:15,borek:18,cilekli_turta:20,balli_kaymak:25};
-const ITEM_LABELS={bugday:'Buğday',saman:'Saman',arpa:'Arpa',sebze:'Sebze',un:'Un',arpa_unu:'Arpa Unu',tuy:'Tüy',yumurta:'Yumurta',yun:'Yün',sut:'Süt',ekmek:'Ekmek',corba:'Çorba',kek:'Kek',patates:'Patates',domates:'Domates',cicek:'Çiçek',yonca:'Yonca',cilek:'Çilek',patates_tohum:'Patates Tohumu',domates_tohum:'Domates Tohumu',cicek_tohum:'Çiçek Tohumu',yonca_tohum:'Yonca Tohumu',cilek_tohum:'Çilek Tohumu',bugday_unu:'Buğday Unu',patates_puresi:'Patates Püresi',kaymak:'Kaymak',cilek_puresi:'Çilek Püresi',domates_puresi:'Domates Püresi',bal:'Bal',domates_corbasi:'Domates Çorbası',patates_corbasi:'Patates Çorbası',salcali_ekmek:'Salçalı Ekmek',borek:'Börek',cilekli_turta:'Çilekli Turta',balli_kaymak:'Ballı Kaymak',meseLodunu:'Meşe Odunu',demir:'Demir',kil:'Kil',kereste:'Kereste',civi:'Çivi',tugla:'Tuğla'};
+const ITEM_LABELS={bugday:'Buğday',saman:'Saman',arpa:'Arpa',sebze:'Sebze',un:'Un',arpa_unu:'Arpa Unu',tuy:'Tüy',yumurta:'Yumurta',yun:'Yün',sut:'Süt',ekmek:'Ekmek',corba:'Çorba',kek:'Kek',patates:'Patates',domates:'Domates',cicek:'Çiçek',yonca:'Yonca',cilek:'Çilek',patates_tohum:'Patates Tohumu',domates_tohum:'Domates Tohumu',cicek_tohum:'Çiçek Tohumu',yonca_tohum:'Yonca Tohumu',cilek_tohum:'Çilek Tohumu',bugday_unu:'Buğday Unu',patates_puresi:'Patates Püresi',kaymak:'Kaymak',cilek_puresi:'Çilek Püresi',domates_puresi:'Domates Püresi',bal:'Bal',domates_corbasi:'Domates Çorbası',patates_corbasi:'Patates Çorbası',salcali_ekmek:'Salçalı Ekmek',borek:'Börek',cilekli_turta:'Çilekli Turta',balli_kaymak:'Ballı Kaymak',meseLodunu:'Meşe Odunu',demir:'Demir',kil:'Kil',kereste:'Kereste',civi:'Çivi',tugla:'Tuğla',balik:'Balık',iksir_kucuk:'Küçük Can İksiri',iksir_orta:'Orta Can İksiri',iksir_buyuk:'Büyük Can İksiri'};
 
 /* ══════════════════════════════════════
    BİNA YÜKSELTME MALZEMELERİ (kereste/çivi/tuğla)
@@ -4411,9 +4452,19 @@ function matCostHTML(cost){
     return `<span style="font-size:10px;padding:1px 6px;border-radius:4px;margin:1px;display:inline-block;background:${ok?'#13190f':'#2a1010'};border:1px solid ${ok?'#2a3a18':'#6a2020'};color:${ok?'#9bd17a':'#f08080'};">${ic} ${v}${ok?'':` (${have})`}</span>`;
   }).join(' ');
 }
-const ITEM_ICONS={bugday:'🌾',saman:'🌿',arpa:'🌱',sebze:'🥦',un:'🥛',arpa_unu:'🥛',tuy:'🪶',yumurta:'🥚',yun:'🧶',sut:'🥛',ekmek:'🍞',corba:'🥣',kek:'🎂',patates:'🥔',domates:'🍅',cicek:'🌸',yonca:'🍀',cilek:'🍓',patates_tohum:'🌱',domates_tohum:'🌱',cicek_tohum:'🌱',yonca_tohum:'🌱',cilek_tohum:'🌱',bugday_unu:'🫙',patates_puresi:'🫙',kaymak:'🫙',cilek_puresi:'🫙',domates_puresi:'🫙',bal:'🍯',domates_corbasi:'🥣',patates_corbasi:'🥣',salcali_ekmek:'🍞',borek:'🥐',cilekli_turta:'🍓',balli_kaymak:'🍯',meseLodunu:'🪵',demir:'⛏',kil:'🪣',kereste:'🪵',civi:'🔩',tugla:'🧱'};
+const ITEM_ICONS={bugday:'🌾',saman:'🌿',arpa:'🌱',sebze:'🥦',un:'🥛',arpa_unu:'🥛',tuy:'🪶',yumurta:'🥚',yun:'🧶',sut:'🥛',ekmek:'🍞',corba:'🥣',kek:'🎂',patates:'🥔',domates:'🍅',cicek:'🌸',yonca:'🍀',cilek:'🍓',patates_tohum:'🌱',domates_tohum:'🌱',cicek_tohum:'🌱',yonca_tohum:'🌱',cilek_tohum:'🌱',bugday_unu:'🫙',patates_puresi:'🫙',kaymak:'🫙',cilek_puresi:'🫙',domates_puresi:'🫙',bal:'🍯',domates_corbasi:'🥣',patates_corbasi:'🥣',salcali_ekmek:'🍞',borek:'🥐',cilekli_turta:'🍓',balli_kaymak:'🍯',meseLodunu:'🪵',demir:'⛏',kil:'🪣',kereste:'🪵',civi:'🔩',tugla:'🧱',balik:'🐟',iksir_kucuk:'🧪',iksir_orta:'🧪',iksir_buyuk:'🧪'};
 // Görseli olan eşyaların dosya adı — key ile farklıysa buraya ekle
-const ITEM_IMGS={meseLodunu:'odun',demir:'demir',kil:'kil',kereste:'kereste',civi:'civi',tugla:'tugla'};
+const ITEM_IMGS={meseLodunu:'odun',demir:'demir',kil:'kil',kereste:'kereste',civi:'civi',tugla:'tugla',balik:'balik',
+  iksir_kucuk:'kucukcaniksiri',iksir_orta:'ortacaniksiri',iksir_buyuk:'buyukcaniksiri'};
+
+/* ── AŞEVİ İKSİRLERİ ──
+   Bu çıktılar G.prodInv'e değil doğrudan ENVANTERE düşer (kullanılabilir eşya).
+   İçerikleri Pazar'daki NPC iksirleriyle birebir aynı (id 401/411/412). */
+const POTION_CRAFTS={
+  iksir_kucuk:{name:'Küçük Can İksiri',grade:'gray', reqLv:1, pct:10, img:'kucukcaniksiri',price:30},
+  iksir_orta: {name:'Orta Can İksiri', grade:'green',reqLv:5, pct:20, img:'ortacaniksiri', price:100},
+  iksir_buyuk:{name:'Büyük Can İksiri',grade:'blue', reqLv:10,pct:30, img:'buyukcaniksiri',price:300},
+};
 function itemImg(key,size='48px'){
   const f=ITEM_IMGS[key];if(!f)return`<span style="font-size:${size};">${ITEM_ICONS[key]||'📦'}</span>`;
   return`<img src="${IMG_BASE}${f}.webp" style="width:${size};height:${size};object-fit:contain;" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<span style=\\'font-size:${size};\\' >${ITEM_ICONS[key]||'📦'}</span>')">`;
@@ -4502,7 +4553,7 @@ const G={
   explored:new Set([21,22,27,28,14,15,20]),
   selectedCell:null,
   prodTimers:[],prodTimerId:1,
-  prodInv:{bugday:5,saman:3,arpa:0,sebze:0,un:2,arpa_unu:0,tuy:1,yumurta:3,yun:1,sut:4,ekmek:0,corba:0,kek:0,patates:0,domates:0,cicek:0,yonca:0,cilek:0,patates_tohum:0,domates_tohum:0,cicek_tohum:0,yonca_tohum:0,cilek_tohum:0,bugday_unu:0,patates_puresi:0,kaymak:0,cilek_puresi:0,domates_puresi:0,bal:0,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0,meseLodunu:0,demir:0,kil:0,kereste:0,civi:0,tugla:0},
+  prodInv:{bugday:5,saman:3,arpa:0,sebze:0,un:2,arpa_unu:0,tuy:1,yumurta:3,yun:1,sut:4,ekmek:0,corba:0,kek:0,patates:0,domates:0,cicek:0,yonca:0,cilek:0,patates_tohum:0,domates_tohum:0,cicek_tohum:0,yonca_tohum:0,cilek_tohum:0,bugday_unu:0,patates_puresi:0,kaymak:0,cilek_puresi:0,domates_puresi:0,bal:0,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0,meseLodunu:0,demir:0,kil:0,kereste:0,civi:0,tugla:0,balik:0},
   matInv:{ham_demir:0, guc_runesi:0, ejderha_pulu:0, thros_kanadi:0, dev_disi:0, anka_kulu:0, ruh_kristali:0, iblis_kani:0, semavi_oz:0},
   guildName:'',
   guildId:null,
@@ -5066,6 +5117,24 @@ function renderKarakter(){
       </div>`).join('');
   }
 
+  // Yetenekler — kazanımı ve etkisi olan/olmayan hepsi listelenir
+  const skillsEl=document.getElementById('g-skills');
+  if(skillsEl && typeof QSKILLS!=='undefined'){
+    skillsEl.innerHTML=Object.entries(QSKILLS).map(([k,m])=>{
+      const v=qSkillVal(k);
+      const fx=(QSKILL_FX[k]||(()=> 'Henüz bir etkisi yok'))(v);
+      return `<div class="skill-row ${v>0?'':'sk-off'}">
+        <span class="skill-ico">${m.ico}</span>
+        <div class="skill-mid">
+          <div class="skill-name">${m.lbl}</div>
+          <div class="skill-fx">${fx}</div>
+          <div class="skill-bar-bg"><div class="skill-bar" style="width:${Math.min(100,v)}%"></div></div>
+        </div>
+        <span class="skill-val">${v.toFixed(2).replace(/\.?0+$/,'')||0}</span>
+      </div>`;
+    }).join('');
+  }
+
   // Aktif premium etkiler
   const perksEl=document.getElementById('g-active-perks');
   if(perksEl){
@@ -5307,13 +5376,17 @@ function useConsumable(itemId){
   const eff=getEffectiveStats();
   let msg='';
 
+  // İksircilik yeteneği iyileştirme miktarını artırır (puan başına +%1)
+  const pMult=potionPowerMult();
+  const pNote=pMult>1?` 🧪+%${Math.round((pMult-1)*100)}`:'';
   if(item.stats?.hp_restore_pct){
-    const heal=Math.floor(eff.maxhp*(item.stats.hp_restore_pct/100));
+    const heal=Math.floor(eff.maxhp*(item.stats.hp_restore_pct/100)*pMult);
     G.stats.hp=Math.min(eff.maxhp, G.stats.hp+heal);
-    msg=`+${heal} can yenilendi! (${item.stats.hp_restore_pct}%)`;
+    msg=`+${heal} can yenilendi! (${item.stats.hp_restore_pct}%${pNote})`;
   } else if(item.stats?.hp_restore){
-    G.stats.hp=Math.min(eff.maxhp, G.stats.hp+item.stats.hp_restore);
-    msg=`+${item.stats.hp_restore} can yenilendi!`;
+    const heal=Math.floor(item.stats.hp_restore*pMult);
+    G.stats.hp=Math.min(eff.maxhp, G.stats.hp+heal);
+    msg=`+${heal} can yenilendi!${pNote}`;
   } else if(item.stats?.atk_boost){
     msg=`Saldırı +%${item.stats.atk_boost} güçlendirildi!`;
   } else {
@@ -5962,7 +6035,8 @@ function renderGelistirme(){
     const isNekro=selected.img?.startsWith('necro');
     const luckActive=perkActive('luckCharmUntil');
     const baseDisplayChance=isNekro?50:Math.round(nextLevel.chance*100);
-    const displayChance=Math.min(100, baseDisplayChance+(luckActive?5:0));
+    const smithPct=Math.round(smithChanceBonus()*1000)/10; // %0.1 hassasiyetle
+    const displayChance=Math.min(100, baseDisplayChance+(luckActive?5:0)+smithPct);
     matsHtml=`
       <div class="enh-mats">
         <div class="enh-mat ${hasMat?'ok':'missing'}">
@@ -5977,7 +6051,7 @@ function renderGelistirme(){
         </div>
       </div>
       <div style="font-size:14px;color:var(--ink3);text-align:center;margin-top:6px;">
-        Başarı şansı: <span style="color:var(--gold2);font-family:var(--font-head);font-size:18px;">%${displayChance}</span>${luckActive?` <span style="color:#9bd17a;font-size:13px;">(%${baseDisplayChance} +%5 🍀)</span>`:''}
+        Başarı şansı: <span style="color:var(--gold2);font-family:var(--font-head);font-size:18px;">%${Math.round(displayChance*10)/10}</span>${(luckActive||smithPct>0)?` <span style="color:#9bd17a;font-size:13px;">(%${baseDisplayChance}${luckActive?' +%5 🍀':''}${smithPct>0?` +%${smithPct} 🔨`:''})</span>`:''}
         ${isNekro
           ?`<span style="color:#f87171;font-size:12px;display:block;margin-top:3px;">💀 Başarısız olursa eşya <b>yok olur!</b></span>`
           :curPlus>0?`<span style="color:#f87171;font-size:12px;display:block;margin-top:3px;">⚠ Başarısız olursa +${curPlus} → +${curPlus-1} düşer</span>`:''
@@ -6106,6 +6180,9 @@ function startEnhancement(itemId){
   // Malzeme ve altın düş
   G.gold-=level.goldCost;
   G.matInv[level.mat.key]-=level.mat.qty;
+  // Demircilik: her deneme ustalık kazandırır (başarısız denemeler de sayılır —
+  // deneme zaten altın+malzeme yakıyor)
+  qAddSkill('demircilik', 0.1);
   enhRunning=true;
   updateHUD();
   renderGelistirme();
@@ -6122,7 +6199,7 @@ function startEnhancement(itemId){
     const isNekro=item.img?.startsWith('necro');
     const luckBonus=perkActive('luckCharmUntil')?0.05:0;
     const baseChance=(isNekro?0.5:level.chance);
-    const success=Math.random()<Math.min(1, baseChance+luckBonus);
+    const success=Math.random()<Math.min(1, baseChance+luckBonus+smithChanceBonus());
 
     if(success){
       // Eşyayı güncelle
@@ -6474,14 +6551,18 @@ function cellClick(idx,_cell){
       }
     } else {
       // Kaynak toplama aksiyonları
+      // Bir kare birden fazla eylem sunabilir (su: balık ya da kil) — hasat hakkı
+      // ortaktır, oyuncu hangisini yapacağını seçer.
       const GATHER_ACTIONS={
-        forest: {icon:'🪓',label:'Ağaç Kes',type:'lumber',desc:'Meşe Odunu topla (2 dk → 5-10 adet)'},
-        mountain:{icon:'⛏',label:'Kazı Yap', type:'mine', desc:'Demir madeni çıkar (2 dk → 3-7 adet)'},
-        water:  {icon:'🪣',label:'Kil Topla',type:'clay',  desc:'Nehirden kil topla (2 dk → 3-6 adet)'},
-        village:{icon:'💰',label:'Vergi Topla',type:'gold',desc:'Köyden vergi topla (2 dk → 15-30🪙)'},
-        ruins:  {icon:'🔍',label:'Araştır',  type:'loot',  desc:'Harabeyi araştır (2 dk → rastgele ekipman)'},
+        forest: [{icon:'🪓',label:'Ağaç Kes',type:'lumber',desc:'Meşe Odunu topla (2 dk → 5-10 adet)'}],
+        mountain:[{icon:'⛏',label:'Kazı Yap', type:'mine', desc:'Demir madeni çıkar (2 dk → 3-7 adet)'}],
+        water:  [{icon:'🎣',label:'Balık Tut',type:'fish', desc:'Ağları at (2 dk → 3-6 balık, 🎣 Balıkçılık kazandırır)'},
+                 {icon:'🪣',label:'Kil Topla',type:'clay',  desc:'Nehirden kil topla (2 dk → 3-6 adet)'}],
+        village:[{icon:'💰',label:'Vergi Topla',type:'gold',desc:'Köyden vergi topla (2 dk → 15-30🪙)'}],
+        ruins:  [{icon:'🔍',label:'Araştır',  type:'loot',  desc:'Harabeyi araştır (2 dk → rastgele ekipman)'}],
       };
-      const ga=GATHER_ACTIONS[cell.t];
+      const gaList=GATHER_ACTIONS[cell.t]||null;
+      const ga=gaList?gaList[0]:null;
       const gathering=gatherTimers.find(t=>t.cellIdx===idx);
       let btnHtml='';
       if(ga){
@@ -6495,10 +6576,13 @@ function cellClick(idx,_cell){
             <span style="font-size:11px;color:var(--ink3);">tamamlanıyor...</span>
           </div>`;
         } else {
-          btnHtml=`<button class="btn" style="width:100%;margin-top:8px;" onclick="startGather(${idx},'${ga.type}')">${ga.icon} ${ga.label}</button>`;
+          btnHtml=gaList.map(a=>
+            `<button class="btn" style="width:100%;margin-top:8px;" onclick="startGather(${idx},'${a.type}')">${a.icon} ${a.label}</button>`
+          ).join('');
         }
       }
-      info.innerHTML=`<div class="row-between" style="margin-bottom:6px;"><span style="font-family:var(--font-head);font-size:13px;color:var(--gold);">${cell.n}</span><span class="tag tag-gold">✓ Keşfedildi</span></div><div style="font-size:11px;color:var(--ink3);">${ga?.desc||cell.info}</div>${btnHtml}`;
+      const descHtml=gaList?gaList.map(a=>`<div>${a.desc}</div>`).join(''):cell.info;
+      info.innerHTML=`<div class="row-between" style="margin-bottom:6px;"><span style="font-family:var(--font-head);font-size:13px;color:var(--gold);">${cell.n}</span><span class="tag tag-gold">✓ Keşfedildi</span></div><div style="font-size:11px;color:var(--ink3);line-height:1.6;">${descHtml}</div>${btnHtml}`;
     }
   } else info.style.display='none';
   renderHarita();
@@ -7426,8 +7510,8 @@ function zdOpenPotionPicker(){
   const eff=getEffectiveStats();
   const rows=potions.map(p=>{
     const healTxt=p.stats.hp_restore_pct
-      ? `Max canın %${p.stats.hp_restore_pct}'i (+${Math.floor(eff.maxhp*p.stats.hp_restore_pct/100)})`
-      : `+${p.stats.hp_restore} can`;
+      ? `Max canın %${p.stats.hp_restore_pct}'i (+${Math.floor(eff.maxhp*p.stats.hp_restore_pct/100*potionPowerMult())})`
+      : `+${Math.floor(p.stats.hp_restore*potionPowerMult())} can`;
     return `<div onclick="closeGModal();zdAction('potion',${p.id})" style="display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:6px;border-radius:8px;border:1px solid var(--border2);background:var(--panel2);cursor:pointer;">
       <span style="font-size:24px;">${p.icon}</span>
       <div style="flex:1;text-align:left;">
@@ -7492,8 +7576,8 @@ function zdAction(action, itemId){
     const item=G.inventory.find(x=>x.id===itemId);
     if(!item||!(item.stats?.hp_restore||item.stats?.hp_restore_pct)){ toast('İksir bulunamadı!'); return; }
     const heal=item.stats.hp_restore_pct
-      ? Math.floor(eff.maxhp*(item.stats.hp_restore_pct/100))
-      : item.stats.hp_restore;
+      ? Math.floor(eff.maxhp*(item.stats.hp_restore_pct/100)*potionPowerMult())
+      : Math.floor(item.stats.hp_restore*potionPowerMult());
     const before=b.playerHp;
     b.playerHp=Math.min(eff.maxhp, b.playerHp+heal);
     // Yığından düş / son taneyse kaldır
@@ -7881,11 +7965,67 @@ const QSKILLS={
   ciftcilik:  {lbl:'Çiftçilik',   ico:'🌾'},
   demircilik: {lbl:'Demircilik',  ico:'🔨'},
   madencilik: {lbl:'Madencilik',  ico:'⛏'},
-  sifacilik:  {lbl:'Şifacılık',   ico:'🧪'},
+  sifacilik:  {lbl:'İksircilik',  ico:'🧪'},   // kod anahtarı 'sifacilik' kalır (eski kayıtlar bozulmasın)
   izcilik:    {lbl:'İzcilik',     ico:'🧭'},
 };
-function qSkillVal(k){return Math.round((((G.skills||{})[k])||0)*10)/10;}
-function qAddSkill(k,v){ if(!G.skills)G.skills={}; G.skills[k]=Math.round((((G.skills[k]||0)+v))*10)/10; }
+const QSKILL_MAX=100;
+/* Not: 2 ondalık hassasiyet — çiftçilik ürün başına 0.01 kazandığı için
+   1 ondalıkta yuvarlanıp sıfırlanırdı. Tüm yetenekler 100'de tavan yapar. */
+function qSkillVal(k){return Math.round((((G.skills||{})[k])||0)*100)/100;}
+function qAddSkill(k,v){
+  if(!G.skills)G.skills={};
+  G.skills[k]=Math.min(QSKILL_MAX, Math.round((((G.skills[k]||0)+v))*100)/100);
+  // Görev dışı kaynaklar da (geliştirme, hasat) yerel kaydı tazelesin
+  try{ questSave(); }catch(e){}
+}
+
+/* ── YETENEK ETKİLERİ ──
+   Demircilik : her 1 puan → geliştirme başarı şansı +%0.2  (100 puan → +%20)
+   Çiftçilik  : her 1 puan → tarla bonus şansı +%1, ekim süresi -%0.5
+                (100 puan → bonus pratikte garanti, süre yarıya iner) */
+function smithChanceBonus(){ return qSkillVal('demircilik')*0.002; }
+function farmChanceBonus(){  return qSkillVal('ciftcilik')*0.01; }
+function farmSpeedMult(){    return Math.max(0.5, 1 - qSkillVal('ciftcilik')*0.005); }
+/* Hayvancılık : pasif üretim + çiftlik tarifleri hızlanır, bonus şansı ve üreme artar */
+function ranchSpeedMult(){   return Math.max(0.5, 1 - qSkillVal('hayvancilik')*0.005); }
+function ranchChanceBonus(){ return qSkillVal('hayvancilik')*0.005; }
+/* İzcilik : keşif/toplama hızlanır, harabe ganimeti artar */
+function scoutSpeedMult(){   return Math.max(0.6, 1 - qSkillVal('izcilik')*0.004); }
+function scoutLootMult(){    return 1 + qSkillVal('izcilik')*0.01; }
+/* İksircilik : içilen iksirlerin iyileştirmesi artar */
+function potionPowerMult(){  return 1 + qSkillVal('sifacilik')*0.01; }
+/* Balıkçılık : tutulan balık miktarı artar */
+function fishAmountMult(){   return 1 + qSkillVal('balikcilik')*0.01; }
+
+/* Karakter sayfasındaki yetenek panelinde gösterilen etki açıklamaları.
+   Yeni bir yeteneğe etki bağlarsan satırını buraya ekle. */
+const QHUNT_GATES=[0,1,3,6,9,13,18]; // avcılık av görevlerinin eşikleri
+const QSKILL_FX={
+  demircilik:v=>v>0
+    ? `Geliştirme başarı şansı <b>+%${Math.round(v*0.2*10)/10}</b> · her denemede +0.1`
+    : 'Her geliştirme denemesinde +0.1 kazanılır (1 puan → +%0.2 şans)',
+  ciftcilik:v=>v>0
+    ? `Tarla bonus şansı <b>+%${Math.round(v*10)/10}</b> · ekim süresi <b>-%${Math.round(v*0.5*10)/10}</b>`
+    : 'Tarladan toplanan her üründe +0.01 kazanılır (bonus şansı ve ekim hızı)',
+  avcilik:v=>{
+    const open=QHUNT_GATES.filter(g=>v>=g).length;
+    const next=QHUNT_GATES.find(g=>v<g);
+    return `Açılan av görevi: <b>${open}/${QHUNT_GATES.length}</b>${next!=null?` · sonraki eşik ${next}`:' · tümü açık'}`;
+  },
+  hayvancilik:v=>v>0
+    ? `Pasif üretim ve besleme <b>-%${Math.round(v*0.5*10)/10}</b> süre · üreme ve bonus şansı <b>+%${Math.round(v*0.5*10)/10}</b>`
+    : 'Çiftlikte toplanan her üründe +0.01 (üretim hızı, üreme ve bonus şansı)',
+  izcilik:v=>v>0
+    ? `Keşif/toplama süresi <b>-%${Math.round(v*0.4*10)/10}</b> · harabe hazinesi <b>+%${Math.round(v*10)/10}</b>`
+    : 'Her keşif ve kaynak toplamada +0.05 (keşif hızı ve harabe ganimeti)',
+  sifacilik:v=>v>0
+    ? `İksirlerin iyileştirmesi <b>+%${Math.round(v*10)/10}</b>`
+    : 'Aşevi\'nde demlenen her iksirde +0.05 (iksirler daha çok can yeniler)',
+  balikcilik:v=>v>0
+    ? `Tutulan balık miktarı <b>+%${Math.round(v*10)/10}</b>`
+    : 'Su karelerinde balık tuttukça +0.05 (daha çok balık çıkar)',
+  madencilik: ()=>'Harita güncellemesiyle gelecek (yerel görevler)',
+};
 
 /* Ödül olarak verilen malzemelerin görünen adı */
 const QITEM={meseLodunu:'Odun',demir:'Demir',kereste:'Kereste',kil:'Kil',tugla:'Tuğla',
@@ -7994,28 +8134,28 @@ const QUESTS={
   av:[
     {id:'h_fare', t:'Fare', d:'Fareler kolay avlardır. Ancak onları yakalamak sana hem altın hem de tecrübe puanı kazandırır.',
      ico:'🐁', img:'devsican.webp', dur:480, cd:300, req:[{geo:'sehir'}],
-     rew:{gold:3, xp:15, skill:{k:'avcilik', v:0.1}}},
+     rew:{gold:3, xp:15, skill:{k:'avcilik', v:0.2}}},
     {id:'h_balik', t:'Balıkçılık', d:'Bölgendeki deniz veya göllerde balık tutarak hem altın, hem sağlık hem de tecrübe puanı kazanırsın.',
      ico:'🐟', img:'', dur:480, cd:300, req:[{geo:'deniz'}],
      rew:{gold:3, xp:15, hp:1, skill:{k:'balikcilik', v:0.1}}},
     {id:'h_tavsan', t:'Tavşan Avı', d:'Ormanlık alanlarda avlayabileceğin birkaç tavşan bulabilir; altın, sağlık ve tecrübe puanı kazanırsın.',
-     ico:'🐇', img:'', dur:900, cd:600, req:[{geo:'orman'},{skill:'avcilik',v:2}],
-     rew:{gold:8, xp:15, hp:3, skill:{k:'avcilik', v:0.2}}},
+     ico:'🐇', img:'', dur:900, cd:600, req:[{geo:'orman'},{skill:'avcilik',v:1}],
+     rew:{gold:8, xp:15, hp:3, skill:{k:'avcilik', v:0.3}}},
     {id:'h_ordek', t:'Ördek Avı', d:'Ördek avlamak için açıklık bir alana ve sıkı bir yaya ihtiyacın var. Karşılığında altın, sağlık ve tecrübe puanı kazanırsın.',
-     ico:'🦆', img:'', dur:900, cd:600, req:[{geo:'ova'},{skill:'avcilik',v:5}],
-     rew:{gold:3, xp:40, hp:3, skill:{k:'avcilik', v:0.2}}},
+     ico:'🦆', img:'', dur:900, cd:600, req:[{geo:'ova'},{skill:'avcilik',v:3}],
+     rew:{gold:3, xp:40, hp:3, skill:{k:'avcilik', v:0.3}}},
     {id:'h_geyik', t:'Geyik Avı', d:'Sabır isteyen bir iz sürme. Postu ve eti şehirde iyi para eder.',
-     ico:'🦌', img:'', dur:1800, cd:1800, req:[{geo:'orman'},{skill:'avcilik',v:8}],
-     rew:{gold:20, xp:80, hp:5, skill:{k:'avcilik', v:0.3}}},
+     ico:'🦌', img:'', dur:1800, cd:1800, req:[{geo:'orman'},{skill:'avcilik',v:6}],
+     rew:{gold:20, xp:80, hp:5, skill:{k:'avcilik', v:0.5}}},
     {id:'h_domuz', t:'Yaban Domuzu', d:'Saldırgan bir av. Yaralanmayı göze alırsan bol et ve tecrübe getirir.',
-     ico:'🐗', img:'', dur:1800, cd:1800, req:[{geo:'orman'},{skill:'avcilik',v:12},{hp:40}],
-     rew:{gold:30, xp:120, skill:{k:'avcilik', v:0.4}}},
+     ico:'🐗', img:'', dur:1800, cd:1800, req:[{geo:'orman'},{skill:'avcilik',v:9},{hp:40}],
+     rew:{gold:30, xp:120, skill:{k:'avcilik', v:0.6}}},
     {id:'h_kurt', t:'Bozkurt Sürüsü', d:'Dağ eteklerindeki sürüyü dağıtırsın. Tek başına gitmek cesaret ister.',
-     ico:'🐺', img:'bozkurt.webp', dur:2700, cd:3600, req:[{geo:'dag'},{skill:'avcilik',v:16},{hp:60}],
-     rew:{gold:50, xp:200, skill:{k:'avcilik', v:0.5}}},
+     ico:'🐺', img:'bozkurt.webp', dur:2700, cd:3600, req:[{geo:'dag'},{skill:'avcilik',v:13},{hp:60}],
+     rew:{gold:50, xp:200, skill:{k:'avcilik', v:1.0}}},
     {id:'h_ayi', t:'Boz Ayı', d:'Kışlağından çıkmış yaşlı bir ayı. En tecrübeli avcıların işi.',
-     ico:'🐻', img:'bozayi.webp', dur:3600, cd:7200, req:[{geo:'dag'},{skill:'avcilik',v:22},{hp:80}],
-     rew:{gold:90, xp:350, skill:{k:'avcilik', v:0.8}}},
+     ico:'🐻', img:'bozayi.webp', dur:3600, cd:7200, req:[{geo:'dag'},{skill:'avcilik',v:18},{hp:80}],
+     rew:{gold:90, xp:350, skill:{k:'avcilik', v:1.8}}},
   ],
 
   /* ── DEV KRAKEN AVI ── (qKrakenJoin ile başlar, satır olarak listelenmez) */
@@ -10652,7 +10792,9 @@ function ranchGetBonus(lv){
     {chance:.15,mult:3},{chance:.20,mult:3},{chance:.20,mult:3},
     {chance:.25,mult:3},{chance:.25,mult:4},{chance:.30,mult:4},{chance:.50,mult:4},
   ];
-  return table[Math.min(lv,10)-1]||{chance:.05,mult:2};
+  const b=table[Math.min(lv,10)-1]||{chance:.05,mult:2};
+  // Hayvancılık yeteneği bonus şansını yükseltir (puan başına +%0.5)
+  return {chance: Math.min(1, b.chance + ranchChanceBonus()), mult: b.mult};
 }
 function ranchMaxProd(lv){return 4+lv;}
 
@@ -10703,11 +10845,12 @@ function accrueAnimals(){
     const count=G.animals[k]||0;
     if(!G.animalProdTs[k]) G.animalProdTs[k]=now;
     if(count<1){ G.animalProdTs[k]=now; return; }
-    const interval=def.intervalH*3600e3;
+    // Hayvancılık yeteneği pasif üretim aralığını kısaltır (puan başına -%0.5)
+    const interval=Math.max(60e3, def.intervalH*3600e3*ranchSpeedMult());
     const elapsed=Math.min(now-G.animalProdTs[k], ANIMAL_ACCRUE_CAP_H*3600e3);
     const units=Math.floor(elapsed/interval);
     if(units>0){
-      const cap=count*Math.floor(ANIMAL_ACCRUE_CAP_H/def.intervalH);
+      const cap=count*Math.max(1,Math.floor(ANIMAL_ACCRUE_CAP_H*3600e3/interval));
       G.animalStore[k]=Math.min((G.animalStore[k]||0)+units*count, cap);
       // Kısmi ilerlemeyi koru: sayaç tam üretim dilimlerine göre ilerler
       G.animalProdTs[k]=now-(elapsed-units*interval);
@@ -10722,8 +10865,10 @@ function accrueAnimals(){
     if(count<2){ G.animalBreedTs[k]=now; return; }
     const rolls=Math.floor((now-G.animalBreedTs[k])/DAY);
     if(rolls>0){
+      // Hayvancılık yeteneği üreme şansını yükseltir (%50 taban, puan başına +%0.5)
+      const breedChance=Math.min(1, 0.5 + qSkillVal('hayvancilik')*0.005);
       for(let i=0;i<rolls;i++){
-        if(Math.random()<0.5){
+        if(Math.random()<breedChance){
           if(!Array.isArray(G.animalBabies[def.baby])) G.animalBabies[def.baby]=[];
           G.animalBabies[def.baby].push(0);
           born.push(BABY_DEFS[def.baby].name);
@@ -10747,6 +10892,7 @@ function collectAnimalProd(key){
   const fv=(FOOD_VALUE[def.out]||0)*amt;
   if(fv>0) G.food+=fv;
   G.animalStore[key]=0;
+  qAddSkill('hayvancilik', amt*0.01); // pasif ürün toplamak da hayvancılık kazandırır
   trackAch('harvest');
   toast(`${ITEM_ICONS[def.out]||'📦'} ${amt}x ${ITEM_LABELS[def.out]||def.out} toplandı!${fv>0?' 🍖 +'+fv+' yemek':''}`);
   updateHUD();updateInvStrip();renderRanch();
@@ -10959,7 +11105,8 @@ async function startRanchProd(rId){
     outputs[k]={amount,bonus};
   });
   let dbId=null;
-  const dur=effectiveProdDur(r.dur);
+  // Hayvancılık yeteneği besleme süresini de kısaltır
+  const dur=Math.max(1, Math.round(effectiveProdDur(r.dur)*ranchSpeedMult()));
   if(currentUser){
     const {data,error}=await supa.from('production_timers').insert({
       profile_id:currentUser.id,building:'ranch',recipe_id:rId,duration_secs:dur,outputs
@@ -11466,7 +11613,8 @@ async function startFarmCrop(cropId, plotIdx){
   }
 
   let farmDbId=null;
-  const dur=effectiveProdDur(crop.dur||120);
+  // Çiftçilik yeteneği ekim süresini kısaltır (puan başına -%0.5, en çok -%50)
+  const dur=Math.max(1, Math.round(effectiveProdDur(crop.dur||120) * farmSpeedMult()));
   if(currentUser){
     const payload={profile_id:currentUser.id,building:'farm',recipe_id:cropId,duration_secs:dur,outputs,plot_idx:plotIdx};
     let {data,error}=await supa.from('production_timers').insert(payload).select().single();
@@ -11530,13 +11678,40 @@ async function startProd(bKey,rId){
 
 async function collectProd(id){
   const idx=G.prodTimers.findIndex(x=>x.id===id);if(idx<0)return;
-  const t=G.prodTimers[idx];const bonusItems=[];let foodGained=0;
+  const t=G.prodTimers[idx];const bonusItems=[];let foodGained=0;let unitsHarvested=0;let potionsMade=0;
   Object.entries(t.outputs).forEach(([k,v])=>{
+    const pot=POTION_CRAFTS[k];
+    if(pot){
+      // İksirler envantere düşer (kullanılabilir eşya), depoya değil
+      const free=Math.max(0, invCap()-invCount());
+      const made=Math.min(v.amount, free);
+      for(let i=0;i<made;i++){
+        addItemStacked({
+          id:newItemId(), name:pot.name, icon:'🧪', cat:'consumable', type:'İksir',
+          grade:pot.grade, price:pot.price, reqLv:pot.reqLv, img:pot.img,
+          desc:`Maksimum canın %${pot.pct}'ini yeniler.`,
+          stats:{hp_restore_pct:pot.pct}, qty:1, material:null, classBonus:null,
+        });
+      }
+      potionsMade+=made;
+      if(made<v.amount) toast('Envanter dolu! Bazı iksirler kayboldu.');
+      if(v.bonus) bonusItems.push(`🧪 ${pot.name} ×${made}`);
+      return;
+    }
     G.prodInv[k]=(G.prodInv[k]||0)+v.amount;
+    unitsHarvested+=v.amount;
     if(v.bonus) bonusItems.push(`${ITEM_ICONS[k]} ${ITEM_LABELS[k]||k} ×${v.amount}`);
     const fv=t.building==='kitchen'?(KITCHEN_FOOD_VALUES[k]||0)*v.amount:(FOOD_VALUE[k]||0)*v.amount;
     if(fv>0){G.food+=fv;foodGained+=fv;}
   });
+  // İksircilik: demlenen her iksir 0.05 puan kazandırır
+  if(potionsMade>0){ qAddSkill('sifacilik', potionsMade*0.05); renderKarakter(); }
+  // Meslek kazanımı: toplanan her ürün adedi 0.01 puan
+  // (100 puan ≈ 10.000 ürün — bilinçli olarak çok uzun soluklu)
+  if(unitsHarvested>0){
+    if(t.building==='farm')  qAddSkill('ciftcilik',   unitsHarvested*0.01);
+    if(t.building==='ranch') qAddSkill('hayvancilik', unitsHarvested*0.01);
+  }
   // (Eski %5 besleme-yavrusu mekaniği kaldırıldı — üreme artık 24 saatlik
   //  zamanlayıcıyla accrueAnimals() içinde işliyor)
   // Supabase'den sil
