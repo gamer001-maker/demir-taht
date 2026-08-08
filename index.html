@@ -1259,6 +1259,34 @@ html,body{
 #p-prod.has-bg #prod-content .sec{text-shadow:0 1px 4px #000,0 0 14px #000000cc;}
 #p-prod.has-bg #prod-content .sec::after{background:linear-gradient(90deg,rgba(110,75,42,.9),transparent);}
 
+/* MOBİL: backdrop-filter her scroll karesinde arkaplanı yeniden bulanıklaştırdığı
+   için ciddi kasmaya yol açıyor. Küçük ekranlarda blur'u kapat, yerine
+   biraz daha opak zemin ver — görünüm korunur, scroll akıcı olur. */
+@media(max-width:899px){
+  #p-prod.has-bg .hdr,
+  #p-prod.has-bg .inv-strip,
+  #p-prod.has-bg .tabs{
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+    background:rgba(30,20,12,.92);
+  }
+  #p-prod.has-bg #prod-content .card,
+  #p-prod.has-bg #prod-content .card-sm,
+  #p-prod.has-bg #prod-content .recipe,
+  #p-prod.has-bg #prod-content .timer-card{
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+    background:rgba(28,19,10,.86);
+  }
+  #p-prod.has-bg #prod-content .mat-chip,
+  #p-prod.has-bg #prod-content .btn,
+  #p-prod.has-bg #prod-content .btn-ghost{
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+  }
+  #p-prod.has-bg #prod-content .mat-chip{background:rgba(18,12,6,.88);}
+  /* Arkaplan görselini GPU katmanına sabitle — repaint azalır */
+  #p-prod.has-bg{will-change:auto;transform:translateZ(0);}
+  #p-prod.has-bg::before{will-change:auto;}
+}
+
 /* ── Kale haritası (masaüstü görsel görünüm) ── */
 #castle-map-view{display:none;}
 @media(min-width:900px){
@@ -8817,6 +8845,25 @@ async function loadMaterialListings(){
   }));
 }
 
+/* Yığın ilanı kartı — hem Malzeme sekmesinde hem "Tümü"de kullanılır */
+function matStackCardHtml(l){
+  const mine=l.sellerId===currentUser?.id;
+  const canAfford=G.gold>=l.unitPrice;
+  return `<div class="listing-card" style="cursor:${mine?'default':'pointer'};" ${mine?'':`onclick="openMaterialBuy('${l.id}')"`}>
+    <div class="item-icon" style="margin-bottom:2px;">
+      <img src="${IMG_BASE}${l.img}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" style="width:50px;height:50px;object-fit:contain;"/>
+      <span style="display:none;font-size:30px;">${l.icon}</span>
+    </div>
+    <div class="item-name" style="font-family:var(--font-head);font-size:20px;line-height:1.3;">${l.label}</div>
+    <div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);">${l.stock.toLocaleString('tr')} adet</div>
+    <div style="font-size:16px;color:var(--ink3);">👤 ${mine?'<span style="color:var(--gold);">Sen</span>':l.sellerName}</div>
+    <div style="font-family:var(--font-head);font-size:18px;color:var(--gold);">${l.unitPrice.toLocaleString('tr')}🪙<span style="font-size:14px;color:var(--ink3);">/adet</span></div>
+    ${mine
+      ? `<button class="buy-btn-sm" style="width:100%;margin-top:auto;background:var(--panel3);" onclick="event.stopPropagation();withdrawMaterial('${l.id}')">Geri Çek</button>`
+      : `<button class="buy-btn-sm" style="width:100%;margin-top:auto;" onclick="event.stopPropagation();openMaterialBuy('${l.id}')" ${canAfford?'':'disabled'}>Satın Al</button>`}
+  </div>`;
+}
+
 function renderMaterialMarket(q, sort){
   let listings=[...G_MATERIAL_LISTINGS];
   if(q) listings=listings.filter(l=>l.label.toLowerCase().includes(q));
@@ -8861,23 +8908,7 @@ function renderMaterialMarket(q, sort){
     wrap.innerHTML=html;
     return;
   }
-  const cards=listings.map(l=>{
-    const mine=l.sellerId===currentUser?.id;
-    const canAfford=G.gold>=l.unitPrice;
-    return `<div class="listing-card" style="cursor:${mine?'default':'pointer'};" ${mine?'':`onclick="openMaterialBuy('${l.id}')"`}>
-      <div class="item-icon" style="margin-bottom:2px;">
-        <img src="${IMG_BASE}${l.img}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" style="width:50px;height:50px;object-fit:contain;"/>
-        <span style="display:none;font-size:30px;">${l.icon}</span>
-      </div>
-      <div class="item-name" style="font-family:var(--font-head);font-size:20px;line-height:1.3;">${l.label}</div>
-      <div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);">${l.stock.toLocaleString('tr')} adet</div>
-      <div style="font-size:16px;color:var(--ink3);">👤 ${mine?'<span style="color:var(--gold);">Sen</span>':l.sellerName}</div>
-      <div style="font-family:var(--font-head);font-size:18px;color:var(--gold);">${l.unitPrice.toLocaleString('tr')}🪙<span style="font-size:14px;color:var(--ink3);">/adet</span></div>
-      ${mine
-        ? `<button class="buy-btn-sm" style="width:100%;margin-top:auto;background:var(--panel3);" onclick="event.stopPropagation();withdrawMaterial('${l.id}')">Geri Çek</button>`
-        : `<button class="buy-btn-sm" style="width:100%;margin-top:auto;" onclick="event.stopPropagation();openMaterialBuy('${l.id}')" ${canAfford?'':'disabled'}>Satın Al</button>`}
-    </div>`;
-  }).join('');
+  const cards=listings.map(matStackCardHtml).join('');
   html+=`<div class="market-grid">${cards}</div>`;
   wrap.innerHTML=html;
 }
@@ -9129,9 +9160,23 @@ function renderMarket(){
     </div>`).join('');
   const regularGridHtml = regularItems.length?`<div class="market-grid">${regularItems.map(cardHtml).join('')}</div>`:'';
 
-  document.getElementById('market-content').innerHTML=items.length
-    ?stallSectionsHtml+regularGridHtml
-    :`<div style="text-align:center;padding:30px;font-size:12px;color:var(--ink3);font-style:italic;">İlan bulunamadı.</div>`;
+  // "Tümü" sekmesinde oyuncu yığın ilanlarını da göster
+  let matSectionHtml='';
+  if(G.marketCat==='all'){
+    let ml=[...G_MATERIAL_LISTINGS];
+    if(q) ml=ml.filter(l=>l.label.toLowerCase().includes(q));
+    if(sort==='price_asc') ml.sort((a,b)=>a.unitPrice-b.unitPrice);
+    else if(sort==='price_desc') ml.sort((a,b)=>b.unitPrice-a.unitPrice);
+    if(ml.length){
+      matSectionHtml=`<div class="sec" style="margin-top:14px;">📦 Malzeme Yığınları</div>
+        <div class="market-grid">${ml.map(matStackCardHtml).join('')}</div>`;
+      if(cnt) cnt.textContent=(items.length+ml.length)+' ilan';
+    }
+  }
+
+  const bodyHtml = (items.length ? stallSectionsHtml+regularGridHtml : '') + matSectionHtml;
+  document.getElementById('market-content').innerHTML = bodyHtml
+    || `<div style="text-align:center;padding:30px;font-size:12px;color:var(--ink3);font-style:italic;">İlan bulunamadı.</div>`;
 }
 function buyItem(id){
   const item=MARKET_ITEMS.find(x=>x.id===id);
@@ -12091,7 +12136,8 @@ async function marketListDepo(key){
   trackAch('market');
   toast(`${sell}x ${label} pazara listelendi! (${price}🪙/adet)`);
   await loadMaterialListings();
-  if(G.marketCat==='materials' || G.marketCat==='all') renderMarket();
+  // Pazar açıksa görünümü tazele — hangi sekmede olursa olsun
+  if(document.getElementById('p-market')?.classList.contains('active')) renderMarket();
 }
 
 function renderDepot(){
