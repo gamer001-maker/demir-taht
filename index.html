@@ -1152,6 +1152,22 @@ html,body{
 .listing-card.purple{border-top:3px solid var(--g-purple);}
 .listing-card.orange{border-top:3px solid var(--g-orange);}
 .market-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;align-items:stretch;}
+/* MOBİL: 2 sütun — tek tek kaydırmak yerine yan yana görünür.
+   Kart içeriği daraldığı için yazı/ikon ölçüleri küçültülür. */
+@media(max-width:899px){
+  .market-grid{grid-template-columns:repeat(2,1fr) !important;gap:8px;}
+  .market-grid .listing-card{padding:8px 6px;gap:3px;}
+  .market-grid .item-icon{width:60px !important;height:60px !important;}
+  .market-grid .item-icon img{width:44px !important;height:44px !important;}
+  .market-grid .item-name{font-size:14px !important;line-height:1.25 !important;}
+  .market-grid .listing-card > div{font-size:11px !important;}
+  .market-grid .listing-card span{font-size:11px !important;}
+  .market-grid .buy-btn-sm{font-size:12px !important;padding:6px 4px !important;}
+}
+@media(max-width:360px){
+  .market-grid{gap:6px;}
+  .market-grid .item-name{font-size:12px !important;}
+}
 .item-icon{width:60px;height:60px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;position:relative;box-shadow:inset 0 1px 0 #ffffff08;background:var(--g-gray-bg);border:1px solid var(--g-gray-b);}
 .item-icon.gray{background:var(--g-gray-bg);border:1px solid var(--g-gray-b);}
 .item-icon.green{background:var(--g-green-bg);border:1px solid var(--g-green-b);}
@@ -8865,12 +8881,13 @@ function matStackCardHtml(l){
 }
 
 function renderMaterialMarket(q, sort){
-  let listings=[...G_MATERIAL_LISTINGS];
+  const src=G.marketSrc||'all';
+  let listings = src==='npc' ? [] : [...G_MATERIAL_LISTINGS];
   if(q) listings=listings.filter(l=>l.label.toLowerCase().includes(q));
   if(sort==='price_asc') listings.sort((a,b)=>a.unitPrice-b.unitPrice);
   else if(sort==='price_desc') listings.sort((a,b)=>b.unitPrice-a.unitPrice);
   // NPC iksirleri/runeleri (tekil eşya)
-  let npcCons=MARKET_ITEMS.filter(i=>i.cat==='consumable'&&i.seller==='npc');
+  let npcCons = src==='player' ? [] : MARKET_ITEMS.filter(i=>i.cat==='consumable'&&i.seller==='npc');
   if(q) npcCons=npcCons.filter(i=>i.name.toLowerCase().includes(q));
   const cnt=document.getElementById('market-count'); if(cnt) cnt.textContent=(listings.length+npcCons.length)+' ilan';
   const wrap=document.getElementById('market-content');
@@ -8897,20 +8914,36 @@ function renderMaterialMarket(q, sort){
     html+=`<div class="sec" style="margin-top:0;">🧪 NPC İksirleri</div><div class="market-grid" style="margin-bottom:16px;">${npcCards}</div>`;
   }
 
-  // ── OYUNCU YIĞIN İLANLARI ──
-  html+=`<div class="sec">📦 Oyuncu Yığın İlanları</div>`;
-  if(!listings.length){
-    html+=`<div style="text-align:center;padding:30px 16px;color:var(--ink3);">
-      <div style="font-size:32px;margin-bottom:8px;">📦</div>
-      <div style="font-size:12px;">Henüz yığın ilanı yok.</div>
-      <div style="font-size:10px;margin-top:6px;">Üretim → Depo'dan malzemelerini pazara listeleyebilirsin.</div>
-    </div>`;
-    wrap.innerHTML=html;
-    return;
+  // ── OYUNCU YIĞIN İLANLARI (tezgahlar ayrı bölümde) ──
+  if(src!=='npc'){
+    const mStalls={}; const mRegular=[];
+    listings.forEach(l=>{
+      const st=G_STALLS[l.sellerId];
+      if(st){
+        if(!mStalls[l.sellerId]) mStalls[l.sellerId]={...st, list:[]};
+        mStalls[l.sellerId].list.push(l);
+      } else mRegular.push(l);
+    });
+    const mStallHtml=Object.values(mStalls).map(g=>`
+      <div style="margin-bottom:14px;padding:10px 12px;border:1px solid var(--gold);border-radius:10px;background:#1a1408;">
+        <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);">🏪 ${esc(g.name)}</div>
+        <div style="font-size:11px;color:var(--ink3);margin-bottom:8px;">${esc(g.heroName)}'in tezgahı</div>
+        <div class="market-grid">${g.list.map(matStackCardHtml).join('')}</div>
+      </div>`).join('');
+
+    html+=`<div class="sec">📦 Oyuncu Yığın İlanları</div>`;
+    if(!listings.length){
+      html+=`<div style="text-align:center;padding:30px 16px;color:var(--ink3);">
+        <div style="font-size:32px;margin-bottom:8px;">📦</div>
+        <div style="font-size:12px;">Henüz yığın ilanı yok.</div>
+        <div style="font-size:10px;margin-top:6px;">Üretim → Depo'dan malzemelerini pazara listeleyebilirsin.</div>
+      </div>`;
+    } else {
+      html+=mStallHtml;
+      if(mRegular.length) html+=`<div class="market-grid">${mRegular.map(matStackCardHtml).join('')}</div>`;
+    }
   }
-  const cards=listings.map(matStackCardHtml).join('');
-  html+=`<div class="market-grid">${cards}</div>`;
-  wrap.innerHTML=html;
+  wrap.innerHTML=html||`<div style="text-align:center;padding:30px;font-size:12px;color:var(--ink3);font-style:italic;">İlan bulunamadı.</div>`;
 }
 
 // Kısmi alım popup'ı
@@ -9152,29 +9185,42 @@ function renderMarket(){
       regularItems.push(item);
     }
   });
-  const stallSectionsHtml=Object.values(stallGroups).map(g=>`
-    <div style="margin-bottom:14px;padding:10px 12px;border:1px solid var(--gold);border-radius:10px;background:#1a1408;">
-      <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);">🏪 ${esc(g.name)}</div>
-      <div style="font-size:11px;color:var(--ink3);margin-bottom:8px;">${esc(g.heroName)}'in tezgahı</div>
-      <div class="market-grid">${g.items.map(cardHtml).join('')}</div>
-    </div>`).join('');
-  const regularGridHtml = regularItems.length?`<div class="market-grid">${regularItems.map(cardHtml).join('')}</div>`:'';
-
-  // "Tümü" sekmesinde oyuncu yığın ilanlarını da göster
+  // "Tümü" sekmesinde oyuncu yığın ilanlarını da göster.
+  // Tezgahı olan satıcıların malzemeleri kendi tezgah bölümüne girer.
   let matSectionHtml='';
-  if(G.marketCat==='all'){
+  const matByStall={};
+  if(G.marketCat==='all' && G.marketSrc!=='npc'){
     let ml=[...G_MATERIAL_LISTINGS];
     if(q) ml=ml.filter(l=>l.label.toLowerCase().includes(q));
     if(sort==='price_asc') ml.sort((a,b)=>a.unitPrice-b.unitPrice);
     else if(sort==='price_desc') ml.sort((a,b)=>b.unitPrice-a.unitPrice);
-    if(ml.length){
+    const loose=[];
+    ml.forEach(l=>{
+      if(G_STALLS[l.sellerId]){
+        (matByStall[l.sellerId]=matByStall[l.sellerId]||[]).push(l);
+        // Tezgahı var ama ekipman ilanı yoksa grubu şimdi oluştur
+        if(!stallGroups[l.sellerId]) stallGroups[l.sellerId]={...G_STALLS[l.sellerId], items:[]};
+      } else loose.push(l);
+    });
+    if(loose.length){
       matSectionHtml=`<div class="sec" style="margin-top:14px;">📦 Malzeme Yığınları</div>
-        <div class="market-grid">${ml.map(matStackCardHtml).join('')}</div>`;
-      if(cnt) cnt.textContent=(items.length+ml.length)+' ilan';
+        <div class="market-grid">${loose.map(matStackCardHtml).join('')}</div>`;
     }
+    if(cnt) cnt.textContent=(items.length+ml.length)+' ilan';
   }
 
-  const bodyHtml = (items.length ? stallSectionsHtml+regularGridHtml : '') + matSectionHtml;
+  const stallSectionsHtml=Object.entries(stallGroups).map(([sid,g])=>{
+    const mats=matByStall[sid]||[];
+    return `
+    <div style="margin-bottom:14px;padding:10px 12px;border:1px solid var(--gold);border-radius:10px;background:#1a1408;">
+      <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);">🏪 ${esc(g.name)}</div>
+      <div style="font-size:11px;color:var(--ink3);margin-bottom:8px;">${esc(g.heroName)}'in tezgahı</div>
+      <div class="market-grid">${g.items.map(cardHtml).join('')}${mats.map(matStackCardHtml).join('')}</div>
+    </div>`;
+  }).join('');
+  const regularGridHtml = regularItems.length?`<div class="market-grid">${regularItems.map(cardHtml).join('')}</div>`:'';
+
+  const bodyHtml = stallSectionsHtml + regularGridHtml + matSectionHtml;
   document.getElementById('market-content').innerHTML = bodyHtml
     || `<div style="text-align:center;padding:30px;font-size:12px;color:var(--ink3);font-style:italic;">İlan bulunamadı.</div>`;
 }
@@ -10698,7 +10744,7 @@ function renderProd(t){
       </div>`;
   }
 
-  let rightHtml=`<div class="sec" style="margin-top:0;">AKTİF ÜRETİM</div>`;
+  let rightHtml=`<div class="sec" style="margin-top:0;">AKTİF ÜRETİM</div>`+collectAllBtnHtml(t);
   if(activeTimers.length){
     rightHtml+=activeTimers.map(x=>timerCardHTML(x)).join('');
   } else {
@@ -10838,7 +10884,7 @@ function renderMill(){
   });
 
   // Aktif üretimler
-  let rightHtml=`<div class="sec" style="margin-top:0;">AKTİF ÜRETİM (${usedSlots}/${maxProd})</div>`;
+  let rightHtml=`<div class="sec" style="margin-top:0;">AKTİF ÜRETİM (${usedSlots}/${maxProd})</div>`+collectAllBtnHtml('mill');
   if(activeTimers.length){
     rightHtml+=activeTimers.map(x=>millTimerCardHTML(x)).join('');
   } else {
@@ -10871,7 +10917,7 @@ function millTimerCardHTML(t){
       </div>
     </div>
     <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px;">${outChips}</div>
-    ${isDone?`<button class="collect-btn" onclick="collectProd(${t.id})">🎁 Topla</button>`:''}
+    ${isDone?`<button class="collect-btn" onclick="collectProd(${t.id})">Topla</button>`:''}
     <div class="timer-prog-bg"><div class="timer-prog-fill" id="tprog-${t.id}" style="width:${pct}%;"></div></div>
   </div>`;
 }
@@ -11163,7 +11209,7 @@ function renderRanch(){
     <div style="font-family:var(--font-head);font-size:10px;color:var(--perg);">${a.name}</div>
     <div style="font-size:14px;font-family:var(--font-head);color:var(--gold);margin:3px 0;">${cnt}</div>
     ${prodLine}
-    ${passive&&stored>0?`<button class="btn btn-xs" style="width:100%;margin-bottom:3px;" onclick="collectAnimalProd('${key}')">🎁 Topla (${stored})</button>`:''}
+    ${passive&&stored>0?`<button class="btn btn-xs" style="width:100%;margin-bottom:3px;" onclick="collectAnimalProd('${key}')">Topla (${stored})</button>`:''}
     ${babyLine}
     <div style="display:flex;gap:3px;justify-content:center;">
       <button class="btn btn-xs" style="font-size:8px;padding:2px 4px;" onclick="sellAnimalNpc('${key}',${a.npcPrice})" ${cnt<1?'disabled':''}>NPC ${a.npcPrice}🪙</button>
@@ -11173,7 +11219,7 @@ function renderRanch(){
   </div>
   <div style="font-size:10px;color:var(--ink3);text-align:center;margin-bottom:10px;">Birikim en fazla 24 saatliktir · Bir türden 2+ hayvanın varsa her 24 saatte %50 şansla yavru doğar</div>`;
 
-  let rightHtml=animalPanel+`<div class="sec" style="margin-top:4px;">AKTİF ÜRETİM (${usedSlots}/${maxProd})</div>`;
+  let rightHtml=animalPanel+`<div class="sec" style="margin-top:4px;">AKTİF ÜRETİM (${usedSlots}/${maxProd})</div>`+collectAllBtnHtml('ranch');
   if(activeTimers.length){
     rightHtml+=activeTimers.map(x=>ranchTimerCardHTML(x)).join('');
   } else {
@@ -11206,7 +11252,7 @@ function ranchTimerCardHTML(t){
       </div>
     </div>
     <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px;">${outChips}</div>
-    ${isDone?`<button class="collect-btn" onclick="collectProd(${t.id})">🎁 Topla</button>`:''}
+    ${isDone?`<button class="collect-btn" onclick="collectProd(${t.id})">Topla</button>`:''}
     <div class="timer-prog-bg"><div class="timer-prog-fill" id="tprog-${t.id}" style="width:${pct}%;"></div></div>
   </div>`;
 }
@@ -11350,7 +11396,7 @@ function renderKitchen(){
     </div>`;
   });
 
-  let rightHtml=`<div class="sec" style="margin-top:0;">AKTİF ÜRETİM (${usedSlots}/${maxProd})</div>`;
+  let rightHtml=`<div class="sec" style="margin-top:0;">AKTİF ÜRETİM (${usedSlots}/${maxProd})</div>`+collectAllBtnHtml('kitchen');
   if(activeTimers.length){
     rightHtml+=activeTimers.map(x=>kitchenTimerCardHTML(x)).join('');
   } else {
@@ -11386,7 +11432,7 @@ function kitchenTimerCardHTML(t){
       </div>
     </div>
     <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px;">${outChips}</div>
-    ${isDone?`<button class="collect-btn" onclick="collectProd(${t.id})">🎁 Topla → Depoya</button>`:''}
+    ${isDone?`<button class="collect-btn" onclick="collectProd(${t.id})">Topla → Depoya</button>`:''}
     <div class="timer-prog-bg"><div class="timer-prog-fill" id="tprog-${t.id}" style="width:${pct}%;"></div></div>
   </div>`;
 }
@@ -11766,7 +11812,7 @@ function timerCardHTML(t){
   const pct=Math.round((1-t.remaining/t.total)*100);
   const fmtT=s=>{const m=Math.floor(s/60),sc=s%60;return `${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;};
   const outChips=Object.entries(t.outputs).map(([k,v])=>`<span class="mat-chip ${v.bonus?'':'output'}" style="${v.bonus?'border-color:var(--g-purple);color:var(--g-purple);':''}">${ITEM_ICONS[k]||'📦'} ${ITEM_LABELS[k]||k} ×${v.amount}${v.bonus?' ✨':''}</span>`).join('');
-  return `<div class="timer-card${isDone?' t-done':''}" id="tc-${t.id}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;"><span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${r.icon} ${r.name}</span><div style="display:flex;align-items:center;gap:5px;"><span style="font-family:var(--font-head);font-size:12px;color:${isDone?'var(--g-green)':'var(--gold)'};" id="tsecs-${t.id}">${isDone?'✓ Hazır':fmtT(t.remaining)}</span>${!isDone?`<button class="btn btn-xs btn-ghost" onclick="cancelProd(${t.id})" style="font-size:8px;padding:2px 5px;">✕</button>`:''}</div></div><div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px;">${outChips}</div>${isDone?`<button class="collect-btn" onclick="collectProd(${t.id})">🎁 Topla</button>`:''}<div class="timer-prog-bg"><div class="timer-prog-fill" id="tprog-${t.id}" style="width:${pct}%;"></div></div></div>`;
+  return `<div class="timer-card${isDone?' t-done':''}" id="tc-${t.id}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;"><span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${r.icon} ${r.name}</span><div style="display:flex;align-items:center;gap:5px;"><span style="font-family:var(--font-head);font-size:12px;color:${isDone?'var(--g-green)':'var(--gold)'};" id="tsecs-${t.id}">${isDone?'✓ Hazır':fmtT(t.remaining)}</span>${!isDone?`<button class="btn btn-xs btn-ghost" onclick="cancelProd(${t.id})" style="font-size:8px;padding:2px 5px;">✕</button>`:''}</div></div><div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px;">${outChips}</div>${isDone?`<button class="collect-btn" onclick="collectProd(${t.id})">Topla</button>`:''}<div class="timer-prog-bg"><div class="timer-prog-fill" id="tprog-${t.id}" style="width:${pct}%;"></div></div></div>`;
 }
 function buildProd(t){const bld=PROD_BUILDINGS[t];if(G.gold<bld.cost){toast('Yeterli altın yok!');return;}G.gold-=bld.cost;bld.level=1;toast(`${bld.name} inşa edildi!`);updateHUD();renderProd(t);sbSave();}
 function upgProd(t,cost){const bld=PROD_BUILDINGS[t];if(G.gold<cost){toast('Yeterli altın yok!');return;}const matCost=buildingMatCost('prod_'+t, bld.level);if(!canAffordMats(matCost)){const eksik=Object.entries(matCost).filter(([k,v])=>(G.prodInv[k]||0)<v).map(([k,v])=>`${ITEM_LABELS[k]} (${G.prodInv[k]||0}/${v})`).join(', ');toast(`Malzeme yetersiz! Gerekli: ${eksik}`);return;}G.gold-=cost;spendMats(matCost);bld.level++;trackAch('build');gainXP(20);toast(`${bld.name} Sv.${bld.level}'e yükseltildi!`);updateHUD();renderProd(t);renderKale();sbSave();}
@@ -11799,6 +11845,88 @@ async function startProd(bKey,rId){
   G.prodTimers.push({id:G.prodTimerId++,dbId,building:bKey,recipe:rId,remaining:dur,total:dur,outputs});
   trackQuest('prodStart1');
   updateInvStrip();renderProd(bKey);toast(`${r.name} başlatıldı!`);sbSave();
+}
+
+/* Bir binadaki hazır tüm üretimleri tek seferde topla */
+async function collectAllProd(building){
+  const ready=G.prodTimers.filter(x=>x.building===building && x.recipe!=='__upgrade__' && x.remaining<=0);
+  if(!ready.length){toast('Toplanacak hazır ürün yok.');return;}
+  const btn=document.getElementById('collect-all-btn');
+  if(btn){btn.disabled=true;btn.textContent='Toplanıyor...';}
+
+  const totals={}; const bonusItems=[];
+  let foodGained=0, unitsHarvested=0, potionsMade=0, potionFull=false;
+
+  for(const t of ready){
+    Object.entries(t.outputs).forEach(([k,v])=>{
+      const pot=POTION_CRAFTS[k];
+      if(pot){
+        const free=Math.max(0, invCap()-invCount());
+        const made=Math.min(v.amount, free);
+        for(let i=0;i<made;i++){
+          addItemStacked({
+            id:newItemId(), name:pot.name, icon:'🧪', cat:'consumable', type:'İksir',
+            grade:pot.grade, price:pot.price, reqLv:pot.reqLv, img:pot.img,
+            desc:`Maksimum canın %${pot.pct}'ini yeniler.`,
+            stats:{hp_restore_pct:pot.pct}, qty:1, material:null, classBonus:null,
+          });
+        }
+        potionsMade+=made;
+        if(made<v.amount) potionFull=true;
+        if(v.bonus) bonusItems.push(`🧪 ${pot.name} ×${made}`);
+        return;
+      }
+      G.prodInv[k]=(G.prodInv[k]||0)+v.amount;
+      totals[k]=(totals[k]||0)+v.amount;
+      unitsHarvested+=v.amount;
+      if(v.bonus) bonusItems.push(`${ITEM_ICONS[k]} ${ITEM_LABELS[k]||k} ×${v.amount}`);
+      const fv=building==='kitchen'?(KITCHEN_FOOD_VALUES[k]||0)*v.amount:(FOOD_VALUE[k]||0)*v.amount;
+      if(fv>0){G.food+=fv;foodGained+=fv;}
+    });
+    // Buğday görev takibi
+    if(building==='farm' && t.recipe==='bugday'){
+      const amt=t.outputs?.bugday?.amount||0;
+      if(amt>0) trackQuest('prodBugday10', Math.min(10,(G.qp.prodBugday10||0)+amt));
+    }
+  }
+
+  if(potionsMade>0){ qAddSkill('sifacilik', potionsMade*0.05); renderKarakter(); }
+  if(unitsHarvested>0){
+    if(building==='farm')  qAddSkill('ciftcilik',   unitsHarvested*0.01);
+    if(building==='ranch') qAddSkill('hayvancilik', unitsHarvested*0.01);
+  }
+  if(potionFull) toast('Envanter dolu! Bazı iksirler kayboldu.');
+  trackAch('harvest');
+
+  // Supabase'den topluca sil
+  const dbIds=ready.map(t=>t.dbId).filter(Boolean);
+  if(currentUser && dbIds.length){
+    await supa.from('production_timers').delete().in('id', dbIds);
+  }
+  const readyIds=new Set(ready.map(t=>t.id));
+  G.prodTimers=G.prodTimers.filter(t=>!readyIds.has(t.id));
+
+  updateInvStrip();renderProd(building);updateHUD();sbSave();
+
+  const summary=Object.entries(totals).map(([k,v])=>`${ITEM_ICONS[k]||'📦'} ${ITEM_LABELS[k]||k} ×${v}`);
+  if(bonusItems.length||summary.length){
+    const el=document.createElement('div');el.className='bonus-flash';
+    el.innerHTML=`<span style="font-size:28px;display:block;margin-bottom:4px;">📦</span>
+      <div style="font-family:var(--font-head);font-size:13px;color:var(--gold2);">${ready.length} ÜRETİM TOPLANDI</div>
+      <div style="font-size:11px;color:var(--perg2);margin-top:4px;line-height:1.6;">${summary.slice(0,8).join('<br>')}${summary.length>8?`<br><span style="color:var(--ink3);">+${summary.length-8} çeşit daha</span>`:''}${foodGained>0?'<br>🍖 +'+foodGained+' yemek':''}</div>`;
+    document.body.appendChild(el);setTimeout(()=>el.remove(),2800);
+  } else {
+    toast(`${ready.length} üretim toplandı!${foodGained>0?' 🍖 +'+foodGained:''}`);
+  }
+}
+
+/* "Hepsini Topla" butonu — 2+ hazır üretim varsa gösterilir */
+function collectAllBtnHtml(building){
+  const n=G.prodTimers.filter(x=>x.building===building && x.recipe!=='__upgrade__' && x.remaining<=0).length;
+  if(n<2) return '';
+  return `<button class="collect-btn" id="collect-all-btn"
+    style="margin:0 0 10px;padding:10px;font-size:13px;letter-spacing:1px;"
+    onclick="collectAllProd('${building}')">Hepsini Topla (${n})</button>`;
 }
 
 async function collectProd(id){
@@ -12002,7 +12130,7 @@ function renderInsaa(){
     <div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:7px;">${matCostHTML(buildingMatCost('prod_insaa',lv))}</div>`;
   }
 
-  let rightHtml=`<div class="sec" style="margin-top:0;">AKTİF ÜRETİM <span style="font-size:10px;color:var(--ink3);">(${usedSlots}/${slots})</span></div>`;
+  let rightHtml=`<div class="sec" style="margin-top:0;">AKTİF ÜRETİM <span style="font-size:10px;color:var(--ink3);">(${usedSlots}/${slots})</span></div>`+collectAllBtnHtml('insaa');
   if(activeTimers.length){
     rightHtml+=activeTimers.map(x=>timerCardHTML(x)).join('');
   } else {
