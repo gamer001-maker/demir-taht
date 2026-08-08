@@ -3632,12 +3632,82 @@ async function resetMap(){
 function startGather(idx, type){
   if(G_MAP[idx]?.harvested){toast('Bu bölgeden zaten kaynak toplandı.');return;}
   if(gatherTimers.find(t=>t.cellIdx===idx)){toast('Bu bölgede zaten bir eylem devam ediyor!');return;}
+  if(type==='fish' && !hasOlta()){toast('🎣 Balık tutmak için olta gerekli! Pazar → Ekipmanlar');return;}
   const gDur=effectiveExploreDur(120);
   gatherTimers.push({cellIdx:idx,type,remaining:gDur,total:gDur});
   toast('Başladı! ⏳');
   renderHarita();
   // Info kartını güncelle
   if(G.selectedCell===idx) cellClick(idx);
+}
+
+/* ── BALIK TUTMA ──
+   Deniz → tuzlu su havuzu, Nehir/Göl → tatlı su havuzu.
+   Yem varsa harcanır ve isabet +5 puan; olta %1 ihtimalle kırılır. */
+function doFishing(cell){
+  const isSalt = (cell.n||'').toLowerCase().includes('deniz');
+  const pool   = isSalt ? FISH_POOLS.salt : FISH_POOLS.fresh;
+  const odds   = fishSeasonOdds();
+
+  // Yem harca
+  const bait = findBait();
+  if(bait) G.prodInv[bait]=(G.prodInv[bait]||0)-1;
+  const bonus = fishSuccessBonus(!!bait);
+
+  const total = odds.reduce((a,b)=>a+b,0) + bonus;
+  const roll  = Math.random()*100;
+
+  // Olta yıpranması — başarılı/başarısız fark etmez
+  let broke=false;
+  if(Math.random()<0.01){
+    const idx=G.inventory.findIndex(i=>i.type==='Olta');
+    if(idx>=0){ G.inventory.splice(idx,1); broke=true; }
+  }
+
+  qAddSkill('balikcilik', 0.05);
+
+  if(roll>=total){
+    const seasonTxt=(G.season===2||G.season===3)?' Soğuk sular zorlu.':'';
+    toast(`🎣 Balık kaçtı!${bait?` (${ITEM_LABELS[bait]} boşa gitti)`:''}${seasonTxt}`);
+    if(broke) setTimeout(()=>toast('💔 Oltan kırıldı! Pazardan yenisini al.'),1400);
+    return;
+  }
+
+  // Ağırlıklı tür seçimi
+  let acc=0, pick=pool[0];
+  const scaled=roll*(odds.reduce((a,b)=>a+b,0)/total); // bonusu oransal dağıt
+  for(let i=0;i<pool.length;i++){
+    acc+=odds[i];
+    if(scaled<acc){ pick=pool[i]; break; }
+  }
+
+  G.prodInv[pick]=(G.prodInv[pick]||0)+1;
+  const f=FISH_TYPES[pick];
+  toast(`🎣 ${f.name} yakaladın!${bait?` (${ITEM_LABELS[bait]} kullanıldı)`:''}`);
+  if(broke) setTimeout(()=>toast('💔 Oltan kırıldı! Pazardan yenisini al.'),1400);
+}
+
+/* Harita bilgi kartında balık tutma özeti */
+function fishDescHtml(cell){
+  const isSalt=(cell.n||'').toLowerCase().includes('deniz');
+  const pool=isSalt?FISH_POOLS.salt:FISH_POOLS.fresh;
+  const odds=fishSeasonOdds();
+  const bait=findBait();
+  const bonus=fishSuccessBonus(!!bait);
+  const total=odds.reduce((a,b)=>a+b,0)+bonus;
+  const miss=Math.max(0,Math.round(100-total));
+  const seasons=['İlkbahar','Yaz','Sonbahar','Kış'];
+  const rod=hasOlta();
+  const rows=pool.map((k,i)=>{
+    const pct=Math.round(odds[i]*(total-bonus>0?1:1));
+    return `<span style="display:inline-block;margin-right:8px;white-space:nowrap;">${FISH_TYPES[k].name} <b style="color:var(--gold2);">%${pct}</b></span>`;
+  }).join('');
+  return `<div style="margin-bottom:4px;">${isSalt?'🌊 Tuzlu su':'🏞 Tatlı su'} · ${seasons[G.season]} · Kaçırma <b style="color:${miss>20?'#f87171':'var(--gold2)'};">%${miss}</b></div>
+    <div style="font-size:10px;line-height:1.9;margin-bottom:4px;">${rows}</div>
+    <div style="font-size:10px;">
+      ${rod?'🎣 Olta hazır':'<span style="color:#f87171;">🎣 Olta yok — Pazar → Ekipmanlar</span>'}
+      ${bait?` · 🪱 ${ITEM_LABELS[bait]} takılacak (+%5)`:' · <span style="color:var(--ink3);">Yem yok (+%5 kaçırıyorsun)</span>'}
+    </div>`;
 }
 
 function finishGather(idx, type){
@@ -3655,13 +3725,7 @@ function finishGather(idx, type){
     G.prodInv.kil=(G.prodInv.kil||0)+amt;
     toast(`🪣 ${amt} Kil topladın!`);
   } else if(type==='fish'){
-    // Balıkçılık yeteneği tutulan balık miktarını artırır
-    const amt=Math.max(1, Math.round((Math.floor(Math.random()*4)+3) * fishAmountMult()));
-    G.prodInv.balik=(G.prodInv.balik||0)+amt;
-    const fv=(FOOD_VALUE.balik||0)*amt;
-    if(fv>0) G.food+=fv;
-    qAddSkill('balikcilik', 0.05);
-    toast(`🐟 ${amt} Balık tuttun!${fv>0?` 🍖 +${fv} yemek`:''}`);
+    doFishing(cell);
   } else if(type==='gold'){
     const amt=Math.floor(Math.random()*16)+15;
     G.gold+=amt;
@@ -4228,6 +4292,11 @@ const MARKET_ITEMS=[
   {id:224,name:'Demir Bot',       icon:'👢',cat:'armor',grade:'blue',  price:400,qty:10,seller:'npc',sellerName:'Zırh Ustası',   type:'Bot',     reqLv:15,material:'demir',desc:'Zırhlı demir bot.',                  stats:{def:8,hp:25},   img:'demirbot',     classBonus:null},
 
   /* ══════════════════════════════════════
+     BALIKÇILIK
+  ══════════════════════════════════════ */
+  {id:290,name:'Olta',icon:'🎣',cat:'weapon',grade:'green',price:1000,qty:999,seller:'npc',sellerName:'Balıkçı',type:'Olta',reqLv:1,tplId:null,material:null,desc:'Su karelerinde balık tutmak için gerekli. Her atışta %1 kırılma riski.',stats:{},img:'olta',classBonus:null},
+
+  /* ══════════════════════════════════════
      AKSESUAR
   ══════════════════════════════════════ */
   {id:301,name:'Bakır Yüzük',     icon:'💍',cat:'accessory',grade:'gray',  price:50,  qty:99,seller:'npc',sellerName:'Mücevherci',  type:'Yüzük',reqLv:1, material:null,desc:'Sıradan bakır yüzük.',                stats:{mgc:3,wis:2},   img:'bakiryuzuk',classBonus:null,tplId:'bakiryuzuk'},
@@ -4464,6 +4533,7 @@ const PROD_RECIPES={
   ],
   kitchen:[
     {id:'ekmek',           name:'Ekmek Pişir',     icon:'🍞', minLv:1, dur:120, inputs:{bugday_unu:2},                  outputs:{ekmek:{base:1}}},
+    {id:'balik_ekmek',     name:'Balık Ekmek',      icon:'🥪', minLv:2, dur:120, inputs:{ekmek:1,baliketi:1}, outputs:{balik_ekmek:{base:1}}},
     {id:'patates_corbasi', name:'Patates Çorbası', icon:'🥣', minLv:2, dur:120, inputs:{patates:2,bugday:1},            outputs:{patates_corbasi:{base:1}}},
     {id:'borek',           name:'Börek',            icon:'🥐', minLv:3, dur:150, inputs:{patates_puresi:1,arpa_unu:2},  outputs:{borek:{base:1}}},
     {id:'salcali_ekmek',   name:'Salçalı Ekmek',   icon:'🍞', minLv:4, dur:150, inputs:{domates_puresi:1,bugday_unu:2}, outputs:{salcali_ekmek:{base:1}}},
@@ -4481,9 +4551,59 @@ const PROD_RECIPES={
     {id:'bake',   name:'Tuğla Yap',   icon:'🧱', minLv:1, dur:150, inputs:{kil:1},        outputs:{tugla:{base:3,chance:0}}},
   ],
 };
-const FOOD_VALUE={bugday:1,arpa:1,sebze:2,saman:0,un:0,arpa_unu:0,tuy:0,yumurta:2,yun:0,sut:2,ekmek:0,corba:0,kek:0,patates:1,domates:2,cicek:0,yonca:0,cilek:3,bugday_unu:0,patates_puresi:3,kaymak:4,cilek_puresi:4,domates_puresi:3,bal:2,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0,balik:4};
-const KITCHEN_FOOD_VALUES={domates_corbasi:10,patates_corbasi:12,ekmek:12,salcali_ekmek:15,borek:18,cilekli_turta:20,balli_kaymak:25};
-const ITEM_LABELS={bugday:'Buğday',saman:'Saman',arpa:'Arpa',sebze:'Sebze',un:'Un',arpa_unu:'Arpa Unu',tuy:'Tüy',yumurta:'Yumurta',yun:'Yün',sut:'Süt',ekmek:'Ekmek',corba:'Çorba',kek:'Kek',patates:'Patates',domates:'Domates',cicek:'Çiçek',yonca:'Yonca',cilek:'Çilek',patates_tohum:'Patates Tohumu',domates_tohum:'Domates Tohumu',cicek_tohum:'Çiçek Tohumu',yonca_tohum:'Yonca Tohumu',cilek_tohum:'Çilek Tohumu',bugday_unu:'Buğday Unu',patates_puresi:'Patates Püresi',kaymak:'Kaymak',cilek_puresi:'Çilek Püresi',domates_puresi:'Domates Püresi',bal:'Bal',domates_corbasi:'Domates Çorbası',patates_corbasi:'Patates Çorbası',salcali_ekmek:'Salçalı Ekmek',borek:'Börek',cilekli_turta:'Çilekli Turta',balli_kaymak:'Ballı Kaymak',meseLodunu:'Meşe Odunu',demir:'Demir',kil:'Kil',kereste:'Kereste',civi:'Çivi',tugla:'Tuğla',balik:'Balık',iksir_kucuk:'Küçük Can İksiri',iksir_orta:'Orta Can İksiri',iksir_buyuk:'Büyük Can İksiri'};
+/* ══════════════════════════════════════
+   BALIKÇILIK SİSTEMİ
+   Her atışta 1 balık. Tür ağırlıklı zarla belirlenir.
+   Mevsim kaçırma şansını değiştirir; yem + yetenek azaltır.
+══════════════════════════════════════ */
+const FISH_TYPES={
+  /* ── Tatlı su (Nehir / Göl) ── */
+  kefal:       {name:'Tatlı Su Kefali', img:'kefal',       water:'fresh', meat:[1,10]},
+  sazan:       {name:'Sazan',            img:'sazan',       water:'fresh', meat:[1,10]},
+  alabalik:    {name:'Alabalık',         img:'alabalik',    water:'fresh', meat:[1,10]},
+  aynalisazan: {name:'Aynalı Sazan',     img:'aynalisazan', water:'fresh', meat:[10,15],
+                bonus:{key:'sazanpulu', min:1, max:1, chance:0.10}},
+  somon:       {name:'Somon',            img:'somon',       water:'fresh', meat:[10,15],
+                bonus:{key:'havyar',    min:1, max:3, chance:0.10}},
+  yayin:       {name:'Yayın Balığı',     img:'yayin',       water:'fresh', meat:[10,20]},
+  /* ── Tuzlu su (Deniz) ── */
+  tuzlukefal:  {name:'Tuzlu Su Kefali',  img:'tuzlukefal',  water:'salt',  meat:[1,10]},
+  levrek:      {name:'Levrek',           img:'levrek',      water:'salt',  meat:[1,10]},
+  cupra:       {name:'Çupra',            img:'cupra',       water:'salt',  meat:[1,10]},
+  dislilevrek: {name:'Dişli Levrek',     img:'dislilevrek', water:'salt',  meat:[10,15],
+                bonus:{key:'levrekdisi',min:1, max:1, chance:0.10}},
+  devcupra:    {name:'Dev Çupra',        img:'devcupra',    water:'salt',  meat:[10,15],
+                bonus:{key:'havyar',    min:1, max:3, chance:0.10}},
+  kopekbalik:  {name:'Köpek Balığı',     img:'kopekbalik',  water:'salt',  meat:[10,20]},
+};
+/* Kademe sırası — iki havuz da aynı oranları paylaşır */
+const FISH_POOLS={
+  fresh:['kefal','sazan','alabalik','aynalisazan','somon','yayin'],
+  salt: ['tuzlukefal','levrek','cupra','dislilevrek','devcupra','kopekbalik'],
+};
+/* Mevsim ağırlıkları — toplam 100'den eksik kalan kısım kaçırma şansıdır */
+const FISH_ODDS={
+  warm:[32,22,18,9,6,3], // İlkbahar/Yaz → toplam 90, %10 kaçırma
+  cold:[27,18,15,7,5,3], // Sonbahar/Kış → toplam 75, %25 kaçırma
+};
+const FISH_KEYS=Object.keys(FISH_TYPES);
+const BAIT_KEYS=['solucan','hamur'];
+
+/* Aktif mevsime göre ağırlık dizisi */
+function fishSeasonOdds(){ return (G.season===2||G.season===3)?FISH_ODDS.cold:FISH_ODDS.warm; }
+/* Yem + yetenek ile kazanılan ek isabet puanı (yüzde puanı) */
+function fishSuccessBonus(hasBait){
+  const skillPts=Math.min(8, qSkillVal('balikcilik')*0.5);
+  return (hasBait?5:0)+skillPts;
+}
+/* Envanterde/depoda yem var mı? İlk bulunanı döndürür */
+function findBait(){ return BAIT_KEYS.find(k=>(G.prodInv[k]||0)>0)||null; }
+/* Elde olta var mı? */
+function hasOlta(){ return G.inventory.some(i=>i.type==='Olta'); }
+
+const FOOD_VALUE={bugday:1,arpa:1,sebze:2,saman:0,un:0,arpa_unu:0,tuy:0,yumurta:2,yun:0,sut:2,ekmek:0,corba:0,kek:0,patates:1,domates:2,cicek:0,yonca:0,cilek:3,bugday_unu:0,patates_puresi:3,kaymak:4,cilek_puresi:4,domates_puresi:3,bal:2,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0,balik:4,baliketi:3,solucan:0,hamur:0,sazanpulu:0,levrekdisi:0,havyar:0,balik_ekmek:0};
+const KITCHEN_FOOD_VALUES={domates_corbasi:10,patates_corbasi:12,ekmek:12,salcali_ekmek:15,borek:18,cilekli_turta:20,balli_kaymak:25,balik_ekmek:22};
+const ITEM_LABELS={bugday:'Buğday',saman:'Saman',arpa:'Arpa',sebze:'Sebze',un:'Un',arpa_unu:'Arpa Unu',tuy:'Tüy',yumurta:'Yumurta',yun:'Yün',sut:'Süt',ekmek:'Ekmek',corba:'Çorba',kek:'Kek',patates:'Patates',domates:'Domates',cicek:'Çiçek',yonca:'Yonca',cilek:'Çilek',patates_tohum:'Patates Tohumu',domates_tohum:'Domates Tohumu',cicek_tohum:'Çiçek Tohumu',yonca_tohum:'Yonca Tohumu',cilek_tohum:'Çilek Tohumu',bugday_unu:'Buğday Unu',patates_puresi:'Patates Püresi',kaymak:'Kaymak',cilek_puresi:'Çilek Püresi',domates_puresi:'Domates Püresi',bal:'Bal',domates_corbasi:'Domates Çorbası',patates_corbasi:'Patates Çorbası',salcali_ekmek:'Salçalı Ekmek',borek:'Börek',cilekli_turta:'Çilekli Turta',balli_kaymak:'Ballı Kaymak',meseLodunu:'Meşe Odunu',demir:'Demir',kil:'Kil',kereste:'Kereste',civi:'Çivi',tugla:'Tuğla',balik:'Balık',kefal:'Tatlı Su Kefali',sazan:'Sazan',alabalik:'Alabalık',aynalisazan:'Aynalı Sazan',somon:'Somon',yayin:'Yayın Balığı',tuzlukefal:'Tuzlu Su Kefali',levrek:'Levrek',cupra:'Çupra',dislilevrek:'Dişli Levrek',devcupra:'Dev Çupra',kopekbalik:'Köpek Balığı',baliketi:'Balık Eti',sazanpulu:'Sazan Pulu',levrekdisi:'Levrek Dişi',havyar:'Havyar',solucan:'Solucan',hamur:'Hamur',balik_ekmek:'Balık Ekmek',iksir_kucuk:'Küçük Can İksiri',iksir_orta:'Orta Can İksiri',iksir_buyuk:'Büyük Can İksiri'};
 
 /* ══════════════════════════════════════
    BİNA YÜKSELTME MALZEMELERİ (kereste/çivi/tuğla)
@@ -4548,9 +4668,13 @@ function matCostHTML(cost){
     return `<span style="font-size:10px;padding:1px 6px;border-radius:4px;margin:1px;display:inline-block;background:${ok?'#13190f':'#2a1010'};border:1px solid ${ok?'#2a3a18':'#6a2020'};color:${ok?'#9bd17a':'#f08080'};">${ic} ${v}${ok?'':` (${have})`}</span>`;
   }).join(' ');
 }
-const ITEM_ICONS={bugday:'🌾',saman:'🌿',arpa:'🌱',sebze:'🥦',un:'🥛',arpa_unu:'🥛',tuy:'🪶',yumurta:'🥚',yun:'🧶',sut:'🥛',ekmek:'🍞',corba:'🥣',kek:'🎂',patates:'🥔',domates:'🍅',cicek:'🌸',yonca:'🍀',cilek:'🍓',patates_tohum:'🌱',domates_tohum:'🌱',cicek_tohum:'🌱',yonca_tohum:'🌱',cilek_tohum:'🌱',bugday_unu:'🫙',patates_puresi:'🫙',kaymak:'🫙',cilek_puresi:'🫙',domates_puresi:'🫙',bal:'🍯',domates_corbasi:'🥣',patates_corbasi:'🥣',salcali_ekmek:'🍞',borek:'🥐',cilekli_turta:'🍓',balli_kaymak:'🍯',meseLodunu:'🪵',demir:'⛏',kil:'🪣',kereste:'🪵',civi:'🔩',tugla:'🧱',balik:'🐟',iksir_kucuk:'🧪',iksir_orta:'🧪',iksir_buyuk:'🧪'};
+const ITEM_ICONS={bugday:'🌾',saman:'🌿',arpa:'🌱',sebze:'🥦',un:'🥛',arpa_unu:'🥛',tuy:'🪶',yumurta:'🥚',yun:'🧶',sut:'🥛',ekmek:'🍞',corba:'🥣',kek:'🎂',patates:'🥔',domates:'🍅',cicek:'🌸',yonca:'🍀',cilek:'🍓',patates_tohum:'🌱',domates_tohum:'🌱',cicek_tohum:'🌱',yonca_tohum:'🌱',cilek_tohum:'🌱',bugday_unu:'🫙',patates_puresi:'🫙',kaymak:'🫙',cilek_puresi:'🫙',domates_puresi:'🫙',bal:'🍯',domates_corbasi:'🥣',patates_corbasi:'🥣',salcali_ekmek:'🍞',borek:'🥐',cilekli_turta:'🍓',balli_kaymak:'🍯',meseLodunu:'🪵',demir:'⛏',kil:'🪣',kereste:'🪵',civi:'🔩',tugla:'🧱',balik:'🐟',kefal:'🐟',sazan:'🐟',alabalik:'🐟',aynalisazan:'🐟',somon:'🐟',yayin:'🐟',tuzlukefal:'🐠',levrek:'🐠',cupra:'🐠',dislilevrek:'🐠',devcupra:'🐠',kopekbalik:'🦈',baliketi:'🍥',sazanpulu:'✨',levrekdisi:'🦷',havyar:'🥚',solucan:'🪱',hamur:'🫓',balik_ekmek:'🥪',iksir_kucuk:'🧪',iksir_orta:'🧪',iksir_buyuk:'🧪'};
 // Görseli olan eşyaların dosya adı — key ile farklıysa buraya ekle
 const ITEM_IMGS={meseLodunu:'odun',demir:'demir',kil:'kil',kereste:'kereste',civi:'civi',tugla:'tugla',balik:'balik',
+  kefal:'kefal',sazan:'sazan',alabalik:'alabalik',aynalisazan:'aynalisazan',somon:'somon',yayin:'yayin',
+  tuzlukefal:'tuzlukefal',levrek:'levrek',cupra:'cupra',dislilevrek:'dislilevrek',devcupra:'devcupra',kopekbalik:'kopekbalik',
+  baliketi:'baliketi',sazanpulu:'sazanpulu',levrekdisi:'levrekdisi',havyar:'havyar',
+  solucan:'solucan',hamur:'hamur',balik_ekmek:'balikekmek',
   iksir_kucuk:'kucukcaniksiri',iksir_orta:'ortacaniksiri',iksir_buyuk:'buyukcaniksiri'};
 
 /* ── AŞEVİ İKSİRLERİ ──
@@ -4649,7 +4773,7 @@ const G={
   explored:new Set([21,22,27,28,14,15,20]),
   selectedCell:null,
   prodTimers:[],prodTimerId:1,
-  prodInv:{bugday:5,saman:3,arpa:0,sebze:0,un:2,arpa_unu:0,tuy:1,yumurta:3,yun:1,sut:4,ekmek:0,corba:0,kek:0,patates:0,domates:0,cicek:0,yonca:0,cilek:0,patates_tohum:0,domates_tohum:0,cicek_tohum:0,yonca_tohum:0,cilek_tohum:0,bugday_unu:0,patates_puresi:0,kaymak:0,cilek_puresi:0,domates_puresi:0,bal:0,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0,meseLodunu:0,demir:0,kil:0,kereste:0,civi:0,tugla:0,balik:0},
+  prodInv:{bugday:5,saman:3,arpa:0,sebze:0,un:2,arpa_unu:0,tuy:1,yumurta:3,yun:1,sut:4,ekmek:0,corba:0,kek:0,patates:0,domates:0,cicek:0,yonca:0,cilek:0,patates_tohum:0,domates_tohum:0,cicek_tohum:0,yonca_tohum:0,cilek_tohum:0,bugday_unu:0,patates_puresi:0,kaymak:0,cilek_puresi:0,domates_puresi:0,bal:0,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0,meseLodunu:0,demir:0,kil:0,kereste:0,civi:0,tugla:0,balik:0,kefal:0,sazan:0,alabalik:0,aynalisazan:0,somon:0,yayin:0,tuzlukefal:0,levrek:0,cupra:0,dislilevrek:0,devcupra:0,kopekbalik:0,baliketi:0,sazanpulu:0,levrekdisi:0,havyar:0,solucan:0,hamur:0,balik_ekmek:0},
   matInv:{ham_demir:0, guc_runesi:0, ejderha_pulu:0, thros_kanadi:0, dev_disi:0, anka_kulu:0, ruh_kristali:0, iblis_kani:0, semavi_oz:0},
   guildName:'',
   guildId:null,
@@ -6652,7 +6776,7 @@ function cellClick(idx,_cell){
       const GATHER_ACTIONS={
         forest: [{icon:'🪓',label:'Ağaç Kes',type:'lumber',desc:'Meşe Odunu topla (2 dk → 5-10 adet)'}],
         mountain:[{icon:'⛏',label:'Kazı Yap', type:'mine', desc:'Demir madeni çıkar (2 dk → 3-7 adet)'}],
-        water:  [{icon:'🎣',label:'Balık Tut',type:'fish', desc:'Ağları at (2 dk → 3-6 balık, 🎣 Balıkçılık kazandırır)'},
+        water:  [{icon:'🎣',label:'Balık Tut',type:'fish', desc:fishDescHtml(cell)},
                  {icon:'🪣',label:'Kil Topla',type:'clay',  desc:'Nehirden kil topla (2 dk → 3-6 adet)'}],
         village:[{icon:'💰',label:'Vergi Topla',type:'gold',desc:'Köyden vergi topla (2 dk → 15-30🪙)'}],
         ruins:  [{icon:'🔍',label:'Araştır',  type:'loot',  desc:'Harabeyi araştır (2 dk → rastgele ekipman)'}],
@@ -8118,8 +8242,8 @@ const QSKILL_FX={
     ? `İksirlerin iyileştirmesi <b>+%${Math.round(v*10)/10}</b>`
     : 'Aşevi\'nde demlenen her iksirde +0.05 (iksirler daha çok can yeniler)',
   balikcilik:v=>v>0
-    ? `Tutulan balık miktarı <b>+%${Math.round(v*10)/10}</b>`
-    : 'Su karelerinde balık tuttukça +0.05 (daha çok balık çıkar)',
+    ? `Balık kaçırma şansı <b>-${Math.min(8,Math.round(v*0.5*10)/10)} puan</b>`
+    : 'Su karelerinde balık tuttukça +0.05 (balık kaçırma şansın azalır)',
   madencilik: ()=>'Harita güncellemesiyle gelecek (yerel görevler)',
 };
 
@@ -10883,6 +11007,23 @@ function renderMill(){
     </div>`;
   });
 
+  // ── BALIK PARÇALAMA ──
+  const fishOwned=FISH_KEYS.filter(k=>(G.prodInv[k]||0)>0);
+  const fishTotal=fishOwned.reduce((a,k)=>a+(G.prodInv[k]||0),0);
+  const millFull=usedSlots>=maxProd;
+  recipesHtml+=`<div class="recipe" style="border-color:var(--g-blue);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <span style="font-family:var(--font-head);font-size:12px;font-weight:600;color:#8ab4d8;">🔪 Balık Parçala</span>
+      <span style="font-size:10px;color:var(--ink3);">${fmtT(120)}</span>
+    </div>
+    <div style="font-size:10px;color:var(--ink3);line-height:1.6;margin-bottom:6px;">
+      Balığı ete dönüştürür. Bazı türlerden ayrıca <b style="color:var(--gold2);">pul, diş veya havyar</b> çıkabilir.
+      ${fishTotal?`<br>Depoda <b style="color:var(--perg2);">${fishTotal}</b> balık var.`:'<br><span style="color:#f87171;">Depoda balık yok — haritada su karesinde balık tut.</span>'}
+    </div>
+    <button class="btn btn-xs" style="width:100%;" onclick="openFishButcherModal()"
+      ${(!fishTotal||millFull)?'disabled':''}>${millFull?'Kapasite Dolu':(fishTotal?'🔪 Balık Seç':'Balık Yok')}</button>
+  </div>`;
+
   // Aktif üretimler
   let rightHtml=`<div class="sec" style="margin-top:0;">AKTİF ÜRETİM (${usedSlots}/${maxProd})</div>`+collectAllBtnHtml('mill');
   if(activeTimers.length){
@@ -10903,7 +11044,13 @@ function renderMill(){
 }
 
 function millTimerCardHTML(t){
-  const r=(PROD_RECIPES.mill||[]).find(x=>x.id===t.recipe);if(!r)return'';
+  let r=(PROD_RECIPES.mill||[]).find(x=>x.id===t.recipe);
+  if(!r && String(t.recipe).startsWith('butcher_')){
+    const fk=String(t.recipe).slice(8);
+    const f=FISH_TYPES[fk];
+    r={icon:'🔪', name:f?`${f.name} Parçalanıyor`:'Balık Parçalanıyor'};
+  }
+  if(!r) return '';
   const isDone=t.remaining<=0;
   const pct=Math.round((1-t.remaining/t.total)*100);
   const fmtT=s=>{const m=Math.floor(s/60),sc=s%60;return `${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;};
@@ -10920,6 +11067,80 @@ function millTimerCardHTML(t){
     ${isDone?`<button class="collect-btn" onclick="collectProd(${t.id})">Topla</button>`:''}
     <div class="timer-prog-bg"><div class="timer-prog-fill" id="tprog-${t.id}" style="width:${pct}%;"></div></div>
   </div>`;
+}
+
+/* ── BALIK PARÇALAMA ── */
+function openFishButcherModal(){
+  const owned=FISH_KEYS.filter(k=>(G.prodInv[k]||0)>0);
+  if(!owned.length){toast('Depoda balık yok!');return;}
+  const cards=owned.map(k=>{
+    const f=FISH_TYPES[k];
+    const bonusTxt=f.bonus
+      ? `<div style="font-size:9px;color:var(--gold2);margin-top:2px;">%10 → ${ITEM_ICONS[f.bonus.key]} ${f.bonus.min===f.bonus.max?f.bonus.min:`${f.bonus.min}-${f.bonus.max}`} ${ITEM_LABELS[f.bonus.key]}</div>`
+      : '';
+    return `<div class="card-sm" style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:6px;"
+        onclick="startFishButcher('${k}')">
+      <img src="${IMG_BASE}${f.img}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"
+        style="width:42px;height:42px;object-fit:contain;flex-shrink:0;"/>
+      <span style="display:none;font-size:26px;">${ITEM_ICONS[k]}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-family:var(--font-head);font-size:13px;color:var(--perg);">${f.name}</div>
+        <div style="font-size:10px;color:var(--ink3);">🍥 ${f.meat[0]}-${f.meat[1]} Balık Eti</div>
+        ${bonusTxt}
+      </div>
+      <span style="font-family:var(--font-head);font-size:16px;color:var(--gold);flex-shrink:0;">×${G.prodInv[k]}</span>
+    </div>`;
+  }).join('');
+  showGModal(`
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="font-size:32px;">🔪</div>
+      <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);margin-top:4px;">Balık Parçala</div>
+      <div style="font-size:11px;color:var(--ink3);">Parçalamak istediğin balığı seç (2 dk)</div>
+    </div>
+    ${cards}
+    <button class="btn btn-ghost" style="width:100%;margin-top:6px;" onclick="closeGModal()">Vazgeç</button>`);
+}
+
+async function startFishButcher(fishKey){
+  const f=FISH_TYPES[fishKey]; if(!f) return;
+  if((G.prodInv[fishKey]||0)<1){toast('Bu balıktan yok!');return;}
+  const lv=PROD_BUILDINGS.mill.level;
+  if(lv<1){toast('Önce Değirmen inşa et!');return;}
+  if(G.prodTimers.filter(x=>x.building==='mill').length>=millMaxProd(lv)){
+    toast('Değirmen kapasitesi dolu!');return;
+  }
+  closeGModal();
+  G.prodInv[fishKey]--;
+
+  // Et miktarı — değirmen bonusu et üretimine de uygulanır
+  const {chance,mult}=millGetBonus(lv);
+  const isBonus=Math.random()<chance;
+  const baseMeat=f.meat[0]+Math.floor(Math.random()*(f.meat[1]-f.meat[0]+1));
+  const outputs={ baliketi:{amount: isBonus?baseMeat*mult:baseMeat, bonus:isBonus} };
+
+  // Yan ürün — %10, bonus çarpanından etkilenmez
+  if(f.bonus && Math.random()<f.bonus.chance){
+    const b=f.bonus;
+    const qty=b.min+Math.floor(Math.random()*(b.max-b.min+1));
+    outputs[b.key]={amount:qty, bonus:true};
+  }
+
+  const dur=effectiveProdDur(120);
+  let dbId=null;
+  if(currentUser){
+    const {data,error}=await supa.from('production_timers').insert({
+      profile_id:currentUser.id, building:'mill', recipe_id:'butcher_'+fishKey,
+      duration_secs:dur, outputs
+    }).select().single();
+    if(!error&&data) dbId=data.id;
+  }
+  G.prodTimers.push({id:G.prodTimerId++,dbId,building:'mill',recipe:'butcher_'+fishKey,
+    remaining:dur,total:dur,outputs});
+  trackQuest('prodStart1');
+  qAddSkill('balikcilik',0.02);
+  updateInvStrip();renderMill();
+  toast(`🔪 ${f.name} parçalanıyor...`);
+  sbSave();
 }
 
 async function startMillProd(rId){
@@ -11847,6 +12068,17 @@ async function startProd(bKey,rId){
   updateInvStrip();renderProd(bKey);toast(`${r.name} başlatıldı!`);sbSave();
 }
 
+/* Yem düşme zarı — tarla hasadında %25 solucan, ekmek pişirmede %25 hamur */
+function rollBaitDrop(building, recipe){
+  if(building==='farm' && recipe!=='__upgrade__' && Math.random()<0.25){
+    G.prodInv.solucan=(G.prodInv.solucan||0)+1; return 'solucan';
+  }
+  if(building==='kitchen' && recipe==='ekmek' && Math.random()<0.25){
+    G.prodInv.hamur=(G.prodInv.hamur||0)+1; return 'hamur';
+  }
+  return null;
+}
+
 /* Bir binadaki hazır tüm üretimleri tek seferde topla */
 async function collectAllProd(building){
   const ready=G.prodTimers.filter(x=>x.building===building && x.recipe!=='__upgrade__' && x.remaining<=0);
@@ -11854,7 +12086,7 @@ async function collectAllProd(building){
   const btn=document.getElementById('collect-all-btn');
   if(btn){btn.disabled=true;btn.textContent='Toplanıyor...';}
 
-  const totals={}; const bonusItems=[];
+  const totals={}; const bonusItems=[]; const baitDrops={};
   let foodGained=0, unitsHarvested=0, potionsMade=0, potionFull=false;
 
   for(const t of ready){
@@ -11888,6 +12120,8 @@ async function collectAllProd(building){
       const amt=t.outputs?.bugday?.amount||0;
       if(amt>0) trackQuest('prodBugday10', Math.min(10,(G.qp.prodBugday10||0)+amt));
     }
+    const bd=rollBaitDrop(building, t.recipe);
+    if(bd) baitDrops[bd]=(baitDrops[bd]||0)+1;
   }
 
   if(potionsMade>0){ qAddSkill('sifacilik', potionsMade*0.05); renderKarakter(); }
@@ -11918,6 +12152,8 @@ async function collectAllProd(building){
   } else {
     toast(`${ready.length} üretim toplandı!${foodGained>0?' 🍖 +'+foodGained:''}`);
   }
+  const bdList=Object.entries(baitDrops);
+  if(bdList.length) setTimeout(()=>toast(bdList.map(([k,v])=>`${ITEM_ICONS[k]} ${v} ${ITEM_LABELS[k]}`).join(', ')+' buldun! (balık yemi)'),900);
 }
 
 /* "Hepsini Topla" butonu — 2+ hazır üretim varsa gösterilir */
@@ -11976,6 +12212,8 @@ async function collectProd(id){
     const amt=t.outputs?.bugday?.amount||0;
     if(amt>0) trackQuest('prodBugday10', Math.min(10,(G.qp.prodBugday10||0)+amt));
   }
+  // Yem şansı: tarlada %25 solucan, ekmekte %25 hamur
+  const baitDrop=rollBaitDrop(t.building, t.recipe);
   trackAch('harvest');
   G.prodTimers.splice(idx,1);updateInvStrip();renderProd(t.building);updateHUD();sbSave();
   if(bonusItems.length){
@@ -11983,6 +12221,7 @@ async function collectProd(id){
     el.innerHTML=`<span style="font-size:28px;display:block;margin-bottom:4px;">✨</span><div style="font-family:var(--font-head);font-size:13px;color:var(--g-purple);">BONUS ÜRETİM!</div><div style="font-size:11px;color:var(--perg2);margin-top:3px;">${bonusItems.join('<br>')}${foodGained>0?'<br>🍖 +'+foodGained+' yemek':''}</div>`;
     document.body.appendChild(el);setTimeout(()=>el.remove(),2500);
   } else toast(`Ürünler toplandı!${foodGained>0?' 🍖 +'+foodGained+' yemek':''}`);
+  if(baitDrop) setTimeout(()=>toast(`${ITEM_ICONS[baitDrop]} 1 ${ITEM_LABELS[baitDrop]} buldun! (balık yemi)`),900);
 }
 
 function sellAnimalNpc(key,price){
@@ -12044,6 +12283,11 @@ async function cancelProd(id){
   const t=G.prodTimers[idx];
   const r=(PROD_RECIPES[t.building]||[]).find(x=>x.id===t.recipe);
   if(r) Object.entries(r.inputs).forEach(([k,v])=>{G.prodInv[k]=(G.prodInv[k]||0)+Math.floor(v/2);});
+  // Balık parçalama iptali → balık aynen geri döner
+  if(String(t.recipe).startsWith('butcher_')){
+    const fk=String(t.recipe).slice(8);
+    if(FISH_TYPES[fk]) G.prodInv[fk]=(G.prodInv[fk]||0)+1;
+  }
   if(currentUser&&t.dbId){
     await supa.from('production_timers').delete().eq('id',t.dbId);
   }
@@ -12275,6 +12519,7 @@ function renderDepot(){
     {lbl:'🐄 Çiftlik', keys:['tuy','yumurta','sut','yun','bal']},
     {lbl:'🍳 Aşevi',   keys:['domates_corbasi','patates_corbasi','ekmek','salcali_ekmek','borek','cilekli_turta','balli_kaymak']},
     {lbl:'🏗 İnşaa',   keys:['meseLodunu','demir','kil','kereste','civi','tugla'], always:true},
+    {lbl:'🎣 Balıkçılık', keys:['kefal','sazan','alabalik','aynalisazan','somon','yayin','tuzlukefal','levrek','cupra','dislilevrek','devcupra','kopekbalik','baliketi','sazanpulu','levrekdisi','havyar','solucan','hamur','balik']},
   ];
   let html='';
   groups.forEach(g=>{
@@ -12612,6 +12857,12 @@ async function sbLoadProfile() {
   if(p.prod_insaa !== undefined) PROD_BUILDINGS.insaa.level = p.prod_insaa;
   // Üretim envanteri
   if(p.prod_inv && Object.keys(p.prod_inv).length) G.prodInv = {...G.prodInv, ...p.prod_inv};
+  // Eski jenerik 'balik' stoğunu Tatlı Su Kefali'ne çevir (tek seferlik migrasyon)
+  if((G.prodInv.balik||0)>0){
+    G.prodInv.kefal=(G.prodInv.kefal||0)+G.prodInv.balik;
+    G.prodInv.balik=0;
+    setTimeout(()=>sbSave(),1200);
+  }
   if(p.mat_inv && typeof p.mat_inv==='object') G.matInv = {...G.matInv, ...p.mat_inv};
   // Oyuncu envanteri ve kuşanılan eşyalar
   if(p.inventory && Array.isArray(p.inventory)) G.inventory = p.inventory;
