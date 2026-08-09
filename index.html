@@ -1338,12 +1338,8 @@ html,body{
   #p-guild.has-bg{transform:translateZ(0);}
 }
 
-/* ── Kale haritası (masaüstü görsel görünüm) ── */
-#castle-map-view{display:none;}
-@media(min-width:900px){
-  #castle-list-view{display:none;}
-  #castle-map-view{display:block;}
-}
+/* ── Kale haritası (tüm ekranlarda görsel görünüm) ── */
+#castle-map-view{display:block;}
 #castle-map-scene{
   position:relative;width:100%;aspect-ratio:2400/1792;
   background:url('https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/kalearkaplan.webp') center/cover no-repeat,#1a2008;
@@ -1369,11 +1365,48 @@ html,body{
 }
 .cmap-lbl b{color:var(--gold);}
 #castle-map-extras{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px;}
+/* Dar ekranda sahne aynı kalır, sadece etiketler küçülür (yatay kaydırma yok) */
+@media(max-width:899px){
+  .cmap-lbl{font-size:8px;padding:1px 4px;border-radius:4px;bottom:-4px;}
+  #castle-map-extras{gap:4px;margin-top:6px;}
+}
 
-/* ── Birlik kartları (Halk sekmesi) ── */
+/* ── Avluda duran birlikler (kale haritasının alt şeridi) ── */
+.cmap-troops{
+  position:absolute;left:50%;bottom:8%;transform:translateX(-50%);
+  width:94%;display:flex;flex-wrap:wrap-reverse;justify-content:center;align-items:flex-end;
+  gap:6px 4px;z-index:3;pointer-events:none;
+}
+.cmap-troops.editing{opacity:.2;}                          /* bina taşıma modunda yoldan çekilir */
+.cmap-troops.editing .cmap-fig{pointer-events:none;}       /* ...ve tıklamayı binalara bırakır */
+.cmap-fig{
+  position:relative;width:clamp(26px,6.5%,74px);cursor:pointer;pointer-events:auto;
+  transition:filter .15s,transform .15s;
+}
+.cmap-fig:hover{filter:brightness(1.25) drop-shadow(0 0 10px #d4af37cc);transform:translateY(-3px);z-index:6;}
+.cmap-fig img{width:100%;height:auto;display:block;pointer-events:none;filter:drop-shadow(0 3px 6px #000000aa);}
+.cmap-fig-emo{width:100%;align-items:center;justify-content:center;font-size:clamp(18px,4vw,44px);}
+.cmap-fig-lv{
+  position:absolute;top:-5px;right:-5px;z-index:2;
+  font-family:var(--font-head);font-size:9px;line-height:1.4;
+  background:rgba(10,7,3,.9);border:1px solid var(--border2);color:var(--gold);
+  border-radius:4px;padding:0 3px;pointer-events:none;
+}
+@media(max-width:899px){ .cmap-fig-lv{font-size:7px;top:-3px;right:-3px;} }
+
+/* ── Birlik kartları (Kale sekmesi) ── */
 .troop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;align-items:stretch;margin-bottom:8px;}
-.troop-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:7px;}
+.troop-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:7px;cursor:pointer;transition:border-color .15s,box-shadow .15s;}
+.troop-card:hover{border-color:var(--border2);box-shadow:0 0 12px #00000060;}
 .troop-card-icon{width:96px;height:96px;border-radius:10px;background:var(--panel);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;margin-bottom:2px;}
+/* Kart görseli kapsayıcıyı doldurur — boyut CSS'ten gelir, sabit px yok */
+.troop-art{width:100%;height:100%;object-fit:contain;display:block;}
+.troop-art-emo{width:100%;height:100%;align-items:center;justify-content:center;font-size:clamp(22px,6vw,52px);}
+@media(max-width:640px){
+  .troop-grid{grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px;}
+  .troop-card{padding:10px;gap:5px;border-radius:9px;}
+  .troop-card-icon{width:74px;height:74px;margin-bottom:0;}
+}
 .buy-btn-sm:disabled{background:var(--panel);border-color:var(--border);color:var(--ink3);cursor:not-allowed;}
 
 /* ═══════════════════════════════
@@ -2098,7 +2131,6 @@ html,body{
       <div class="tab active" id="gt-karakter" onclick="ggo('karakter')"><img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/karakter.webp" class="tab-img" alt="Karakter"/>Karakter</div>
       <div class="tab" id="gt-kale" onclick="ggo('kale')"><img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/kale.webp" class="tab-img" alt="Kale"/>Kale</div>
       <div class="tab" id="gt-gelistirme" onclick="ggo('gelistirme')"><img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/gelistir.webp" class="tab-img" alt="Geliştir"/>Geliştir</div>
-      <div class="tab" id="gt-halk" onclick="ggo('halk')"><img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/halk.webp" class="tab-img" alt="Halk"/>Halk</div>
       <div class="tab" id="gt-harita" onclick="ggo('harita')"><img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/harita.webp" class="tab-img" alt="Harita"/>Harita</div>
       <div class="tab" id="gt-arena" onclick="ggo('arena')"><img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/arena.webp" class="tab-img" alt="Arena"/>Arena</div>
       <div class="tab" id="gt-zindan" onclick="ggo('zindan')"><img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/zindan.webp" class="tab-img" alt="Zindan"/>Zindan</div>
@@ -2217,44 +2249,22 @@ html,body{
           <div style="font-family:var(--font-head);font-size:clamp(9px,1.1vw,14px);color:var(--gold);letter-spacing:1px;margin-bottom:9px;">KALE İSTATİSTİKLERİ</div>
           <div id="castle-bars-wrap"></div>
         </div>
-        <!-- Masaüstü: görsel kale haritası (≥900px) -->
+        <!-- Görsel kale haritası (tüm ekranlar) — binalar + avludaki birlikler -->
         <div id="castle-map-view">
           <div id="castle-map-scene"></div>
           <div id="castle-map-extras"></div>
         </div>
-        <!-- Mobil / dar ekran: klasik liste -->
-        <div id="castle-list-view">
-          <div class="card">
-            <div style="font-family:var(--font-head);font-size:clamp(9px,1.1vw,14px);color:var(--gold);letter-spacing:1px;margin-bottom:8px;">BİNALAR</div>
-            <div id="castle-buildings-wrap"></div>
-          </div>
-          <div class="card">
-            <div style="font-family:var(--font-head);font-size:clamp(9px,1.1vw,14px);color:var(--gold);letter-spacing:1px;margin-bottom:8px;">🏭 ÜRETİM BİNALARI</div>
-            <div id="castle-prod-wrap"></div>
-          </div>
-        </div>
-      </div>
-      <!-- GELİŞTİRME -->
-      <div class="scroll" id="gs-gelistirme" style="display:none;"></div>
-      <!-- HALK -->
-      <div class="pad" id="gs-halk" style="display:none;">
-        <div class="card" id="folk-overview-card"></div>
-        <div class="card">
-          <div style="font-family:var(--font-head);font-size:9px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">YÖNETİM</div>
-          <div id="folk-actions-wrap"></div>
-        </div>
-        <div class="card">
+        <!-- Birlikler -->
+        <div class="card" style="margin-top:10px;">
           <div class="row-between" style="margin-bottom:8px;">
-            <span style="font-family:var(--font-head);font-size:9px;color:var(--gold);letter-spacing:1px;">⚔ BİRLİKLER</span>
+            <span style="font-family:var(--font-head);font-size:clamp(9px,1.1vw,14px);color:var(--gold);letter-spacing:1px;">⚔ BİRLİKLERİN</span>
             <span id="troop-cap-lbl" style="font-family:var(--font-head);font-size:11px;color:var(--gold2);">0/0</span>
           </div>
           <div id="troops-wrap"></div>
         </div>
-        <div class="card">
-          <div style="font-family:var(--font-head);font-size:9px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">HALK OLAYLARI</div>
-          <div id="folk-events-wrap"></div>
-        </div>
       </div>
+      <!-- GELİŞTİRME -->
+      <div class="scroll" id="gs-gelistirme" style="display:none;"></div>
       <!-- HARİTA -->
       <div class="pad" id="gs-harita" style="display:none;">
         <div class="map-grid" id="map-grid" style="margin-bottom:10px;"></div>
@@ -2820,9 +2830,8 @@ const COACH_TIPS={
   'page:prod':   {icon:'🌾', title:'Üretim', text:'Çiftlik, değirmen, mutfak ve hayvanlarla hammadde üret. Ürünler zamanla olgunlaşır — sık sık uğrayıp topla, sonra işleyip sat ya da kullan.'},
   'page:profile':{icon:'👤', title:'Profil', text:'İstatistiklerini, başarımlarını ve sıralamadaki yerini buradan görürsün. Hedeflerini takip etmek için iyi bir yer.'},
   // Oyun alt sekmeleri
-  'g:kale':      {icon:'🏰', title:'Kale', text:'Krallığının kalbi. Binaları geliştirerek gelir, asker kapasitesi ve savunma kazanırsın.'},
+  'g:kale':      {icon:'🏰', title:'Kale', text:'Krallığının kalbi. Haritadaki binalara dokunup geliştir; avluda duran birliklerine tıklayıp donat. Kışla seviyesi birlik kapasiteni belirler.'},
   'g:gelistirme':{icon:'⚒', title:'Geliştirme', text:'Silah ve zırhlarını yükselt. Her seviye saldırı/savunma gücünü artırır ve kritik şansını besler.'},
-  'g:halk':      {icon:'👥', title:'Halk', text:'Halkının mutluluğunu yönet. Mutlu halk daha çok gelir ve asker verir; mutsuzluk isyana yol açabilir.'},
   'g:harita':    {icon:'🗺', title:'Harita', text:'Bölgeleri keşfet ve mağaralarda savaş. Yeni alanlar açtıkça ganimet ve kaynak kazanırsın.'},
   'g:arena':     {icon:'⚔', title:'Arena', text:'Diğer oyuncularla dövüş, sıralamada yüksel. Zaferler arena puanı ve ödül kazandırır.'},
   'g:zindan':    {icon:'🗝', title:'Zindan', text:'Sıra tabanlı savaşların kalbi. Saldır, büyü yap, savun ya da Sıyrıl. Günlük giriş hakkın sınırlı.'},
@@ -2967,6 +2976,21 @@ const SUVARI_DMG_MULT  = 1.5; // süvari hasar çarpanı
 function troopIconHtml(typeKey, icon, size){
   return `<img src="${IMG_BASE}${typeKey}.webp" style="width:${size}px;height:${size}px;object-fit:contain;border-radius:8px;flex-shrink:0;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><span style="display:none;font-size:${Math.round(size*0.62)}px;width:${size}px;height:${size}px;align-items:center;justify-content:center;flex-shrink:0;">${icon}</span>`;
 }
+// Kart görseli — kapsayıcısını doldurur (boyut CSS'ten gelir, sabit px yok)
+function troopArtHtml(typeKey, icon){
+  return `<img src="${IMG_BASE}${typeKey}.webp" class="troop-art" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><span class="troop-art-emo" style="display:none;">${icon}</span>`;
+}
+// Bir birliğin sağladığı pasif etki satırları (tür başına sabit, adet arttıkça toplanır)
+function troopFxLines(type){
+  switch(type){
+    case 'rehber':  return ['🧭 Keşif süresi −%5','🌿 Keşif kaynağı +%10'];
+    case 'rahip':   return ['⛪ Karizma +%5 (kritik şansı)'];
+    case 'sovalye': return ['🛡 Saldırı +%5','🛡 Savunma +%5'];
+    case 'tabip':   return ['⚕ Savaşta tur başına %10 şansla canının %5\'i yenilenir'];
+    case 'suvari':  return ['🐴 Silah hasarı ×1.5'];
+    default:        return [];
+  }
+}
 
 // Benzersiz birlik ID'si
 function newTroopId(){ return 'tr_'+Date.now()+'_'+Math.floor(Math.random()*1000); }
@@ -3089,7 +3113,7 @@ function confirmPromoteSuvari(tid){
   troop.type='suvari';
   closeGModal();
   celebrate('🐴','SÜVARİ!',`Piyaden ata bindi — artık %50 daha sert vuruyor!`,'gold');
-  renderHalk();
+  renderTroops();
   if(PROD_BUILDINGS.ranch.level>0&&G.prodTab==='ranch') renderRanch();
   if(currentUser) sbSave();
 }
@@ -3104,29 +3128,32 @@ const TROOP_SLOT_META={
   ring:  {lbl:'Yüzük',   ph:'💍', types:['Yüzük']},
   ring2: {lbl:'Yüzük',   ph:'💍', types:['Yüzük']},
 };
-// Tüm birliklerin toplam ek savunması (silah dışı tüm slotlardan)
-function troopArmorDef(){
+// Tek bir birliğin ek savunması (silah dışı tüm slotlardan)
+function troopDefOf(troop){
   let def=0;
-  (G.companions||[]).forEach(c=>{
-    TROOP_EQ_SLOTS.forEach(k=>{
-      if(k==='weapon') return;
-      const it=c.equip?.[k];
-      if(it?.stats?.def) def += it.stats.def;
-    });
+  TROOP_EQ_SLOTS.forEach(k=>{
+    if(k==='weapon') return;
+    const it=troop?.equip?.[k];
+    if(it?.stats?.def) def += it.stats.def;
   });
   return def;
+}
+// Tüm birliklerin toplam ek savunması
+function troopArmorDef(){
+  return (G.companions||[]).reduce((sum,c)=>sum+troopDefOf(c),0);
 }
 // Silah giydirilmiş birlik var mı? (savaşta vuracak)
 function armedTroops(){
   return (G.companions||[]).filter(c=>c.equip?.weapon && troopAttackDmg(c)>0);
 }
 
-// Bir birliği donatma penceresi — anatomik dizilim (kask üstte, silah/gövde ortada...)
-function openEquipTroopModal(tid){
+// Birlik detay ekranı — seviye/XP, savaş katkısı, sağladığı etki + anatomik donatma ızgarası
+function openTroopModal(tid){
   const troop=(G.companions||[]).find(c=>c.tid===tid);
   if(!troop) return;
-  const t=TROOP_TYPES[troop.type]||{name:troop.type,icon:'❓'};
+  const t=TROOP_TYPES[troop.type]||{name:troop.type,icon:'❓',desc:''};
   const lv=troopLevel(troop);
+  const xp=troop.xp||0;
   const xpNeed=troopXpNeed(lv);
   const slotCell=(key)=>{
     const meta=TROOP_SLOT_META[key];
@@ -3146,19 +3173,75 @@ function openEquipTroopModal(tid){
     <span class="tr-eq-ph">${ph}</span>
     <span class="tr-eq-lbl">${lbl}</span>
   </div>`;
+  const tile=(val,lbl,col)=>`<div style="flex:1;text-align:center;padding:7px 4px;border-radius:8px;background:var(--panel2);border:1px solid var(--border);">
+    <div style="font-family:var(--font-head);font-size:16px;color:${col};">${val}</div>
+    <div style="font-size:9px;color:var(--ink3);">${lbl}</div>
+  </div>`;
+  const dmg=troopAttackDmg(troop);
+  const def=troopDefOf(troop);
+  const eqCount=TROOP_EQ_SLOTS.filter(k=>troop.equip?.[k]).length;
+  const xpPct=Math.min(100,Math.round(xp/xpNeed*100));
+  const fx=troopFxLines(troop.type);
+  const isPiyade=troop.type==='piyade';
+  const hasHorse=(G.animals?.at||0)>=1;
   showGModal(`
-    <div style="text-align:center;margin-bottom:2px;">
-      <div style="font-family:var(--font-head);font-size:20px;color:var(--gold2);letter-spacing:1px;">${t.icon} ${t.name} <span style="font-size:14px;color:var(--gold);">Sv.${lv}</span></div>
-      <div style="font-size:13px;color:var(--ink3);margin-top:5px;">Savaş XP: ${troop.xp||0}/${xpNeed} · Slota dokun → eşya seç</div>
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;">
+      <div class="troop-card-icon" style="width:84px;height:84px;margin-bottom:0;">${troopArtHtml(troop.type,t.icon)}</div>
+      <div style="flex:1;min-width:0;text-align:left;">
+        <div style="font-family:var(--font-head);font-size:19px;color:var(--gold2);letter-spacing:.5px;">${t.name} <span style="font-size:14px;color:var(--gold);">Sv.${lv}</span></div>
+        <div style="font-size:11px;color:var(--ink3);line-height:1.4;margin:3px 0 6px;">${t.desc}</div>
+        <div style="height:7px;border-radius:4px;background:var(--panel3);border:1px solid var(--border);overflow:hidden;">
+          <div style="height:100%;width:${xpPct}%;background:var(--mor);"></div>
+        </div>
+        <div style="font-size:10px;color:var(--ink3);margin-top:3px;">Savaş XP ${xp}/${xpNeed} → Sv.${lv+1}</div>
+      </div>
     </div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;">
+      ${tile('⚔ '+dmg,'Vuruş hasarı','#f08080')}
+      ${tile('🛡 '+def,'Eklediği savunma','#6adfff')}
+      ${tile('🎒 '+eqCount+'/'+TROOP_EQ_SLOTS.length,'Donanım','var(--gold2)')}
+    </div>
+    ${fx.length?`<div style="padding:8px 10px;background:#13190f;border:1px solid #2a3a18;border-radius:8px;margin-bottom:10px;">
+      <div style="font-family:var(--font-head);font-size:9px;color:var(--gold2);letter-spacing:.5px;margin-bottom:4px;">SAĞLADIĞI ETKİ</div>
+      ${fx.map(f=>`<div style="font-size:11px;color:#9bd17a;line-height:1.6;">${f}</div>`).join('')}
+    </div>`:''}
+    ${dmg===0?`<div style="font-size:11px;color:#f0a050;text-align:center;margin-bottom:6px;">⚠ Silahı yok — savaşta vuramaz. Aşağıdan bir silah donat.</div>`:''}
     <div class="tr-eq-grid">
       ${lockedCell('Kolye','📿')}${slotCell('helmet')}${lockedCell('Küpe','💠')}
       ${slotCell('weapon')}${slotCell('chest')}${slotCell('gloves')}
       ${slotCell('ring')}${slotCell('boots')}${slotCell('ring2')}
     </div>
-    <div style="font-size:13px;color:var(--ink3);text-align:center;margin-bottom:8px;">Silah → düşmana vurur · Diğer parçalar → savunmana eklenir</div>
-    <button class="btn btn-ghost" style="width:100%;margin-top:6px;font-size:14px;padding:10px;" onclick="closeGModal()">Kapat</button>
-  `, {width:440});
+    <div style="font-size:11px;color:var(--ink3);text-align:center;margin-bottom:8px;line-height:1.5;">
+      Slota dokun → eşya seç. Silah düşmana vurur, diğer parçalar savunmana eklenir.<br>
+      Her eşyanın kendi seviye şartı var — birlik savaştıkça seviye atlar.
+    </div>
+    ${isPiyade&&lv>=SUVARI_MIN_LEVEL?`<button class="btn" style="width:100%;margin-bottom:8px;${hasHorse?'background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;':'opacity:.55;'}"
+      onclick="promoteToSuvari('${tid}')" title="${hasHorse?'Çiftlikten 1 at kullanılır':'Çiftlikte at yok — Pazardan al'}">🐴 Süvari Yap${hasHorse?'':' (at gerekli)'}</button>`:''}
+    ${isPiyade&&lv<SUVARI_MIN_LEVEL?`<div style="font-size:11px;color:var(--ink3);text-align:center;margin-bottom:8px;">🐴 Sv.${SUVARI_MIN_LEVEL}'te süvari olabilir (şu an Sv.${lv})</div>`:''}
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-ghost" style="flex:1;" onclick="confirmDismissTroop('${tid}')">Azat Et</button>
+      <button class="btn" style="flex:1;" onclick="closeGModal()">Kapat</button>
+    </div>
+  `, {width:460});
+}
+// Azat onayı — seviye kaybı geri alınamaz, ekipmanlar envantere döner
+function confirmDismissTroop(tid){
+  const troop=(G.companions||[]).find(c=>c.tid===tid);
+  if(!troop) return;
+  const t=TROOP_TYPES[troop.type]||{name:troop.type,icon:'❓'};
+  const eqCount=TROOP_EQ_SLOTS.filter(k=>troop.equip?.[k]).length;
+  showGModal(`
+    <div style="text-align:center;margin-bottom:14px;">
+      <div style="font-size:38px;margin-bottom:6px;">${t.icon}</div>
+      <div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);">${t.name} azat edilsin mi?</div>
+      <div style="font-size:12px;color:var(--perg2);margin-top:8px;line-height:1.6;">
+        Sv.${troopLevel(troop)} birliğin krallıktan ayrılır — <b style="color:#f0a050;">seviyesi geri gelmez</b>.
+        ${eqCount?`<br>Üzerindeki <b>${eqCount} parça</b> envanterine döner.`:''}
+      </div>
+    </div>
+    <button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="closeGModal();dismissTroop('${tid}')">Azat Et</button>
+    <button class="btn" style="width:100%;" onclick="openTroopModal('${tid}')">Vazgeç</button>
+  `);
 }
 
 // Bir slot için envanterden eşya seçimi
@@ -3207,7 +3290,7 @@ function openTroopSlotPicker(tid, slotKey){
       <div style="font-family:var(--font-head);font-size:18px;color:var(--gold2);letter-spacing:1px;">${meta.ph} ${meta.lbl.toUpperCase()} SEÇ</div>
     </div>
     ${rows}
-    <button class="btn btn-ghost" style="width:100%;margin-top:8px;font-size:14px;padding:10px;" onclick="openEquipTroopModal('${tid}')">← Geri</button>
+    <button class="btn btn-ghost" style="width:100%;margin-top:8px;font-size:14px;padding:10px;" onclick="openTroopModal('${tid}')">← Geri</button>
   `, {width:440});
 }
 function equipTroop(tid, slotKey, itemId){
@@ -3229,8 +3312,8 @@ function equipTroop(tid, slotKey, itemId){
   G.inventory.splice(idx,1);
   toast(`${item.icon} ${item.name} donatıldı!`);
   if(currentUser) sbSave();
-  renderHalk(); renderKarakter();
-  openEquipTroopModal(tid); // modalı tazele
+  renderTroops(); renderKarakter();
+  openTroopModal(tid); // modalı tazele
 }
 function unequipTroop(tid, slotKey){
   const troop=(G.companions||[]).find(c=>c.tid===tid);
@@ -3241,8 +3324,8 @@ function unequipTroop(tid, slotKey){
   troop.equip[slotKey]=null;
   toast(`${item.icon} ${item.name} çıkarıldı.`);
   if(currentUser) sbSave();
-  renderHalk(); renderKarakter();
-  openEquipTroopModal(tid);
+  renderTroops(); renderKarakter();
+  openTroopModal(tid);
 }
 
 /* ── BİRLİK BESLEME MALİYETİ (götürü) ──
@@ -3280,9 +3363,9 @@ function offerFoundTroop(typeKey){
   if(!G.capturedTroops) G.capturedTroops=[];
   const cap={ cid:'cap_'+Date.now()+'_'+Math.floor(Math.random()*1000), type:typeKey, foundAt:_now() };
   G.capturedTroops.push(cap);
-  toast(`${t.icon} Bir ${t.name} yakaladın! Halk sekmesinde seni bekliyor.`);
+  toast(`${t.icon} Bir ${t.name} yakaladın! Kale sekmesinde seni bekliyor.`);
   if(currentUser) sbSave();
-  if(typeof renderHalk==='function' && document.getElementById('p-game')?.classList.contains('active')) renderHalk();
+  if(typeof renderTroops==='function' && document.getElementById('p-game')?.classList.contains('active')) renderTroops();
 }
 
 // Süresi dolan esirleri temizle (kaçtı). Değişiklik olduysa true döner.
@@ -3302,14 +3385,14 @@ function pruneCapturedTroops(){
 // Esir bir birliği birliğe kat
 function recruitCaptured(cid){
   const idx=(G.capturedTroops||[]).findIndex(c=>c.cid===cid);
-  if(idx<0){ toast('Bu esir artık yok.'); renderHalk(); return; }
+  if(idx<0){ toast('Bu esir artık yok.'); renderTroops(); return; }
   const cap=G.capturedTroops[idx];
   // Süre dolmuş mu?
   if(_now()-cap.foundAt >= CAPTURE_DURATION_MS){
     G.capturedTroops.splice(idx,1);
     const t=TROOP_TYPES[cap.type];
     toast(`${t?.icon||''} ${t?.name||'Birim'} çoktan kaçmış!`);
-    renderHalk(); if(currentUser) sbSave();
+    renderTroops(); if(currentUser) sbSave();
     return;
   }
   // Birlik dolu mu?
@@ -3322,7 +3405,7 @@ function recruitCaptured(cid){
   addTroop(cap.type);
   const t=TROOP_TYPES[cap.type];
   celebrate(t.icon, `${t.name.toUpperCase()} KATILDI!`, `Birlik: ${troopCount()}/${troopCap()}`, 'gold');
-  updateHUD(); renderHalk();
+  updateHUD(); renderTroops();
   if(currentUser) sbSave();
 }
 
@@ -3334,7 +3417,7 @@ function releaseCaptured(cid){
   const t=TROOP_TYPES[cap.type];
   G.capturedTroops.splice(idx,1);
   toast(`${t?.icon||''} ${t?.name||'Birim'} serbest bırakıldı.`);
-  renderHalk();
+  renderTroops();
   if(currentUser) sbSave();
 }
 
@@ -3369,7 +3452,7 @@ function swapCapturedTroop(oldTid, cid){
   const t=TROOP_TYPES[cap.type];
   closeGModal();
   celebrate(t.icon, `${t.name.toUpperCase()} KATILDI!`, 'Bir birlik azat edildi, yerine geçti', 'gold');
-  updateHUD(); renderHalk();
+  updateHUD(); renderTroops();
   if(currentUser) sbSave();
 }
 function confirmRecruitFound(typeKey){
@@ -3378,7 +3461,7 @@ function confirmRecruitFound(typeKey){
   const t=TROOP_TYPES[typeKey];
   closeGModal();
   celebrate(t.icon, `${t.name.toUpperCase()} KATILDI!`, `Birlik: ${troopCount()}/${troopCap()}`, 'gold');
-  updateHUD(); if(typeof renderHalk==='function') renderHalk();
+  updateHUD(); if(typeof renderTroops==='function') renderTroops();
   if(currentUser) sbSave();
 }
 function swapTroop(oldTid, newTypeKey){
@@ -3387,7 +3470,7 @@ function swapTroop(oldTid, newTypeKey){
   const t=TROOP_TYPES[newTypeKey];
   closeGModal();
   celebrate(t.icon, `${t.name.toUpperCase()} KATILDI!`, 'Bir birlik azat edildi, yerine geçti', 'gold');
-  updateHUD(); if(typeof renderHalk==='function') renderHalk();
+  updateHUD(); if(typeof renderTroops==='function') renderTroops();
   if(currentUser) sbSave();
 }
 // Kışladan piyade işe al
@@ -3398,16 +3481,16 @@ function hirePiyade(){
   G.gold-=cost;
   addTroop('piyade');
   toast(`🗡 Piyade işe alındı! -${cost}🪙`);
-  updateHUD(); renderHalk();
+  updateHUD(); renderTroops();
   if(currentUser) sbSave();
 }
-// Birliği azat et (manuel, Halk ekranından)
+// Birliği azat et (manuel, Kale ekranından)
 function dismissTroop(tid){
   const c=(G.companions||[]).find(x=>x.tid===tid); if(!c) return;
   const t=TROOP_TYPES[c.type];
   removeTroop(tid);
   toast(`${t.icon} ${t.name} azat edildi.`);
-  updateHUD(); renderHalk();
+  updateHUD(); renderTroops();
   if(currentUser) sbSave();
 }
 
@@ -3715,7 +3798,7 @@ async function finishExplore(idx,dbId){
   G.explored.add(idx);
   // Keşif bonusları
   if(cell.t==='ruins'){const rb=troopBuffs();let b=Math.floor(Math.random()*40)+20;b=Math.floor(b*rb.resourceMult*scoutLootMult());G.gold+=b;const scoutPct=Math.round((scoutLootMult()-1)*100);const bonusNote=(rb.rehber>0?` (Rehber +%${Math.round((rb.resourceMult-1)*100)}`:(scoutPct>0?' (':''))+(scoutPct>0?`${rb.rehber>0?', ':''}İzcilik +%${scoutPct}`:'')+((rb.rehber>0||scoutPct>0)?')':'');toast(`Harabeler keşfedildi! ${b}🪙 hazine bulundu!${bonusNote} 💰`);trackQuest('exploreRuin');trackQuest('exploreRuin2',Math.min(2,[...G.explored].filter(i=>G_MAP[i]?.t==='ruins').length));}
-  else if(cell.t==='village'){G.folk.population+=20;toast(`${cell.n} keşfedildi! +20 nüfus 🏘`);trackQuest('exploreVillage3',Math.min(3,[...G.explored].filter(i=>G_MAP[i]?.t==='village').length));}
+  else if(cell.t==='village'){const fb=15;G.food+=fb;toast(`${cell.n} keşfedildi! Köylüler ${fb}🌾 erzak verdi 🏘`);trackQuest('exploreVillage3',Math.min(3,[...G.explored].filter(i=>G_MAP[i]?.t==='village').length));}
   else toast(`${cell.n} keşfedildi! 🗺`);
   // Özel birim keşfi — araziye göre tematik, TEST: %50 şans
   // Kasaba→Rahip/Tabip, Harabe→Şövalye, Orman→Rehber, Dağlar→Şövalye/Rehber
@@ -4153,11 +4236,11 @@ setInterval(async()=>{
       }
     }
   }
-  // Esir birlikler — geri sayım + süre dolanları temizle (Halk sekmesi açıksa)
+  // Esir birlikler — geri sayım + süre dolanları temizle (Kale sekmesi açıksa)
   if((G.capturedTroops||[]).length){
-    const halkOpen=document.getElementById('gs-halk')?.style.display!=='none' && document.getElementById('p-game')?.classList.contains('active');
-    const escaped=pruneCapturedTroops();
-    if(halkOpen && typeof renderTroops==='function') renderTroops();
+    const kaleOpen=document.getElementById('gs-kale')?.style.display!=='none' && document.getElementById('p-game')?.classList.contains('active');
+    pruneCapturedTroops();
+    if(kaleOpen && typeof renderTroops==='function') renderTroops();
   }
 },1000);
 
@@ -4599,7 +4682,7 @@ const QUEST_DATA={
     {id:'d1',type:'daily',title:'Zindan Hazırlığı',icon:'⚔',objectives:[{text:'Zindan ekranını ziyaret et',key:'visitZindan',cur:0,max:1}],rewards:[{t:'gold',v:50},{t:'xp',v:30}]},
     {id:'d2',type:'daily',title:'Hazineyi Doldur',icon:'🪙',objectives:[{text:'100 altın topla',key:'goldReached100',cur:0,max:1}],rewards:[{t:'gold',v:80},{t:'xp',v:40}]},
     {id:'d3',type:'daily',title:'Arena Antrenmanı',icon:'🛡',objectives:[{text:"Arena'da 1 dövüş yap",key:'arenaFight1',cur:0,max:1}],rewards:[{t:'gold',v:60},{t:'xp',v:50}]},
-    {id:'d4',type:'daily',title:'Halkı Mutlu Et',icon:'😊',objectives:[{text:"Halk mutluluğunu %60'a çıkar",key:'happiness60',cur:0,max:1}],rewards:[{t:'gold',v:100},{t:'xp',v:60}]},
+    {id:'d4',type:'daily',title:'Pazar Turu',icon:'🛒',objectives:[{text:"Pazar'da alışveriş yap",key:'marketBuy1',cur:0,max:1}],rewards:[{t:'gold',v:100},{t:'xp',v:60}]},
     {id:'d5',type:'daily',title:'Keşifçi',icon:'🗺',objectives:[{text:'1 yeni bölge keşfet',key:'exploreDaily',cur:0,max:1}],rewards:[{t:'gold',v:70},{t:'xp',v:45}]},
     {id:'d6',type:'daily',title:'Üretim Ustası',icon:'🌾',objectives:[{text:'1 üretim başlat',key:'prodStart1',cur:0,max:1}],rewards:[{t:'gold',v:40},{t:'xp',v:35}]},
   ],
@@ -4942,11 +5025,6 @@ const G={
   stats:{str:0,def:0,agi:0,wis:0,cha:0,hp:100,maxhp:100},
   gold:500,food:50,morale:72,
   castle:{hp:100,maxhp:100,def:40,atk:25,morale:72,walls:1,towers:1,barracks:1,farm:1,market:1},
-  folk:{population:100,happiness:68,tax:10},
-  folkEvents:[
-    {id:'fe1',title:'Kıtlık Haberleri',desc:'Güney köylerinde yiyecek sıkıntısı.',done:false,choices:[{t:'Yardım gönder (-30🌾)',fn:()=>{if(G.food<30){toast('Yeterli yiyecek yok!');return;}G.food-=30;G.folk.happiness=Math.min(100,G.folk.happiness+12);}},{t:'Görmezden gel',fn:()=>{G.folk.happiness=Math.max(0,G.folk.happiness-8);}}]},
-    {id:'fe2',title:'Şenlik Talebi',desc:'Halk şenlik istiyor.',done:false,choices:[{t:'Şenlik (-40🪙)',fn:()=>{if(G.gold<40){toast('Yeterli altın yok!');return;}G.gold-=40;G.folk.happiness=Math.min(100,G.folk.happiness+15);}},{t:'Reddet',fn:()=>{G.folk.happiness=Math.max(0,G.folk.happiness-5);}}]},
-  ],
   arenaScore:0,arenaWins:0,arenaLosses:0,
   zdTickets:3, zdTicketDate:'',
   loginStreak:0, lastLoginDate:'', loginClaimedToday:false,
@@ -4982,10 +5060,10 @@ const G={
     visitZindan:0,goldReached100:0,arenaFight1:0,arenaFight5:0,
     arenaWin1:0,arenaWin5:0,explore5:0,exploreDaily:0,
     exploreRuin:0,exploreRuin2:0,exploreVillage3:0,
-    prodBugday10:0,happiness60:0,marketBuy1:0,prodStart1:0,
+    prodBugday10:0,marketBuy1:0,prodStart1:0,
     wallsLv2:0,joinGuild:0,treasuryDeposit100:0,
   },
-  dailyQp:{visitZindan:0,goldReached100:0,arenaFight1:0,happiness60:0,exploreDaily:0,prodStart1:0},
+  dailyQp:{visitZindan:0,goldReached100:0,arenaFight1:0,marketBuy1:0,exploreDaily:0,prodStart1:0},
   completedQuests:new Set(),
   dailyCollected:new Set(),
   inventory:[], // max 50 slot — {id, name, icon, type, grade, price, stats, desc, seller:'player', sellerName}
@@ -5089,12 +5167,11 @@ async function startGame(){
   questLoad();
   refreshLoginStreak();
   if(currentUser) initSaleWatcher();
-  updateHUD();renderGame('karakter');renderGame('kale');renderGame('gelistirme');renderGame('halk');renderGame('harita');renderGame('arena');renderGame('zindan');
+  updateHUD();renderGame('karakter');renderGame('kale');renderGame('gelistirme');renderGame('harita');renderGame('arena');renderGame('zindan');
   renderQuest(G.questTab);renderMarket();renderGuild(G.guildTab);renderProd(G.prodTab);renderProfile(G.profileTab);
   updateInvStrip();
   Promise.all([loadPlayerMarketItems(),loadMaterialListings()]).then(()=>renderMarket());
   if(G.gold>=100) trackQuest('goldReached100');
-  if(G.folk.happiness>=60) trackQuest('happiness60');
   // Harita başlat
   initPlayerMap().then(()=>renderGame('harita'));
   toast(`Hoş geldin, ${G.heroName}! 🏰`);
@@ -5292,7 +5369,6 @@ function renderGame(s){
   if(s==='karakter') renderKarakter();
   if(s==='kale') renderKale();
   if(s==='gelistirme') renderGelistirme();
-  if(s==='halk') renderHalk();
   if(s==='harita') renderHarita();
   if(s==='arena') renderArena();
   if(s==='zindan') renderZindan();
@@ -6137,18 +6213,8 @@ function renderKale(){
   document.getElementById('castle-hdr-card').innerHTML=`<div class="row-between" style="margin-bottom:5px;"><span style="font-family:var(--font-head);font-size:clamp(14px,1.6vw,19px);color:var(--gold2);">🏰 ${G.heroName||'Kral'}\'ın Kalesi</span><span class="tag tag-gold">Sur Sv.${c.walls}</span></div><div style="font-size:clamp(10px,1.1vw,13px);color:var(--ink3);">Kule: ${c.towers} | Kışla: ${c.barracks}</div>`;
   const bars=[{icon:'❤',lbl:'Kale Canı',val:c.hp,max:c.maxhp,pct:Math.round(c.hp/c.maxhp*100),color:'var(--hp)'},{icon:'🛡',lbl:'Savunma',val:c.def,max:100,pct:Math.min(100,c.def),color:'var(--def)'},{icon:'⚔',lbl:'Saldırı',val:c.atk,max:100,pct:Math.min(100,c.atk),color:'var(--atk)'},{icon:'😊',lbl:'Moral',val:Math.floor(G.morale),max:100,pct:Math.floor(G.morale),color:'var(--mor)'}];
   document.getElementById('castle-bars-wrap').innerHTML=bars.map(b=>`<div class="castle-stat"><span class="cs-icon">${b.icon}</span><span class="cs-lbl">${b.lbl}</span><div class="cs-bar-bg"><div class="cs-bar" style="width:${b.pct}%;background:${b.color};"></div></div><span class="cs-val">${b.val}${b.max!==100?'/'+b.max:''}</span></div>`).join('');
-  const blds=[{n:'Surlar',lv:c.walls,max:5,icon:'🧱',cost:80,key:'walls'},{n:'Kuleler',lv:c.towers,max:4,icon:'🗼',cost:60,key:'towers'},{n:'Kışla',lv:c.barracks,max:10,icon:'⚔',cost:70,key:'barracks'},{n:'Çiftlik',lv:c.farm,max:5,icon:'🌾',cost:50,key:'farm'},{n:'Pazar',lv:c.market,max:4,icon:'🏪',cost:90,key:'market'}];
-  document.getElementById('castle-buildings-wrap').innerHTML=blds.map(b=>{const uc=Math.floor(b.cost*Math.pow(1.4,b.lv));const mx=b.lv>=b.max;const matCost=mx?{}:buildingMatCost(b.key,b.lv);const matsOk=canAffordMats(matCost);const canUpg=!mx&&G.gold>=uc&&matsOk;return `<div style="margin-bottom:10px;padding:8px;background:var(--panel2);border-radius:8px;border:1px solid var(--border);"><div class="row-between" style="margin-bottom:${mx?'0':'5px'};"><span>${b.icon}</span><span style="font-family:var(--font-head);font-size:clamp(11px,1.2vw,15px);color:var(--perg2);flex:1;margin:0 7px;">${b.n} <span style="color:var(--ink3);">Sv.${b.lv}</span></span><button class="btn btn-xs" onclick="upgBld('${b.key}',${uc})" ${canUpg?'':'disabled'}>${mx?'Max':uc+'🪙'}</button></div>${mx?'':`<div style="display:flex;flex-wrap:wrap;gap:2px;">${matCostHTML(matCost)}</div>`}</div>`;}).join('');
-  // Üretim binaları (aynı upgProd ile yükseltilir, üretim sekmesiyle senkron)
-  const prodWrap=document.getElementById('castle-prod-wrap');
-  if(prodWrap){
-    prodWrap.innerHTML=Object.entries(PROD_BUILDINGS).map(([key,bld])=>{
-      const lv=bld.level;const mx=lv>=bld.max;const uc=Math.floor(bld.cost*Math.pow(1.6,lv));
-      const matCost=mx?{}:buildingMatCost('prod_'+key,lv);const matsOk=canAffordMats(matCost);const canUpg=!mx&&G.gold>=uc&&matsOk;
-      return `<div style="margin-bottom:10px;padding:8px;background:var(--panel2);border-radius:8px;border:1px solid var(--border);"><div class="row-between" style="margin-bottom:${mx?'0':'5px'};"><span>${bld.icon}</span><span style="font-family:var(--font-head);font-size:clamp(11px,1.2vw,15px);color:var(--perg2);flex:1;margin:0 7px;">${bld.name} <span style="color:var(--ink3);">Sv.${lv}</span></span><button class="btn btn-xs" onclick="upgProd('${key}',${uc})" ${canUpg?'':'disabled'}>${mx?'Max':uc+'🪙'}</button></div>${mx?'':`<div style="display:flex;flex-wrap:wrap;gap:2px;">${matCostHTML(matCost)}</div>`}</div>`;
-    }).join('');
-  }
   renderCastleMap();
+  renderTroops();
 }
 
 /* ══════════════════════════════════════
@@ -6199,7 +6265,7 @@ function renderCastleMap(){
       <img src="${IMG_BASE}${s.img}.webp" onerror="this.style.display='none';this.parentElement.style.minHeight='40px'"/>
       ${s.noLabel?'':`<div class="cmap-lbl">${name} <b>Sv.${lv}</b></div>`}
     </div>`;
-  }).join('');
+  }).join('')+castleTroopFiguresHTML();
   if(extras){
     extras.innerHTML=CASTLE_MAP_EXTRAS.map(x=>{
       const lv = x.kind==='castle' ? (G.castle[x.bkey]||0) : (PROD_BUILDINGS[x.bkey]?.level||0);
@@ -6209,6 +6275,26 @@ function renderCastleMap(){
       <button class="btn btn-xs ${_cmapEditMode?'':'btn-ghost'}" style="margin-left:auto;${_cmapEditMode?'border-color:var(--gold);color:var(--gold2);':''}" onclick="toggleCmapEdit()">🖱 ${_cmapEditMode?'Düzenlemeyi Bitir':'Binaları Taşı'}</button>
       ${_cmapEditMode?`<button class="btn btn-xs btn-ghost" onclick="resetCastleLayout()">↺ Varsayılan Yerleşim</button>`:''}`;
   }
+}
+/* Avludaki birlik figürleri — sahnenin alt şeridinde sabit dizilim (flex).
+   Bina sürükleme moduyla çakışmaz; düzenleme açıkken soluklaşıp tıklanamaz olur.
+   Konumu CSS'teki .cmap-troops{bottom} ile ayarlanır. */
+function castleTroopFiguresHTML(){
+  const figs=(G.companions||[]).map(c=>{
+    const t=TROOP_TYPES[c.type]||{name:c.type,icon:'❓'};
+    const lv=troopLevel(c);
+    return `<div class="cmap-fig" onclick="event.stopPropagation();openTroopModal('${c.tid}')" title="${t.name} Sv.${lv} — donat">
+      <span class="cmap-fig-lv">${lv}</span>
+      <img src="${IMG_BASE}${c.type}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+      <span class="cmap-fig-emo" style="display:none;">${t.icon}</span>
+    </div>`;
+  }).join('');
+  return `<div class="cmap-troops${_cmapEditMode?' editing':''}" id="cmap-troops">${figs}</div>`;
+}
+// Sadece figür şeridini tazele (sahnenin tamamını yeniden kurmadan)
+function renderCastleTroopFigures(){
+  const el=document.getElementById('cmap-troops');
+  if(el) el.outerHTML=castleTroopFiguresHTML();
 }
 function toggleCmapEdit(){
   _cmapEditMode=!_cmapEditMode;
@@ -6319,9 +6405,10 @@ function upgBld(key,cost){
   gainXP(25);toast(key+' geliştirildi!');updateHUD();renderKale();
   if(currentUser) sbSave();
 }
-/* ── TUR & ORDU SİSTEMİ KALDIRILDI ──
+/* ── TUR, ORDU & HALK SİSTEMLERİ KALDIRILDI ──
    Oyun artık sabit server saatiyle akar (bkz. initServerTime).
-   Askerler "Halk" sekmesindeki birlik (companions) sistemine taşındı. */
+   Askerler Kale sekmesindeki birlik (companions) sistemine taşındı;
+   nüfus/mutluluk/vergi kavramları tamamen çıkarıldı (`folk` tablosu artık kullanılmıyor). */
 
 /* ══════════════════════════════════════
    GELİŞTİRME SİSTEMİ
@@ -6937,37 +7024,13 @@ function showEnhSmoke(type){
   setTimeout(()=>{ cancelAnimationFrame(raf); canvas.remove(); }, 4000);
 }
 
-/* ── HALK ── */
-function renderHalk(){
-  const f=G.folk;
-  const mood=f.happiness>=70?'Mutlu 😊':f.happiness>=45?'Nötr 😐':'Mutsuz 😠';
-  const moodCls=f.happiness>=70?'tag-green':f.happiness>=45?'tag-gold':'tag-red';
-  const upkeep=troopUpkeepCost();
-  document.getElementById('folk-overview-card').innerHTML=`
-    <div class="row-between" style="margin-bottom:7px;">
-      <span style="font-family:var(--font-head);font-size:13px;color:var(--perg);">Nüfus</span>
-      <span style="font-family:var(--font-head);font-size:16px;color:var(--gold);">${f.population}</span>
-    </div>
-    <div class="row-between" style="margin-bottom:7px;">
-      <span style="font-size:11px;color:var(--ink3);">Durum</span>
-      <span class="tag ${moodCls}">${mood}</span>
-    </div>
-    ${upkeep.count>0?`<div class="row-between" style="margin-bottom:7px;">
-      <span style="font-size:11px;color:var(--ink3);">🍖 Birlik beslemesi/aktivite</span>
-      <span style="font-family:var(--font-head);font-size:12px;color:${G.food>=upkeep.food?'var(--g-green)':'var(--hp)'};">${upkeep.food}🌾 + ${upkeep.gold}🪙</span>
-    </div>`:''}
-    <div class="castle-stat" style="margin-bottom:0;"><span class="cs-icon">😊</span><span class="cs-lbl">Mutluluk</span><div class="cs-bar-bg"><div class="cs-bar" style="width:${f.happiness}%;background:var(--mor);"></div></div><span class="cs-val">${f.happiness}%</span></div>`;
-  document.getElementById('folk-actions-wrap').innerHTML=`<div class="row-between" style="margin-bottom:7px;"><span style="font-size:12px;color:var(--perg2);">Vergi: ${f.tax}%</span><div style="display:flex;gap:5px;"><button class="btn btn-xs" onclick="changeTax(-5)">▼ İndir</button><button class="btn btn-xs" onclick="changeTax(5)">▲ Artır</button></div></div><button class="btn btn-sm" style="width:100%;margin-bottom:5px;" onclick="festival()">🎉 Şenlik (-40🪙)</button><button class="btn btn-sm" style="width:100%;" onclick="feedPeople()">🌾 Yiyecek Dağıt (-30🌾)</button>`;
-  const evs=G.folkEvents.filter(e=>!e.done);
-  document.getElementById('folk-events-wrap').innerHTML=evs.length===0?`<div style="font-size:11px;color:var(--ink3);">Şu an sakin...</div>`:evs.map(e=>`<div class="card-sm"><div style="font-family:var(--font-head);font-size:11px;color:var(--gold2);margin-bottom:3px;">${e.title}</div><div style="font-size:11px;color:var(--ink3);margin-bottom:5px;">${e.desc}</div><div style="display:flex;gap:5px;flex-wrap:wrap;">${e.choices.map((c,ci)=>`<button class="btn btn-xs" onclick="folkChoice('${e.id}',${ci})">${c.t}</button>`).join('')}</div></div>`).join('');
-  renderTroops();
-}
-
+/* ── BİRLİKLER (Kale sekmesi) ── */
 function renderTroops(){
+  pruneCapturedTroops();      // süresi dolanları temizle
+  renderCastleTroopFigures(); // kale avlusundaki figürleri tazele
   const wrap=document.getElementById('troops-wrap');
   const capLbl=document.getElementById('troop-cap-lbl');
   if(!wrap) return;
-  pruneCapturedTroops(); // süresi dolanları temizle
   const cap=troopCap(), cnt=troopCount();
   if(capLbl) capLbl.textContent=`${cnt}/${cap}`;
   let html='';
@@ -6999,38 +7062,33 @@ function renderTroops(){
       ${capCards}
     </div>`;
   }
-  // Mevcut birlikler — masaüstünde kart ızgarası (4'lü sıra)
+  // Mevcut birlikler — kart ızgarası; karta dokununca detay/donatma ekranı açılır
   if(cnt>0){
     const troopCards = (G.companions||[]).map(c=>{
       const t=TROOP_TYPES[c.type]||{name:c.type,icon:'❓',desc:''};
       const dmg=troopAttackDmg(c);
+      const def=troopDefOf(c);
+      const lv=troopLevel(c);
       const equipChips=TROOP_EQ_SLOTS.map(k=>{
         const it=c.equip?.[k]; if(!it) return '';
         const col=k==='weapon'
           ?{bg:'#2a1e08',bd:'#7a5a18',fg:'#d4a843'}
           :{bg:'#0a1e28',bd:'#2a5a6a',fg:'#6adfff'};
-        return `<span style="font-size:11px;padding:2px 6px;border-radius:3px;background:${col.bg};border:1px solid ${col.bd};color:${col.fg};">${it.icon} ${it.name}${it.enhPlus>0?' +'+it.enhPlus:''}</span>`;
+        return `<span style="font-size:10px;padding:2px 5px;border-radius:3px;background:${col.bg};border:1px solid ${col.bd};color:${col.fg};">${it.icon} ${it.name}${it.enhPlus>0?' +'+it.enhPlus:''}</span>`;
       }).filter(Boolean).join(' ');
-      return `<div class="troop-card">
-        <div class="troop-card-icon">${troopIconHtml(c.type,t.icon,84)}</div>
-        <div style="font-family:var(--font-head);font-size:16px;color:var(--perg);">${t.name}</div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span style="font-family:var(--font-head);font-size:13px;color:var(--gold);">Sv.${troopLevel(c)}</span>
-          ${dmg>0?`<span style="font-family:var(--font-head);font-size:13px;color:#f08080;">⚔ ${dmg}</span>`:''}
+      const suvariReady = c.type==='piyade' && lv>=SUVARI_MIN_LEVEL;
+      return `<div class="troop-card" onclick="openTroopModal('${c.tid}')" title="${t.name} — detay ve donatma">
+        <div class="troop-card-icon">${troopArtHtml(c.type,t.icon)}</div>
+        <div style="font-family:var(--font-head);font-size:15px;color:var(--perg);">${t.name}</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;">
+          <span style="font-family:var(--font-head);font-size:13px;color:var(--gold);">Sv.${lv}</span>
+          ${dmg>0?`<span style="font-family:var(--font-head);font-size:13px;color:#f08080;">⚔ ${dmg}</span>`:'<span style="font-size:11px;color:#f0a050;">silahsız</span>'}
+          ${def>0?`<span style="font-family:var(--font-head);font-size:13px;color:#6adfff;">🛡 ${def}</span>`:''}
         </div>
-        <div style="font-size:12px;color:var(--ink3);line-height:1.4;">${t.desc}</div>
-        ${equipChips?`<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:2px;">${equipChips}</div>`:''}
-        ${c.type==='piyade'&&troopLevel(c)>=SUVARI_MIN_LEVEL?(()=>{
-          const hasHorse=(G.animals?.at||0)>=1;
-          return `<button class="btn btn-xs" style="width:100%;margin-top:4px;${hasHorse?'background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;':'opacity:.55;'}"
-            onclick="promoteToSuvari('${c.tid}')" title="${hasHorse?'Çiftlikten 1 at kullanılır':'Çiftlikte at yok — Pazardan al'}">
-            🐴 Süvari Yap${hasHorse?'':' (at gerekli)'}
-          </button>`;
-        })():''}
-        ${c.type==='piyade'&&troopLevel(c)<SUVARI_MIN_LEVEL?`<div style="font-size:10px;color:var(--ink3);margin-top:2px;">🐴 Sv.${SUVARI_MIN_LEVEL}'te süvari olabilir (şu an Sv.${troopLevel(c)})</div>`:''}
-        <div style="display:flex;gap:6px;width:100%;margin-top:auto;padding-top:10px;">
-          <button class="btn btn-xs" style="flex:1;" onclick="openEquipTroopModal('${c.tid}')">⚔ Donat</button>
-          <button class="btn btn-xs btn-ghost" style="flex:1;" onclick="dismissTroop('${c.tid}')">Azat</button>
+        ${suvariReady?`<div style="font-size:10px;color:#7aaa5a;">🐴 Süvari olabilir</div>`:''}
+        ${equipChips?`<div style="display:flex;gap:3px;flex-wrap:wrap;justify-content:center;">${equipChips}</div>`:''}
+        <div style="width:100%;margin-top:auto;padding-top:8px;">
+          <button class="btn btn-xs" style="width:100%;" onclick="event.stopPropagation();openTroopModal('${c.tid}')">⚔ Donat & Detay</button>
         </div>
       </div>`;
     }).join('');
@@ -7067,10 +7125,6 @@ function renderTroops(){
   </div>`;
   wrap.innerHTML=html;
 }
-function changeTax(d){G.folk.tax=Math.max(0,Math.min(40,G.folk.tax+d));G.folk.happiness=Math.max(0,Math.min(100,G.folk.happiness+(d>0?-8:8)));toast('Vergi: %'+G.folk.tax);renderHalk();}
-function festival(){if(G.gold<40){toast('Yeterli altın yok!');return;}G.gold-=40;G.folk.happiness=Math.min(100,G.folk.happiness+15);gainXP(15);toast('Şenlik düzenlendi! +15 mutluluk');if(G.folk.happiness>=60)trackQuest('happiness60');updateHUD();renderHalk();}
-function feedPeople(){if(G.food<30){toast('Yeterli yiyecek yok!');return;}G.food-=30;G.folk.happiness=Math.min(100,G.folk.happiness+12);gainXP(10);toast('Yiyecek dağıtıldı! +12 mutluluk');if(G.folk.happiness>=60)trackQuest('happiness60');updateHUD();renderHalk();}
-function folkChoice(id,ci){const ev=G.folkEvents.find(e=>e.id===id);if(!ev||ev.done)return;ev.choices[ci].fn();ev.done=true;gainXP(15);toast('Karar verildi!');updateHUD();renderHalk();}
 
 /* ── HARİTA ── */
 function renderHarita(){
@@ -13186,7 +13240,7 @@ function renderProfile(t){
       <div class="sec">SAVAŞ</div>
       <div class="stat-grid2"><div class="stat2"><div class="stat2-val">${G.arenaWins}</div><div class="stat2-lbl">Galibiyet</div></div><div class="stat2"><div class="stat2-val">${G.arenaLosses}</div><div class="stat2-lbl">Mağlubiyet</div></div><div class="stat2"><div class="stat2-val">${G.arenaWins+G.arenaLosses>0?Math.round(G.arenaWins/(G.arenaWins+G.arenaLosses)*100):0}%</div><div class="stat2-lbl">Oran</div></div><div class="stat2"><div class="stat2-val">${G.arenaScore}</div><div class="stat2-lbl">Arena Puanı</div></div></div>
       <div class="sec">EKONOMİ</div>
-      <div class="stat-grid2"><div class="stat2"><div class="stat2-val">${Math.floor(G.gold)}</div><div class="stat2-lbl">Güncel Altın</div></div><div class="stat2"><div class="stat2-val">${G.folk.population}</div><div class="stat2-lbl">Nüfus</div></div><div class="stat2"><div class="stat2-val">${G.folk.happiness}%</div><div class="stat2-lbl">Halk Mutluluk</div></div><div class="stat2"><div class="stat2-val">${G.folk.tax}%</div><div class="stat2-lbl">Vergi</div></div></div>`;
+      <div class="stat-grid2"><div class="stat2"><div class="stat2-val">${Math.floor(G.gold)}</div><div class="stat2-lbl">Güncel Altın</div></div><div class="stat2"><div class="stat2-val">${Math.floor(G.food)}</div><div class="stat2-lbl">Yiyecek</div></div><div class="stat2"><div class="stat2-val">Sv.${G.castle?.market||0}</div><div class="stat2-lbl">Pazar</div></div><div class="stat2"><div class="stat2-val">${invCount()}/${invCap()}</div><div class="stat2-lbl">Envanter</div></div></div>`;
   } else if(t==='ach'){
     checkAchievements(); // canlı değerlerden (seviye, zafer) yeni tamamlananları yakala
     const rows=ACHIEVEMENTS.map(a=>{const c=Math.min(a.cur(),a.max);return {...a,curVal:c,isDone:c>=a.max};});
@@ -13326,11 +13380,7 @@ async function sbCreateProfile(username) {
   });
   if(castleRes.error) console.error('Kale hatası:', castleRes.error);
 
-  // Halk
-  await supa.from('folk').insert({
-    profile_id: currentUser.id,
-    population: 100, happiness: 68, tax: 10
-  });
+  // (Halk sistemi kaldırıldı — `folk` tablosu artık yazılmıyor/okunmuyor)
   // Başlangıç keşfedilen hücreler
   const cells = [21,22,27,28,14,15,20].map(i => ({ profile_id: currentUser.id, cell_index: i }));
   await supa.from('explored_cells').insert(cells);
@@ -13389,10 +13439,6 @@ async function sbLoadProfile() {
   // Kale
   const { data: c } = await supa.from('castles').select('*').eq('profile_id', currentUser.id).single();
   if (c) G.castle = { hp:c.hp, maxhp:c.max_hp, def:c.defense, atk:c.attack, morale:G.morale, walls:c.walls, towers:c.towers, barracks:c.barracks, farm:c.farm, market:c.market };
-
-  // Halk
-  const { data: folk } = await supa.from('folk').select('*').eq('profile_id', currentUser.id).single();
-  if (folk) G.folk = { population: folk.population, happiness: folk.happiness, tax: folk.tax };
 
   // Keşfedilen hücreler — önce tablo, boşsa profiles.explored_json yedeği
   const { data: cells } = await supa.from('explored_cells').select('cell_index').eq('profile_id', currentUser.id);
@@ -13773,13 +13819,6 @@ async function _sbSaveNow() {
     }).eq('profile_id', currentUser.id);
     if (e2) console.error('sbSave castles hatası:', e2);
 
-    const { error: e3 } = await supa.from('folk').update({
-      population: G.folk.population,
-      happiness:  G.folk.happiness,
-      tax:        G.folk.tax,
-    }).eq('profile_id', currentUser.id);
-    if (e3) console.error('sbSave folk hatası:', e3);
-
     const existing = await supa.from('explored_cells').select('cell_index').eq('profile_id', currentUser.id);
     const existingSet = new Set((existing.data||[]).map(c=>c.cell_index));
     const newCells = [...G.explored].filter(i=>!existingSet.has(i)).map(i=>({ profile_id: currentUser.id, cell_index: i }));
@@ -13847,7 +13886,7 @@ async function doLogin() {
     document.getElementById('p-game').classList.add('active');
     document.getElementById('bottom-nav').style.display='flex';document.getElementById('gchat-fab').style.display='flex';
     updateHUD();
-    renderGame('karakter');renderGame('kale');renderGame('gelistirme');renderGame('halk');renderGame('harita');renderGame('arena');renderGame('zindan');
+    renderGame('karakter');renderGame('kale');renderGame('gelistirme');renderGame('harita');renderGame('arena');renderGame('zindan');
     renderQuest(G.questTab);renderMarket();renderGuild(G.guildTab);renderProd(G.prodTab);renderProfile(G.profileTab);
     updateInvStrip();
     initSaleWatcher();
@@ -14354,13 +14393,12 @@ const nd=document.getElementById('notif-dot');if(nd) nd.style.display='block';
       document.getElementById('bottom-nav').style.display='flex';document.getElementById('gchat-fab').style.display='flex';
       questLoad();
       updateHUD();
-      renderGame('karakter');renderGame('kale');renderGame('gelistirme');renderGame('halk');renderGame('harita');renderGame('arena');renderGame('zindan');
+      renderGame('karakter');renderGame('kale');renderGame('gelistirme');renderGame('harita');renderGame('arena');renderGame('zindan');
       renderQuest(G.questTab);renderMarket();renderGuild(G.guildTab);renderProd(G.prodTab);renderProfile(G.profileTab);
       updateInvStrip();
       if(G.gold>=100) trackQuest('goldReached100');
       // Zaten bir loncadaysa "loncaya katıl" görevini tamamla (geçmiş üyeler için)
       if(G.guildId) trackQuest('joinGuild');
-      if(G.folk.happiness>=60) trackQuest('happiness60');
       initSaleWatcher();
       toast(`Hoş geldin, ${G.heroName}! ☁`);
       return;
