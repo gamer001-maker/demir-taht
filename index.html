@@ -2250,9 +2250,9 @@ html,body{
       <button class="btn btn-sm" onclick="toast('Satış özelliği yakında!')">+ Sat</button>
     </div>
     <div style="display:flex;justify-content:center;gap:6px;background:var(--panel2);border-bottom:1px solid var(--border);padding:7px 10px;flex-shrink:0;">
-      <div class="src-btn active" id="src-all" onclick="setSrc('all')">🏪 Tümü</div>
-      <div class="src-btn" id="src-player" onclick="setSrc('player')">👤 Oyuncu</div>
-      <div class="src-btn" id="src-npc" onclick="setSrc('npc')">🤖 NPC</div>
+      <div class="src-btn active" id="src-all" onclick="setSrc('all')">Tümü</div>
+      <div class="src-btn" id="src-player" onclick="setSrc('player')">Oyuncu</div>
+      <div class="src-btn" id="src-npc" onclick="setSrc('npc')">Tüccar</div>
     </div>
     <div style="display:flex;overflow-x:auto;background:var(--panel2);border-bottom:1px solid var(--border);padding:0 4px;flex-shrink:0;scrollbar-width:none;">
       <div class="cat-tab active" id="cat-all"         onclick="setCat('all')"         style="flex-shrink:0;padding:9px 12px;font-family:var(--font-head);font-size:12px;color:var(--gold2);cursor:pointer;border-bottom:2px solid var(--gold2);white-space:nowrap;">⚡ Tümü</div>
@@ -4128,6 +4128,26 @@ const ARMOR_TEMPLATES={
 
 /* Şablondan rastgele stat üretir — her edinimde çağrılır */
 /* Şablondan üretilen eşyalar için açıklama — pazar kataloğundan çekilir */
+/* Eşya görselini her kaynaktan çözer: img → şablon → pazar kataloğu → emoji */
+function resolveItemImg(item){
+  if(!item) return null;
+  if(item.img) return item.img;
+  const tid=item.tplId;
+  if(tid && WEAPON_TEMPLATES[tid]?.img) return WEAPON_TEMPLATES[tid].img;
+  const m=MARKET_ITEMS.find(x=>(tid&&x.tplId===tid)||x.name===item.name);
+  if(m?.img) return m.img;
+  if(ITEM_IMGS[item.key||item.name]) return ITEM_IMGS[item.key||item.name];
+  return null;
+}
+/* Standart görsel etiketi — bulunamazsa emoji'ye düşer */
+function itemImgTag(item, px, extraStyle=''){
+  const src=resolveItemImg(item);
+  const emojiPx=Math.round(px*0.55);
+  return src
+    ? `<img src="${IMG_BASE}${src}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" style="width:${px}px;height:${px}px;object-fit:contain;${extraStyle}"/><span style="display:none;font-size:${emojiPx}px;">${item.icon||'📦'}</span>`
+    : `<div style="font-size:${emojiPx}px;${extraStyle}">${item.icon||'📦'}</div>`;
+}
+
 function tplDesc(tplId, tpl){
   if(!tplId) return tpl?.desc||'';
   const m=MARKET_ITEMS.find(x=>x.tplId===tplId&&x.desc);
@@ -5168,7 +5188,7 @@ function bulkSellConfirm(){
       <div style="font-size:42px;margin-bottom:8px;">🏪</div>
       <div style="font-family:var(--font-head);font-size:14px;color:var(--gold2);">${items.length} eşya satılacak</div>
       <div style="margin-top:12px;font-size:15px;color:var(--gold2);font-family:var(--font-head);">Toplam: ${total.toLocaleString('tr-TR')}🪙</div>
-      <div style="font-size:9px;color:var(--ink3);margin-top:3px;">NPC, piyasa değerinin %40'ını öder</div>
+      <div style="font-size:9px;color:var(--ink3);margin-top:3px;">Tüccar, piyasa değerinin %40'ını öder</div>
     </div>
     <button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;font-size:14px;" onclick="bulkSellConfirmed()">✅ Sat (+${total.toLocaleString('tr-TR')}🪙)</button>
     <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal()">Vazgeç</button>`);
@@ -5389,13 +5409,13 @@ function renderKarakter(){
   const invCountEl=document.getElementById('inv-count');
   const cap=invCap();
   if(invCountEl) invCountEl.textContent=`${G.inventory.length}/${cap}`;
-  const INV_FILTERS=[{k:'all',lbl:'Tümü'},{k:'weapon',lbl:'⚔ Silah'},{k:'armor',lbl:'🛡 Zırh'},{k:'consumable',lbl:'🧪 İksir'},{k:'other',lbl:'📦 Diğer'}];
+  const INV_FILTERS=[{k:'all',lbl:'Tümü'},{k:'weapon',lbl:'Silah'},{k:'armor',lbl:'Zırh'},{k:'consumable',lbl:'İksir'},{k:'other',lbl:'Diğer'}];
   const invTb=document.getElementById('inv-toolbar');
   if(invTb) invTb.innerHTML=`
     <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:6px 0 8px;">
       ${INV_FILTERS.map(f=>`<button onclick="setInvFilter('${f.k}')" style="padding:3px 9px;border-radius:4px;border:1px solid ${invFilter===f.k?'var(--gold)':'var(--border2)'};background:${invFilter===f.k?'#2a1e08':'var(--panel)'};color:${invFilter===f.k?'var(--gold2)':'var(--ink3)'};font-family:var(--font-head);font-size:clamp(8px,.9vw,11px);cursor:pointer;">${f.lbl}</button>`).join('')}
-      <button onclick="toggleBulkMode('trash')" title="Toplu çöpe at" style="padding:3px 9px;border-radius:4px;border:1px solid ${bulkMode==='trash'?'#c04a4a':'var(--border2)'};background:${bulkMode==='trash'?'#3a1414':'var(--panel)'};color:${bulkMode==='trash'?'#f08080':'var(--ink3)'};font-family:var(--font-head);font-size:clamp(8px,.9vw,11px);cursor:pointer;white-space:nowrap;">🗑 Çöpe At</button>
-      <button onclick="toggleBulkMode('sell')" title="Toplu NPC'ye sat" style="padding:3px 9px;border-radius:4px;border:1px solid ${bulkMode==='sell'?'var(--g-green)':'var(--border2)'};background:${bulkMode==='sell'?'#122a10':'var(--panel)'};color:${bulkMode==='sell'?'#7aaa5a':'var(--ink3)'};font-family:var(--font-head);font-size:clamp(8px,.9vw,11px);cursor:pointer;white-space:nowrap;">🏪 NPC'ye Sat</button>
+      <button onclick="toggleBulkMode('trash')" title="Toplu çöpe at" style="padding:3px 9px;border-radius:4px;border:1px solid ${bulkMode==='trash'?'#c04a4a':'var(--border2)'};background:${bulkMode==='trash'?'#3a1414':'var(--panel)'};color:${bulkMode==='trash'?'#f08080':'var(--ink3)'};font-family:var(--font-head);font-size:clamp(8px,.9vw,11px);cursor:pointer;white-space:nowrap;">Çöpe At</button>
+      <button onclick="toggleBulkMode('sell')" title="Toplu Tüccar'a sat" style="padding:3px 9px;border-radius:4px;border:1px solid ${bulkMode==='sell'?'var(--g-green)':'var(--border2)'};background:${bulkMode==='sell'?'#122a10':'var(--panel)'};color:${bulkMode==='sell'?'#7aaa5a':'var(--ink3)'};font-family:var(--font-head);font-size:clamp(8px,.9vw,11px);cursor:pointer;white-space:nowrap;">Tüccar'a Sat</button>
       <select onchange="setInvSort(this.value)" style="margin-left:auto;background:var(--panel);border:1px solid var(--border);color:var(--perg2);font-family:var(--font-head);font-size:clamp(8px,.9vw,11px);padding:3px 6px;border-radius:4px;outline:none;">
         <option value="default" ${invSort==='default'?'selected':''}>Sırala</option>
         <option value="grade" ${invSort==='grade'?'selected':''}>Nadirlik</option>
@@ -5412,7 +5432,7 @@ function renderKarakter(){
       <button class="btn" style="padding:4px 10px;font-size:10px;${bulkMode==='trash'?'background:linear-gradient(180deg,#3a1414,#220a0a);border-color:#c04a4a;color:#f08080;':'background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;'}"
         ${bulkSelected.size===0?'disabled':''}
         onclick="${bulkMode==='trash'?'bulkTrashConfirm()':'bulkSellConfirm()'}">
-        ${bulkMode==='trash'?'🗑 Seçilenleri Çöpe At':"🏪 Seçilenleri Sat"}
+        ${bulkMode==='trash'?'Seçilenleri Çöpe At':"Seçilenleri Sat"}
       </button>
     </div>`:''}`;
   const INV_W_TYPES=['Kılıç','Asa','Hançer','Yay','Bıçak','Sopa'];
@@ -5474,12 +5494,14 @@ function openInvModal(itemId, eqSlotKey=null){
     // Equipped slota tıklandı — sadece çıkar seçeneği
     const eq=G.equipped[eqSlotKey];
     if(!eq){html=`<div style="text-align:center;color:var(--ink3);padding:16px;">Bu slot boş.</div>`;showGModal(html);return;}
+    const eqImgHtml = itemImgTag(eq, 80, 'margin-bottom:6px;filter:drop-shadow(0 2px 8px #00000080);');
     html=`
       <div style="text-align:center;margin-bottom:12px;">
-        <div style="font-size:36px;margin-bottom:6px;">${eq.icon}</div>
-        <div style="font-family:var(--font-head);font-size:14px;color:var(--gold2);">${eq.name}${eq.enhPlus>0?' +'+eq.enhPlus:''}</div>
+        ${eqImgHtml}
+        <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);">${eq.name}${eq.enhPlus>0?` <span style="color:var(--gold);">+${eq.enhPlus}</span>`:''}</div>
         <div style="font-size:10px;color:var(--ink3);">${eq.type} · ${rollGradeLabel(eq)||eq.grade}</div>
         <div style="font-size:11px;color:var(--perg2);margin-top:6px;">${formatStats(eq.stats)}</div>
+        ${eq.desc?`<div style="font-size:10px;color:var(--ink3);font-style:italic;margin-top:6px;">${eq.desc}</div>`:''}
       </div>
       <button class="btn" style="width:100%;margin-bottom:8px;" onclick="unequipItem('${eqSlotKey}')">Çıkar → Envantere Al</button>`;
     showGModal(html);return;
@@ -5506,9 +5528,7 @@ function openInvModal(itemId, eqSlotKey=null){
     if(bonus) setHtml=`<div style="margin-top:4px;font-size:10px;color:var(--ink3);font-style:italic;">4×${bonus.label} seti: +${bonus.def} Sav, +${bonus.agi} Çev, +${bonus.wis} Bil</div>`;
   }
   // Görsel
-  const imgHtml = item.img
-    ? `<img src="${IMG_BASE}${item.img}.webp" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="width:80px;height:80px;object-fit:contain;margin-bottom:6px;filter:drop-shadow(0 2px 8px #00000080);"/><span style="display:none;font-size:48px;">${item.icon}</span>`
-    : `<div style="font-size:48px;margin-bottom:6px;">${item.icon}</div>`;
+  const imgHtml = itemImgTag(item, 80, 'margin-bottom:6px;filter:drop-shadow(0 2px 8px #00000080);');
 
   html=`
     <div style="text-align:center;margin-bottom:12px;">
@@ -5525,7 +5545,7 @@ function openInvModal(itemId, eqSlotKey=null){
     ${item.cat==='consumable'||item.type==='İksir'?`<button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#0a2a1a,#051408);border-color:var(--g-green);color:#7aaa5a;" onclick="useConsumable(${item.id})">⚗ Kullan${item.qty&&item.qty>1?' ('+item.qty+' adet)':''}</button>`:''}
     ${item.qty>1?`<button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="openSplitStackModal(${item.id})">✂ Yığını Ayır</button>`:''}
     ${(()=>{const k=stackKeyOf(item);return k&&G.inventory.some(x=>x.id!==item.id&&stackKeyOf(x)===k)?`<button class="btn btn-ghost" style="width:100%;margin-bottom:8px;border-color:var(--gold);color:var(--gold2);" onclick="mergeStacks(${item.id})">🔗 Aynı Türleri Birleştir</button>`:'';})()}
-    <button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:#3a6a18;color:#7aaa5a;" onclick="sellToNPC(${item.id})">🏪 NPC'ye Sat (${getNPCSellPrice(item).toLocaleString('tr-TR')}🪙)</button>
+    <button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:#3a6a18;color:#7aaa5a;" onclick="sellToNPC(${item.id})">Tüccar'a Sat (${getNPCSellPrice(item).toLocaleString('tr-TR')}🪙)</button>
     <button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="openSellModal(${item.id})">🪙 Pazara Sat</button>
     <button class="btn btn-danger" style="width:100%;" onclick="dropItem(${item.id})">🗑 At</button>`;
   showGModal(html);
@@ -5769,18 +5789,20 @@ function sellToNPC(itemId){
   // Onay modalı
   closeGModal();
   showGModal(`
-    <div style="text-align:center;margin-bottom:16px;">
-      <div style="font-size:42px;margin-bottom:8px;">${item.icon}</div>
+      <div style="text-align:center;margin-bottom:16px;">
+      ${item.img
+        ? `<img src="${IMG_BASE}${item.img}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" style="width:72px;height:72px;object-fit:contain;margin-bottom:8px;filter:drop-shadow(0 2px 8px #00000080);"/><span style="display:none;font-size:42px;">${item.icon}</span>`
+        : `<div style="font-size:42px;margin-bottom:8px;">${item.icon}</div>`}
       <div style="font-family:var(--font-head);font-size:14px;color:${col};">${item.name}${plusText}</div>
       <div style="font-size:11px;color:var(--ink3);margin-top:4px;">${item.type}</div>
       <div style="margin-top:12px;font-size:15px;color:var(--gold2);font-family:var(--font-head);">
-        NPC Alış Fiyatı: ${price.toLocaleString('tr-TR')}🪙
+        Tüccar Alış Fiyatı: ${price.toLocaleString('tr-TR')}🪙
       </div>
-      <div style="font-size:9px;color:var(--ink3);margin-top:3px;">NPC, piyasa değerinin %40'ını öder</div>
+      <div style="font-size:9px;color:var(--ink3);margin-top:3px;">Tüccar, piyasa değerinin %40'ını öder</div>
       ${item.enhPlus>0?`<div style="font-size:10px;color:var(--ink3);margin-top:4px;">Geliştirme +${item.enhPlus} dahil</div>`:''}
     </div>
     <button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;font-size:14px;"
-      onclick="confirmSellToNPC(${itemId})">✅ Sat (+${price.toLocaleString('tr-TR')}🪙)</button>
+      onclick="confirmSellToNPC(${itemId})">Sat (+${price.toLocaleString('tr-TR')}🪙)</button>
     <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal();openInvModal(${itemId})">Geri Dön</button>
   `);
 }
@@ -5794,7 +5816,7 @@ function confirmSellToNPC(itemId){
   G.inventory = G.inventory.filter(x=>x.id!==itemId);
   trackAch('market');
   closeGModal();
-  toast(`🏪 ${item.name}${plusText} NPC'ye satıldı! +${price.toLocaleString('tr-TR')}🪙`);
+  toast(`${item.name}${plusText} Tüccar'a satıldı! +${price.toLocaleString('tr-TR')}🪙`);
   updateHUD(); renderKarakter();
   if(currentUser) sbSave();
 }
@@ -9039,7 +9061,7 @@ function renderMaterialMarket(q, sort){
         <div class="item-icon" style="margin-bottom:2px;">${iconContent}</div>
         <div class="item-name" style="font-family:var(--font-head);font-size:20px;line-height:1.3;">${item.name}</div>
         <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">${lvBadge}<span style="font-size:14px;color:var(--ink3);">${item.type}</span></div>
-        <div style="font-size:16px;color:var(--ink3);">🤖 NPC</div>
+        <div style="font-size:16px;color:var(--ink3);">Tüccar</div>
         <div style="font-family:var(--font-head);font-size:22px;color:var(--gold);">${item.price.toLocaleString('tr')}🪙</div>
         <button class="buy-btn-sm" style="width:100%;margin-top:auto;" onclick="event.stopPropagation();buyMarketItem('${item.id}')" ${canBuy?'':'disabled'}>Satın Al</button>
       </div>`;
@@ -9298,7 +9320,7 @@ function renderMarket(){
       <div class="item-name ${gradeCls}" style="font-family:var(--font-head);font-size:20px;line-height:1.3;word-break:break-word;">${item.name}${enhBadge?'&nbsp;'+enhBadge:''}</div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">${lvBadge}${item.type?`<span style="font-size:14px;color:var(--ink3);">${item.type}</span>`:''}</div>
       ${statsP?`<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">${statsP}</div>`:''}
-      <div style="font-size:16px;color:var(--ink3);">${isBoss?'⚔ Boss':item.seller==='npc'?'🤖 NPC':'👤 '+item.sellerName}${isOwnListing?' <span style="color:var(--gold);">(Sen)</span>':''}</div>
+      <div style="font-size:16px;color:var(--ink3);">${isBoss?'Boss':item.seller==='npc'?'Tüccar':item.sellerName}${isOwnListing?' <span style="color:var(--gold);">(Sen)</span>':''}</div>
       <div style="font-family:var(--font-head);font-size:22px;margin-top:auto;color:${isBoss?'var(--g-orange)':'var(--gold)'};">${isBoss?'Boss Drop':item.price.toLocaleString('tr')+'🪙'}</div>
       ${!isBoss&&!isOwnListing?`<button class="buy-btn-sm" style="width:100%;margin-top:4px;" onclick="event.stopPropagation();${clickFn}" ${!canBuy?'disabled':''}>${item.cat==='premium'&&item.premiumKey!=='stall'?'✨ Etkinleştir':'Satın Al'}</button>`:''}
       ${isOwnListing?`<button class="buy-btn-sm" style="width:100%;margin-top:4px;background:linear-gradient(180deg,#3a1414,#220a0a);border-color:#c04a4a;color:#f08080;" onclick="event.stopPropagation();withdrawListing('${item.id}')">🗑 Satıştan Kaldır</button>`:''}
@@ -11977,7 +11999,7 @@ async function startFarmCrop(cropId, plotIdx){
     const seedName = (cropId==='bugday'||cropId==='arpa')
       ? ITEM_LABELS[cropId]
       : (ITEM_LABELS[seedKey]||cropId+' tohumu');
-    toast(`${seedName} tohumu yok! NPC pazarından satın al.`);
+    toast(`${seedName} tohumu yok! Pazardan satın al.`);
     return;
   }
 
@@ -12240,7 +12262,7 @@ function sellAnimalNpc(key,price){
   if((animals[key]||0)<1){toast('Satacak hayvanın yok!');return;}
   const name=ANIMAL_DEFS[key]?.name||key;
   animals[key]--;G.gold+=price;
-  toast(`${name} NPC'ye ${price}🪙'a satıldı!`);
+  toast(`${name} Tüccar'a ${price}🪙'a satıldı!`);
   updateHUD();renderRanch();if(currentUser) sbSave();
 }
 
@@ -12462,7 +12484,7 @@ function showDepoPopup(key){
       <div class="depo-pop-lbl">Adet</div>
       <input class="depo-pop-qty" id="depo-pop-qty" type="number" min="1" max="${amt}" value="1">
       <hr class="depo-pop-sep">
-      <div class="depo-pop-lbl" style="margin-bottom:6px;">NPC'ye Sat <span style="color:var(--gold)">50🪙/adet</span></div>
+      <div class="depo-pop-lbl" style="margin-bottom:6px;">Tüccar'a Sat <span style="color:var(--gold)">50🪙/adet</span></div>
       <button class="btn btn-sm" style="width:100%;margin-bottom:10px;" onclick="npcSellDepo('${key}')">Sat</button>
       <hr class="depo-pop-sep">
       <div class="depo-pop-lbl">Pazar fiyatı (🪙/adet)</div>
