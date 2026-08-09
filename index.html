@@ -1437,6 +1437,42 @@ html,body{
 }
 @media(max-width:900px){
   .char-sheet{grid-template-columns:1fr;}
+  .char-left-col,.char-right-col{display:contents;}
+  .char-top{order:1;}
+  #cs-kusanilmis{order:2;}
+  #char-tabs-bar{display:grid;order:3;}
+  #cs-envanter,#cs-yetenekler,#cs-nitelikler,#cs-ozellikler{order:4;}
+  .cs-panel{display:none;}
+  .cs-panel.cs-active{display:block;}
+}
+
+/* ── Karakter sayfası mobil sekme çubuğu ── */
+.char-tabs-bar{
+  display:none; /* sadece mobilde açılır (yukarıdaki media query) */
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+}
+.char-tab-btn{
+  font-family:var(--font-head);
+  font-size:10px;
+  line-height:1.5;
+  letter-spacing:.3px;
+  color:var(--ink3);
+  background:linear-gradient(180deg,#2e2010,#1e1608);
+  border:1px solid var(--border2);
+  border-radius:8px;
+  padding:8px 2px;
+  cursor:pointer;
+  text-align:center;
+  transition:all .15s;
+  box-shadow:inset 0 1px 0 #ffffff08,0 2px 6px #00000040;
+}
+.char-tab-btn:active{transform:scale(.96);}
+.char-tab-btn.cs-active{
+  color:var(--gold2);
+  border-color:var(--gold);
+  background:linear-gradient(180deg,#3a2a18,#241a0c);
+  box-shadow:inset 0 1px 0 #ffffff15,0 0 8px #b08d5740;
 }
 
 /* Sol sütun: Avatar + kimlik + nitelikler + efektif statlar */
@@ -2076,8 +2112,16 @@ html,body{
               </div>
             </div>
 
+            <!-- Mobil sekme çubuğu: Envanter / Yetenekler / Nitelikler / Özellikler -->
+            <div class="char-tabs-bar" id="char-tabs-bar">
+              <button type="button" class="char-tab-btn" data-cs="envanter" onclick="csShow('envanter')">📦<br>Envanter</button>
+              <button type="button" class="char-tab-btn" data-cs="yetenekler" onclick="csShow('yetenekler')">🛠<br>Yetenekler</button>
+              <button type="button" class="char-tab-btn" data-cs="nitelikler" onclick="csShow('nitelikler')">⚜<br>Nitelikler</button>
+              <button type="button" class="char-tab-btn" data-cs="ozellikler" onclick="csShow('ozellikler')">⚡<br>Özellikler</button>
+            </div>
+
             <!-- Nitelikler -->
-            <div class="parchment-section">
+            <div class="parchment-section cs-panel" id="cs-nitelikler">
               <div class="parch-header">
                 <span class="parch-title">⚜ KAHRAMAN NİTELİKLERİ</span>
                 <span class="parch-sp">Serbest Puan: <strong id="g-sp">0</strong></span>
@@ -2086,7 +2130,7 @@ html,body{
             </div>
 
             <!-- Efektif Savaş Statları -->
-            <div class="parchment-section">
+            <div class="parchment-section cs-panel" id="cs-ozellikler">
               <div class="parch-header">
                 <span class="parch-title">⚡ KARAKTER ÖZELLİKLERİ</span>
               </div>
@@ -2095,7 +2139,7 @@ html,body{
             </div>
 
             <!-- Yetenekler -->
-            <div class="parchment-section">
+            <div class="parchment-section cs-panel" id="cs-yetenekler">
               <div class="parch-header">
                 <span class="parch-title">🛠 YETENEKLER</span>
                 <span class="parch-sp">En fazla 100</span>
@@ -2108,14 +2152,18 @@ html,body{
           <!-- ══ SAĞ SÜTUN ══ -->
           <div class="char-right-col">
 
-            <!-- Kuşanılmış + Envanter -->
-            <div class="inventory-section">
+            <!-- Kuşanılmış (her zaman görünür) -->
+            <div class="inventory-section" id="cs-kusanilmis">
               <div class="parch-header">
                 <span class="parch-title">⚔ KUŞANILMIŞ</span>
               </div>
               <div class="eq-slots-row" id="eq-slots"></div>
               <div id="set-bonus-display"></div>
-              <div class="parch-header" style="margin-top:14px;">
+            </div>
+
+            <!-- Envanter -->
+            <div class="inventory-section cs-panel" id="cs-envanter">
+              <div class="parch-header">
                 <span class="parch-title">📦 ENVANTER</span>
                 <span class="parch-sp" id="inv-count">0/50</span>
               </div>
@@ -5146,6 +5194,15 @@ setInterval(()=>{
 /* ══════════════════════════════════════
    GAME TABS
 ══════════════════════════════════════ */
+/* Karakter sayfası mobil sekmeleri: envanter / yetenekler / nitelikler / özellikler */
+function csShow(name){
+  document.querySelectorAll('.cs-panel').forEach(el=>el.classList.remove('cs-active'));
+  document.querySelectorAll('.char-tab-btn').forEach(el=>el.classList.remove('cs-active'));
+  const panel=document.getElementById('cs-'+name);
+  const btn=document.querySelector('.char-tab-btn[data-cs="'+name+'"]');
+  if(panel) panel.classList.add('cs-active');
+  if(btn) btn.classList.add('cs-active');
+}
 function ggo(s){
   document.querySelectorAll('[id^="gs-"]').forEach(el=>{el.style.display='none';});
   document.querySelectorAll('[id^="gt-"]').forEach(el=>el.classList.remove('active'));
@@ -5289,6 +5346,7 @@ function dropOnEqSlot(ev,slotKey){
 
 /* ── KARAKTER ── */
 function renderKarakter(){
+  if(!document.querySelector('.cs-panel.cs-active')) csShow('nitelikler');
   const cls=CLASSES.find(c=>c.id===G.classId)||CLASSES[0];
 
   // Avatar
