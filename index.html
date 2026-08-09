@@ -3378,7 +3378,21 @@ function dismissTroop(tid){
 
 // Üretim süresi — hızlandırıcı aktifse %10 kısa
 function effectiveProdDur(dur){
-  return perkActive('prodSpeedUntil') ? Math.max(1, Math.round(dur*0.9)) : dur;
+  let d = perkActive('prodSpeedUntil') ? dur*0.9 : dur;
+  d *= (1 - ringFx('prodspeed')); // Usta Yüzüğü
+  return Math.max(1, Math.round(d));
+}
+/* Orman Ruhu Yüzüğü — tarla/çiftlik çıktı miktarı çarpanı */
+function ringYieldMult(){ return 1 + ringFx('yield'); }
+
+/* ── PAZAR KOMİSYONU ──
+   Oyuncudan oyuncuya satışlarda %10 kesinti alınır (altın ekonomisine fren).
+   Nehir Ruhu Yüzüğü bunu puan puan düşürür, en az %5'e iner.
+   Oran İLAN AÇILIRKEN sabitlenip satırda saklanır — satıcı çevrimdışıyken
+   sunucu onun yüzüğünü göremez. */
+const MARKET_COMMISSION_BASE=10;
+function marketCommissionPct(){
+  return Math.max(5, MARKET_COMMISSION_BASE - ringFx('commission')*100);
 }
 
 /* Premium öğe etkisini uygula. (Fiyat zaten buyItem'da düşüldü.) */
@@ -3818,6 +3832,15 @@ function finishGather(idx, type){
     G.gold+=amt;
     toast(`💰 Kasabadan ${amt}🪙 topladın!`);
   } else if(type==='loot'){
+    // %12 ihtimalle yüzük çıkar (İzcilik ganimeti artırdıkça yüzük şansı da yükselir)
+    if(Math.random() < Math.min(0.30, 0.12*scoutLootMult()) && !invFull()){
+      dropRandomRing(['bakiryuzuk','sansyuzugu','nehirruhuyuzugu','arinmayuzugu','atesyuzugu','ustayuzugu'], Math.floor(Math.random()*2), 'Harabe ganimeti');
+      G_MAP[idx].harvested=true;
+      if(currentUser) supa.from('player_maps').upsert({profile_id:currentUser.id,cells:G_MAP},{onConflict:'profile_id'});
+      qAddSkill('izcilik', 0.05);
+      gainXP(15);updateHUD();renderKarakter();renderHarita();
+      return;
+    }
     const equipPool=MARKET_ITEMS.filter(x=>['weapon','armor','accessory'].includes(x.cat)&&['gray','green','blue'].includes(x.grade)&&x.seller!=='boss');
     if(equipPool.length&&!invFull()){
       const base=equipPool[Math.floor(Math.random()*equipPool.length)];
@@ -3945,10 +3968,11 @@ async function caveAction(action){
   // Oyuncu saldırı
   let playerDmg=0;
   if(action==='attack'){
-    playerDmg=Math.max(1,Math.floor(eff.physDmg*(0.85+Math.random()*0.3)));
+    const rage=ringRageMult(G.stats.hp, eff.maxhp);
+    playerDmg=Math.max(1,Math.floor(eff.physDmg*(0.85+Math.random()*0.3)*rage));
     const isCrit=caveState.guaranteedCrit||Math.random()<(eff.critChance||0.05);
     if(isCrit){playerDmg=Math.floor(playerDmg*1.8);log.push({t:`⚔ Kritik! ${playerDmg} hasar verdin!`,c:'#f87171'});}
-    else log.push({t:`⚔ ${playerDmg} hasar verdin.`,c:'#f87171'});
+    else log.push({t:`⚔ ${playerDmg} hasar verdin.${rage>1?` (😡 +%${Math.round((rage-1)*100)})`:''}`,c:'#f87171'});
     caveState.guaranteedCrit=false;
     caveState.enemyHp=Math.max(0,caveState.enemyHp-playerDmg);
   } else if(action==='defend'){
@@ -3963,9 +3987,17 @@ async function caveAction(action){
       log.push({t:'🛡 Savunma pozisyonu aldın. (Bu tur %50 az hasar)',c:'#6a9abf'});
     }
   } else if(action==='magic'){
-    const wisDmg=Math.max(1,Math.floor((eff.wis||5)*4*(0.9+Math.random()*0.2)));
+    const rageM=ringRageMult(G.stats.hp, eff.maxhp);
+    const wisDmg=Math.max(1,Math.floor((eff.wis||5)*4*(0.9+Math.random()*0.2)*rageM));
     caveState.enemyHp=Math.max(0,caveState.enemyHp-wisDmg);
-    log.push({t:`✨ ${wisDmg} büyü hasarı verdin!`,c:'#c084fc'});
+    playerDmg=wisDmg;
+    log.push({t:`✨ ${wisDmg} büyü hasarı verdin!${rageM>1?` (😡 +%${Math.round((rageM-1)*100)})`:''}`,c:'#c084fc'});
+  }
+  // Yüzükler: can çalma + yakma
+  if(playerDmg>0){
+    const r=ringOnHit(caveState, playerDmg, G.stats.hp, eff.maxhp);
+    G.stats.hp=r.hp;
+    r.msgs.forEach(m=>log.push({t:m,c:'#7aaa5a'}));
   }
 
   // Birlikler de saldırır (yalnızca oyuncu saldırdıysa)
@@ -3977,6 +4009,13 @@ async function caveAction(action){
       caveState.enemyHp=Math.max(0,caveState.enemyHp-td);
       log.push({t:`${t.icon} ${t.name} saldırdı: ${td} hasar!`,c:'#7aaa5a'});
     });
+  }
+
+  // Yüzük tur sonu: yakma + arınma
+  {
+    const rt=ringTurnEnd(caveState, caveState.enemyHp, CAVE_ENEMY.hp, G.stats.hp, eff.maxhp);
+    caveState.enemyHp=rt.enemyHp; G.stats.hp=rt.playerHp;
+    rt.msgs.forEach(m=>log.push({t:m,c:'#7aaa5a'}));
   }
 
   // Düşman yenildi mi?
@@ -4287,7 +4326,9 @@ function getRollGrade(item){
 }
 // Nadirlik sadece silah/zırhta (ileride takı ve birliklerde) gösterilir —
 // materyal/hayvan/iksir gibi eşyalar hep "sıradan" olduğundan rozet taşımaz.
-function rarityEligible(item){ return item?.cat==='weapon' || item?.cat==='armor'; }
+/* Nadirlik rozeti/çerçevesi: silah, zırh ve takı (yüzükler) taşır — materyal,
+   iksir, hayvan gibi eşyalar düz görünür. */
+function rarityEligible(item){ return item?.cat==='weapon' || item?.cat==='armor' || item?.cat==='accessory'; }
 function rollGradeLabel(item){
   const g=getRollGrade(item);
   if(g) return ROLL_GRADES[g].label;
@@ -4913,7 +4954,7 @@ const G={
   completedQuests:new Set(),
   dailyCollected:new Set(),
   inventory:[], // max 50 slot — {id, name, icon, type, grade, price, stats, desc, seller:'player', sellerName}
-  equipped:{weapon:null, chest:null, helmet:null, gloves:null, boots:null, ring:null},
+  equipped:{weapon:null, chest:null, helmet:null, gloves:null, boots:null, ring:null, ring2:null},
   farmPlots:[5,6,9,10], // açılmış tarla kareleri (4×4 gridde 0-15) — merkez 2×2 başlangıç
 };
 
@@ -5237,7 +5278,20 @@ const ITEM_SLOT_MAP={
   'Bot':'boots',
   'Yüzük':'ring'
 };
-function slotForItem(item){ return ITEM_SLOT_MAP[item.type]||null; }
+/* Yüzükler iki slota da gidebilir: ilk boş olanı seç, ikisi de doluysa ilkinin
+   üstüne yaz (mevcut davranış). Sürükle-bırakta hedef slot zaten belli olduğu
+   için dropOnEqSlot ayrıca kontrol eder. */
+function slotForItem(item){
+  const base=ITEM_SLOT_MAP[item.type]||null;
+  if(base==='ring') return G.equipped?.ring ? (G.equipped?.ring2 ? 'ring' : 'ring2') : 'ring';
+  return base;
+}
+/* Bir eşya bu slota kuşanılabilir mi? (yüzükler her iki yüzük slotuna da uyar) */
+function slotAccepts(item, slotKey){
+  const base=ITEM_SLOT_MAP[item.type]||null;
+  if(base==='ring') return slotKey==='ring'||slotKey==='ring2';
+  return base===slotKey;
+}
 
 let bulkMode=null; // null | 'trash' | 'sell'
 let bulkSelected=new Set();
@@ -5340,7 +5394,7 @@ function dropOnEqSlot(ev,slotKey){
   if(!itemId) return;
   const item=G.inventory.find(x=>x.id===itemId);
   if(!item) return;
-  if(slotForItem(item)!==slotKey){ toast('Bu eşya bu slota kuşanılamaz.'); return; }
+  if(!slotAccepts(item, slotKey)){ toast('Bu eşya bu slota kuşanılamaz.'); return; }
   equipItem(itemId, slotKey);
 }
 
@@ -5403,6 +5457,7 @@ function renderKarakter(){
     {key:'gloves',  lbl:'Eldiven',  icon:'🧤'},
     {key:'boots',   lbl:'Bot',      icon:'👢'},
     {key:'ring',    lbl:'Yüzük',    icon:'💍'},
+    {key:'ring2',   lbl:'Yüzük II', icon:'💍'},
   ];
   const equippedHTML=eqSlots.map(s=>{
     const item=G.equipped[s.key];
@@ -5425,7 +5480,7 @@ function renderKarakter(){
       ${item?`<div class="inv-tooltip">
         <div class="tt-name">${item.name}${item.enhPlus>0?` <span style="color:var(--gold);">+${item.enhPlus}</span>`:''}</div>
         <div class="tt-type">${rollGradeLabel(item)?rollGradeLabel(item)+' · ':''}${item.type}${item.reqLv>1?' · Sv.'+item.reqLv:''}</div>
-        <div class="tt-stat">${formatStats(item.stats)}</div>
+        <div class="tt-stat">${statsOrEffect(item)}</div>
         ${item.desc?`<div class="tt-flavor">${item.desc}</div>`:''}
       </div>`:''}
     </div>`;
@@ -5570,7 +5625,7 @@ function renderKarakter(){
       <div class="inv-tooltip">
         <div class="tt-name">${item.name}${item.enhPlus?' <span style="color:var(--gold)">+'+item.enhPlus+'</span>':''}${item.qty&&item.qty>1?' x'+item.qty:''}</div>
         <div class="tt-type">${rollGradeLabel(item)?rollGradeLabel(item)+' · ':''}${item.type}${item.reqLv>1?' · Sv.'+item.reqLv:''}</div>
-        <div class="tt-stat">${formatStats(item.stats)}</div>
+        <div class="tt-stat">${statsOrEffect(item)}</div>
         ${item.desc?`<div class="tt-flavor">${item.desc}</div>`:''}
       </div>
     </div>`;
@@ -5581,6 +5636,20 @@ function formatStats(stats){
   if(!stats||!Object.keys(stats).length) return '—';
   const labels={atk:'Saldırı',def:'Savunma',hp:'Can',mgc:'Büyü',str:'Güç',spd:'Hız',crit:'Kritik',wis:'Bilgelik',acc:'İsabet',luck:'Şans'};
   return Object.entries(stats).map(([k,v])=>`${labels[k]||k}: +${v}`).join(', ');
+}
+/* Yüzükler düz stat taşımaz — güçleri etkilerinden gelir. Envanterde,
+   kuşanma penceresinde ve tooltip'te bu metin gösterilir. */
+function itemEffectText(item){
+  const t=ringTpl(item);
+  if(!t||!t.fx) return ''; // etkisiz yüzük (Bakır) düz statlarını göstermeye devam eder
+  const p=Math.round(ringPct(item)*10)/10;
+  return t.fxTxt(p);
+}
+/* Stat satırı — yüzükte etki metnine düşer */
+function statsOrEffect(item){
+  const fx=itemEffectText(item);
+  if(fx) return fx;
+  return formatStats(item?.stats);
 }
 
 function openInvModal(itemId, eqSlotKey=null){
@@ -5597,7 +5666,7 @@ function openInvModal(itemId, eqSlotKey=null){
         ${eqImgHtml}
         <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);">${eq.name}${eq.enhPlus>0?` <span style="color:var(--gold);">+${eq.enhPlus}</span>`:''}</div>
         <div style="font-size:10px;color:var(--ink3);">${eq.type} · ${rollGradeLabel(eq)||eq.grade}</div>
-        <div style="font-size:11px;color:var(--perg2);margin-top:6px;">${formatStats(eq.stats)}</div>
+        <div style="font-size:11px;color:var(--perg2);margin-top:6px;">${statsOrEffect(eq)}</div>
         ${eq.desc?`<div style="font-size:10px;color:var(--ink3);font-style:italic;margin-top:6px;">${eq.desc}</div>`:''}
       </div>
       <button class="btn" style="width:100%;margin-bottom:8px;" onclick="unequipItem('${eqSlotKey}')">Çıkar → Envantere Al</button>`;
@@ -5632,7 +5701,7 @@ function openInvModal(itemId, eqSlotKey=null){
       ${imgHtml}
       <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);">${item.name}${item.enhPlus>0?` <span style="color:var(--gold);">+${item.enhPlus}</span>`:''}${item.qty&&item.qty>1?` <span style="font-size:11px;color:var(--gold);">x${item.qty}</span>`:''}</div>
       <div style="font-size:10px;color:var(--ink3);margin-bottom:4px;">${(()=>{const g=getRollGrade(item);return g?`<span style="color:${ROLL_GRADES[g].color};font-family:var(--font-head);">${ROLL_GRADES[g].label}</span> · `:'';})()}${item.type}${item.reqLv>1?` · <span style="color:${canEquip?'var(--gold2)':'#c87070'}">Sv.${item.reqLv}</span>`:''}</div>
-      <div style="font-size:12px;color:var(--perg2);margin-bottom:4px;">${formatStats(item.stats)}</div>
+      <div style="font-size:12px;color:var(--perg2);margin-bottom:4px;">${statsOrEffect(item)}</div>
       ${classBonusHtml}
       ${setHtml}
       ${item.desc?`<div style="font-size:10px;color:var(--ink3);font-style:italic;margin-top:6px;">${item.desc}</div>`:''}
@@ -5928,9 +5997,21 @@ function openSellModal(itemId){
       <div style="font-size:10px;color:var(--ink3);">Alış fiyatı: ${item.price}🪙</div>
     </div>
     <div style="font-size:11px;color:var(--ink3);margin-bottom:6px;">Satış fiyatını belirle:</div>
-    <input class="input-field" id="sell-price-inp" type="number" min="1" value="${suggested}" style="margin-bottom:10px;"/>
+    <input class="input-field" id="sell-price-inp" type="number" min="1" value="${suggested}" style="margin-bottom:6px;" oninput="_sellNetPreview()"/>
+    <div id="sell-net-line" style="font-size:11px;color:var(--ink3);margin-bottom:10px;text-align:center;"></div>
     <button class="btn" style="width:100%;" onclick="confirmSellItem(${itemId})">🪙 Pazara Listele</button>`;
   showGModal(html);
+  _sellNetPreview();
+}
+
+/* Satış penceresinde "eline geçecek net tutar" önizlemesi */
+function _sellNetPreview(){
+  const el=document.getElementById('sell-net-line'); if(!el) return;
+  const price=Math.max(1,parseInt(document.getElementById('sell-price-inp')?.value)||1);
+  const pct=marketCommissionPct();
+  const fee=Math.floor(price*pct/100);
+  const discount=MARKET_COMMISSION_BASE-pct;
+  el.innerHTML=`Komisyon %${pct}${discount>0?` <span style="color:#9bd17a;">(💍 −%${discount})</span>`:''} · Eline geçecek: <b style="color:var(--gold);">${(price-fee).toLocaleString('tr')}🪙</b>`;
 }
 
 async function confirmSellItem(itemId){
@@ -5963,17 +6044,19 @@ async function confirmSellItem(itemId){
     item_class_bonus: item.classBonus||null,
     item_enh_plus:    item.enhPlus||0,
     price,
+    commission_pct: marketCommissionPct(), // Nehir Ruhu Yüzüğü indirimi ilan anında sabitlenir
     created_at: new Date().toISOString(),
   };
   let {data:newListing,error}=await supa.from('marketplace').insert(listingPayload).select().single();
   // Yeni kolonlar DB'de henüz yoksa onlarsız tekrar dene (kayıt çökmesin)
-  if(error&&/item_base_stats|item_tpl_id/.test(error.message||'')){
+  if(error&&/item_base_stats|item_tpl_id|commission_pct/.test(error.message||'')){
     delete listingPayload.item_base_stats;
     delete listingPayload.item_tpl_id;
+    delete listingPayload.commission_pct;
     ({data:newListing,error}=await supa.from('marketplace').insert(listingPayload).select().single());
   }
 
-  if(!error&&newListing) _myListings.market.set(newListing.id,{name:sani(item.name),price});
+  if(!error&&newListing) _myListings.market.set(newListing.id,{name:sani(item.name),price,commissionPct:listingPayload.commission_pct??MARKET_COMMISSION_BASE});
 
   if(error){
     // Hata olursa eşyayı geri ver
@@ -6208,6 +6291,129 @@ function upgBld(key,cost){
 /* ══════════════════════════════════════
    GELİŞTİRME SİSTEMİ
 ══════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   YÜZÜKLER
+   Her yüzüğün etkisi + seviyesiyle ölçeklenir:  yüzde = per × (enhPlus+1)
+   → +0'da %0.5, +1'de %1, +9'da %5 (Elementel Ekip'te per=1 → %1/%2/%10)
+   fx anahtarı ringFx() ile okunur; aynı fx'li iki yüzük takılırsa toplanır.
+   Görsel dosya adı = tplId (images/<tplId>.webp)
+══════════════════════════════════════════════════════════════ */
+const RING_TEMPLATES={
+  /* ── SAVAŞ ── */
+  arinmayuzugu:       {name:'Arınma Yüzüğü',        fx:'regen',      per:0.5, grade:'blue',   reqLv:5, tier:'savas',
+    desc:'Her tur azami canının bir kısmını yeniler.',        fxTxt:p=>`Her tur azami canının %${p} kadarı yenilenir`},
+  atesyuzugu:         {name:'Ateş Yüzüğü',           fx:'burn',       per:0.5, grade:'blue',   reqLv:5, tier:'savas',
+    desc:'Vuruşların düşmanı tutuşturabilir.',                fxTxt:p=>`%${p} ihtimalle yakma (5 tur boyunca tur başı %1 can, üst üste binebilir)`},
+  kanyuzugu:          {name:'Kan Yüzüğü',            fx:'lifesteal',  per:0.5, grade:'purple', reqLv:5, tier:'savas',
+    desc:'Verdiğin hasarın bir kısmını cana çevirir.',        fxTxt:p=>`Verdiğin hasarın %${p} kadarı can olarak döner`},
+  necruyuzugu:        {name:'Necro Yüzüğü',          fx:'curse',      per:0.5, grade:'purple', reqLv:5, tier:'savas',
+    desc:'Düşmanı lanetler, aldığı iyileşmeyi kırar.',        fxTxt:p=>`Düşmanın iyileşmesi %${p} azalır`},
+  ofkekristaliyuzugu: {name:'Öfke Kristali',         fx:'rage',       per:0.5, grade:'orange', reqLv:5, tier:'savas',
+    desc:'Yaralandıkça öfken hasara dönüşür.',                fxTxt:p=>`Eksik her %10 can için +%${p} hasar`},
+  elementalekipyuzugu:{name:'Elementel Ekip Yüzüğü', fx:'guildboss',  per:1.0, grade:'orange', reqLv:5, tier:'savas',
+    desc:'Lonca kardeşlerinle avlanırken güç verir.',         fxTxt:p=>`Lonca boss savaşında +%${p} güç`},
+  /* ── GELİŞİM ── */
+  nehirruhuyuzugu:    {name:'Nehir Ruhu Yüzüğü',     fx:'commission', per:0.5, grade:'blue',   reqLv:5, tier:'gelisim',
+    desc:'Tüccarlar sana daha az komisyon keser.',            fxTxt:p=>`Pazar komisyonu %${p} puan azalır`},
+  ormanruhuyuzugu:    {name:'Orman Ruhu Yüzüğü',     fx:'yield',      per:0.5, grade:'purple', reqLv:5, tier:'gelisim',
+    desc:'Toprak ve hayvan sana daha cömert davranır.',       fxTxt:p=>`Tarla ve çiftlik üretim miktarı +%${p}`},
+  ustayuzugu:         {name:'Usta Yüzüğü',           fx:'prodspeed',  per:0.5, grade:'purple', reqLv:5, tier:'gelisim',
+    desc:'Bütün atölyelerin daha hızlı çalışır.',             fxTxt:p=>`Tarla, Çiftlik, Değirmen ve Aşevi süresi -%${p}`},
+  sansyuzugu:         {name:'Şans Yüzüğü',           fx:'enhance',    per:0.5, grade:'blue',   reqLv:5, tier:'gelisim',
+    desc:'Örsün başında talih senden yana.',                  fxTxt:p=>`Eşya geliştirme başarı şansı +%${p}`},
+  bakiryuzuk:         {name:'Bakır Yüzük',           fx:null,         per:0,   grade:'gray',   reqLv:1, tier:'gelisim',
+    desc:'Sıradan bakır yüzük.',                              fxTxt:()=>'Özel bir etkisi yok'},
+};
+const RING_SLOTS=['ring','ring2'];
+const RING2_MIN_LEVEL=1; // ikinci yüzük slotu için seviye şartı (şimdilik yok)
+
+/* Bir eşyanın yüzük şablonu (yoksa null) */
+function ringTpl(item){ return item ? (RING_TEMPLATES[item.tplId]||RING_TEMPLATES[item.img]||null) : null; }
+/* Yüzüğün o anki yüzde değeri (+ seviyesine göre) */
+function ringPct(item){ const t=ringTpl(item); return t&&t.fx ? t.per*((item.enhPlus||0)+1) : 0; }
+/* Kuşanılı yüzüklerden bu etkinin toplam ORANI (0.05 = %5) */
+function ringFx(fxKey){
+  let total=0;
+  RING_SLOTS.forEach(s=>{
+    const it=G.equipped?.[s];
+    const t=ringTpl(it);
+    if(t&&t.fx===fxKey) total+=ringPct(it);
+  });
+  return total/100;
+}
+
+/* ══ SAVAŞ YÜZÜĞÜ YARDIMCILARI ══
+   Beş savaş döngüsü (zindan / arena / Golath / PvP / mağara) bu ortak
+   fonksiyonları çağırır. `st` savaş nesnesinin kendisidir; yakma yığınları
+   st._burn dizisinde tutulur (her eleman kalan tur sayısı). */
+
+/* Öfke Kristali — eksik her tam %10 can için hasar çarpanı */
+function ringRageMult(curHp, maxHp){
+  const pct=ringFx('rage');
+  if(pct<=0||!maxHp) return 1;
+  const slices=Math.floor(Math.max(0, 1-(curHp/maxHp))*10); // küsurat sayılmaz
+  return 1 + slices*pct;
+}
+/* Kan Yüzüğü — verilen hasarın bir kısmı cana döner */
+function ringLifesteal(dmg){
+  const pct=ringFx('lifesteal');
+  return pct>0 ? Math.floor(dmg*pct) : 0;
+}
+/* Ateş Yüzüğü — vuruşta yakma denemesi (5 tur, üst üste binebilir) */
+function ringTryBurn(st){
+  const pct=ringFx('burn');
+  if(pct<=0||!st||Math.random()>=pct) return false;
+  if(!Array.isArray(st._burn)) st._burn=[];
+  st._burn.push(5);
+  return true;
+}
+/* Yakma tiki — düşmana verilecek hasarı döndürür, süreleri azaltır */
+function ringBurnTick(st, enemyMaxHp){
+  if(!st||!Array.isArray(st._burn)||!st._burn.length) return 0;
+  const stacks=st._burn.length;
+  st._burn=st._burn.map(t=>t-1).filter(t=>t>0);
+  return Math.max(1, Math.floor((enemyMaxHp||100)*0.01*stacks));
+}
+/* Arınma Yüzüğü — tur başı can yenilemesi */
+function ringRegenHeal(maxHp){
+  const pct=ringFx('regen');
+  return pct>0 ? Math.max(1, Math.floor(maxHp*pct)) : 0;
+}
+/* Necro Yüzüğü — düşmanın aldığı iyileşmeyi kırar (0.95 = %5 azalma) */
+function ringCurseMult(){ return Math.max(0, 1-ringFx('curse')); }
+
+/* Oyuncu vuruşu sonrası ortak işlem: can çalma + yakma.
+   Savaş döngüsü dönen metinleri kendi loguna basar. */
+function ringOnHit(st, dmg, playerHp, maxHp){
+  const out={heal:0, burned:false, hp:playerHp, msgs:[]};
+  if(dmg<=0) return out;
+  const ls=ringLifesteal(dmg);
+  if(ls>0){
+    out.heal=Math.min(ls, maxHp-playerHp);
+    if(out.heal>0){ out.hp=playerHp+out.heal; out.msgs.push(`🩸 Kan Yüzüğü: +${out.heal} can çaldın.`); }
+  }
+  if(ringTryBurn(st)){ out.burned=true; out.msgs.push('🔥 Ateş Yüzüğü: düşman tutuştu!'); }
+  return out;
+}
+/* Tur sonu ortak işlem: yakma hasarı + arınma iyileşmesi.
+   healMult: rakibin Necro Yüzüğü bizi lanetlediyse <1 gelir (yalnız PvP). */
+function ringTurnEnd(st, enemyHp, enemyMaxHp, playerHp, maxHp, healMult){
+  const out={enemyHp, playerHp, msgs:[]};
+  const burn=ringBurnTick(st, enemyMaxHp);
+  if(burn>0 && enemyHp>0){
+    out.enemyHp=Math.max(0, enemyHp-burn);
+    out.msgs.push(`🔥 Yanma: ${burn} hasar (${st._burn.length} yığın kaldı).`);
+  }
+  const hm=(healMult==null?1:healMult);
+  const rg=Math.floor(ringRegenHeal(maxHp)*hm);
+  if(rg>0 && playerHp>0 && playerHp<maxHp){
+    const healed=Math.min(rg, maxHp-playerHp);
+    out.playerHp=playerHp+healed;
+    out.msgs.push(`💠 Arınma Yüzüğü: +${healed} can.${hm<1?' (lanetlisin)':''}`);
+  }
+  return out;
+}
+
 const ENH_LEVELS = [
   {plus:1, chance:0.90, mat:{key:'ham_demir',   name:'Ham Demir',    icon:'⛏',  qty:1}, goldCost:1,  statBonus:0.10},
   {plus:2, chance:0.80, mat:{key:'guc_runesi',  name:'Güç Rünesi',   icon:'🔶', qty:1}, goldCost:2,  statBonus:0.15},
@@ -6252,7 +6458,7 @@ function renderGelistirme(){
   const el=document.getElementById('gs-gelistirme');
   if(!el) return;
 
-  const UPGRADEABLE_TYPES=['Kılıç','Asa','Hançer','Yay','Bıçak','Sopa','Göğüslük','Zırh','Kask','Eldiven','Bot'];
+  const UPGRADEABLE_TYPES=['Kılıç','Asa','Hançer','Yay','Bıçak','Sopa','Göğüslük','Zırh','Kask','Eldiven','Bot','Yüzük'];
   const WEAPON_TYPES=['Kılıç','Asa','Hançer','Yay','Bıçak','Sopa'];
   const ARMOR_TYPES=['Göğüslük','Zırh','Kask','Eldiven','Bot'];
   const equippedIds=new Set(Object.values(G.equipped).filter(Boolean).map(v=>v.id));
@@ -6383,7 +6589,8 @@ function renderGelistirme(){
     const luckActive=perkActive('luckCharmUntil');
     const baseDisplayChance=isNekro?50:Math.round(nextLevel.chance*100);
     const smithPct=Math.round(smithChanceBonus()*1000)/10; // %0.1 hassasiyetle
-    const displayChance=Math.min(100, baseDisplayChance+(luckActive?5:0)+smithPct);
+    const ringPctEnh=Math.round(ringFx('enhance')*1000)/10; // Şans Yüzüğü
+    const displayChance=Math.min(100, baseDisplayChance+(luckActive?5:0)+smithPct+ringPctEnh);
     matsHtml=`
       <div class="enh-mats">
         <div class="enh-mat ${hasMat?'ok':'missing'}">
@@ -6398,7 +6605,7 @@ function renderGelistirme(){
         </div>
       </div>
       <div style="font-size:14px;color:var(--ink3);text-align:center;margin-top:6px;">
-        Başarı şansı: <span style="color:var(--gold2);font-family:var(--font-head);font-size:18px;">%${Math.round(displayChance*10)/10}</span>${(luckActive||smithPct>0)?` <span style="color:#9bd17a;font-size:13px;">(%${baseDisplayChance}${luckActive?' +%5 🍀':''}${smithPct>0?` +%${smithPct} 🔨`:''})</span>`:''}
+        Başarı şansı: <span style="color:var(--gold2);font-family:var(--font-head);font-size:18px;">%${Math.round(displayChance*10)/10}</span>${(luckActive||smithPct>0||ringPctEnh>0)?` <span style="color:#9bd17a;font-size:13px;">(%${baseDisplayChance}${luckActive?' +%5 🍀':''}${smithPct>0?` +%${smithPct} 🔨`:''}${ringPctEnh>0?` +%${ringPctEnh} 💍`:''})</span>`:''}
         ${isNekro
           ?`<span style="color:#f87171;font-size:12px;display:block;margin-top:3px;">💀 Başarısız olursa eşya <b>yok olur!</b></span>`
           :curPlus>0?`<span style="color:#f87171;font-size:12px;display:block;margin-top:3px;">⚠ Başarısız olursa +${curPlus} → +${curPlus-1} düşer</span>`:''
@@ -6513,7 +6720,7 @@ function startEnhancement(itemId){
   if(enhRunning) return;
   const allItems=[
     ...Object.entries(G.equipped).filter(([k,v])=>v&&k!=='ring').map(([k,v])=>({...v,_slot:k,_source:'equipped'})),
-    ...G.inventory.filter(i=>['Kılıç','Asa','Hançer','Yay','Bıçak','Sopa','Göğüslük','Zırh','Kask','Eldiven','Bot'].includes(i.type)).map(i=>({...i,_source:'inventory'}))
+    ...G.inventory.filter(i=>['Kılıç','Asa','Hançer','Yay','Bıçak','Sopa','Göğüslük','Zırh','Kask','Eldiven','Bot','Yüzük'].includes(i.type)).map(i=>({...i,_source:'inventory'}))
   ];
   const item=allItems.find(x=>x.id===itemId);
   if(!item) return;
@@ -6546,7 +6753,7 @@ function startEnhancement(itemId){
     const isNekro=item.img?.startsWith('necro');
     const luckBonus=perkActive('luckCharmUntil')?0.05:0;
     const baseChance=(isNekro?0.5:level.chance);
-    const success=Math.random()<Math.min(1, baseChance+luckBonus+smithChanceBonus());
+    const success=Math.random()<Math.min(1, baseChance+luckBonus+smithChanceBonus()+ringFx('enhance'));
 
     if(success){
       // Eşyayı güncelle
@@ -7103,13 +7310,16 @@ function goliathPlayerAction(type){
   _gbAnim(()=>{
     const b=_GB,eff=b.eff;
     if(type==='attack'){
-      const md=Math.max(1,Math.floor(eff.physDmg*(0.8+Math.random()*0.4)));
+      const rage=ringRageMult(b.playerHp,b.playerMaxHp);
+      const md=Math.max(1,Math.floor(eff.physDmg*(0.8+Math.random()*0.4)*rage));
       const isCrit=Math.random()<(eff.critChance||0);
       const critMult=1+Math.max(0.5,(eff.crit||0)/100);
       let fd=isCrit?Math.floor(md*critMult):md;
       if(G.classId==='ranger'&&(eff.acc||0)>0&&Math.random()<(eff.trueDmgChance||0))fd=Math.floor(fd*1.3);
       b.bossHp-=fd;
-      _gbLog('⚔ '+fd+(isCrit?' 💥':'')+' hasar verdin!','#c9a646');
+      _gbLog('⚔ '+fd+(isCrit?' 💥':'')+' hasar verdin!'+(rage>1?` (😡 +%${Math.round((rage-1)*100)})`:''),'#c9a646');
+      const rh=ringOnHit(b,fd,b.playerHp,b.playerMaxHp);
+      b.playerHp=rh.hp; rh.msgs.forEach(m=>_gbLog(m,'#7aaa5a'));
       const dodged=Math.random()<(eff.dodgeChance||0);
       if(!dodged){
         const od=Math.max(1,Math.floor(b.opp.power/10+Math.random()*8)-Math.floor((eff.damageReduction||0)*b.opp.power/10));
@@ -7120,6 +7330,11 @@ function goliathPlayerAction(type){
       const od=Math.max(0,Math.floor(raw*0.4));
       b.playerHp-=od;
       _gbLog('🛡 Savundun! '+od+' hasar aldın (azaltıldı).','#5a8aaa');
+    }
+    { // yüzük tur sonu
+      const rt=ringTurnEnd(b,b.bossHp,b.bossMaxHp,b.playerHp,b.playerMaxHp);
+      b.bossHp=rt.enemyHp; b.playerHp=rt.playerHp;
+      rt.msgs.forEach(m=>_gbLog(m,'#7aaa5a'));
     }
     _gbHUD();
     if(b.bossHp<=0){setTimeout(()=>_gbEnd(true),600);return;}
@@ -7253,13 +7468,16 @@ function arenaBattleAction(type){
   _abAnim(()=>{
     const b=_AB,eff=b.eff;
     if(type==='attack'){
-      const md=Math.max(1,Math.floor(eff.physDmg*(0.8+Math.random()*0.4)));
+      const rage=ringRageMult(b.playerHp,b.playerMaxHp);
+      const md=Math.max(1,Math.floor(eff.physDmg*(0.8+Math.random()*0.4)*rage));
       const isCrit=Math.random()<(eff.critChance||0);
       const critMult=1+Math.max(0.5,(eff.crit||0)/100);
       let fd=isCrit?Math.floor(md*critMult):md;
       if(G.classId==='ranger'&&(eff.acc||0)>0&&Math.random()<(eff.trueDmgChance||0))fd=Math.floor(fd*1.3);
       b.oppHp-=fd;
-      _abLog('⚔ '+fd+(isCrit?' 💥':'')+' hasar verdin!','#c9a646');
+      _abLog('⚔ '+fd+(isCrit?' 💥':'')+' hasar verdin!'+(rage>1?` (😡 +%${Math.round((rage-1)*100)})`:''),'#c9a646');
+      const rh=ringOnHit(b,fd,b.playerHp,b.playerMaxHp);
+      b.playerHp=rh.hp; rh.msgs.forEach(m=>_abLog(m,'#7aaa5a'));
       const dodged=Math.random()<(eff.dodgeChance||0);
       if(!dodged){
         const od=Math.max(1,Math.floor(b.opp.power/10+Math.random()*8)-Math.floor((eff.damageReduction||0)*b.opp.power/10));
@@ -7270,6 +7488,11 @@ function arenaBattleAction(type){
       const od=Math.max(0,Math.floor(raw*0.4));
       b.playerHp-=od;
       _abLog('🛡 Savundun! '+od+' hasar aldın (azaltıldı).','#5a8aaa');
+    }
+    { // yüzük tur sonu
+      const rt=ringTurnEnd(b,b.oppHp,b.oppMaxHp,b.playerHp,b.playerMaxHp);
+      b.oppHp=rt.enemyHp; b.playerHp=rt.playerHp;
+      rt.msgs.forEach(m=>_abLog(m,'#7aaa5a'));
     }
     _abHUD();
     if(b.oppHp<=0){setTimeout(()=>_abEnd(true),600);return;}
@@ -7887,9 +8110,12 @@ function zdAction(action, itemId){
   // Oyuncu turu
   let playerDmg=0, fled=false;
   if(action==='attack'){
-    playerDmg=Math.max(1, Math.floor(eff.physDmg*(0.85+Math.random()*0.3)) - Math.floor(b.enemy.def*0.5));
+    // Öfke Kristali temel hasara eklenir — kritik çarpanı bu toplam üzerine uygulanır
+    const rage=ringRageMult(b.playerHp, eff.maxhp);
+    playerDmg=Math.max(1, Math.floor(eff.physDmg*(0.85+Math.random()*0.3)*rage) - Math.floor(b.enemy.def*0.5));
     const zdCritStat=eff.crit||0;
     const zdCritMult=1+Math.max(0.5,zdCritStat/100);
+    if(rage>1) log(`😡 Öfke Kristali: hasarın %${Math.round((rage-1)*100)} arttı.`,'good');
     if(b.guaranteedCrit||Math.random()<eff.critChance){
       playerDmg=Math.floor(playerDmg*zdCritMult);
       log(`💥 Kritik! ${b.enemy.name}'a ${playerDmg} hasar verdin.`,'good');
@@ -7906,8 +8132,9 @@ function zdAction(action, itemId){
     log('🛡 Savunma duruşu aldın. Hasar -%40.','info');
   }
   else if(action==='magic'){
-    playerDmg=Math.max(1, Math.floor(eff.magicDmg*(0.9+Math.random()*0.4)));
-    log(`✨ Büyü! ${b.enemy.name}'a ${playerDmg} büyü hasarı verdin.`,'good');
+    const rageM=ringRageMult(b.playerHp, eff.maxhp);
+    playerDmg=Math.max(1, Math.floor(eff.magicDmg*(0.9+Math.random()*0.4)*rageM));
+    log(`✨ Büyü! ${b.enemy.name}'a ${playerDmg} büyü hasarı verdin.${rageM>1?` (😡 +%${Math.round((rageM-1)*100)})`:''}`,'good');
   }
   else if(action==='dodge'){
     if(Math.random()<0.5){
@@ -7938,6 +8165,9 @@ function zdAction(action, itemId){
   if(playerDmg>0){
     b.enemyHp=Math.max(0,b.enemyHp-playerDmg);
     zdAnimateHit('enemy');
+    // Yüzükler: can çalma + yakma
+    const r=ringOnHit(b, playerDmg, b.playerHp, eff.maxhp);
+    b.playerHp=r.hp; r.msgs.forEach(m=>log(m,'good'));
   }
 
   // Birlikler de saldırır (yalnızca oyuncu saldırdıysa: attack/magic)
@@ -7954,6 +8184,13 @@ function zdAction(action, itemId){
     if(armed.length) zdAnimateHit('enemy');
   }
 
+  // Yüzük tur sonu: yakma hasarı + arınma iyileşmesi
+  {
+    const rt=ringTurnEnd(b, b.enemyHp, b.enemy.maxHp||b.enemy.hp||100, b.playerHp, eff.maxhp);
+    b.enemyHp=rt.enemyHp; b.playerHp=rt.playerHp;
+    rt.msgs.forEach(m=>log(m, m.startsWith('🔥')?'good':'good'));
+  }
+
   // Düşman öldü mü?
   if(b.enemyHp<=0){
     const room=ZD.rooms[b.roomIdx];
@@ -7968,6 +8205,11 @@ function zdAction(action, itemId){
     if(room.type==='boss'){
       zdBossWeaponDrop(b.enemy, ZD.floor);
       trackAch('zdboss');
+      // Yüzük dropu — kademeye göre havuz, %18 şans (son katta %30)
+      const isFinalFloor=ZD.floor>=ZD_FLOORS;
+      if(Math.random() < (isFinalFloor?0.30:0.18)){
+        dropRandomRing(zdRingPool(ZD.tier||1), Math.max(0,(ZD.tier||1)-2), 'Zindan yüzüğü');
+      }
     }
     updateHUD(); ZD.battle=null;
     const dmgText = playerDmg>0 ? ` (${playerDmg} hasar)` : '';
@@ -8088,6 +8330,43 @@ function zdDeath(){
 
 /* ── BOSS SILAH DROPU ── */
 const ZD_SUN_WEAPONS = ['gunesasa','gunesbicak','guneskilic','gunesyay'];
+
+/* ── YÜZÜK DROPU ──
+   Zindan boss'ları, lonca boss'u ve harabe araştırması yüzük düşürebilir.
+   plus: düşen yüzüğün + değeri. Envanter doluysa sessizce düşmez. */
+function makeRing(tplId, plus){
+  const t=RING_TEMPLATES[tplId]; if(!t) return null;
+  return {
+    id:newItemId(), cat:'accessory', tplId,
+    name:t.name, icon:'💍', type:'Yüzük', grade:t.grade,
+    reqLv:t.reqLv, img:tplId,
+    stats:{}, baseStats:{},          // yüzüklerin gücü etkisinden gelir, düz stat taşımaz
+    enhPlus:Math.max(0,plus||0), _migrated:true,
+    desc:t.desc, price:0, material:null, classBonus:null,
+    seller:'player', sellerName:G.heroName||G.username,
+  };
+}
+/* Havuzdan rastgele yüzük düşür. Döndürdüğü eşya envantere eklenmiştir. */
+function dropRandomRing(pool, plus, note){
+  if(invCount()>=invCap()){ toast('⚠ Envanter dolu, yüzük düşmedi!'); return null; }
+  const keys=(pool&&pool.length)?pool:Object.keys(RING_TEMPLATES).filter(k=>RING_TEMPLATES[k].fx);
+  const ring=makeRing(keys[Math.floor(Math.random()*keys.length)], plus);
+  if(!ring) return null;
+  G.inventory.push(ring);
+  setTimeout(()=>{ toast(`💍 ${note||'Yüzük'}: ${ring.name}${ring.enhPlus>0?' +'+ring.enhPlus:''} düştü!`); },900);
+  renderKarakter();
+  if(currentUser) sbSave();
+  return ring;
+}
+/* Kademeye göre yüzük havuzu — üst kademeler güçlü yüzükleri açar */
+function zdRingPool(tier){
+  const basic=['bakiryuzuk','sansyuzugu','nehirruhuyuzugu','arinmayuzugu','atesyuzugu'];
+  const mid  =['ustayuzugu','ormanruhuyuzugu','kanyuzugu','necruyuzugu'];
+  const top  =['ofkekristaliyuzugu','elementalekipyuzugu'];
+  if(tier<=2) return basic;
+  if(tier<=4) return [...basic,...mid];
+  return [...basic,...mid,...top];
+}
 
 function zdNecroItemDrop(){
   if(invCount()>=invCap()){ toast('⚠ Envanter dolu, item düşmedi!'); return; }
@@ -9298,23 +9577,29 @@ const _myListings={market:new Map(), mat:new Map()}; // id → fiyat/stok bilgis
 
 async function _refreshMyListingCache(){
   if(!currentUser) return;
-  const {data:mk}=await supa.from('marketplace').select('id,item_name,price').eq('seller_id',currentUser.id);
+  let {data:mk}=await supa.from('marketplace').select('id,item_name,price,commission_pct').eq('seller_id',currentUser.id);
+  if(!mk) ({data:mk}=await supa.from('marketplace').select('id,item_name,price').eq('seller_id',currentUser.id));
   _myListings.market.clear();
-  (mk||[]).forEach(r=>_myListings.market.set(r.id,{name:sani(r.item_name),price:Number(r.price)||0}));
-  const {data:mt}=await supa.from('material_listings').select('id,item_label,stock,unit_price').eq('seller_id',currentUser.id);
+  (mk||[]).forEach(r=>_myListings.market.set(r.id,{name:sani(r.item_name),price:Number(r.price)||0,commissionPct:Number(r.commission_pct??MARKET_COMMISSION_BASE)}));
+  let {data:mt}=await supa.from('material_listings').select('id,item_label,stock,unit_price,commission_pct').eq('seller_id',currentUser.id);
+  if(!mt) ({data:mt}=await supa.from('material_listings').select('id,item_label,stock,unit_price').eq('seller_id',currentUser.id));
   _myListings.mat.clear();
-  (mt||[]).forEach(r=>_myListings.mat.set(r.id,{label:sani(r.item_label),stock:Number(r.stock)||0,unitPrice:Number(r.unit_price)||0}));
+  (mt||[]).forEach(r=>_myListings.mat.set(r.id,{label:sani(r.item_label),stock:Number(r.stock)||0,unitPrice:Number(r.unit_price)||0,commissionPct:Number(r.commission_pct??MARKET_COMMISSION_BASE)}));
 }
 
-function _creditSale(key, amount, label){
+function _creditSale(key, amount, label, commissionPct){
   if(amount<=0 || _creditedSales.has(key)) return;
   _creditedSales.add(key);
-  // Yeni dünyada satış geliri sunucuda eklendi → sadece yerele yansıt.
-  // Geçiş döneminde (RPC'ler migre edilmeden) eski usul yerel tahsilat.
-  if(_goldRpcMissing) G.gold+=amount;
-  else applyServerGoldDelta(amount);
+  // Komisyon sunucudaki RPC'de kesiliyor — burada aynı hesabı yaparak
+  // ekranda net tutarı gösteriyoruz (yerel bakiye sunucuyla uyuşsun).
+  const pct=Number(commissionPct??MARKET_COMMISSION_BASE);
+  const fee=Math.floor(amount*pct/100);
+  const net=amount-fee;
+  if(_goldRpcMissing) G.gold+=net;
+  else applyServerGoldDelta(net);
   updateHUD();
-  celebrate('🪙','İLANIN SATILDI!',`${label} → +${amount.toLocaleString('tr')}🪙`,'gold');
+  celebrate('🪙','İLANIN SATILDI!',
+    `${label} → +${net.toLocaleString('tr')}🪙${fee>0?`  <span style="opacity:.7;">(komisyon −%${pct} = ${fee.toLocaleString('tr')}🪙)</span>`:''}`,'gold');
   if(currentUser) sbSave();
 }
 
@@ -9327,7 +9612,7 @@ async function initSaleWatcher(){
       const rec=_myListings.market.get(row?.id); if(!rec) return;
       _myListings.market.delete(row.id);
       if(_withdrawnListings.has('mk_'+row.id)) return;
-      _creditSale('mk_'+row.id, rec.price, rec.name);
+      _creditSale('mk_'+row.id, rec.price, rec.name, rec.commissionPct);
     })
     // Yığın ilanından kısmi alım (stok azaldı)
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'material_listings',filter:`seller_id=eq.${currentUser.id}`},({new:row})=>{
@@ -9335,14 +9620,14 @@ async function initSaleWatcher(){
       const newStock=Number(row.stock)||0;
       const sold=rec.stock-newStock;
       rec.stock=newStock;
-      if(sold>0) _creditSale('mt_'+row.id+'_'+newStock, sold*rec.unitPrice, `${sold}x ${rec.label}`);
+      if(sold>0) _creditSale('mt_'+row.id+'_'+newStock, sold*rec.unitPrice, `${sold}x ${rec.label}`, rec.commissionPct);
     })
     // Yığın ilanı tamamen bitti / silindi
     .on('postgres_changes',{event:'DELETE',schema:'public',table:'material_listings'},({old:row})=>{
       const rec=_myListings.mat.get(row?.id); if(!rec) return;
       _myListings.mat.delete(row.id);
       if(_withdrawnListings.has('mt_'+row.id)) return;
-      if(rec.stock>0) _creditSale('mt_'+row.id+'_son', rec.stock*rec.unitPrice, `${rec.stock}x ${rec.label}`);
+      if(rec.stock>0) _creditSale('mt_'+row.id+'_son', rec.stock*rec.unitPrice, `${rec.stock}x ${rec.label}`, rec.commissionPct);
     })
     .subscribe();
 }
@@ -10329,11 +10614,22 @@ function joinBossHunt(){
     :`<span>${cls?.icon||'⚔'}</span>`;
   bossHunters.push({name:sani(G.heroName||G.username||'Sen'),classIcon:cls?.icon||'⚔',className:cls?.name||'',avatarHtml,isMe:true});
   if(currentUser&&G.guildId){
-    supa.from('guild_boss_sessions').upsert({
+    // Elementel Ekip Yüzüğü katkısı DB'ye yazılır — boss zarı tüm istemcilerde
+    // aynı hesaplanmalı, bu yüzden yerel G.equipped'ten değil paylaşılan
+    // kayıttan okunur. (ring_bonus kolonu yoksa onsuz tekrar denenir.)
+    const payload={
       guild_id:G.guildId,profile_id:currentUser.id,
       joined_at:new Date().toISOString(),
       cycle:Math.floor(Date.now()/600000),
-    },{onConflict:'guild_id,profile_id,cycle'}).then(()=>{});
+      ring_bonus: ringFx('guildboss'),
+    };
+    supa.from('guild_boss_sessions').upsert(payload,{onConflict:'guild_id,profile_id,cycle'})
+      .then(({error})=>{
+        if(error && /ring_bonus/i.test(error.message||'')){
+          delete payload.ring_bonus;
+          supa.from('guild_boss_sessions').upsert(payload,{onConflict:'guild_id,profile_id,cycle'}).then(()=>{});
+        }
+      });
     _loadBossHunters();
     _subscribeBossResult();
   }
@@ -10390,8 +10686,12 @@ async function prepAction(type){
 async function _loadBossHunters(){
   if(!G.guildId) return;
   const cycle=Math.floor(Date.now()/600000);
-  const {data}=await supa.from('guild_boss_sessions')
-    .select('profile_id,prep_action').eq('guild_id',G.guildId).eq('cycle',cycle);
+  let {data,error}=await supa.from('guild_boss_sessions')
+    .select('profile_id,prep_action,ring_bonus').eq('guild_id',G.guildId).eq('cycle',cycle);
+  if(error && /ring_bonus/i.test(error.message||'')){ // kolon henüz yoksa
+    ({data}=await supa.from('guild_boss_sessions')
+      .select('profile_id,prep_action').eq('guild_id',G.guildId).eq('cycle',cycle));
+  }
   if(!data) return;
   const ids=data.map(d=>d.profile_id);
   if(!ids.length){bossHunters=[];_updateBossParticipants();return;}
@@ -10409,7 +10709,8 @@ async function _loadBossHunters(){
       ?`<img src="${avSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none'"/>`
       :`<span>${cls?.icon||'⚔'}</span>`;
     return {name:sani(p.hero_name||p.username||'Avcı'),classIcon:cls?.icon||'⚔',className:cls?.name||'',avatarHtml,isMe,
-      prepAction: isMe ? myPrepAction : prepMap[d.profile_id]};
+      prepAction: isMe ? myPrepAction : prepMap[d.profile_id],
+      ringBonus: Number(d.ring_bonus)||0};
   });
   _updateBossParticipants();
 }
@@ -10472,7 +10773,9 @@ async function showBossResult(boss){
       const sharpenCount = bossHunters.filter(h=>h.prepAction==='sharpen').length;
       const fortifyCount = bossHunters.filter(h=>h.prepAction==='fortify').length;
       const prepBonus = (sharpenCount + fortifyCount) * 0.05;
-      const winChance = Math.min(0.40 + participantBonus + prepBonus, 0.85);
+      // Elementel Ekip Yüzüğü — ekipteki tüm yüzüklerin katkısı toplanır
+      const ringBonus = bossHunters.reduce((a,h)=>a+(Number(h.ringBonus)||0), 0);
+      const winChance = Math.min(0.40 + participantBonus + prepBonus + ringBonus, 0.95);
       // DETERMİNİSTİK zar: seed = lonca + döngü → her client aynı sonucu
       // hesaplar; kim önce yazarsa yazsın history'de çelişki oluşmaz.
       const seedStr=`${G.guildId}_${cycle}`;
@@ -10509,6 +10812,11 @@ async function showBossResult(boss){
   if(won){
     G.gold+=500; updateHUD();
     if(boss.matDrop){G.matInv[boss.matDrop.key]=(G.matInv[boss.matDrop.key]||0)+1;}
+    // Lonca boss'u yüzük düşürebilir — %20, Elementel Ekip dahil güçlü havuz
+    if(Math.random()<0.20){
+      dropRandomRing(['elementalekipyuzugu','ofkekristaliyuzugu','kanyuzugu','necruyuzugu','ormanruhuyuzugu'],
+        Math.floor(Math.random()*3), 'Lonca boss ganimeti');
+    }
   }
   if(currentUser) sbSave();
   if(currentUser&&G.guildId&&_bossResultChannel){
@@ -11340,11 +11648,14 @@ const BABY_DEFS={
   ogul:  {name:'Oğul',   icon:'🐝', img:'ogul',   adult:'ari',   feed:{key:'bal',qty:1}},
   tay:   {name:'Tay',    icon:'🐴', img:'tay',    adult:'at',    feed:{key:'arpa',qty:1}},
 };
+/* Pasif üretim artık YEM tüketir (Pasif Besleme açıkken).
+   feed = üretilen her 1 ürün için harcanan yem. Yem biterse üretim durur —
+   bu sayede çiftlik geliri tarla üretimine bağlanır. Denge için buradan ayarla. */
 const ANIMAL_PASSIVE={
-  tavuk:{out:'yumurta', intervalH:8},
-  koyun:{out:'yun',     intervalH:1},
-  inek: {out:'sut',     intervalH:2},
-  ari:  {out:'bal',     intervalH:4},
+  tavuk:{out:'yumurta', intervalH:8, feed:{key:'saman',qty:1}},
+  koyun:{out:'yun',     intervalH:1, feed:{key:'saman',qty:1}},
+  inek: {out:'sut',     intervalH:2, feed:{key:'saman',qty:1}},
+  ari:  {out:'bal',     intervalH:4, feed:{key:'cicek',qty:1}},
   // at: pasif üretimi yok — sadece besleme tarifiyle süt verir
 };
 const ANIMAL_ACCRUE_CAP_H=24; // en fazla 24 saatlik üretim birikir
@@ -11356,6 +11667,32 @@ function _ensureAnimalState(){
   if(!G.animalStore||typeof G.animalStore!=='object') G.animalStore={};
   if(!G.animalProdTs||typeof G.animalProdTs!=='object') G.animalProdTs={};
   if(!G.animalBreedTs||typeof G.animalBreedTs!=='object') G.animalBreedTs={};
+  if(G.autoFeed===undefined) G.autoFeed=true; // varsayılan açık
+}
+
+/* Pasif beslemenin saatlik yem ihtiyacı — {yemAnahtarı: adet/saat} */
+function ranchFeedDemand(){
+  const need={};
+  Object.entries(ANIMAL_PASSIVE).forEach(([k,def])=>{
+    const cnt=(G.animals||{})[k]||0;
+    if(cnt<1||!def.feed) return;
+    const interval=Math.max(60e3, def.intervalH*3600e3*ranchSpeedMult());
+    need[def.feed.key]=(need[def.feed.key]||0)+(3600e3/interval)*cnt*def.feed.qty;
+  });
+  return need;
+}
+
+/* Pasif beslemeyi aç/kapa */
+function toggleAutoFeed(){
+  _ensureAnimalState();
+  accrueAnimals();               // kapatmadan önce hak edilenleri işle
+  G.autoFeed=!G.autoFeed;
+  G.animalProdTs={};             // sayaçlar sıfırdan başlasın (birikmiş boşluk taşınmasın)
+  const now=_now();
+  Object.keys(ANIMAL_PASSIVE).forEach(k=>{ G.animalProdTs[k]=now; });
+  toast(G.autoFeed?'🌾 Pasif besleme açıldı — hayvanlar yem tüketerek üretecek.':'⏸ Pasif besleme kapatıldı — yem harcanmayacak, üretim durdu.');
+  renderRanch();
+  if(currentUser) sbSave();
 }
 /* Pasif üretim + üreme sayaçlarını şimdiki server zamanına kadar işlet */
 function accrueAnimals(){
@@ -11372,8 +11709,19 @@ function accrueAnimals(){
     const units=Math.floor(elapsed/interval);
     if(units>0){
       const cap=count*Math.max(1,Math.floor(ANIMAL_ACCRUE_CAP_H*3600e3/interval));
-      G.animalStore[k]=Math.min((G.animalStore[k]||0)+units*count, cap);
-      // Kısmi ilerlemeyi koru: sayaç tam üretim dilimlerine göre ilerler
+      const room=Math.max(0, cap-(G.animalStore[k]||0));
+      let made=Math.min(units*count, room);
+      // Pasif besleme kapalıysa üretim yok; açıksa yem kadar üretilir
+      if(!G.autoFeed) made=0;
+      else if(def.feed && made>0){
+        const have=G.prodInv[def.feed.key]||0;
+        const afford=Math.floor(have/def.feed.qty);
+        made=Math.min(made, afford);
+        if(made>0) G.prodInv[def.feed.key]=have-made*def.feed.qty;
+      }
+      if(made>0) G.animalStore[k]=(G.animalStore[k]||0)+made;
+      // Sayaç her durumda ilerler — yem yokken geçen süre geri kazanılmaz
+      // (aksi halde yem biriktirip toplu üretim yapılabilirdi)
       G.animalProdTs[k]=now-(elapsed-units*interval);
     }
   });
@@ -11530,9 +11878,39 @@ function renderRanch(){
     </div>`;
   });
 
+  // Pasif besleme anahtarı + yem durumu
+  const feedNeed=ranchFeedDemand();
+  const feedRows=Object.entries(feedNeed).map(([k,perHour])=>{
+    const have=G.prodInv[k]||0;
+    const hoursLeft=perHour>0?have/perHour:Infinity;
+    const low=hoursLeft<6;
+    return `<span class="mat-chip${low?' missing':''}" style="${low?'':'border-color:#2a3a18;color:#9bd17a;'}">
+      ${ITEM_ICONS[k]||'📦'} ${ITEM_LABELS[k]||k} ${have} <span style="opacity:.7;">(−${(Math.round(perHour*10)/10)}/sa${isFinite(hoursLeft)?` · ${hoursLeft<1?'<1':Math.floor(hoursLeft)} sa yeter`:''})</span>
+    </span>`;
+  }).join(' ');
+  const anyEmpty=Object.entries(feedNeed).some(([k,ph])=>ph>0&&(G.prodInv[k]||0)<1);
+  const autoOn=G.autoFeed!==false;
+  const autoFeedPanel=`
+    <div class="card" style="margin-bottom:10px;padding:10px 11px;border-color:${autoOn?(anyEmpty?'#6a2020':'#2a3a18'):'var(--border)'};">
+      <div class="row-between" style="margin-bottom:${Object.keys(feedNeed).length?'6px':'0'};">
+        <div>
+          <div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">🌾 Pasif Besleme</div>
+          <div style="font-size:9px;color:var(--ink3);margin-top:2px;">${autoOn
+            ? 'Hayvanlar yem tüketerek kendiliğinden üretir'
+            : 'Kapalı — yem harcanmıyor, pasif üretim durdu'}</div>
+        </div>
+        <button class="btn btn-sm" onclick="toggleAutoFeed()"
+          style="min-width:74px;${autoOn
+            ? 'background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#9bd17a;'
+            : 'background:var(--panel3);border-color:var(--border);color:var(--ink3);'}">${autoOn?'AÇIK':'KAPALI'}</button>
+      </div>
+      ${Object.keys(feedNeed).length?`<div style="display:flex;gap:4px;flex-wrap:wrap;">${feedRows}</div>`:''}
+      ${autoOn&&anyEmpty?`<div style="font-size:9px;color:#f08080;margin-top:5px;">⚠ Yem bitti — üretim durdu. Tarlada <b>yonca</b> ekerek saman üretebilirsin.</div>`:''}
+    </div>`;
+
   // Hayvan kartları: yetişkin sayısı + birikmiş pasif ürün + yavrular
   const animals=G.animals||{};
-  const animalPanel=`<div class="sec" style="margin-top:0;">HAYVANLAR</div>
+  const animalPanel=autoFeedPanel+`<div class="sec" style="margin-top:0;">HAYVANLAR</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
   ${Object.entries(ANIMAL_DEFS).map(([key,a])=>{
     const cnt=animals[key]||0;
@@ -11541,10 +11919,11 @@ function renderRanch(){
     const babies=G.animalBabies[a.baby]||[];
     const bDef=BABY_DEFS[a.baby];
     const maxFed=babies.length?Math.max(...babies):0;
+    const feedTxt=passive?.feed?` · ${passive.feed.qty} ${ITEM_ICONS[passive.feed.key]||''}`:'';
     const prodLine=passive
       ? (cnt>0
-        ? `<div style="font-size:10px;color:${stored>0?'var(--g-green)':'var(--ink3)'};margin:2px 0;">${ITEM_ICONS[passive.out]||'📦'} Birikmiş: <b>${stored}</b> <span style="color:var(--ink3);">(${passive.intervalH} saatte 1/${a.name.split(' ')[0].toLowerCase()})</span></div>`
-        : `<div style="font-size:10px;color:var(--ink3);margin:2px 0;">${passive.intervalH} saatte 1 ${ITEM_LABELS[passive.out]||passive.out} üretir</div>`)
+        ? `<div style="font-size:10px;color:${stored>0?'var(--g-green)':'var(--ink3)'};margin:2px 0;">${ITEM_ICONS[passive.out]||'📦'} Birikmiş: <b>${stored}</b> <span style="color:var(--ink3);">(${passive.intervalH} saatte 1${feedTxt})</span>${autoOn?'':' <span style="color:#c87070;">⏸</span>'}</div>`
+        : `<div style="font-size:10px;color:var(--ink3);margin:2px 0;">${passive.intervalH} saatte 1 ${ITEM_LABELS[passive.out]||passive.out}${feedTxt} üretir</div>`)
       : `<div style="font-size:10px;color:var(--ink3);margin:2px 0;">Pasif üretimi yok — beslenirse süt verir</div>`;
     const babyLine=babies.length
       ? `<div style="display:flex;align-items:center;justify-content:center;gap:4px;margin:3px 0;">
@@ -11553,7 +11932,7 @@ function renderRanch(){
         </div>
         <button class="btn btn-xs" style="width:100%;margin-bottom:3px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;" onclick="feedBaby('${a.baby}')">🍼 Besle (${bDef.feed.qty} ${ITEM_LABELS[bDef.feed.key]})</button>`
       : '';
-    return `<div class="card" style="text-align:center;padding:10px 6px;">
+    return `<div c  lass="card" style="text-align:center;padding:10px 6px;">
     <img src="${IMG_BASE}${a.img}.webp" style="width:100%;height:90px;object-fit:contain;border-radius:6px;margin-bottom:6px;" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
     <div style="font-size:36px;display:none;">${a.icon}</div>
     <div style="font-family:var(--font-head);font-size:10px;color:var(--perg);">${a.name}</div>
@@ -11567,7 +11946,7 @@ function renderRanch(){
     </div>
   </div>`;}).join('')}
   </div>
-  <div style="font-size:10px;color:var(--ink3);text-align:center;margin-bottom:10px;">Birikim en fazla 24 saatliktir · Bir türden 2+ hayvanın varsa her 24 saatte %50 şansla yavru doğar</div>`;
+  <div style="font-size:10px;color:var(--ink3);text-align:center;margin-bottom:10px;">Birikim en fazla 24 saatliktir · Bir türden 2+ hayvanın varsa her 24 saatte %50 şansla yavru doğar<br>Yem yokken geçen süre geri kazanılmaz — deponu dolu tut</div>`;
 
   let rightHtml=animalPanel+`<div class="sec" style="margin-top:4px;">AKTİF ÜRETİM (${usedSlots}/${maxProd})</div>`+collectAllBtnHtml('ranch');
   if(activeTimers.length){
@@ -11620,9 +11999,10 @@ async function startRanchProd(rId){
   Object.entries(r.inputs).forEach(([k,v])=>{G.prodInv[k]-=v;});
   const {chance,mult}=ranchGetBonus(lv);
   const outputs={};
+  const yMult=ringYieldMult(); // Orman Ruhu Yüzüğü çiftliği de kapsar
   Object.entries(r.outputs).forEach(([k,o])=>{
     const bonus=Math.random()<chance;
-    const amount=(bonus?(o.base*mult):o.base)*animalCount;
+    const amount=Math.max(1, Math.round((bonus?(o.base*mult):o.base)*animalCount*yMult));
     outputs[k]={amount,bonus};
   });
   let dbId=null;
@@ -12109,10 +12489,13 @@ async function startFarmCrop(cropId, plotIdx){
   const bMult=isBonus?mult:1;
   const outputs={};
 
+  // Orman Ruhu Yüzüğü — tüm tarla çıktılarını artırır
+  const yMult=ringYieldMult();
+  const yAmt=n=>Math.max(1, Math.round(n*yMult));
   // Saman çıktısı
   const samanBase=crop.saman+samanBonus;
   if(samanBase>0){
-    outputs['saman']={amount:samanBase*bMult, bonus:isBonus};
+    outputs['saman']={amount:yAmt(samanBase*bMult), bonus:isBonus};
   }
 
   // Ana ürün çıktısı
@@ -12121,7 +12504,7 @@ async function startFarmCrop(cropId, plotIdx){
   // Yonca: sadece saman (ana ürün yok)
   if(cropId!=='yonca'){
     const baseAmt=(cropId==='bugday'||cropId==='arpa')?3:2;
-    outputs[cropId]={amount:baseAmt*bMult, bonus:isBonus};
+    outputs[cropId]={amount:yAmt(baseAmt*bMult), bonus:isBonus};
   }
 
   // Tohum çıktısı (buğday/arpa hariç — onlar zaten kendileri tohum)
@@ -12618,15 +13001,21 @@ async function marketListDepo(key){
   document.getElementById('depo-pop-ov')?.remove();
   renderDepot();
   if(currentUser) sbSave();
-  const {data:newListing,error}=await supa.from('material_listings').insert({
+  const matPayload={
     seller_id:currentUser.id,
     seller_name:G.heroName||G.username,
     item_key:key,
     item_label:label,
     stock:sell,
     unit_price:price,
-  }).select().single();
-  if(!error&&newListing) _myListings.mat.set(newListing.id,{label:sani(label),stock:sell,unitPrice:price});
+    commission_pct: marketCommissionPct(),
+  };
+  let {data:newListing,error}=await supa.from('material_listings').insert(matPayload).select().single();
+  if(error&&/commission_pct/.test(error.message||'')){ // kolon henüz yoksa
+    delete matPayload.commission_pct;
+    ({data:newListing,error}=await supa.from('material_listings').insert(matPayload).select().single());
+  }
+  if(!error&&newListing) _myListings.mat.set(newListing.id,{label:sani(label),stock:sell,unitPrice:price,commissionPct:matPayload.commission_pct??MARKET_COMMISSION_BASE});
   if(error){
     // Hata olursa stoğu geri ver
     G.prodInv[key]=(G.prodInv[key]||0)+sell; renderDepot();
@@ -13003,7 +13392,8 @@ async function sbLoadProfile() {
     G.animalStore  = (a._store   && typeof a._store  ==='object') ? a._store   : {};
     G.animalProdTs = (a._prodTs  && typeof a._prodTs ==='object') ? a._prodTs  : {};
     G.animalBreedTs= (a._breedTs && typeof a._breedTs==='object') ? a._breedTs : {};
-    delete a._babies; delete a._store; delete a._prodTs; delete a._breedTs;
+    G.autoFeed     = a._autoFeed!==false; // eski kayıtlarda yoksa açık kabul edilir
+    delete a._babies; delete a._store; delete a._prodTs; delete a._breedTs; delete a._autoFeed;
     G.animals = {...G.animals, ...a};
   }
   // Eski eşyalarda cat eksikse, isim/tür eşleşmesiyle geri doldur (zırh giydirme bug fix)
@@ -13303,7 +13693,7 @@ async function _sbSaveNow() {
       companions: G.companions,
       captured_troops: G.capturedTroops,
       explored_json: [...G.explored],
-      animals:      {...G.animals, _babies:G.animalBabies||{}, _store:G.animalStore||{}, _prodTs:G.animalProdTs||{}, _breedTs:G.animalBreedTs||{}},
+      animals:      {...G.animals, _babies:G.animalBabies||{}, _store:G.animalStore||{}, _prodTs:G.animalProdTs||{}, _breedTs:G.animalBreedTs||{}, _autoFeed:G.autoFeed!==false},
       castle_layout: G.castleLayout||{},
     };
     let { error: e1 } = await supa.from('profiles').update(profilePayload).eq('id', currentUser.id);
@@ -13447,7 +13837,7 @@ let PVP = {
   oppData:     null,     // rakibin presence kaydı
   myS:  null,
   oppS: null,
-  myHp:0, oppHp:0, myMaxHp:0, oppMaxHp:0,
+  myHp:0, oppHp:0, myMaxHp:0, oppMaxHp:0, oppCurse:0, _burn:[],
   myTurn:      false,
   oppDefending:false,
   busy:        false,    // animasyon sürerken çift tık engeli
@@ -13654,6 +14044,7 @@ function pvpStartBattle(myData, oppData, imFirst){
   PVP.myTurn = imFirst;
   PVP.state  = 'fighting';
   PVP.oppDefending = false; PVP.busy = false; PVP.log = [];
+  PVP.oppCurse = 0; PVP._burn = []; // yüzük durumları her maçta sıfırlanır
 
   pvpTrack();
   const ew=document.getElementById('pvp-arena-wrap'); if(ew) ew.innerHTML='';
@@ -13768,6 +14159,9 @@ async function pvpAction(type){
   _pvpAnim('pvp-my-spr', G.classId, G.avatarIdx||0, async()=>{
     const result=pvpComputeHit(PVP.myS, PVP.oppS, type==='magic');
     let dmg=result.dmg;
+    // Öfke Kristali — eksik cana göre hasar artışı
+    const rage=ringRageMult(PVP.myHp, PVP.myMaxHp);
+    if(rage>1 && dmg>0){ dmg=Math.floor(dmg*rage); pvpLog(`😡 Öfke Kristali: hasarın %${Math.round((rage-1)*100)} arttı.`,'good'); }
     if(PVP.oppDefending){ dmg=Math.floor(dmg*0.60); PVP.oppDefending=false; }
     result.dmg=dmg;
     Object.assign(payload,result);
@@ -13780,6 +14174,18 @@ async function pvpAction(type){
     } else {
       _pvpShake('pvp-opp-spr');
       pvpLog(`${type==='magic'?'✨':'⚔'} ${PVP.oppData.heroName}'a ${dmg} ${type==='magic'?'büyü':'fiziksel'} hasar verdin${critTxt}${ignTxt}`,'good');
+    }
+    // Yüzükler: can çalma + yakma (yakma tiki tur sonunda işler)
+    if(dmg>0){
+      const rh=ringOnHit(PVP, dmg, PVP.myHp, PVP.myMaxHp);
+      PVP.myHp=rh.hp; rh.msgs.forEach(m=>pvpLog(m,'good'));
+    }
+    payload.curse=ringFx('curse'); // Necro Yüzüğü — rakibin iyileşmesini kırar
+    { // yakma hasarı + arınma iyileşmesi (rakibin laneti iyileşmemizi azaltır)
+      const rt=ringTurnEnd(PVP, PVP.oppHp, PVP.oppMaxHp, PVP.myHp, PVP.myMaxHp, Math.max(0,1-(PVP.oppCurse||0)));
+      if(rt.enemyHp!==PVP.oppHp){ payload.burnDmg=PVP.oppHp-rt.enemyHp; PVP.oppHp=rt.enemyHp; }
+      PVP.myHp=rt.playerHp;
+      rt.msgs.forEach(m=>pvpLog(m,'good'));
     }
     _pvpHUD();
 
@@ -13810,6 +14216,7 @@ function pvpReceiveAction(payload){
     return;
   }
 
+  if(payload.curse!==undefined) PVP.oppCurse=payload.curse; // rakibin Necro gücü
   _pvpAnim('pvp-opp-spr', PVP.oppData.classId, PVP.oppData.avatarIdx||0, ()=>{
     if(payload.dmg!==undefined){
       PVP.myHp=Math.max(0,PVP.myHp-payload.dmg);
@@ -13818,6 +14225,11 @@ function pvpReceiveAction(payload){
       } else {
         _pvpShake('pvp-my-spr');
         pvpLog(`${PVP.oppData.heroName}: ${payload.dmg} hasar verdi${payload.isCrit?' 💥KRİTİK!':''}`,'bad');
+      }
+      // Rakibin Ateş Yüzüğü bizi yakıyorsa hasarı burada uygula (iki taraf aynı sonucu görsün)
+      if(payload.burnDmg>0){
+        PVP.myHp=Math.max(0,PVP.myHp-payload.burnDmg);
+        pvpLog(`🔥 Yanıyorsun: ${payload.burnDmg} hasar aldın.`,'bad');
       }
       _pvpHUD();
     }
