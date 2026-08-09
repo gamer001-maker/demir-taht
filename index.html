@@ -781,17 +781,8 @@ html,body{
 .gd-tavern-head{font-family:var(--font-head);font-size:clamp(13px,1.4vw,16px);color:var(--gold2);letter-spacing:2px;text-align:center;padding:10px;border:1px solid #4a3a6a;border-radius:10px;background:radial-gradient(ellipse at 50% 0%,rgba(42,26,58,.6),rgba(22,16,32,.6));backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);margin-bottom:10px;box-shadow:inset 0 0 16px #00000070;}
 .gd-tavern-head small{display:block;font-family:var(--font-body);font-size:clamp(8px,.9vw,10px);color:#9a8ab0;font-style:italic;letter-spacing:0;margin-top:2px;}
 
-/* ── Lonca sekme arkaplan görselleri (Taverna/Depo/Üyeler) ──
-   #guild-content (.scroll) flex:1 ile zaten tam ekran yüksekliğinde —
-   .gd-bgpanel de min-height:100% ile en az o kadar uzar (kısa içerikte
-   bile ekranı doldurur), içerik daha uzunsa doğal olarak büyümeye devam
-   eder ve #guild-content içeride kayar. İçindeki img+shade absolute
-   (inset:0) olduğu için panel'in boyunu etkilemez, sadece kutuyu
-   "cover" ile tam kaplar. */
-.gd-bgpanel{position:relative;min-height:100%;border-radius:12px;overflow:hidden;box-shadow:0 4px 18px #00000060;}
-.gd-bgpanel-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;z-index:0;}
-.gd-bgpanel-shade{position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,rgba(10,7,15,.5) 0%,rgba(10,7,15,.74) 100%);}
-.gd-bgpanel-content{position:relative;z-index:1;padding:12px;}
+/* Not: Lonca arkaplanları artık #p-guild SAYFASINA basılıyor (setGuildBg) —
+   eski .gd-bgpanel sarmalayıcısı kaldırıldı, kalan tek şey kart saydamlığı. */
 /* Geniş kartlar (üye/depo eşyası) — üstteki görsel görünsün diye hafif saydam.
    .listing-card/.member-card Pazar'da da kullanıldığından ONLARA dokunulmaz;
    bu ek sınıf sadece lonca ekranlarında eklenir. */
@@ -1301,6 +1292,50 @@ html,body{
   /* Arkaplan görselini GPU katmanına sabitle — repaint azalır */
   #p-prod.has-bg{will-change:auto;transform:translateZ(0);}
   #p-prod.has-bg::before{will-change:auto;}
+}
+
+/* ══ LONCA SEKMESİ ARKAPLAN GÖRSELLERİ ══
+   Üretim sekmesiyle aynı desen: görsel #p-guild SAYFASINA basılır
+   (setGuildBg), böylece başlık + sekme şeridi dahil tüm alanı kaplar.
+   Görseli #guild-content içine koymak yetmiyordu — o kap padding'li ve
+   kaydırmalı olduğu için kenarlarda boşluk kalıyordu. */
+#p-guild{position:relative;background-size:cover;background-position:center;background-repeat:no-repeat;}
+#p-guild::before{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:linear-gradient(to bottom,
+    rgba(12,8,14,.52) 0%, rgba(12,8,14,.70) 40%, rgba(12,8,14,.88) 100%);
+  opacity:0;transition:opacity .35s;
+}
+#p-guild.has-bg::before{opacity:1;}
+#p-guild > *{position:relative;z-index:1;}
+/* Üst şeritler camlaşır (arkaplan varken ahşap doku yerine cam) */
+#p-guild.has-bg .hdr,
+#p-guild.has-bg .tabs{
+  background:rgba(26,18,28,.72);background-image:none;
+  -webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
+}
+#p-guild.has-bg #guild-content{background:transparent;background-image:none;}
+/* Kart kutuları saydam cam.
+   .member-card / .listing-card BİLEREK dışarıda — onların saydamlığı
+   .gd-card-t sınıfıyla ayrıca ayarlanıyor (elle ince ayar yapılabilsin). */
+#p-guild.has-bg #guild-content .card,
+#p-guild.has-bg #guild-content .card-sm{
+  background:rgba(38,28,18,.55);
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+}
+#p-guild.has-bg #guild-content .gd-tavern-head{
+  background:rgba(42,26,58,.55);
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+}
+#p-guild.has-bg #guild-content .sec{text-shadow:0 1px 4px #000,0 0 14px #000000cc;}
+#p-guild.has-bg #guild-content .sec::after{background:linear-gradient(90deg,rgba(110,75,42,.9),transparent);}
+@media(max-width:899px){
+  #p-guild.has-bg .hdr,
+  #p-guild.has-bg .tabs{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(26,18,28,.9);}
+  #p-guild.has-bg #guild-content .card{
+    -webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(38,28,18,.85);
+  }
+  #p-guild.has-bg{transform:translateZ(0);}
 }
 
 /* ── Kale haritası (masaüstü görsel görünüm) ── */
@@ -10007,7 +10042,29 @@ function glgo(t) {
   renderGuild(t);
 }
 
+/* Lonca sekmesine göre sayfa arkaplanı (Üretim'deki setProdBg deseni).
+   Savaş sekmesinin kendi boss sahnesi var — orada sayfa arkaplanı kapatılır. */
+const GUILD_BGS={ members:'uyeler', chat:'taverna' };
+function setGuildBg(tab){
+  const page=document.getElementById('p-guild');
+  if(!page) return;
+  let file=GUILD_BGS[tab]||'';
+  if(tab==='storage') file = (guildStorageTab==='personal') ? 'kisiseldepo' : 'ortakdepo';
+  if(file && G.guildId){
+    if(page.dataset.bg!==file){
+      page.style.backgroundImage=`url('${IMG_BASE}${file}.webp')`;
+      page.dataset.bg=file;
+    }
+    page.classList.add('has-bg');
+  } else {
+    page.classList.remove('has-bg');
+    page.style.backgroundImage='';
+    page.dataset.bg='';
+  }
+}
+
 function renderGuild(t) {
+  setGuildBg(t);
   document.getElementById('guild-hdr-sub').textContent = G.guildName || 'Lonca seçilmedi';
   const roleBadge=document.getElementById('guild-role-badge');
   if(roleBadge) roleBadge.textContent = !G.guildId ? '—'
@@ -10166,7 +10223,7 @@ async function loadGuildStorage(){
   G_GUILD_STORAGE.personal=data.filter(r=>r.owner_id===currentUser.id).map(_mapGuildStorageRow);
   G_GUILD_STORAGE.shared=data.filter(r=>r.owner_id===null).map(_mapGuildStorageRow);
 }
-function setGuildStorageTab(t){ guildStorageTab=t; paintGuildStorage(); }
+function setGuildStorageTab(t){ guildStorageTab=t; setGuildBg('storage'); paintGuildStorage(); }
 function renderGuildStorage(){
   if(!G.guildId){document.getElementById('guild-content').innerHTML=`<div style="text-align:center;padding:30px;font-size:13px;color:var(--ink3);">Önce bir loncaya katıl.</div>`;return;}
   document.getElementById('guild-content').innerHTML=`<div style="text-align:center;padding:20px;font-size:13px;color:var(--ink3);">Depo yükleniyor...</div>`;
@@ -10191,31 +10248,24 @@ function paintGuildStorage(){
       <button class="buy-btn-sm" style="width:100%;margin-top:${guildStorageTab==='shared'?'4px':'auto'};" onclick="withdrawGuildStorage(${it.id})">${guildStorageTab==='personal'?'📤 Al':'Eşyayı Al'}</button>
     </div>`;
   }).join('');
-  const bgImg = guildStorageTab==='personal' ? 'kisiseldepo' : 'ortakdepo';
   wrap.innerHTML = `
     <div style="display:flex;gap:6px;margin-bottom:10px;">
       <button class="btn btn-sm ${guildStorageTab==='personal'?'':'btn-ghost'}" style="flex:1;" onclick="setGuildStorageTab('personal')">🔒 Kişisel Depo</button>
       <button class="btn btn-sm ${guildStorageTab==='shared'?'':'btn-ghost'}" style="flex:1;" onclick="setGuildStorageTab('shared')">🌐 Ortak Depo</button>
     </div>
-    <div class="gd-bgpanel">
-      <img class="gd-bgpanel-img" src="${IMG_BASE}${bgImg}.webp" onerror="this.style.display='none'"/>
-      <div class="gd-bgpanel-shade"></div>
-      <div class="gd-bgpanel-content">
-        <div style="font-size:11px;color:var(--ink3);margin-bottom:8px;text-align:center;">
-          ${guildStorageTab==='personal'
-            ? 'Buraya koyduğun eşyaları sadece sen alabilirsin — kiralık kasa gibi.'
-            : 'Buraya koyulan eşyayı loncadaki herkes alabilir — ilk gelen alır.'}
-        </div>
-        <div class="row-between" style="margin-bottom:8px;">
-          <span style="font-size:11px;color:var(--gold2);font-family:var(--font-head);">${list.length}/${cap}</span>
-          <div style="display:flex;gap:5px;">
-            <button class="btn btn-xs btn-ghost" onclick="renderGuildStorage()">🔄 Yenile</button>
-            <button class="btn btn-xs" onclick="openGuildStorageDepositPicker()">📥 Eşya Koy</button>
-          </div>
-        </div>
-        ${list.length?`<div class="market-grid">${cards}</div>`:`<div style="text-align:center;padding:24px;color:var(--ink3);font-size:12px;">Depo boş.</div>`}
+    <div style="font-size:11px;color:var(--ink3);margin-bottom:8px;text-align:center;">
+      ${guildStorageTab==='personal'
+        ? 'Buraya koyduğun eşyaları sadece sen alabilirsin — kiralık kasa gibi.'
+        : 'Buraya koyulan eşyayı loncadaki herkes alabilir — ilk gelen alır.'}
+    </div>
+    <div class="row-between" style="margin-bottom:8px;">
+      <span style="font-size:11px;color:var(--gold2);font-family:var(--font-head);">${list.length}/${cap}</span>
+      <div style="display:flex;gap:5px;">
+        <button class="btn btn-xs btn-ghost" onclick="renderGuildStorage()">🔄 Yenile</button>
+        <button class="btn btn-xs" onclick="openGuildStorageDepositPicker()">📥 Eşya Koy</button>
       </div>
     </div>
+    ${list.length?`<div class="market-grid">${cards}</div>`:`<div style="text-align:center;padding:24px;color:var(--ink3);font-size:12px;">Depo boş.</div>`}
   `;
 }
 function openGuildStorageDepositPicker(){
@@ -10349,14 +10399,8 @@ async function sbLoadGuildMembers(){
     (leaders.length  ? `<div class="sec" style="margin-top:0;">Lider</div>${leaders.map(mc).join('')}`  : '')
     +(officers.length? `<div class="sec">Subaylar</div>${officers.map(mc).join('')}` : '')
     +(mems.length    ? `<div class="sec">Üyeler</div>${mems.map(mc).join('')}`       : '');
-  document.getElementById('guild-content').innerHTML=`
-    <div class="gd-bgpanel">
-      <img class="gd-bgpanel-img" src="${IMG_BASE}uyeler.webp" onerror="this.style.display='none'"/>
-      <div class="gd-bgpanel-shade"></div>
-      <div class="gd-bgpanel-content">
-        <div style="max-width:420px;margin:0 auto;">${rows}</div>
-      </div>
-    </div>`;
+  document.getElementById('guild-content').innerHTML=
+    `<div style="max-width:420px;margin:0 auto;">${rows}</div>`;
 }
 /* ══════════════════════════════════════
    LONCA BOSS SAVAŞ SİSTEMİ v3
@@ -10413,18 +10457,19 @@ function renderGuildWar(){
   }
   const boss = getCurrentBoss();
   const gc = document.getElementById('guild-content');
-  // ÖNEMLİ: görsel #guild-content'in KENDİ innerHTML'i içine (gd-bgpanel deseni)
-  // gömülür — gc.style.background* ARTIK KULLANILMIYOR. Eski haliyle bu satırlar
-  // #guild-content'e kalıcı stil basıyordu ve hiçbir başka renderGuild* fonksiyonu
-  // bunu temizlemediği için, Savaş sekmesi bir kez açıldıktan sonra o anki boss
-  // görseli TÜM lonca sekmelerinde arkada yapışık kalıyordu.
+  // Boss görseli sekmenin KENDİ içeriğine gömülür — gc.style.background*
+  // ARTIK KULLANILMIYOR. Eski haliyle o satırlar #guild-content'e kalıcı stil
+  // basıyordu ve hiçbir başka renderGuild* fonksiyonu temizlemediği için, Savaş
+  // sekmesi bir kez açıldıktan sonra boss görseli TÜM sekmelerde yapışık kalıyordu.
+  // (Diğer sekmelerin arkaplanı setGuildBg ile #p-guild sayfasına basılır.)
   gc.innerHTML=`
     <style>
       @keyframes bossSlideUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
       .boss-hunter-row{animation:bossSlideUp .35s ease both;}
     </style>
-    <div class="gd-bgpanel" style="border-radius:0;box-shadow:none;margin-bottom:0;min-height:0;">
-      <img class="gd-bgpanel-img" src="${IMG_BASE}${boss.img}.webp" onerror="this.src='${IMG_BASE}${boss.img}.jpg';this.onerror=()=>this.style.display='none';"/>
+    <div style="position:relative;border-radius:0;overflow:hidden;">
+      <img src="${IMG_BASE}${boss.img}.webp" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;z-index:0;"
+        onerror="this.src='${IMG_BASE}${boss.img}.jpg';this.onerror=()=>this.style.display='none';"/>
     <div style="min-height:480px;display:flex;flex-direction:column;background:linear-gradient(to bottom,rgba(0,0,0,0.15) 0%,rgba(0,0,0,0.05) 25%,rgba(15,8,4,0.82) 60%,rgba(15,8,4,1) 100%);position:relative;z-index:1;">
 
       <!-- Üst: Boss görseli + adı -->
@@ -11068,16 +11113,12 @@ async function fetchMyRanks(){
 function renderGuildChat(){
   if(!G.guildId){document.getElementById('guild-content').innerHTML=`<div style="text-align:center;padding:30px;font-size:13px;color:var(--ink3);">Tavernaya girmek için önce bir loncaya katıl.</div>`;return;}
   document.getElementById('guild-content').innerHTML=`
-    <div class="gd-bgpanel">
-      <img class="gd-bgpanel-img" src="${IMG_BASE}taverna.webp" onerror="this.style.display='none'"/>
-      <div class="gd-bgpanel-shade"></div>
-      <div class="gd-bgpanel-content">
-        <div class="gd-tavern-head">🍺 TAVERNA<small>ocak çıtırdıyor, yoldaşlar masada — söz sende</small></div>
-        <div id="chat-msgs" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;min-height:200px;"></div>
-        <div style="display:flex;gap:6px;">
-          <input class="input-field" style="flex:1;" id="chat-inp" placeholder="Tavernada söz al..." onkeydown="if(event.key==='Enter') gSend()"/>
-          <button class="btn btn-sm" onclick="gSend()">➤</button>
-        </div>
+    <div style="max-width:560px;margin:0 auto;">
+      <div class="gd-tavern-head">🍺 TAVERNA<small>ocak çıtırdıyor, yoldaşlar masada — söz sende</small></div>
+      <div id="chat-msgs" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;min-height:200px;"></div>
+      <div style="display:flex;gap:6px;">
+        <input class="input-field" style="flex:1;" id="chat-inp" placeholder="Tavernada söz al..." onkeydown="if(event.key==='Enter') gSend()"/>
+        <button class="btn btn-sm" onclick="gSend()">➤</button>
       </div>
     </div>`;
   sbLoadChatHistory();sbSubscribeChat();
