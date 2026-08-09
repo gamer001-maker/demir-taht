@@ -1355,7 +1355,8 @@ html,body{
 .cmap-spot img{width:100%;height:auto;display:block;pointer-events:none;}
 .cmap-spot.unbuilt{filter:grayscale(.9) brightness(.55);}
 .cmap-spot.unbuilt:hover{filter:grayscale(.5) brightness(.85) drop-shadow(0 0 12px #d4af3788);}
-.cmap-spot.editing{cursor:grab;outline:2px dashed #d4af3788;outline-offset:4px;border-radius:8px;}
+/* touch-action:none ŞART — yoksa mobilde parmak binayı değil sayfayı kaydırır */
+.cmap-spot.editing{cursor:grab;outline:2px dashed #d4af3788;outline-offset:4px;border-radius:8px;touch-action:none;}
 .cmap-spot.editing:active{cursor:grabbing;}
 .cmap-lbl{
   position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
@@ -1371,28 +1372,39 @@ html,body{
   #castle-map-extras{gap:4px;margin-top:6px;}
 }
 
-/* ── Avluda duran birlikler (kale haritasının alt şeridi) ── */
+/* ── Kale haritasındaki birlik kümesi ──
+   Konum G.castleLayout._troops'tan gelir (varsayılan CASTLE_TROOP_SPOT — sağ üst),
+   binalar gibi düzenleme modunda sürüklenip kaydedilir. */
 .cmap-troops{
-  position:absolute;left:50%;bottom:8%;transform:translateX(-50%);
-  width:94%;display:flex;flex-wrap:wrap-reverse;justify-content:center;align-items:flex-end;
-  gap:6px 4px;z-index:3;pointer-events:none;
+  position:absolute;transform:translate(-50%,-50%);
+  width:42%;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;
+  gap:5px 4px;z-index:4;pointer-events:none;
 }
-.cmap-troops.editing{opacity:.2;}                          /* bina taşıma modunda yoldan çekilir */
-.cmap-troops.editing .cmap-fig{pointer-events:none;}       /* ...ve tıklamayı binalara bırakır */
+/* Düzenlemede yakalama alanı yalnız figürlerdir (kapsayıcı kutu binaların tıklamasını çalmasın);
+   hangi figürden tutulursa tutulsun küme bütün olarak taşınır. */
+.cmap-troops.editing .cmap-fig{cursor:grab;touch-action:none;outline:2px dashed #d4af3788;outline-offset:3px;border-radius:6px;}
+.cmap-troops.editing .cmap-fig:active{cursor:grabbing;}
+.cmap-troops.editing .cmap-fig:hover{transform:none;}
+.cmap-troops.editing .cmap-fig img,
+.cmap-troops.editing .cmap-fig-emo{animation:none;}
 .cmap-fig{
-  position:relative;width:clamp(26px,6.5%,74px);cursor:pointer;pointer-events:auto;
+  position:relative;width:clamp(24px,14%,72px);cursor:pointer;pointer-events:auto;
   transition:filter .15s,transform .15s;
 }
-.cmap-fig:hover{filter:brightness(1.25) drop-shadow(0 0 10px #d4af37cc);transform:translateY(-3px);z-index:6;}
+.cmap-fig:hover{filter:brightness(1.3) drop-shadow(0 0 10px #d4af37cc);transform:translateY(-3px);z-index:6;}
 .cmap-fig img{width:100%;height:auto;display:block;pointer-events:none;filter:drop-shadow(0 3px 6px #000000aa);}
 .cmap-fig-emo{width:100%;align-items:center;justify-content:center;font-size:clamp(18px,4vw,44px);}
+/* Nefes alma — her figür kendi gecikmesiyle (--d) hafifçe salınır, küme canlı görünür */
+@keyframes cmapIdle{0%,100%{transform:translateY(0) rotate(0deg);}50%{transform:translateY(-8%) rotate(-1.5deg);}}
+.cmap-fig img,.cmap-fig .cmap-fig-emo{animation:cmapIdle 3.2s ease-in-out infinite;animation-delay:var(--d,0s);}
+@media(prefers-reduced-motion:reduce){ .cmap-fig img,.cmap-fig .cmap-fig-emo{animation:none;} }
 .cmap-fig-lv{
   position:absolute;top:-5px;right:-5px;z-index:2;
   font-family:var(--font-head);font-size:9px;line-height:1.4;
   background:rgba(10,7,3,.9);border:1px solid var(--border2);color:var(--gold);
   border-radius:4px;padding:0 3px;pointer-events:none;
 }
-@media(max-width:899px){ .cmap-fig-lv{font-size:7px;top:-3px;right:-3px;} }
+@media(max-width:899px){ .cmap-fig-lv{font-size:7px;top:-3px;right:-3px;} .cmap-troops{width:54%;} }
 
 /* ── Birlik kartları (Kale sekmesi) ── */
 .troop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;align-items:stretch;margin-bottom:8px;}
@@ -6272,24 +6284,31 @@ function renderCastleMap(){
       const spotKey='extra_'+x.kind+'_'+x.bkey;
       return `<button class="btn btn-xs btn-ghost" onclick="openCastleSpotModal('${spotKey}')">${x.icon} ${x.name} <span style="color:var(--gold);">Sv.${lv}</span></button>`;
     }).join('')+`
-      <button class="btn btn-xs ${_cmapEditMode?'':'btn-ghost'}" style="margin-left:auto;${_cmapEditMode?'border-color:var(--gold);color:var(--gold2);':''}" onclick="toggleCmapEdit()">🖱 ${_cmapEditMode?'Düzenlemeyi Bitir':'Binaları Taşı'}</button>
+      <button class="btn btn-xs ${_cmapEditMode?'':'btn-ghost'}" style="margin-left:auto;${_cmapEditMode?'border-color:var(--gold);color:var(--gold2);':''}" onclick="toggleCmapEdit()">🖱 ${_cmapEditMode?'Düzenlemeyi Bitir':'Yerleşimi Düzenle'}</button>
       ${_cmapEditMode?`<button class="btn btn-xs btn-ghost" onclick="resetCastleLayout()">↺ Varsayılan Yerleşim</button>`:''}`;
   }
 }
-/* Avludaki birlik figürleri — sahnenin alt şeridinde sabit dizilim (flex).
-   Bina sürükleme moduyla çakışmaz; düzenleme açıkken soluklaşıp tıklanamaz olur.
-   Konumu CSS'teki .cmap-troops{bottom} ile ayarlanır. */
+/* Kale haritasındaki birlik kümesi — binalar gibi yüzde koordinatlı, sürüklenebilir tek blok.
+   Varsayılan sağ üstte; oyuncu taşırsa G.castleLayout._troops'a yazılır (binalarla aynı kayıt). */
+const CASTLE_TROOP_SPOT={key:'_troops', x:76, y:23};
+
 function castleTroopFiguresHTML(){
-  const figs=(G.companions||[]).map(c=>{
+  const ov=(G.castleLayout||{})[CASTLE_TROOP_SPOT.key]||{};
+  const cx=typeof ov.x==='number'?ov.x:CASTLE_TROOP_SPOT.x;
+  const cy=typeof ov.y==='number'?ov.y:CASTLE_TROOP_SPOT.y;
+  const figs=(G.companions||[]).map((c,i)=>{
     const t=TROOP_TYPES[c.type]||{name:c.type,icon:'❓'};
     const lv=troopLevel(c);
-    return `<div class="cmap-fig" onclick="event.stopPropagation();openTroopModal('${c.tid}')" title="${t.name} Sv.${lv} — donat">
+    return `<div class="cmap-fig" style="--d:${(i*0.37).toFixed(2)}s"
+      onclick="if(_cmapEditMode){event.stopPropagation();return;}event.stopPropagation();openTroopModal('${c.tid}')"
+      title="${_cmapEditMode?'Sürükleyerek birliklerin durduğu yeri değiştir':t.name+' Sv.'+lv+' — donat'}">
       <span class="cmap-fig-lv">${lv}</span>
       <img src="${IMG_BASE}${c.type}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
       <span class="cmap-fig-emo" style="display:none;">${t.icon}</span>
     </div>`;
   }).join('');
-  return `<div class="cmap-troops${_cmapEditMode?' editing':''}" id="cmap-troops">${figs}</div>`;
+  return `<div class="cmap-troops${_cmapEditMode?' editing':''}" id="cmap-troops" style="left:${cx}%;top:${cy}%;"
+    onpointerdown="cmapDragStart(event,'${CASTLE_TROOP_SPOT.key}')">${figs}</div>`;
 }
 // Sadece figür şeridini tazele (sahnenin tamamını yeniden kurmadan)
 function renderCastleTroopFigures(){
@@ -6299,39 +6318,54 @@ function renderCastleTroopFigures(){
 function toggleCmapEdit(){
   _cmapEditMode=!_cmapEditMode;
   renderCastleMap();
-  toast(_cmapEditMode?'🖱 Düzenleme modu AÇIK — binaları sürükleyip bırak':'Düzenleme bitti, yerleşim kaydedildi');
+  toast(_cmapEditMode?'🖱 Düzenleme modu AÇIK — binaları ve birlikleri sürükleyip bırak':'Düzenleme bitti, yerleşim kaydedildi');
 }
 function resetCastleLayout(){
   G.castleLayout={};
   renderCastleMap();
-  toast('↺ Binalar varsayılan yerlerine döndü.');
+  toast('↺ Binalar ve birlikler varsayılan yerlerine döndü.');
   if(currentUser) sbSave();
 }
-/* Düzenleme modunda bina sürükleme — bırakınca G.castleLayout'a yazılır ve kaydedilir */
+/* Düzenleme modunda bina/birlik sürükleme — bırakınca G.castleLayout'a yazılır ve kaydedilir.
+   Mobil notu: sayfanın parmakla birlikte kaymaması CSS'teki `touch-action:none` sayesinde olur
+   (pointerdown'daki preventDefault tek başına kaydırmayı durdurmaz). Pointer capture ile
+   parmak elemanın dışına taşsa da sürükleme kopmaz. */
 function cmapDragStart(e,key){
   if(!_cmapEditMode) return;
   e.preventDefault(); e.stopPropagation();
   const scene=document.getElementById('castle-map-scene');
   const spot=e.currentTarget;
   const r=scene.getBoundingClientRect();
+  if(!r.width||!r.height) return;
+  // Tutulan nokta ile elemanın merkezi arasındaki fark korunur — kenardan tutunca zıplamaz
+  const sr=spot.getBoundingClientRect();
+  const offX=e.clientX-(sr.left+sr.width/2);
+  const offY=e.clientY-(sr.top+sr.height/2);
   let lx=null,ly=null;
+  // Yakalama gerçekten dokunulan öğede olmalı — kapsayıcı `pointer-events:none` olabilir
+  const capEl=(e.target&&e.target.nodeType===1)?e.target:spot;
+  try{ capEl.setPointerCapture(e.pointerId); }catch(_){}
   const move=(ev)=>{
-    lx=Math.max(0,Math.min(100,(ev.clientX-r.left)/r.width*100));
-    ly=Math.max(0,Math.min(100,(ev.clientY-r.top)/r.height*100));
+    if(ev.cancelable) ev.preventDefault();
+    lx=Math.max(0,Math.min(100,(ev.clientX-offX-r.left)/r.width*100));
+    ly=Math.max(0,Math.min(100,(ev.clientY-offY-r.top)/r.height*100));
     spot.style.left=lx+'%';
     spot.style.top=ly+'%';
   };
   const up=()=>{
     document.removeEventListener('pointermove',move);
     document.removeEventListener('pointerup',up);
+    document.removeEventListener('pointercancel',up);
+    try{ capEl.releasePointerCapture(e.pointerId); }catch(_){}
     if(lx!=null){
       if(!G.castleLayout) G.castleLayout={};
       G.castleLayout[key]={x:+lx.toFixed(1), y:+ly.toFixed(1)};
       if(currentUser) sbSave();
     }
   };
-  document.addEventListener('pointermove',move);
+  document.addEventListener('pointermove',move,{passive:false});
   document.addEventListener('pointerup',up);
+  document.addEventListener('pointercancel',up);
 }
 
 /* Haritadaki binaya tıklanınca açılan yükseltme penceresi */
