@@ -948,7 +948,31 @@ html,body{
 .map-cell .mlbl{font-size:6px;font-family:var(--font-head);color:#fff;text-shadow:0 1px 3px #000;}
 .t-plains{background:#1e2e12;}.t-forest{background:#122210;}.t-mountain{background:#2e241a;}
 .t-water{background:#0e1e28;}.t-castle{background:#2a1e10;}.t-village{background:#261e0a;}.t-ruins{background:#1a1610;}.t-cave{background:#1a0e2a;}
+.t-camp{background:#241a0e;}
 #map-info-card{position:sticky;bottom:0;z-index:5;}
+
+/* ── DÜNYA HARİTASI ──
+   Görselin üstündeki ▼ işaretleri zaten basılı; pinler o işaretlerin
+   üzerine oturan tıklanabilir noktalardır (yüzde koordinat). */
+#world-map-scroll{overflow-x:auto;overflow-y:hidden;border:2px solid var(--border2);border-radius:12px;background:#08121c;-webkit-overflow-scrolling:touch;}
+#world-map-scene{position:relative;width:100%;aspect-ratio:6047/3375;background-size:100% 100%;background-position:center;}
+@media(max-width:899px){ #world-map-scene{width:1000px;} }
+.wm-pin{position:absolute;transform:translate(-50%,-50%);width:clamp(26px,2.6vw,34px);height:clamp(26px,2.6vw,34px);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:clamp(12px,1.3vw,16px);
+  cursor:pointer;background:radial-gradient(circle,#000000cc 0%,#00000055 72%,transparent 100%);
+  border:2px solid var(--gold2);box-shadow:0 0 10px #000a;transition:transform .15s ease;z-index:3;}
+.wm-pin:hover{transform:translate(-50%,-50%) scale(1.18);z-index:5;}
+.wm-pin.sel{border-color:#fff;box-shadow:0 0 14px var(--gold);z-index:5;}
+.wm-pin.here{border-color:#7aff9a;animation:wmPulse 2.2s ease-in-out infinite;}
+@keyframes wmPulse{0%,100%{box-shadow:0 0 0 3px #7aff9a33,0 0 12px #7aff9a66;}50%{box-shadow:0 0 0 6px #7aff9a1a,0 0 20px #7aff9aaa;}}
+@media(prefers-reduced-motion:reduce){ .wm-pin.here{animation:none;} }
+.wm-row{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:8px 10px;margin-bottom:5px;
+  background:var(--panel3);border:1px solid var(--border2);border-radius:9px;cursor:pointer;transition:border-color .15s;}
+.wm-row:hover{border-color:var(--gold2);}
+.wm-row.here{border-color:#7aff9a;background:#132014;}
+.wm-row .wm-ico{font-size:19px;width:24px;text-align:center;flex:none;}
+.wm-row .wm-nm{font-family:var(--font-head);font-size:12px;color:var(--perg2);}
+.wm-row .wm-sub{font-size:9.5px;color:var(--ink3);}
 
 /* ═══════════════════════════════
    ARENA
@@ -2279,6 +2303,15 @@ html,body{
       <div class="scroll" id="gs-gelistirme" style="display:none;"></div>
       <!-- HARİTA -->
       <div class="pad" id="gs-harita" style="display:none;">
+        <!-- DÜNYA HARİTASI -->
+        <div id="world-map-view">
+          <div id="world-map-scroll"><div id="world-map-scene"></div></div>
+          <div class="card" id="world-region-card" style="margin-top:8px;"></div>
+          <div id="world-region-list" style="margin-top:8px;"></div>
+        </div>
+        <!-- BÖLGE KEŞİF GRİDİ -->
+        <div id="region-map-view" style="display:none;">
+        <div id="region-map-head" style="margin-bottom:8px;"></div>
         <div class="map-grid" id="map-grid" style="margin-bottom:10px;"></div>
         <div style="font-size:10px;color:var(--ink3);text-align:center;margin-bottom:6px;">Keşfetmek: 10🪙 | Komşudan genişle</div>
         <button id="new-map-btn" class="btn" style="width:100%;display:none;margin-bottom:8px;border-color:var(--gold2);" onclick="resetMap()">🗺 Yeni Yerler Keşfet</button>
@@ -2303,6 +2336,7 @@ html,body{
               <div style="font-size:9px;color:var(--ink3);">Kil</div>
             </div>
           </div>
+        </div>
         </div>
       </div>
       <!-- ARENA -->
@@ -3725,18 +3759,109 @@ const TERRAIN_TYPES=[
   {t:'water',  n:'Göl',      info:'Su kaynağı',    img:IMG_BASE+'gol.jpeg',    weight:2},
   {t:'cave',   n:'Mağara Girişi', info:'Karanlık bir mağara... İçeride tehlikeli bir yaratık yuva kurmuş.', img:IMG_BASE+'magaragirisi.webp', weight:4},
 ];
+/* Yabancı bölgelerde kalenin yerini tutan çekirdek hücre (keşif buradan yayılır) */
+const CAMP_TERRAIN={t:'camp', n:'Kampın', info:'Seyahat kampın. Keşif buradan yayılır.', img:IMG_BASE+'kasaba.png', weight:0};
+const START_CELL=21; // 6x6 gridin merkezi — kale ve kamp hep burada
 
-/* Harita üreteci — her oyuncu için rastgele 35 hücre */
-function generateMap(seed){
+/* ══════════════════════════════════════
+   DÜNYA HARİTASI — BÖLGELER
+   x/y: haritabuyuk.webp üstünde pin konumu (yüzde).
+   no:  explored_cells/explore_timers'ta kullanılan slot numarası.
+        cell_index = slot*100 + hücre. Oyuncunun DOĞDUĞU bölge her zaman
+        slot 0'ı kullanır → eski kayıtlar (0-35) olduğu gibi geçerli kalır,
+        hiçbir SQL migrasyonu gerekmez.
+   weights: TERRAIN_TYPES içindeki 'n' (isim) → ağırlık. Bölgenin karakterini
+        bu tablo belirler; yeni arazi görselleri geldikçe burası genişler.
+   ring: o bölgenin zindan/harabelerinden ÇIKAN özel yüzük.
+══════════════════════════════════════ */
+const REGIONS={
+  vaelys:{no:1, name:'Vaelys Tepesi', icon:'🌄', x:65.3, y:31.5,
+    desc:'Yemyeşil tepeler, sık meşe ormanları ve bereketli vadiler. Odun ve av bol.',
+    ring:'ormanruhuyuzugu',
+    weights:{'Ova':22,'Orman':34,'Dağlar':12,'Kasaba':12,'Harabeler':9,'Deniz':1,'Nehir':5,'Göl':2,'Mağara Girişi':3}},
+  blacktide:{no:2, name:'Blacktide Koyu', icon:'🏴', x:68.2, y:65.1,
+    desc:'Korsanların sığındığı karanlık koy. Batık gemiler ve yağmalanmış harabeler dolu.',
+    ring:'nehirruhuyuzugu',
+    weights:{'Ova':8,'Orman':14,'Dağlar':8,'Kasaba':14,'Harabeler':18,'Deniz':24,'Nehir':4,'Göl':2,'Mağara Girişi':8}},
+  stormreach:{no:3, name:'Stormreach Adaları', icon:'⛵', x:25.0, y:57.8,
+    desc:'Fırtınalı sulara serpilmiş yüzlerce ada. Balık ve gizli koylar cenneti.',
+    ring:'sansyuzugu',
+    weights:{'Ova':8,'Orman':18,'Dağlar':8,'Kasaba':10,'Harabeler':10,'Deniz':30,'Nehir':6,'Göl':4,'Mağara Girişi':6}},
+  aethelgard:{no:4, name:'Aethelgard Mağarası', icon:'🕳', x:39.8, y:30.8,
+    desc:'Dağın bağrına oyulmuş kadim mağara ağı. Karanlıkta bir şeyler kıpırdıyor.',
+    ring:'necruyuzugu',
+    weights:{'Ova':8,'Orman':18,'Dağlar':30,'Kasaba':6,'Harabeler':16,'Deniz':1,'Nehir':3,'Göl':2,'Mağara Girişi':16}},
+  frosthill:{no:5, name:'Frost Hill', icon:'❄', x:42.4, y:16.4,
+    desc:'Buzul rüzgârlarının dövdüğü kar dağları. Yolculuk zor, ödülü büyük.',
+    ring:'arinmayuzugu',
+    weights:{'Ova':10,'Orman':14,'Dağlar':42,'Kasaba':6,'Harabeler':12,'Deniz':2,'Nehir':4,'Göl':4,'Mağara Girişi':6}},
+  brimstone:{no:6, name:'Brimstone Dağları', icon:'🌋', x:76.0, y:42.1,
+    desc:'Lav akan volkanik sıradağlar. Toprak sıcak, taş keskin, hava zehirli.',
+    ring:'atesyuzugu',
+    weights:{'Ova':8,'Orman':6,'Dağlar':44,'Kasaba':4,'Harabeler':18,'Deniz':1,'Nehir':2,'Göl':1,'Mağara Girişi':16}},
+  maelstrom:{no:7, name:'Maelstrom Geçiti', icon:'🌀', x:41.0, y:52.9,
+    desc:'Girdapların yuttuğu dar boğaz. Nehirler burada denize karışır.',
+    ring:'ofkekristaliyuzugu',
+    weights:{'Ova':12,'Orman':18,'Dağlar':18,'Kasaba':6,'Harabeler':14,'Deniz':10,'Nehir':16,'Göl':4,'Mağara Girişi':2}},
+  dustguard:{no:8, name:'Dustguard Çölü', icon:'🏜', x:50.5, y:78.1,
+    desc:'Ucu bucağı olmayan kum denizi. Kum altında gömülü şehirler var.',
+    ring:'kanyuzugu',
+    weights:{'Ova':34,'Orman':4,'Dağlar':24,'Kasaba':8,'Harabeler':20,'Deniz':1,'Nehir':2,'Göl':3,'Mağara Girişi':4}},
+};
+/* Sınıfına göre doğduğun bölge */
+const CLASS_HOME_REGION={warrior:'vaelys', mage:'blacktide', rogue:'stormreach', ranger:'aethelgard', knight:'vaelys'};
+function homeRegionFor(cls){ return CLASS_HOME_REGION[cls]||'vaelys'; }
+/* Her yerden çıkabilen yüzükler + yüzüğün açıldığı en düşük zindan kademesi */
+const RING_COMMON=['bakiryuzuk','ustayuzugu'];
+const RING_TIER_MIN={bakiryuzuk:1,sansyuzugu:1,nehirruhuyuzugu:1,arinmayuzugu:1,atesyuzugu:1,
+  ustayuzugu:3,ormanruhuyuzugu:3,kanyuzugu:3,necruyuzugu:3,
+  ofkekristaliyuzugu:5,elementalekipyuzugu:5};
+
+/* ── Bölge yardımcıları ── */
+function regionKeys(){ return Object.keys(REGIONS); }
+function curRegion(){ return REGIONS[G.region]||REGIONS[homeRegionFor(G.classId)]; }
+function regionSlot(key){ return key===G.homeRegion?0:(REGIONS[key]?.no||0); }
+function regionBySlot(slot){
+  if(slot===0) return G.homeRegion;
+  return regionKeys().find(k=>REGIONS[k].no===slot)||G.homeRegion;
+}
+function gCellIdx(key,idx){ return regionSlot(key)*100+idx; }
+/* Komşuluk — satır kenarında sarmayı engeller (5 ile 6 komşu değildir) */
+function cellNeighbors(idx){
+  const r=Math.floor(idx/6), c=idx%6, out=[];
+  if(c>0) out.push(idx-1);
+  if(c<5) out.push(idx+1);
+  if(r>0) out.push(idx-6);
+  if(r<5) out.push(idx+6);
+  return out;
+}
+/* İki bölge arası mesafe (harita yüzdesi) → altın ve bekleme süresi */
+function regionDist(a,b){
+  const A=REGIONS[a],B=REGIONS[b];
+  if(!A||!B) return 0;
+  return Math.hypot(A.x-B.x, A.y-B.y);
+}
+function travelCost(a,b){
+  const d=regionDist(a,b);
+  return { gold: Math.max(20, Math.round(d*4)), secs: Math.min(2400, Math.max(300, Math.round(d*30))) };
+}
+
+/* Harita üreteci — bölgenin arazi ağırlıklarıyla 36 hücre */
+function generateMap(seed, regionKey){
   const rng=mulberry32(seed);
   const cells=[];
-  // Ağırlıklı rastgele terrain seçimi
-  const pool=TERRAIN_TYPES.filter(t=>t.t!=='castle');
-  const totalW=pool.reduce((a,t)=>a+t.weight,0);
+  const W=REGIONS[regionKey]?.weights||null;
+  const isHome=regionKey===G.homeRegion;
+  // Ağırlıklı rastgele terrain seçimi — bölge tablosu varsa o, yoksa taban ağırlık
+  const pool=TERRAIN_TYPES.filter(t=>t.t!=='castle').map(t=>({...t, w: W?(W[t.n]||0):t.weight}));
+  const totalW=pool.reduce((a,t)=>a+t.w,0)||1;
   for(let i=0;i<36;i++){
-    if(i===21){cells.push({...TERRAIN_TYPES[0],idx:i});continue;} // Kale sabit ortada (6x6: satır 3, sütun 3)
-    let r=rng()*totalW,cum=0;
-    for(const tt of pool){cum+=tt.weight;if(r<cum){cells.push({...tt,idx:i});break;}}
+    // Merkez hücre: ana bölgede kalen, diğerlerinde kampın
+    if(i===START_CELL){cells.push({...(isHome?TERRAIN_TYPES[0]:CAMP_TERRAIN),idx:i});continue;}
+    let r=rng()*totalW,cum=0,picked=null;
+    for(const tt of pool){cum+=tt.w;if(r<cum){picked=tt;break;}}
+    if(!picked) picked=pool.find(t=>t.w>0)||pool[0];
+    cells.push({t:picked.t,n:picked.n,info:picked.info,img:picked.img,idx:i});
   }
   return cells;
 }
@@ -3748,40 +3873,111 @@ function mulberry32(seed){
 /* Kullanıcı ID'sinden seed üret */
 function userSeed(uid){if(!uid)return 42;let h=0;for(let i=0;i<uid.length;i++){h=Math.imul(31,h)+uid.charCodeAt(i)|0;}return Math.abs(h);}
 
-/* ── PLAYER MAP ── */
-let G_MAP=[]; // Aktif harita
-let exploreTimers=[]; // Keşif sayaçları
-let gatherTimers=[]; // Kaynak toplama sayaçları
+/* ── PLAYER MAP ──
+   G_MAPS: {bölgeAnahtarı: 36 hücre}. player_maps.cells jsonb'sinde
+   {_meta:{v,region,home,travelUntil}, vaelys:[...], ...} olarak saklanır.
+   Eski kayıt düz dizi ise oyuncunun ana bölgesine taşınır (tek seferlik). */
+let G_MAPS={};        // tüm bölgelerin haritaları
+let G_EXPLORED={};    // {bölge: Set(yerel hücre indeksi)}
+let G_MAP=[];         // aktif bölgenin haritası — G_MAPS[G.region] referansı
+let G_TRAVEL_UNTIL=0; // bir sonraki seyahatin açılacağı zaman (ms, server saati)
+let exploreTimers=[]; // Keşif sayaçları (aktif bölge)
+let gatherTimers=[];  // Kaynak toplama sayaçları (aktif bölge)
+let mapView='world';  // 'world' = dünya haritası · 'region' = keşif gridi
+let mapsReady=false;  // initPlayerMap tamamlanana kadar render bekler
+                      // (erken render G.explored'ı boş Set ile ezerdi)
+
+function ensureRegionMap(key){
+  if(!Array.isArray(G_MAPS[key])||G_MAPS[key].length!==36){
+    G_MAPS[key]=generateMap(userSeed((currentUser?.id||'demo')+':'+key), key);
+  }
+  if(!G_EXPLORED[key]) G_EXPLORED[key]=new Set();
+  G_EXPLORED[key].add(START_CELL); // kale / kamp her zaman açık
+  return G_MAPS[key];
+}
+function setActiveRegion(key){
+  if(!REGIONS[key]) key=G.homeRegion;
+  G.region=key;
+  G_MAP=ensureRegionMap(key);
+  G.explored=G_EXPLORED[key];
+  G.selectedCell=null;
+  // Önceki bölgenin hücre kartı ekranda kalmasın
+  const info=document.getElementById('map-info-card');
+  if(info){ info.style.display='none'; info.innerHTML=''; }
+}
+/* Tüm bölgelerdeki toplam keşif sayısı ve DB'ye yazılacak global indeksler */
+function exploredTotal(){ return Object.values(G_EXPLORED).reduce((a,s)=>a+s.size,0); }
+function exploredGlobalList(){
+  const out=[];
+  for(const [k,s] of Object.entries(G_EXPLORED)){ for(const i of s) out.push(gCellIdx(k,i)); }
+  return out;
+}
+async function saveMaps(){
+  if(!currentUser) return;
+  const payload={_meta:{v:2, region:G.region, home:G.homeRegion, travelUntil:G_TRAVEL_UNTIL}};
+  for(const [k,v] of Object.entries(G_MAPS)){ if(REGIONS[k]&&Array.isArray(v)) payload[k]=v; }
+  await supa.from('player_maps').upsert({profile_id:currentUser.id,cells:payload},{onConflict:'profile_id'});
+}
 
 async function initPlayerMap(){
-  if(!currentUser){G_MAP=generateMap(42);renderHarita();return;}
-  const {data}=await supa.from('player_maps').select('cells').eq('profile_id',currentUser.id).single();
-  if(data?.cells?.length){
-    G_MAP=data.cells;
-  } else {
-    G_MAP=generateMap(userSeed(currentUser.id));
-    await supa.from('player_maps').upsert({profile_id:currentUser.id,cells:G_MAP},{onConflict:'profile_id'});
+  if(!G.homeRegion||!REGIONS[G.homeRegion]) G.homeRegion=homeRegionFor(G.classId);
+  let needSave=false;
+
+  if(currentUser){
+    const {data}=await supa.from('player_maps').select('cells').eq('profile_id',currentUser.id).single();
+    const raw=data?.cells;
+    if(Array.isArray(raw)&&raw.length===36){
+      // ESKİ KAYIT: tek dizi → oyuncunun ana bölgesine taşınır
+      G_MAPS={[G.homeRegion]:raw};
+      needSave=true;
+    } else if(raw&&typeof raw==='object'&&!Array.isArray(raw)){
+      const meta=raw._meta||{};
+      if(REGIONS[meta.home]) G.homeRegion=meta.home;
+      G_TRAVEL_UNTIL=Number(meta.travelUntil)||0;
+      G_MAPS={};
+      for(const [k,v] of Object.entries(raw)){
+        if(k!=='_meta'&&REGIONS[k]&&Array.isArray(v)&&v.length===36) G_MAPS[k]=v;
+      }
+      if(REGIONS[meta.region]) G.region=meta.region;
+    } else needSave=true;
+  } else { G_MAPS={}; }
+
+  // Keşfedilen hücreleri bölgelere ayır (cell_index = slot*100 + hücre)
+  const rawExplored=(G.explored instanceof Set)?[...G.explored]:[];
+  G_EXPLORED={};
+  for(const g of rawExplored){
+    const idx=g%100, key=regionBySlot(Math.floor(g/100));
+    if(!REGIONS[key]||idx<0||idx>35) continue;
+    (G_EXPLORED[key]||(G_EXPLORED[key]=new Set())).add(idx);
   }
+
+  ensureRegionMap(G.homeRegion);
+  setActiveRegion(REGIONS[G.region]?G.region:G.homeRegion);
+  mapsReady=true;
+  if(needSave) await saveMaps();
   await loadExporeTimers();
   renderHarita();
 }
 
 async function loadExporeTimers(){
+  exploreTimers=[];
   if(!currentUser) return;
   const {data}=await supa.from('explore_timers').select('*').eq('profile_id',currentUser.id);
   if(!data||!data.length) return;
   const now=Date.now();
-  exploreTimers=data.map(row=>{
+  const rows=data.map(row=>{
     const started=new Date(row.started_at).getTime();
     const elapsed=Math.floor((now-started)/1000);
-    const remaining=Math.max(0,row.duration_secs-elapsed);
-    return {id:row.id,cellIdx:row.cell_index,remaining,total:row.duration_secs};
+    return {id:row.id, slot:Math.floor(row.cell_index/100), cellIdx:row.cell_index%100,
+            remaining:Math.max(0,row.duration_secs-elapsed), total:row.duration_secs};
   });
-  // Süresi dolmuşları hemen keşfet
-  for(const t of exploreTimers.filter(x=>x.remaining<=0)){
-    await finishExplore(t.cellIdx,t.id);
+  // Süresi dolmuşları hemen keşfet — hangi bölgede başlatıldıysa orada tamamlanır
+  for(const t of rows.filter(x=>x.remaining<=0)){
+    await finishExplore(t.cellIdx, t.id, regionBySlot(t.slot));
   }
-  exploreTimers=exploreTimers.filter(x=>x.remaining>0);
+  // Ekranda yalnızca bulunduğun bölgenin sayaçları görünür
+  const slot=regionSlot(G.region);
+  exploreTimers=rows.filter(x=>x.remaining>0&&x.slot===slot);
 }
 
 async function startExplore(idx){
@@ -3793,11 +3989,11 @@ async function startExplore(idx){
   let dbId=null;
   if(currentUser){
     const {data}=await supa.from('explore_timers').insert({
-      profile_id:currentUser.id,cell_index:idx,duration_secs:exDur
+      profile_id:currentUser.id,cell_index:gCellIdx(G.region,idx),duration_secs:exDur
     }).select().single();
     if(data) dbId=data.id;
   }
-  exploreTimers.push({id:dbId,cellIdx:idx,remaining:exDur,total:exDur});
+  exploreTimers.push({id:dbId,cellIdx:idx,slot:regionSlot(G.region),remaining:exDur,total:exDur});
   const rb=troopBuffs();
   const speedNote = rb.rehber>0 ? ` (Rehber: %${Math.round((1-rb.exploreSpeedMult)*100)} hızlı)` : '';
   toast(`Keşif başladı!${speedNote} 🗺`);
@@ -3805,12 +4001,14 @@ async function startExplore(idx){
   renderHarita();
 }
 
-async function finishExplore(idx,dbId){
-  const cell=G_MAP[idx];if(!cell)return;
-  G.explored.add(idx);
+async function finishExplore(idx,dbId,regionKey){
+  const key=REGIONS[regionKey]?regionKey:G.region;
+  const cells=ensureRegionMap(key);
+  const cell=cells[idx];if(!cell)return;
+  G_EXPLORED[key].add(idx);
   // Keşif bonusları
-  if(cell.t==='ruins'){const rb=troopBuffs();let b=Math.floor(Math.random()*40)+20;b=Math.floor(b*rb.resourceMult*scoutLootMult());G.gold+=b;const scoutPct=Math.round((scoutLootMult()-1)*100);const bonusNote=(rb.rehber>0?` (Rehber +%${Math.round((rb.resourceMult-1)*100)}`:(scoutPct>0?' (':''))+(scoutPct>0?`${rb.rehber>0?', ':''}İzcilik +%${scoutPct}`:'')+((rb.rehber>0||scoutPct>0)?')':'');toast(`Harabeler keşfedildi! ${b}🪙 hazine bulundu!${bonusNote} 💰`);trackQuest('exploreRuin');trackQuest('exploreRuin2',Math.min(2,[...G.explored].filter(i=>G_MAP[i]?.t==='ruins').length));}
-  else if(cell.t==='village'){const fb=15;G.food+=fb;toast(`${cell.n} keşfedildi! Köylüler ${fb}🌾 erzak verdi 🏘`);trackQuest('exploreVillage3',Math.min(3,[...G.explored].filter(i=>G_MAP[i]?.t==='village').length));}
+  if(cell.t==='ruins'){const rb=troopBuffs();let b=Math.floor(Math.random()*40)+20;b=Math.floor(b*rb.resourceMult*scoutLootMult());G.gold+=b;const scoutPct=Math.round((scoutLootMult()-1)*100);const bonusNote=(rb.rehber>0?` (Rehber +%${Math.round((rb.resourceMult-1)*100)}`:(scoutPct>0?' (':''))+(scoutPct>0?`${rb.rehber>0?', ':''}İzcilik +%${scoutPct}`:'')+((rb.rehber>0||scoutPct>0)?')':'');toast(`Harabeler keşfedildi! ${b}🪙 hazine bulundu!${bonusNote} 💰`);trackQuest('exploreRuin');trackQuest('exploreRuin2',Math.min(2,[...G_EXPLORED[key]].filter(i=>cells[i]?.t==='ruins').length));}
+  else if(cell.t==='village'){const fb=15;G.food+=fb;toast(`${cell.n} keşfedildi! Köylüler ${fb}🌾 erzak verdi 🏘`);trackQuest('exploreVillage3',Math.min(3,[...G_EXPLORED[key]].filter(i=>cells[i]?.t==='village').length));}
   else toast(`${cell.n} keşfedildi! 🗺`);
   // Özel birim keşfi — araziye göre tematik, TEST: %50 şans
   // Kasaba→Rahip/Tabip, Harabe→Şövalye, Orman→Rehber, Dağlar→Şövalye/Rehber
@@ -3825,7 +4023,7 @@ async function finishExplore(idx,dbId){
     const found=terrainPool[Math.floor(Math.random()*terrainPool.length)];
     setTimeout(()=>offerFoundTroop(found), 700); // keşif toast'ından sonra
   }
-  trackQuest('exploreDaily');trackQuest('explore5',Math.min(5,G.explored.size-7));
+  trackQuest('exploreDaily');trackQuest('explore5',Math.min(5,exploredTotal()-7));
   trackAch('explore');
   qAddSkill('izcilik', 0.05); // her tamamlanan keşif izcilik kazandırır
   gainXP(10);updateHUD();
@@ -3833,29 +4031,74 @@ async function finishExplore(idx,dbId){
   if(dbId&&currentUser) await supa.from('explore_timers').delete().eq('id',dbId);
   // Keşfedilen hücreyi kaydet (v2 sözdizimi)
   if(currentUser) await supa.from('explored_cells').upsert(
-    {profile_id:currentUser.id,cell_index:idx},
+    {profile_id:currentUser.id,cell_index:gCellIdx(key,idx)},
     {onConflict:'profile_id,cell_index'}
   );
   sbSave();
   renderHarita();
 }
 
-/* ── HARİTA SIFIRLAMA ── */
+/* ── HARİTA SIFIRLAMA — yalnızca bulunulan bölge yenilenir ── */
 async function resetMap(){
-  if(!confirm('Tüm haritayı sıfırlayıp yeni araziler mi keşfedeceksin?')) return;
-  G.explored=new Set([21]); // Kale her zaman keşfedilmiş
+  const key=G.region, R=REGIONS[key];
+  if(!confirm(`${R.name} bölgesini sıfırlayıp yeni araziler mi keşfedeceksin?`)) return;
+  const slot=regionSlot(key);
+  G_EXPLORED[key]=new Set([START_CELL]); // kale / kamp her zaman keşfedilmiş
+  G.explored=G_EXPLORED[key];
   G.selectedCell=null;
-  // Yeni harita üret
-  const newSeed=Date.now()&0xffffffff;
-  G_MAP=generateMap(newSeed);
-  // Supabase: tüm keşfedilen hücreleri sil, kaleyi yeniden ekle
+  // Yeni harita üret — bölgenin kendi arazi ağırlıklarıyla
+  G_MAPS[key]=generateMap(Date.now()&0xffffffff, key);
+  G_MAP=G_MAPS[key];
+  // Supabase: SADECE bu bölgenin hücrelerini sil, çekirdeği yeniden ekle
   if(currentUser){
-    await supa.from('explored_cells').delete().eq('profile_id',currentUser.id);
-    await supa.from('explored_cells').insert({profile_id:currentUser.id,cell_index:21});
-    await supa.from('player_maps').upsert({profile_id:currentUser.id,cells:G_MAP},{onConflict:'profile_id'});
+    await supa.from('explored_cells').delete().eq('profile_id',currentUser.id)
+      .gte('cell_index',slot*100).lte('cell_index',slot*100+35);
+    await supa.from('explored_cells').insert({profile_id:currentUser.id,cell_index:gCellIdx(key,START_CELL)});
+    await saveMaps();
   }
   document.getElementById('map-info-card').style.display='none';
-  toast('Yeni topraklar keşfe açıldı! 🗺');
+  toast(`${R.name} yeniden keşfe açıldı! 🗺`);
+  renderHarita();
+}
+
+/* ── SEYAHAT ──
+   Varış anlık; bekleme BİR SONRAKİ seyahat için doğar. Süre ve altın,
+   pinler arası mesafeden hesaplanır (travelCost). Kontrol getServerNow()
+   ile yapılır — cihaz saati oynatılarak atlanamaz. */
+function travelReadyIn(){ return Math.max(0, Math.ceil((G_TRAVEL_UNTIL-getServerNow())/1000)); }
+function fmtDur(s){
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
+  if(h>0) return `${h}s ${String(m).padStart(2,'0')}dk`;
+  if(m>0) return `${m}dk ${String(sec).padStart(2,'0')}sn`;
+  return `${sec}sn`;
+}
+async function travelTo(key){
+  if(!REGIONS[key]) return;
+  if(key===G.region){ toast('Zaten buradasın.'); return; }
+  const left=travelReadyIn();
+  if(left>0){ toast(`🐴 Kervanın dinleniyor — ${fmtDur(left)} sonra yola çıkabilirsin.`); return; }
+  const c=travelCost(G.region,key);
+  if(G.gold<c.gold){ toast(`${c.gold}🪙 gerekli!`); return; }
+  if(!confirm(`${REGIONS[key].name} bölgesine gidilsin mi?\n\nYol masrafı: ${c.gold}🪙\nVardıktan sonra bir sonraki seyahat için bekleme: ${fmtDur(c.secs)}`)) return;
+  G.gold-=c.gold;
+  G_TRAVEL_UNTIL=getServerNow()+c.secs*1000;
+  ensureRegionMap(key);
+  setActiveRegion(key);
+  mapView='region';
+  // Yeni bölgede eski bölgenin sayaçları görünmemeli
+  gatherTimers=[];
+  await loadExporeTimers();
+  if(currentUser){
+    await saveMaps();
+    // Kampı keşfedilmiş olarak işaretle
+    await supa.from('explored_cells').upsert(
+      {profile_id:currentUser.id,cell_index:gCellIdx(key,START_CELL)},
+      {onConflict:'profile_id,cell_index'}
+    );
+  }
+  updateHUD();
+  toast(`${REGIONS[key].icon} ${REGIONS[key].name} bölgesine vardın!`);
+  sbSave();
   renderHarita();
 }
 
@@ -3948,12 +4191,14 @@ function finishGather(idx, type){
     G.prodInv.meseLodunu=(G.prodInv.meseLodunu||0)+amt;
     toast(`🪵 ${amt} Meşe Odunu topladın!`);
   } else if(type==='mine'){
-    const amt=Math.floor(Math.random()*5)+3;
+    const amt=Math.max(1,Math.round((Math.floor(Math.random()*5)+3)*mineAmountMult()));
     G.prodInv.demir=(G.prodInv.demir||0)+amt;
+    qAddSkill('madencilik', 0.05); // dağda kazı → madencilik
     toast(`⛏ ${amt} Demir topladın!`);
   } else if(type==='clay'){
-    const amt=Math.floor(Math.random()*4)+3;
+    const amt=Math.max(1,Math.round((Math.floor(Math.random()*4)+3)*mineAmountMult()));
     G.prodInv.kil=(G.prodInv.kil||0)+amt;
+    qAddSkill('madencilik', 0.05); // nehirden kil → madencilik
     toast(`🪣 ${amt} Kil topladın!`);
   } else if(type==='fish'){
     doFishing(cell);
@@ -3964,9 +4209,9 @@ function finishGather(idx, type){
   } else if(type==='loot'){
     // %12 ihtimalle yüzük çıkar (İzcilik ganimeti artırdıkça yüzük şansı da yükselir)
     if(Math.random() < Math.min(0.30, 0.12*scoutLootMult()) && !invFull()){
-      dropRandomRing(['bakiryuzuk','sansyuzugu','nehirruhuyuzugu','arinmayuzugu','atesyuzugu','ustayuzugu'], Math.floor(Math.random()*2), 'Harabe ganimeti');
+      dropRandomRing(regionRingPool(2), Math.floor(Math.random()*2), 'Harabe ganimeti');
       G_MAP[idx].harvested=true;
-      if(currentUser) supa.from('player_maps').upsert({profile_id:currentUser.id,cells:G_MAP},{onConflict:'profile_id'});
+      if(currentUser) saveMaps();
       qAddSkill('izcilik', 0.05);
       gainXP(15);updateHUD();renderKarakter();renderHarita();
       return;
@@ -3992,7 +4237,7 @@ function finishGather(idx, type){
   qAddSkill('izcilik', 0.05);
   // Kareyi hasat edildi olarak işaretle ve kaydet
   G_MAP[idx].harvested=true;
-  if(currentUser) supa.from('player_maps').upsert({profile_id:currentUser.id,cells:G_MAP},{onConflict:'profile_id'});
+  if(currentUser) saveMaps();
   gainXP(15);updateHUD();renderKarakter();
   renderHarita();
   // Info kartını güncelle (o kare seçiliyse)
@@ -4166,10 +4411,11 @@ async function caveAction(action){
       log.push({t:`🎁 ${reward.name} (${rollGradeLabel(item)}) kazandın!`,c:'var(--gold2)'});
       celebrate('🐉', '3 BAŞLI YILAN DEVRİLDİ!', `Efsanevi ödül: ${reward.name}`, 'gold');
     }
+    mobMaterialDrop(CAVE_ENEMY, true);
     // Mağarayı temizlenmiş olarak işaretle — bir daha girilemesin
     if(caveState.cellIdx!=null && G_MAP[caveState.cellIdx]){
       G_MAP[caveState.cellIdx].cleared=true;
-      if(currentUser) await supa.from('player_maps').upsert({profile_id:currentUser.id,cells:G_MAP},{onConflict:'profile_id'});
+      if(currentUser) await saveMaps();
     }
     sbSave();
     renderCaveBattle();
@@ -4230,7 +4476,7 @@ setInterval(async()=>{
       const el=document.getElementById(`explore-timer-${t.cellIdx}`);
       if(el){const m=Math.floor(t.remaining/60),s=t.remaining%60;el.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
       if(t.remaining<=0){
-        await finishExplore(t.cellIdx,t.id);
+        await finishExplore(t.cellIdx,t.id,regionBySlot(t.slot??regionSlot(G.region)));
         exploreTimers=exploreTimers.filter(x=>x.cellIdx!==t.cellIdx);
       }
     }
@@ -4247,6 +4493,13 @@ setInterval(async()=>{
         gatherTimers=gatherTimers.filter(x=>x.cellIdx!==g.cellIdx);
       }
     }
+  }
+  // Seyahat bekleme geri sayımı (dünya haritası açıkken)
+  const tcd=document.getElementById('travel-cd');
+  if(tcd){
+    const left=travelReadyIn();
+    if(left>0) tcd.textContent=fmtDur(left);
+    else renderHarita(); // süre doldu → butonlar aktifleşsin
   }
   // Esir birlikler — geri sayım + süre dolanları temizle (Kale sekmesi açıksa)
   if((G.capturedTroops||[]).length){
@@ -4889,7 +5142,7 @@ function hasOlta(){ return G.inventory.some(i=>i.type==='Olta'); }
 
 const FOOD_VALUE={bugday:1,arpa:1,sebze:2,saman:0,un:0,arpa_unu:0,tuy:0,yumurta:2,yun:0,sut:2,ekmek:0,corba:0,kek:0,patates:1,domates:2,cicek:0,yonca:0,cilek:3,bugday_unu:0,patates_puresi:3,kaymak:4,cilek_puresi:4,domates_puresi:3,bal:2,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0,balik:4,baliketi:3,solucan:0,hamur:0,sazanpulu:0,levrekdisi:0,havyar:0,balik_ekmek:0};
 const KITCHEN_FOOD_VALUES={domates_corbasi:10,patates_corbasi:12,ekmek:12,salcali_ekmek:15,borek:18,cilekli_turta:20,balli_kaymak:25,balik_ekmek:22};
-const ITEM_LABELS={bugday:'Buğday',saman:'Saman',arpa:'Arpa',sebze:'Sebze',un:'Un',arpa_unu:'Arpa Unu',tuy:'Tüy',yumurta:'Yumurta',yun:'Yün',sut:'Süt',ekmek:'Ekmek',corba:'Çorba',kek:'Kek',patates:'Patates',domates:'Domates',cicek:'Çiçek',yonca:'Yonca',cilek:'Çilek',patates_tohum:'Patates Tohumu',domates_tohum:'Domates Tohumu',cicek_tohum:'Çiçek Tohumu',yonca_tohum:'Yonca Tohumu',cilek_tohum:'Çilek Tohumu',bugday_unu:'Buğday Unu',patates_puresi:'Patates Püresi',kaymak:'Kaymak',cilek_puresi:'Çilek Püresi',domates_puresi:'Domates Püresi',bal:'Bal',domates_corbasi:'Domates Çorbası',patates_corbasi:'Patates Çorbası',salcali_ekmek:'Salçalı Ekmek',borek:'Börek',cilekli_turta:'Çilekli Turta',balli_kaymak:'Ballı Kaymak',meseLodunu:'Meşe Odunu',demir:'Demir',kil:'Kil',kereste:'Kereste',civi:'Çivi',tugla:'Tuğla',balik:'Balık',kefal:'Tatlı Su Kefali',sazan:'Sazan',alabalik:'Alabalık',aynalisazan:'Aynalı Sazan',somon:'Somon',yayin:'Yayın Balığı',tuzlukefal:'Tuzlu Su Kefali',levrek:'Levrek',cupra:'Çupra',dislilevrek:'Dişli Levrek',devcupra:'Dev Çupra',kopekbalik:'Köpek Balığı',baliketi:'Balık Eti',sazanpulu:'Sazan Pulu',levrekdisi:'Levrek Dişi',havyar:'Havyar',solucan:'Solucan',hamur:'Hamur',balik_ekmek:'Balık Ekmek',iksir_kucuk:'Küçük Can İksiri',iksir_orta:'Orta Can İksiri',iksir_buyuk:'Büyük Can İksiri'};
+const ITEM_LABELS={bugday:'Buğday',saman:'Saman',arpa:'Arpa',sebze:'Sebze',un:'Un',arpa_unu:'Arpa Unu',tuy:'Tüy',yumurta:'Yumurta',yun:'Yün',sut:'Süt',ekmek:'Ekmek',corba:'Çorba',kek:'Kek',patates:'Patates',domates:'Domates',cicek:'Çiçek',yonca:'Yonca',cilek:'Çilek',patates_tohum:'Patates Tohumu',domates_tohum:'Domates Tohumu',cicek_tohum:'Çiçek Tohumu',yonca_tohum:'Yonca Tohumu',cilek_tohum:'Çilek Tohumu',bugday_unu:'Buğday Unu',patates_puresi:'Patates Püresi',kaymak:'Kaymak',cilek_puresi:'Çilek Püresi',domates_puresi:'Domates Püresi',bal:'Bal',domates_corbasi:'Domates Çorbası',patates_corbasi:'Patates Çorbası',salcali_ekmek:'Salçalı Ekmek',borek:'Börek',cilekli_turta:'Çilekli Turta',balli_kaymak:'Ballı Kaymak',meseLodunu:'Meşe Odunu',demir:'Demir',kil:'Kil',kereste:'Kereste',civi:'Çivi',tugla:'Tuğla',balik:'Balık',kefal:'Tatlı Su Kefali',sazan:'Sazan',alabalik:'Alabalık',aynalisazan:'Aynalı Sazan',somon:'Somon',yayin:'Yayın Balığı',tuzlukefal:'Tuzlu Su Kefali',levrek:'Levrek',cupra:'Çupra',dislilevrek:'Dişli Levrek',devcupra:'Dev Çupra',kopekbalik:'Köpek Balığı',baliketi:'Balık Eti',sazanpulu:'Sazan Pulu',levrekdisi:'Levrek Dişi',havyar:'Havyar',solucan:'Solucan',hamur:'Hamur',balik_ekmek:'Balık Ekmek',iksir_kucuk:'Küçük Can İksiri',iksir_orta:'Orta Can İksiri',iksir_buyuk:'Büyük Can İksiri',akrepinzehirkesesi:'Akrep Zehir Kesesi',ayipencesi:'Ayı Pençesi',cataldil:'Çatal Dil',iguanaderisi:'İguana Derisi',keskindis:'Keskin Diş',kirpioklari:'Kirpi Okları',kurtpostu:'Kurt Postu',leoparderisi:'Leopar Derisi',sivridis:'Sivri Diş',yilanderisi:'Yılan Derisi'};
 
 /* ══════════════════════════════════════
    BİNA YÜKSELTME MALZEMELERİ (kereste/çivi/tuğla)
@@ -4954,14 +5207,17 @@ function matCostHTML(cost){
     return `<span style="font-size:10px;padding:1px 6px;border-radius:4px;margin:1px;display:inline-block;background:${ok?'#13190f':'#2a1010'};border:1px solid ${ok?'#2a3a18':'#6a2020'};color:${ok?'#9bd17a':'#f08080'};">${ic} ${v}${ok?'':` (${have})`}</span>`;
   }).join(' ');
 }
-const ITEM_ICONS={bugday:'🌾',saman:'🌿',arpa:'🌱',sebze:'🥦',un:'🥛',arpa_unu:'🥛',tuy:'🪶',yumurta:'🥚',yun:'🧶',sut:'🥛',ekmek:'🍞',corba:'🥣',kek:'🎂',patates:'🥔',domates:'🍅',cicek:'🌸',yonca:'🍀',cilek:'🍓',patates_tohum:'🌱',domates_tohum:'🌱',cicek_tohum:'🌱',yonca_tohum:'🌱',cilek_tohum:'🌱',bugday_unu:'🫙',patates_puresi:'🫙',kaymak:'🫙',cilek_puresi:'🫙',domates_puresi:'🫙',bal:'🍯',domates_corbasi:'🥣',patates_corbasi:'🥣',salcali_ekmek:'🍞',borek:'🥐',cilekli_turta:'🍓',balli_kaymak:'🍯',meseLodunu:'🪵',demir:'⛏',kil:'🪣',kereste:'🪵',civi:'🔩',tugla:'🧱',balik:'🐟',kefal:'🐟',sazan:'🐟',alabalik:'🐟',aynalisazan:'🐟',somon:'🐟',yayin:'🐟',tuzlukefal:'🐠',levrek:'🐠',cupra:'🐠',dislilevrek:'🐠',devcupra:'🐠',kopekbalik:'🦈',baliketi:'🍥',sazanpulu:'✨',levrekdisi:'🦷',havyar:'🥚',solucan:'🪱',hamur:'🫓',balik_ekmek:'🥪',iksir_kucuk:'🧪',iksir_orta:'🧪',iksir_buyuk:'🧪'};
+const ITEM_ICONS={bugday:'🌾',saman:'🌿',arpa:'🌱',sebze:'🥦',un:'🥛',arpa_unu:'🥛',tuy:'🪶',yumurta:'🥚',yun:'🧶',sut:'🥛',ekmek:'🍞',corba:'🥣',kek:'🎂',patates:'🥔',domates:'🍅',cicek:'🌸',yonca:'🍀',cilek:'🍓',patates_tohum:'🌱',domates_tohum:'🌱',cicek_tohum:'🌱',yonca_tohum:'🌱',cilek_tohum:'🌱',bugday_unu:'🫙',patates_puresi:'🫙',kaymak:'🫙',cilek_puresi:'🫙',domates_puresi:'🫙',bal:'🍯',domates_corbasi:'🥣',patates_corbasi:'🥣',salcali_ekmek:'🍞',borek:'🥐',cilekli_turta:'🍓',balli_kaymak:'🍯',meseLodunu:'🪵',demir:'⛏',kil:'🪣',kereste:'🪵',civi:'🔩',tugla:'🧱',balik:'🐟',kefal:'🐟',sazan:'🐟',alabalik:'🐟',aynalisazan:'🐟',somon:'🐟',yayin:'🐟',tuzlukefal:'🐠',levrek:'🐠',cupra:'🐠',dislilevrek:'🐠',devcupra:'🐠',kopekbalik:'🦈',baliketi:'🍥',sazanpulu:'✨',levrekdisi:'🦷',havyar:'🥚',solucan:'🪱',hamur:'🫓',balik_ekmek:'🥪',iksir_kucuk:'🧪',iksir_orta:'🧪',iksir_buyuk:'🧪',akrepinzehirkesesi:'🧪',ayipencesi:'🐾',cataldil:'🐍',iguanaderisi:'🦎',keskindis:'🦷',kirpioklari:'🪶',kurtpostu:'🐺',leoparderisi:'🐆',sivridis:'🦷',yilanderisi:'🐍'};
 // Görseli olan eşyaların dosya adı — key ile farklıysa buraya ekle
 const ITEM_IMGS={meseLodunu:'odun',demir:'demir',kil:'kil',kereste:'kereste',civi:'civi',tugla:'tugla',balik:'balik',
   kefal:'kefal',sazan:'sazan',alabalik:'alabalik',aynalisazan:'aynalisazan',somon:'somon',yayin:'yayin',
   tuzlukefal:'tuzlukefal',levrek:'levrek',cupra:'cupra',dislilevrek:'dislilevrek',devcupra:'devcupra',kopekbalik:'kopekbalik',
   baliketi:'baliketi',sazanpulu:'sazanpulu',levrekdisi:'levrekdisi',havyar:'havyar',
   solucan:'solucan',hamur:'hamur',balik_ekmek:'balikekmek',
-  iksir_kucuk:'kucukcaniksiri',iksir_orta:'ortacaniksiri',iksir_buyuk:'buyukcaniksiri'};
+  iksir_kucuk:'kucukcaniksiri',iksir_orta:'ortacaniksiri',iksir_buyuk:'buyukcaniksiri',
+  akrepinzehirkesesi:'akrepinzehirkesesi',ayipencesi:'ayipencesi',cataldil:'cataldil',
+  iguanaderisi:'iguanaderisi',keskindis:'keskindis',kirpioklari:'kirpioklari',
+  kurtpostu:'kurtpostu',leoparderisi:'leoparderisi',sivridis:'sivridis',yilanderisi:'yilanderisi'};
 
 /* ── AŞEVİ İKSİRLERİ ──
    Bu çıktılar G.prodInv'e değil doğrudan ENVANTERE düşer (kullanılabilir eşya).
@@ -5053,8 +5309,10 @@ const G={
   animalBreedTs:{}, // üreme sayacı (tür → son 24s zarının server-ms'i)
   explored:new Set([21,22,27,28,14,15,20]),
   selectedCell:null,
+  region:null,      // bulunulan bölge anahtarı (REGIONS)
+  homeRegion:null,  // sınıfına göre doğduğun bölge — kalen burada
   prodTimers:[],prodTimerId:1,
-  prodInv:{bugday:5,saman:3,arpa:0,sebze:0,un:2,arpa_unu:0,tuy:1,yumurta:3,yun:1,sut:4,ekmek:0,corba:0,kek:0,patates:0,domates:0,cicek:0,yonca:0,cilek:0,patates_tohum:0,domates_tohum:0,cicek_tohum:0,yonca_tohum:0,cilek_tohum:0,bugday_unu:0,patates_puresi:0,kaymak:0,cilek_puresi:0,domates_puresi:0,bal:0,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0,meseLodunu:0,demir:0,kil:0,kereste:0,civi:0,tugla:0,balik:0,kefal:0,sazan:0,alabalik:0,aynalisazan:0,somon:0,yayin:0,tuzlukefal:0,levrek:0,cupra:0,dislilevrek:0,devcupra:0,kopekbalik:0,baliketi:0,sazanpulu:0,levrekdisi:0,havyar:0,solucan:0,hamur:0,balik_ekmek:0},
+  prodInv:{bugday:5,saman:3,arpa:0,sebze:0,un:2,arpa_unu:0,tuy:1,yumurta:3,yun:1,sut:4,ekmek:0,corba:0,kek:0,patates:0,domates:0,cicek:0,yonca:0,cilek:0,patates_tohum:0,domates_tohum:0,cicek_tohum:0,yonca_tohum:0,cilek_tohum:0,bugday_unu:0,patates_puresi:0,kaymak:0,cilek_puresi:0,domates_puresi:0,bal:0,domates_corbasi:0,patates_corbasi:0,salcali_ekmek:0,borek:0,cilekli_turta:0,balli_kaymak:0,meseLodunu:0,demir:0,kil:0,kereste:0,civi:0,tugla:0,balik:0,kefal:0,sazan:0,alabalik:0,aynalisazan:0,somon:0,yayin:0,tuzlukefal:0,levrek:0,cupra:0,dislilevrek:0,devcupra:0,kopekbalik:0,baliketi:0,sazanpulu:0,levrekdisi:0,havyar:0,solucan:0,hamur:0,balik_ekmek:0,akrepinzehirkesesi:0,ayipencesi:0,cataldil:0,iguanaderisi:0,keskindis:0,kirpioklari:0,kurtpostu:0,leoparderisi:0,sivridis:0,yilanderisi:0},
   matInv:{ham_demir:0, guc_runesi:0, ejderha_pulu:0, thros_kanadi:0, dev_disi:0, anka_kulu:0, ruh_kristali:0, iblis_kani:0, semavi_oz:0},
   guildName:'',
   guildId:null,
@@ -7161,8 +7419,117 @@ function renderTroops(){
 }
 
 /* ── HARİTA ── */
+/* ── HARİTA YÖNLENDİRİCİ — dünya haritası ⇄ bölge keşif gridi ── */
+let worldSel=null; // dünya haritasında seçili bölge (kalıcı değil)
 function renderHarita(){
-  const grid=document.getElementById('map-grid');grid.innerHTML='';
+  const wv=document.getElementById('world-map-view');
+  const rv=document.getElementById('region-map-view');
+  if(!wv||!rv) return;
+  if(!mapsReady){
+    wv.style.display='block'; rv.style.display='none';
+    const card=document.getElementById('world-region-card');
+    if(card) card.innerHTML='<div style="padding:16px;color:var(--ink3);font-size:12px;text-align:center;">⏳ Harita yükleniyor...</div>';
+    return;
+  }
+  const world=(mapView!=='region');
+  wv.style.display=world?'block':'none';
+  rv.style.display=world?'none':'block';
+  if(world) renderWorldMap(); else renderRegionMap();
+}
+function openRegionMap(){ mapView='region'; renderHarita(); }
+function openWorldMap(){ mapView='world'; worldSel=G.region; renderHarita(); }
+function selectRegion(k){ worldSel=k; renderWorldMap(); }
+
+/* ── DÜNYA HARİTASI ── */
+function regionProgress(key){ return (G_EXPLORED[key]||new Set()).size; }
+function renderWorldMap(){
+  const scene=document.getElementById('world-map-scene');
+  if(!scene) return;
+  if(!worldSel||!REGIONS[worldSel]) worldSel=G.region;
+  scene.style.backgroundImage=`url('${IMG_BASE}haritabuyuk.webp')`;
+  scene.innerHTML=regionKeys().map(k=>{
+    const R=REGIONS[k];
+    const cls=`wm-pin${k===G.region?' here':''}${k===worldSel?' sel':''}`;
+    return `<div class="${cls}" style="left:${R.x}%;top:${R.y}%;" title="${esc(R.name)}" onclick="selectRegion('${k}')">${R.icon}</div>`;
+  }).join('');
+
+  const card=document.getElementById('world-region-card');
+  if(card) card.innerHTML=worldRegionCardHTML(worldSel);
+
+  const list=document.getElementById('world-region-list');
+  if(list){
+    const wait=travelReadyIn();
+    list.innerHTML=regionKeys().map(k=>{
+      const R=REGIONS[k], here=(k===G.region);
+      const c=here?null:travelCost(G.region,k);
+      const sub=here
+        ? `<span style="color:#7aff9a;">Buradasın</span> · ${regionProgress(k)}/36 keşif`
+        : `${c.gold}🪙 · ${fmtDur(c.secs)} bekleme · ${regionProgress(k)}/36 keşif`;
+      return `<button class="wm-row${here?' here':''}" onclick="selectRegion('${k}')">
+        <span class="wm-ico">${R.icon}</span>
+        <span style="flex:1;min-width:0;">
+          <span class="wm-nm">${esc(R.name)}${k===G.homeRegion?' <span style="color:var(--gold2);font-size:9px;">🏰 MEMLEKET</span>':''}</span>
+          <span class="wm-sub" style="display:block;">${sub}</span>
+        </span>
+      </button>`;
+    }).join('') + (wait>0
+      ? `<div style="text-align:center;font-size:10px;color:var(--ink3);margin-top:6px;">🐴 Kervanın dinleniyor — <span id="travel-cd" style="color:var(--gold2);">${fmtDur(wait)}</span> sonra yeniden yola çıkabilirsin.</div>`
+      : '');
+  }
+}
+function worldRegionCardHTML(key){
+  const R=REGIONS[key];
+  if(!R) return '';
+  const here=(key===G.region), isHome=(key===G.homeRegion);
+  const prog=regionProgress(key), pct=Math.round(prog/36*100);
+  const ring=RING_TEMPLATES[R.ring];
+  const wait=travelReadyIn();
+  const c=here?null:travelCost(G.region,key);
+  // Bölgenin baskın arazileri (ağırlığı en yüksek 3 tanesi)
+  const top3=Object.entries(R.weights).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]).join(' · ');
+
+  let btn;
+  if(here){
+    btn=`<button class="btn" style="width:100%;margin-top:10px;border-color:var(--gold2);" onclick="openRegionMap()">🔍 Keşif Gridini Aç</button>`;
+  } else if(wait>0){
+    btn=`<button class="btn" style="width:100%;margin-top:10px;opacity:.5;cursor:not-allowed;" disabled>🐴 Kervan dinleniyor — <span id="travel-cd">${fmtDur(wait)}</span></button>`;
+  } else {
+    const poor=G.gold<c.gold;
+    btn=`<button class="btn" style="width:100%;margin-top:10px;${poor?'opacity:.55;':''}" onclick="travelTo('${key}')">🐴 Buraya Git — ${c.gold}🪙${poor?' (yetersiz)':''}</button>`;
+  }
+  return `<div class="row-between" style="margin-bottom:6px;">
+      <span style="font-family:var(--font-head);font-size:14px;color:var(--gold);">${R.icon} ${esc(R.name)}</span>
+      ${here?'<span class="tag tag-gold">✓ Buradasın</span>':isHome?'<span class="tag tag-gold">🏰 Memleket</span>':`<span class="tag">${fmtDur(c.secs)} bekleme</span>`}
+    </div>
+    <div style="font-size:11px;color:var(--ink3);line-height:1.65;margin-bottom:8px;">${esc(R.desc)}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:10px;">
+      <div style="background:var(--panel3);border:1px solid var(--border2);border-radius:8px;padding:7px 9px;">
+        <div style="color:var(--ink3);margin-bottom:2px;">Baskın arazi</div>
+        <div style="color:var(--perg2);font-family:var(--font-head);font-size:10.5px;">${top3}</div>
+      </div>
+      <div style="background:var(--panel3);border:1px solid var(--border2);border-radius:8px;padding:7px 9px;">
+        <div style="color:var(--ink3);margin-bottom:2px;">Bölgeye özel yüzük</div>
+        <div style="color:var(--gold2);font-family:var(--font-head);font-size:10.5px;">💍 ${ring?esc(ring.name):'—'}</div>
+      </div>
+    </div>
+    <div style="margin-top:8px;">
+      <div class="row-between" style="font-size:10px;color:var(--ink3);margin-bottom:3px;"><span>Keşif</span><span>${prog}/36</span></div>
+      <div style="height:6px;background:var(--panel3);border-radius:4px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--gold2),var(--gold));"></div></div>
+    </div>
+    ${btn}`;
+}
+
+/* ── BÖLGE KEŞİF GRİDİ ── */
+function renderRegionMap(){
+  const grid=document.getElementById('map-grid');if(!grid)return;grid.innerHTML='';
+  const head=document.getElementById('region-map-head');
+  if(head){
+    const R=curRegion();
+    head.innerHTML=`<div class="row-between">
+      <button class="btn" style="padding:5px 10px;font-size:11px;" onclick="openWorldMap()">◀ Dünya Haritası</button>
+      <span style="font-family:var(--font-head);font-size:12px;color:var(--gold);">${R.icon} ${esc(R.name)}</span>
+    </div>`;
+  }
   if(!G_MAP.length){grid.innerHTML='<div style="padding:20px;color:var(--ink3);font-size:12px;text-align:center;">⏳ Harita yükleniyor...</div>';return;}
   // Tüm hücreler keşfedildiyse "Yeni Yerler Keşfet" butonu göster
   const allExplored=G_MAP.every((_,i)=>G.explored.has(i));
@@ -7209,7 +7576,7 @@ function cellClick(idx,_cell){
     return;
   }
   if(!G.explored.has(idx)){
-    if([idx-1,idx+1,idx-6,idx+6].some(n=>G.explored.has(n))){
+    if(cellNeighbors(idx).some(n=>G.explored.has(n))){
       info.style.display='block';
       info.innerHTML=`<div class="row-between" style="margin-bottom:8px;"><span style="font-family:var(--font-head);font-size:13px;color:var(--gold);">❓ Keşfedilmemiş Bölge</span><span class="tag tag-red">Bilinmiyor</span></div><div style="font-size:11px;color:var(--ink3);margin-bottom:10px;">Bu bölgede ne olduğu bilinmiyor. Keşfetmek 2 dakika sürer.</div><button class="btn" style="width:100%;" onclick="startExplore(${idx})">🗺 Keşfet — 10🪙 + 2dk</button>`;
     } else {
@@ -7664,6 +8031,7 @@ function closeArenaBattle(){
    ZİNDAN SİSTEMİ
 ══════════════════════════════════════ */
 const ZD_FLOORS = 5;
+const ZD_MIDBOSS_WEAPON_CHANCE = 0.35; // ara kat boss'larının silah düşürme şansı
 const ZD_MAX_TICKETS = 20;
 
 /* ══════════════════════════════════════
@@ -7761,20 +8129,20 @@ function zdPlayerTier(){ return Math.max(1, Math.min(5, Math.ceil((G.level||1)/1
 const ZD_TIERS={
   1:{ lv:[1,10], img:'1seviyezindan',
     mobs:[
-      {id:'jaguar',  name:'Jaguar',  icon:'🐆', img:'jaguar',  hp:34, atk:8,  def:2, xp:16, gold:14},
-      {id:'kirpi',   name:'Kirpi',   icon:'🦔', img:'kirpi',   hp:28, atk:6,  def:4, xp:14, gold:12},
-      {id:'engerek', name:'Engerek', icon:'🐍', img:'engerek', hp:30, atk:10, def:1, xp:18, gold:15},
-      {id:'iguana',  name:'İguana',  icon:'🦎', img:'iguana',  hp:42, atk:7,  def:3, xp:17, gold:14},
-      {id:'akrep',   name:'Akrep',   icon:'🦂', img:'akrep',   hp:26, atk:11, def:2, xp:18, gold:16},
+      {id:'jaguar',  name:'Jaguar',  icon:'🐆', img:'jaguar',  hp:34, atk:8,  def:2, xp:16, gold:14, regions:['vaelys','stormreach']},
+      {id:'kirpi',   name:'Kirpi',   icon:'🦔', img:'kirpi',   hp:28, atk:6,  def:4, xp:14, gold:12, regions:['vaelys','aethelgard']},
+      {id:'engerek', name:'Engerek', icon:'🐍', img:'engerek', hp:30, atk:10, def:1, xp:18, gold:15, regions:['dustguard','blacktide','aethelgard']},
+      {id:'iguana',  name:'İguana',  icon:'🦎', img:'iguana',  hp:42, atk:7,  def:3, xp:17, gold:14, regions:['stormreach','blacktide','brimstone']},
+      {id:'akrep',   name:'Akrep',   icon:'🦂', img:'akrep',   hp:26, atk:11, def:2, xp:18, gold:16, regions:['dustguard','brimstone']},
     ],
     boss:      {id:'bozayi',  name:'Boz Ayı', icon:'🐻', img:'bozayi',  hp:280, atk:20, def:7, xp:100, gold:90,  isBoss:true},
     strongBoss:{id:'bozkurt', name:'Bozkurt', icon:'🐺', img:'bozkurt', hp:420, atk:26, def:9, xp:170, gold:150, isBoss:true, strong:true},
   },
   2:{ lv:[11,20], img:'2seviyezindan',
     mobs:[
-      {id:'devakrep',   name:'Dev Akrep',    icon:'🦂', img:'devakrep',    hp:85, atk:22, def:6,  xp:42, gold:36},
-      {id:'kobrayilani',name:'Kobra Yılanı', icon:'🐍', img:'kobrayilani', hp:72, atk:28, def:4,  xp:46, gold:40},
-      {id:'kuduzkirpi', name:'Kuduz Kirpi',  icon:'🦔', img:'kuduzkirpi',  hp:95, atk:19, def:10, xp:44, gold:38},
+      {id:'devakrep',   name:'Dev Akrep',    icon:'🦂', img:'devakrep',    hp:85, atk:22, def:6,  xp:42, gold:36, regions:['dustguard','brimstone']},
+      {id:'kobrayilani',name:'Kobra Yılanı', icon:'🐍', img:'kobrayilani', hp:72, atk:28, def:4,  xp:46, gold:40, regions:['blacktide','dustguard']},
+      {id:'kuduzkirpi', name:'Kuduz Kirpi',  icon:'🦔', img:'kuduzkirpi',  hp:95, atk:19, def:10, xp:44, gold:38, regions:['vaelys','aethelgard']},
     ],
     boss:      {id:'vahsibozayi',  name:'Vahşi Boz Ayı',  icon:'🐻', img:'vahsibozayi',  hp:700,  atk:45, def:16, xp:260, gold:220, isBoss:true},
     strongBoss:{id:'ciftbasliayi', name:'Çift Başlı Ayı', icon:'🐻', img:'ciftbasliayi', hp:1000, atk:58, def:20, xp:430, gold:380, isBoss:true, strong:true},
@@ -7845,6 +8213,46 @@ function zdCheckTicketReset(){
 }
 
 // Kat için oda dizisi üret — canavarlar zindan kademesinin kadrosundan gelir
+/* Bulunduğun bölgeye etiketlenmiş canavarlar. Bölgeye ait 2'den az canavar
+   varsa etiketsizlerle tamamlanır — böylece henüz kendi hayvanı olmayan
+   bölgelerde (Frost Hill, Maelstrom) zindan boş kalmaz. */
+function zdRegionMobs(mobs){
+  const reg=G.region;
+  const tagged=mobs.filter(m=>Array.isArray(m.regions)&&m.regions.includes(reg));
+  if(tagged.length>=2) return tagged;
+  const untagged=mobs.filter(m=>!Array.isArray(m.regions)||!m.regions.length);
+  const fill=untagged.length?untagged:mobs;
+  return tagged.length?[...tagged,...fill]:fill;
+}
+
+/* ── CANAVAR MATERYALLERİ ──
+   Zindanda kesilen her canavar postunu/dişini bırakır. Çıktı G.prodInv'e
+   düşer (envanter slotu yemez) ve pazarda malzeme olarak satılabilir. */
+const MOB_DROPS={
+  jaguar:      ['leoparderisi','sivridis'],
+  kirpi:       ['kirpioklari'],
+  engerek:     ['yilanderisi','cataldil'],
+  iguana:      ['iguanaderisi'],
+  akrep:       ['akrepinzehirkesesi'],
+  devakrep:    ['akrepinzehirkesesi'],
+  kobrayilani: ['yilanderisi','cataldil'],
+  kuduzkirpi:  ['kirpioklari','sivridis'],
+  bozayi:      ['ayipencesi'],
+  bozkurt:     ['kurtpostu','keskindis'],
+  vahsibozayi: ['ayipencesi','keskindis'],
+  ciftbasliayi:['ayipencesi','kurtpostu'],
+  '3yilan':    ['cataldil','yilanderisi'],
+};
+function mobMaterialDrop(enemy,isBoss){
+  const pool=MOB_DROPS[enemy?.id];
+  if(!pool||!pool.length) return;
+  if(!isBoss && Math.random()>=0.55) return; // normal canavar %55, boss her zaman
+  const key=pool[Math.floor(Math.random()*pool.length)];
+  const amt=isBoss?(1+Math.floor(Math.random()*2)):1;
+  G.prodInv[key]=(G.prodInv[key]||0)+amt;
+  setTimeout(()=>toast(`🧺 ${amt}× ${ITEM_LABELS[key]||key} topladın!`), isBoss?900:350);
+}
+
 function zdGenFloor(floorNum){
   const T=ZD_TIERS[ZD.tier||1]||ZD_TIERS[1];
   const roomCount = 3 + Math.floor(Math.random()*2); // 3 veya 4
@@ -7859,9 +8267,10 @@ function zdGenFloor(floorNum){
   }
   // Son oda boss
   rooms.push({type:'boss', cleared:false});
-  // Düşman ata
+  // Düşman ata — kadro BÖLGEYE göre daralır (akrep çölde, jaguar ormanda...)
   const mult = 1 + (floorNum-1)*0.25; // kat içi güçlenme (kademe zaten ölçekli)
-  const pick = ()=>T.mobs[Math.floor(Math.random()*T.mobs.length)];
+  const mobPool = zdRegionMobs(T.mobs);
+  const pick = ()=>mobPool[Math.floor(Math.random()*mobPool.length)];
   rooms.forEach(r=>{
     if(r.type==='fight'){
       const base=pick();
@@ -8324,12 +8733,16 @@ function zdAction(action, itemId){
     awardTroopCombatXP(Math.max(5, Math.floor(b.enemy.xp*0.5)));
     G.stats.hp=Math.max(1,b.playerHp);
     log(`🏆 ${b.enemy.name} yenildi! +${b.enemy.gold}🪙 +${b.enemy.xp}XP`,'gold');
+    // Canavar materyali — postu/dişi her odadan düşebilir
+    mobMaterialDrop(b.enemy, room.type==='boss');
     // Boss oda ise silah düşür + başarım sayacı
     if(room.type==='boss'){
-      zdBossWeaponDrop(b.enemy, ZD.floor);
-      trackAch('zdboss');
-      // Yüzük dropu — kademeye göre havuz, %18 şans (son katta %30)
       const isFinalFloor=ZD.floor>=ZD_FLOORS;
+      // Silah yağmuru kısıldı: ara kat boss'ları %35, son kat boss'u her zaman.
+      // (Eskiden her kat garanti silah düşürüyordu → koşu başına 5 silah.)
+      if(isFinalFloor || Math.random()<ZD_MIDBOSS_WEAPON_CHANCE) zdBossWeaponDrop(b.enemy, ZD.floor);
+      trackAch('zdboss');
+      // Yüzük dropu — bölgenin havuzu, %18 şans (son katta %30)
       if(Math.random() < (isFinalFloor?0.30:0.18)){
         dropRandomRing(zdRingPool(ZD.tier||1), Math.max(0,(ZD.tier||1)-2), 'Zindan yüzüğü');
       }
@@ -8482,14 +8895,16 @@ function dropRandomRing(pool, plus, note){
   return ring;
 }
 /* Kademeye göre yüzük havuzu — üst kademeler güçlü yüzükleri açar */
-function zdRingPool(tier){
-  const basic=['bakiryuzuk','sansyuzugu','nehirruhuyuzugu','arinmayuzugu','atesyuzugu'];
-  const mid  =['ustayuzugu','ormanruhuyuzugu','kanyuzugu','necruyuzugu'];
-  const top  =['ofkekristaliyuzugu','elementalekipyuzugu'];
-  if(tier<=2) return basic;
-  if(tier<=4) return [...basic,...mid];
-  return [...basic,...mid,...top];
+/* Yüzük havuzu artık BÖLGEYE bağlı: her yerden çıkan ortak yüzükler +
+   bulunduğun bölgenin kendi yüzüğü. Bölge yüzüğü havuza iki kez konur ki
+   asıl ödül o olsun. Yüzüğün açıldığı en düşük kademe RING_TIER_MIN'de. */
+function regionRingPool(tier){
+  const pool=RING_COMMON.filter(k=>(RING_TIER_MIN[k]||1)<=tier);
+  const rk=REGIONS[G.region]?.ring;
+  if(rk&&(RING_TIER_MIN[rk]||1)<=tier) pool.push(rk,rk);
+  return pool.length?pool:['bakiryuzuk'];
 }
+function zdRingPool(tier){ return regionRingPool(tier); }
 
 function zdNecroItemDrop(){
   if(invCount()>=invCap()){ toast('⚠ Envanter dolu, item düşmedi!'); return; }
@@ -8694,7 +9109,13 @@ const QGEO={
 function qHasGeo(k){
   const g=QGEO[k]; if(!g) return true;
   if(g.t.includes('castle')) return true;               // kalen her zaman var
-  return (G_MAP||[]).some(c=>c&&G.explored.has(c.idx)&&g.t.includes(c.t));
+  // Coğrafya TÜM bölgelerdeki keşiflerden gelir; yoksa başka bölgeye seyahat
+  // edince önceden açılmış görevler kapanırdı.
+  for(const [key,set] of Object.entries(G_EXPLORED)){
+    const cells=G_MAPS[key]; if(!cells) continue;
+    for(const i of set){ if(cells[i]&&g.t.includes(cells[i].t)) return true; }
+  }
+  return false;
 }
 
 /* ── RÜTBE ── seviyeden türetilir, ayrı veri tutmaz */
@@ -8746,6 +9167,7 @@ function scoutLootMult(){    return 1 + qSkillVal('izcilik')*0.01; }
 function potionPowerMult(){  return 1 + qSkillVal('sifacilik')*0.01; }
 /* Balıkçılık : tutulan balık miktarı artar */
 function fishAmountMult(){   return 1 + qSkillVal('balikcilik')*0.01; }
+function mineAmountMult(){   return 1 + qSkillVal('madencilik')*0.01; }
 
 /* Karakter sayfasındaki yetenek panelinde gösterilen etki açıklamaları.
    Yeni bir yeteneğe etki bağlarsan satırını buraya ekle. */
@@ -8774,7 +9196,9 @@ const QSKILL_FX={
   balikcilik:v=>v>0
     ? `Balık kaçırma şansı <b>-${Math.min(8,Math.round(v*0.5*10)/10)} puan</b>`
     : 'Su karelerinde balık tuttukça +0.05 (balık kaçırma şansın azalır)',
-  madencilik: ()=>'Harita güncellemesiyle gelecek (yerel görevler)',
+  madencilik:v=>v>0
+    ? `Kazıdan çıkan demir ve kil <b>+%${Math.round(v*10)/10}</b> · her kazıda +0.05`
+    : 'Dağda kazı ve nehirden kil toplamada +0.05 (çıkan miktarı artırır)',
 };
 
 /* Ödül olarak verilen malzemelerin görünen adı */
@@ -13270,7 +13694,7 @@ function renderProfile(t){
   } else if(t==='stats'){
     el.innerHTML=`
       <div class="sec" style="margin-top:0;">GENEL</div>
-      <div class="stat-grid2"><div class="stat2"><div class="stat2-val">${troopCount()}</div><div class="stat2-lbl">Birlik</div></div><div class="stat2"><div class="stat2-val">${G.xp+G.level*100}</div><div class="stat2-lbl">Toplam XP</div></div><div class="stat2"><div class="stat2-val">${G.explored.size}</div><div class="stat2-lbl">Keşif</div></div><div class="stat2"><div class="stat2-val">5</div><div class="stat2-lbl">Görev Tamam</div></div></div>
+      <div class="stat-grid2"><div class="stat2"><div class="stat2-val">${troopCount()}</div><div class="stat2-lbl">Birlik</div></div><div class="stat2"><div class="stat2-val">${G.xp+G.level*100}</div><div class="stat2-lbl">Toplam XP</div></div><div class="stat2"><div class="stat2-val">${exploredTotal()}</div><div class="stat2-lbl">Keşif</div></div><div class="stat2"><div class="stat2-val">5</div><div class="stat2-lbl">Görev Tamam</div></div></div>
       <div class="sec">SAVAŞ</div>
       <div class="stat-grid2"><div class="stat2"><div class="stat2-val">${G.arenaWins}</div><div class="stat2-lbl">Galibiyet</div></div><div class="stat2"><div class="stat2-val">${G.arenaLosses}</div><div class="stat2-lbl">Mağlubiyet</div></div><div class="stat2"><div class="stat2-val">${G.arenaWins+G.arenaLosses>0?Math.round(G.arenaWins/(G.arenaWins+G.arenaLosses)*100):0}%</div><div class="stat2-lbl">Oran</div></div><div class="stat2"><div class="stat2-val">${G.arenaScore}</div><div class="stat2-lbl">Arena Puanı</div></div></div>
       <div class="sec">EKONOMİ</div>
@@ -13813,7 +14237,7 @@ async function _sbSaveNow() {
       farm_layout: {plots:farmUnlockedPlots()},
       companions: G.companions,
       captured_troops: G.capturedTroops,
-      explored_json: [...G.explored],
+      explored_json: exploredGlobalList(),
       animals:      {...G.animals, _babies:G.animalBabies||{}, _store:G.animalStore||{}, _prodTs:G.animalProdTs||{}, _breedTs:G.animalBreedTs||{}, _autoFeed:G.autoFeed!==false},
       castle_layout: G.castleLayout||{},
     };
@@ -13855,7 +14279,7 @@ async function _sbSaveNow() {
 
     const existing = await supa.from('explored_cells').select('cell_index').eq('profile_id', currentUser.id);
     const existingSet = new Set((existing.data||[]).map(c=>c.cell_index));
-    const newCells = [...G.explored].filter(i=>!existingSet.has(i)).map(i=>({ profile_id: currentUser.id, cell_index: i }));
+    const newCells = exploredGlobalList().filter(i=>!existingSet.has(i)).map(i=>({ profile_id: currentUser.id, cell_index: i }));
     if (newCells.length) {
       const { error: e4 } = await supa.from('explored_cells').insert(newCells);
       if (e4) console.error('sbSave explored_cells hatası:', e4);
