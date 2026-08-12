@@ -10328,6 +10328,11 @@
       const tpl = WEAPON_TEMPLATES[tplId];
       return tpl ? rollStatsFromTpl(tpl) : {};
     }
+    function rarityEligible(item) {
+      if (!item) return false;
+      return item.cat === 'weapon' || item.cat === 'armor' || item.cat === 'accessory' || ['Kılıç', 'Asa', 'Hançer', 'Yay', 'Bıçak', 'Sopa', 'Göğüslük', 'Zırh', 'Kask', 'Eldiven', 'Bot', 'Yüzük', 'Küpe'].includes(item.type);
+    }
+
     /* Bir eşyanın şablonunu bul (silah ya da zırh/takı) */
     function getItemTemplate(item) {
       if (!item) return null;
@@ -10361,11 +10366,11 @@
       });
       if (maxS <= minS) return 'siradan';
       const q = (val - minS) / (maxS - minS);
-      // Stricter percentiles as requested by user
-      if (q < 0.40) return 'siradan';
-      if (q < 0.70) return 'nadir';
-      if (q < 0.85) return 'degerli';
-      if (q < 0.95) return 'epik';
+      // Stricter percentiles to make epic and legendary much rarer
+      if (q < 0.60) return 'siradan';
+      if (q < 0.85) return 'nadir';
+      if (q < 0.95) return 'degerli';
+      if (q < 0.99) return 'epik';
       return 'efsanevi';
     }
     // Nadirlik sadece silah/zırhta (ileride takı ve birliklerde) gösterilir —
