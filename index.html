@@ -1417,11 +1417,12 @@
     }
 
     .zd-floor-node.current {
-      border-color: #f87171;
-      background: #2a0808;
-      color: #f87171;
-      box-shadow: 0 0 12px #f8717160;
-      animation: zd-door-pulse .8s infinite;
+      border-color: #ef4444;
+      background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%);
+      color: #fee2e2;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.45);
+      transform: scale(1.08);
     }
 
     .zd-floor-node.locked {
@@ -1443,29 +1444,45 @@
       display: none;
     }
 
+    /* Zindan Kart Kapsayıcısı (Atmospheric Gradient Container) */
+    .zd-wrap-card {
+      background: linear-gradient(180deg, rgba(28, 20, 14, 0.95) 0%, rgba(14, 10, 8, 0.98) 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      max-width: 680px;
+      margin: 0 auto 16px;
+      box-sizing: border-box;
+    }
+
     /* Oda kartları */
     .zd-rooms {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+      max-width: 580px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .zd-room {
-      background: var(--panel2);
+      background: linear-gradient(180deg, rgba(38, 28, 20, 0.85) 0%, rgba(22, 14, 10, 0.95) 100%);
       border: 1px solid var(--border2);
       border-radius: 10px;
-      padding: 12px;
+      padding: 14px 10px;
       text-align: center;
       cursor: pointer;
-      transition: transform .2s, box-shadow .2s, border-color .2s;
+      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
       position: relative;
       overflow: hidden;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
     }
 
     .zd-room:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 20px #00000060;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
     }
 
     .zd-room.cleared {
@@ -1485,47 +1502,52 @@
 
     .zd-room-type-fight {
       border-color: #8b1e1e;
+      background: linear-gradient(180deg, rgba(42, 16, 16, 0.85), rgba(24, 10, 10, 0.95));
     }
 
     .zd-room-type-fight:hover {
       border-color: #f87171;
-      box-shadow: 0 6px 20px #8b1e1e50;
+      box-shadow: 0 6px 20px rgba(139, 30, 30, 0.5);
     }
 
     .zd-room-type-chest {
       border-color: #b08d57;
+      background: linear-gradient(180deg, rgba(45, 34, 16, 0.85), rgba(24, 18, 10, 0.95));
     }
 
     .zd-room-type-chest:hover {
       border-color: var(--gold2);
-      box-shadow: 0 6px 20px #b08d5750;
+      box-shadow: 0 6px 20px rgba(176, 141, 87, 0.5);
     }
 
     .zd-room-type-trap {
       border-color: #7a4a8a;
+      background: linear-gradient(180deg, rgba(38, 18, 45, 0.85), rgba(20, 10, 24, 0.95));
     }
 
     .zd-room-type-trap:hover {
       border-color: #c084fc;
-      box-shadow: 0 6px 20px #7a4a8a50;
+      box-shadow: 0 6px 20px rgba(122, 74, 138, 0.5);
     }
 
     .zd-room-type-rest {
       border-color: #2a6a2a;
+      background: linear-gradient(180deg, rgba(18, 42, 18, 0.85), rgba(10, 24, 10, 0.95));
     }
 
     .zd-room-type-rest:hover {
       border-color: #7aaa5a;
-      box-shadow: 0 6px 20px #2a6a2a50;
+      box-shadow: 0 6px 20px rgba(42, 106, 42, 0.5);
     }
 
     .zd-room-type-boss {
       border-color: #ff6a00;
       border-width: 2px;
+      background: linear-gradient(180deg, rgba(50, 25, 10, 0.9), rgba(30, 12, 5, 0.95));
     }
 
     .zd-room-type-boss:hover {
-      box-shadow: 0 6px 20px #ff6a0060;
+      box-shadow: 0 6px 20px rgba(255, 106, 0, 0.6);
     }
 
     .zd-room-icon {
@@ -14077,7 +14099,7 @@
         ? `👿 Son katta <b style="color:#c9a646;">${T.boss.name}</b> — %${Math.round(ZD_STRONG_BOSS_CHANCE * 100)} şansla <b style="color:#f87171;">${T.strongBoss.name}</b>! <b style="color:#c9a646;">Sv.50 Nekro eşyaları</b> yalnızca burada düşer!`
         : `👿 Son katta <b style="color:#c9a646;">${T.boss.name}</b> — %${Math.round(ZD_STRONG_BOSS_CHANCE * 100)} şansla <b style="color:#f87171;">${T.strongBoss.name}</b> çıkar (daha güçlü, daha cömert)!`;
 
-      return `
+      return `<div class="zd-wrap-card">
     <!-- Kademe girişi (arka plan görseli — 16:9 oranı korunur) -->
     <div class="zd-entrance" style="height:auto;aspect-ratio:16/9;max-width:760px;margin:0 auto 16px;">
       <img src="${IMG_BASE}${T.img}.webp" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"/>
@@ -14102,14 +14124,16 @@
     </div>
 
     <!-- Giriş butonu -->
-    <button class="btn" style="width:100%;font-size:14px;padding:14px;${!canEnter ? 'opacity:.5;cursor:not-allowed;' : ''}"
-      onclick="${canEnter ? 'zdEnter()' : 'void(0)'}">
-      ${canEnter ? `🗝 ${tier}. Seviye Zindana Gir` : '🔒 Günlük Hak Bitti'}
-    </button>
+    <div style="text-align:center;">
+      <button class="btn" style="max-width:360px;width:100%;font-size:14px;padding:12px 20px;${!canEnter ? 'opacity:.5;cursor:not-allowed;' : ''}"
+        onclick="${canEnter ? 'zdEnter()' : 'void(0)'}">
+        ${canEnter ? `🗝 ${tier}. Seviye Zindana Gir` : '🔒 Günlük Hak Bitti'}
+      </button>
+    </div>
     ${ZD.totalGold > 0 ? `<div style="margin-top:10px;text-align:center;font-size:11px;color:var(--ink3);">
       Son zindan: <span style="color:var(--gold);">+${ZD.totalGold}🪙</span> · <span style="color:#7aaa5a;">+${ZD.totalXP}XP</span>
     </div>`: ''}
-  `;
+  </div>`;
     }
 
     /* ── KAT EKRANI ── */
@@ -14136,7 +14160,7 @@
       const canAdvance = allCleared && ZD.floor < ZD_FLOORS;
       const isComplete = allCleared && ZD.floor >= ZD_FLOORS;
 
-      return `
+      return `<div class="zd-wrap-card">
     <!-- Kat göstergesi -->
     <div style="text-align:center;font-family:var(--font-head);font-size:11px;color:var(--ink3);margin-bottom:8px;letter-spacing:2px;">
       <span style="color:var(--gold);">${ZD.tier}. SEVİYE ZİNDAN</span> · KAT ${ZD.floor} / ${ZD_FLOORS}
@@ -14152,19 +14176,23 @@
     </div>
 
     <!-- Odalar -->
-    <div class="sec" style="margin:0 0 8px;">ODALAR</div>
+    <div class="sec" style="margin:0 0 10px;text-align:center;">ODALAR</div>
     <div class="zd-rooms">${roomsHTML}</div>
 
-    <!-- İlerleme / Çıkış -->
-    ${canAdvance ? `<button class="btn" style="width:100%;margin-bottom:8px;" onclick="zdNextFloor()">
-      ⬇ ${ZD.floor + 1}. Kata İn</button>` : ''}
-    ${isComplete ? `<div style="text-align:center;padding:12px;background:linear-gradient(135deg,#1a0e02,#0e1a08);border:1px solid var(--gold);border-radius:8px;margin-bottom:8px;">
-      <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);margin-bottom:6px;">🏆 ZİNDAN TAMAMLANDI!</div>
-      <div style="font-size:11px;color:var(--perg2);margin-bottom:4px;">+${ZD.totalGold}🪙 · +${ZD.totalXP}XP kazandın</div>
-      <div style="font-size:10px;color:var(--ink3);">⚔ 4 silah (1-4. kat boss) + <span style="color:#c9a646;">☀ 1 Güneş Silahı</span> (Altın Şövalye) kazandın!</div>
-    </div>`: ''}
-    <button class="btn btn-ghost" style="width:100%;" onclick="zdExit()">🚪 Zindandan Çık</button>
-  `;
+    <!-- İlerleme / Çıkış Butonları -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:16px;">
+      ${canAdvance ? `<button class="btn" style="max-width:320px;width:100%;font-size:14px;padding:12px 20px;background:linear-gradient(180deg, #b08d57 0%, #7a5c2d 100%);border:1px solid var(--gold);box-shadow:0 4px 14px rgba(176,141,87,0.3);" onclick="zdNextFloor()">
+        ⬇ ${ZD.floor + 1}. Kata İn</button>` : ''}
+      ${isComplete ? `<div style="text-align:center;padding:12px;background:linear-gradient(135deg,#1a0e02,#0e1a08);border:1px solid var(--gold);border-radius:8px;width:100%;max-width:360px;box-sizing:border-box;">
+        <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);margin-bottom:6px;">🏆 ZİNDAN TAMAMLANDI!</div>
+        <div style="font-size:11px;color:var(--perg2);margin-bottom:4px;">+${ZD.totalGold}🪙 · +${ZD.totalXP}XP kazandın</div>
+        <div style="font-size:10px;color:var(--ink3);">⚔ 4 silah + <span style="color:#c9a646;">☀ 1 Güneş Silahı</span> kazandın!</div>
+      </div>`: ''}
+      <button class="btn btn-ghost" style="max-width:320px;width:100%;font-size:13px;padding:10px 18px;background:linear-gradient(180deg, #2a1616 0%, #1a0a0a 100%);border:1px solid #7f1d1d;color:#fca5a5;" onclick="zdExit()">
+        🚪 Zindandan Çık
+      </button>
+    </div>
+  </div>`;
     }
 
     /* ── SAVAŞ EKRANI ── */
