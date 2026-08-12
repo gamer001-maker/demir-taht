@@ -871,6 +871,36 @@
       letter-spacing: normal !important;
     }
 
+    /* Bilgi İkon Butonu (ⓘ) */
+    .info-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: rgba(176, 141, 87, 0.15);
+      border: 1px solid var(--gold);
+      color: var(--gold2);
+      font-size: 10px;
+      font-family: var(--font-body);
+      font-weight: 700;
+      cursor: pointer;
+      margin-left: 5px;
+      vertical-align: middle;
+      transition: all .15s ease;
+      user-select: none;
+      line-height: 1;
+      padding: 0;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .info-btn:hover {
+      background: var(--gold);
+      color: #1a1008;
+      transform: scale(1.12);
+    }
+
     .ob-logo {
       text-align: center;
       padding: 32px 20px 20px;
@@ -9205,6 +9235,25 @@
     }
 
     let _attrPopAnchor = null;
+    function showInfoPop(title, html, el, icon = 'ℹ️') {
+      const pop = document.getElementById('attr-popover');
+      if (!pop) return;
+      if (_attrPopAnchor === el && pop.style.display === 'block') { hideAttrPop(); return; }
+      pop.innerHTML = `
+    <div class="ap-head"><span class="ap-icon">${icon}</span><span class="ap-title">${title}</span></div>
+    <div class="ap-desc" style="margin-bottom:0;font-size:11.5px;line-height:1.5;">${html}</div>`;
+      pop.style.display = 'block';
+      const r = el.getBoundingClientRect();
+      const pw = pop.offsetWidth, ph = pop.offsetHeight;
+      let left = r.left, top = r.bottom + 8;
+      if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+      if (left < 8) left = 8;
+      if (top + ph > window.innerHeight - 8) top = r.top - ph - 8;
+      if (top < 8) top = 8;
+      pop.style.left = left + 'px';
+      pop.style.top = top + 'px';
+      _attrPopAnchor = el;
+    }
     function showAttrPop(key, el) {
       const pop = document.getElementById('attr-popover');
       if (!pop) return;
@@ -11439,11 +11488,14 @@
         skillsEl.innerHTML = Object.entries(QSKILLS).map(([k, m]) => {
           const v = qSkillVal(k);
           const fx = (QSKILL_FX[k] || (() => 'Henüz bir etkisi yok'))(v);
+          const safeFx = String(fx).replace(/'/g, "\\'").replace(/"/g, '&quot;');
           return `<div class="skill-row ${v > 0 ? '' : 'sk-off'}">
         <span class="skill-ico">${m.ico}</span>
         <div class="skill-mid">
-          <div class="skill-name">${m.lbl}</div>
-          <div class="skill-fx">${fx}</div>
+          <div class="skill-name" style="display:flex;align-items:center;">
+            <span>${m.lbl}</span>
+            <button class="info-btn" onclick="event.stopPropagation(); showInfoPop('${m.lbl}', '${safeFx}', this, '${m.ico}')" title="Yetenek Bilgisi">ⓘ</button>
+          </div>
           <div class="skill-bar-bg"><div class="skill-bar" style="width:${Math.min(100, v)}%"></div></div>
         </div>
         <span class="skill-val">${v.toFixed(2).replace(/\.?0+$/, '') || 0}</span>
@@ -14006,17 +14058,10 @@
       <span style="margin-left:auto;font-size:9px;">Her gün sıfırlanır</span>
     </div>
 
-    <!-- Bilgi -->
-    <div class="card" style="margin-bottom:10px;">
-      <div class="sec" style="margin-top:0;">${tier}. SEVİYE ZİNDAN HAKKINDA</div>
-      <div style="font-size:11px;color:var(--ink3);line-height:1.8;">
-        🏚 <b style="color:var(--perg2);">5 kat</b>, her katta rastgele odalar<br>
-        🐾 Bu bölgenin canavarları: <b style="color:var(--perg2);">${mobNames}</b><br>
-        ⚔ Tur bazlı savaş — <b style="color:var(--perg2);">Saldır / Savun / Büyü / Sıyrıl</b><br>
-        🗡 Boss'lar <b style="color:var(--perg2);">Sv.${T.lv[0]}–${T.lv[1]} aralığında</b> silah düşürür — kademe yükseldikçe <b style="color:var(--gold2);">+ değeri artar</b><br>
-        ${finalNote}<br>
-        💀 Ölürsen zindandan çıkarsın, haklar azalmaz
-      </div>
+    <!-- Zindan Bilgisi Butonu -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:8px 12px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;">
+      <span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${tier}. SEVİYE ZİNDAN</span>
+      <button class="info-btn" style="width:auto;border-radius:12px;padding:2px 8px;font-size:10px;" onclick="showInfoPop('${tier}. Seviye Zindan Bilgisi', '🏚 <b style=&quot;color:var(--perg2);&quot;>5 kat</b>, her katta odalar<br>🐾 Canavarlar: <b style=&quot;color:var(--perg2);&quot;>${mobNames.replace(/'/g, "\\'")}</b><br>⚔ Tur bazlı savaş (Saldır/Savun/Büyü/Sıyrıl)<br>🗡 Bosslar <b style=&quot;color:var(--perg2);&quot;>Sv.${T.lv[0]}–${T.lv[1]}</b> silah ve küpe düşürür<br>${finalNote.replace(/'/g, "\\'")}<br>💀 Ölürsen zindandan çıkarsın', this, '🗡')" title="Zindan Bilgisi">ⓘ Zindan Bilgisi</button>
     </div>
 
     <!-- Giriş butonu -->
@@ -17678,9 +17723,10 @@
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">
       <div style="width:42px;height:42px;border-radius:9px;background:var(--panel);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:22px;">⚙</div>
       <div style="flex:1;">
-        <div style="font-family:var(--font-head);font-size:13px;color:var(--perg);">Değirmen <span class="tag tag-gold" style="font-size:8px;margin-left:4px;">Sv.${lv}/${bld.max}</span></div>
-        <div style="font-size:9px;color:var(--ink3);margin-top:2px;">
-          Aktif: ${usedSlots}/${maxProd} · Bonus: %${Math.round(chance * 100)} ×${mult}
+        <div style="font-family:var(--font-head);font-size:13px;color:var(--perg);display:flex;align-items:center;">
+          <span>Değirmen</span>
+          <span class="tag tag-gold" style="font-size:8px;margin-left:4px;">Sv.${lv}/${bld.max}</span>
+          <button class="info-btn" onclick="showInfoPop('Değirmen Bilgisi', 'Aktif Üretim: ${usedSlots}/${maxProd}<br>Bonus Şansı: %${Math.round(chance * 100)} ×${mult}', this, '⚙')" title="Bina Bilgisi">ⓘ</button>
         </div>
       </div>
     </div>`;
@@ -17696,13 +17742,9 @@
         upgHtml = `
       <div class="sec">GELİŞTİR</div>
       <div class="card row-between" style="margin-bottom:12px;">
-        <div>
-          <div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">Sv.${lv} → Sv.${nextLv}</div>
-          <div style="font-size:12px;color:var(--ink3);margin-top:3px;line-height:1.6;">
-            ${newRecipe ? `🫙 <b style="color:var(--perg2);">${newRecipe.name}</b> açılır<br>` : ''}
-            📦 Max üretim ${maxProd} → ${nextMax}<br>
-            ✨ Bonus %${Math.round(chance * 100)} ×${mult} → %${Math.round(nextBonus.chance * 100)} ×${nextBonus.mult}
-          </div>
+        <div style="display:flex;align-items:center;">
+          <span style="font-family:var(--font-head);font-size:12px;color:var(--perg);">Sv.${lv} → Sv.${nextLv}</span>
+          <button class="info-btn" onclick="showInfoPop('Geliştirme Detayı', '${newRecipe ? `🫙 <b style=&quot;color:var(--perg2);&quot;>${newRecipe.name}</b> açılır<br>` : ''}📦 Max üretim: ${maxProd} → ${nextMax}<br>✨ Bonus: %${Math.round(chance * 100)} ×${mult} → %${Math.round(nextBonus.chance * 100)} ×${nextBonus.mult}', this, '⬆')" title="Geliştirme Detayı">ⓘ</button>
         </div>
         <div style="text-align:right;">
           <button class="btn btn-sm" onclick="upgProd('mill',${uc})" ${G.gold >= uc && canAffordMats(buildingMatCost('prod_mill', lv)) ? '' : 'disabled'}>${uc}🪙</button>
@@ -18118,8 +18160,11 @@
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">
       <div style="width:42px;height:42px;border-radius:9px;background:var(--panel);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:22px;">🐄</div>
       <div style="flex:1;">
-        <div style="font-family:var(--font-head);font-size:13px;color:var(--perg);">Çiftlik <span class="tag tag-gold" style="font-size:8px;margin-left:4px;">Sv.${lv}/${bld.max}</span></div>
-        <div style="font-size:9px;color:var(--ink3);margin-top:2px;">Aktif: ${usedSlots}/${maxProd} · Bonus: %${Math.round(chance * 100)} ×${mult}</div>
+        <div style="font-family:var(--font-head);font-size:13px;color:var(--perg);display:flex;align-items:center;">
+          <span>Çiftlik</span>
+          <span class="tag tag-gold" style="font-size:8px;margin-left:4px;">Sv.${lv}/${bld.max}</span>
+          <button class="info-btn" onclick="showInfoPop('Çiftlik Bilgisi', 'Aktif Üretim: ${usedSlots}/${maxProd}<br>Bonus Şansı: %${Math.round(chance * 100)} ×${mult}', this, '🐄')" title="Bina Bilgisi">ⓘ</button>
+        </div>
       </div>
     </div>`;
 
@@ -18133,13 +18178,9 @@
         upgHtml = `
       <div class="sec">GELİŞTİR</div>
       <div class="card row-between" style="margin-bottom:12px;">
-        <div>
-          <div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">Sv.${lv} → Sv.${nextLv}</div>
-          <div style="font-size:9px;color:var(--ink3);margin-top:3px;line-height:1.6;">
-            ${newRecipe ? `${newRecipe.icon} <b style="color:var(--perg2);">${newRecipe.name}</b> açılır<br>` : ''}
-            📦 Max üretim ${maxProd} → ${nextMax}<br>
-            ✨ Bonus %${Math.round(chance * 100)} ×${mult} → %${Math.round(nextBonus.chance * 100)} ×${nextBonus.mult}
-          </div>
+        <div style="display:flex;align-items:center;">
+          <span style="font-family:var(--font-head);font-size:12px;color:var(--perg);">Sv.${lv} → Sv.${nextLv}</span>
+          <button class="info-btn" onclick="showInfoPop('Geliştirme Detayı', '${newRecipe ? `${newRecipe.icon} <b style=&quot;color:var(--perg2);&quot;>${newRecipe.name}</b> açılır<br>` : ''}📦 Max üretim: ${maxProd} → ${nextMax}<br>✨ Bonus: %${Math.round(chance * 100)} ×${mult} → %${Math.round(nextBonus.chance * 100)} ×${nextBonus.mult}', this, '⬆')" title="Geliştirme Detayı">ⓘ</button>
         </div>
         <div style="text-align:right;">
           <button class="btn btn-sm" onclick="upgProd('ranch',${uc})" ${G.gold >= uc && canAffordMats(buildingMatCost('prod_ranch', lv)) ? '' : 'disabled'}>${uc}🪙</button>
@@ -18359,8 +18400,11 @@
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">
       <div style="width:42px;height:42px;border-radius:9px;background:var(--panel);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:22px;">🍳</div>
       <div style="flex:1;">
-        <div style="font-family:var(--font-head);font-size:13px;color:var(--perg);">Aşevi <span class="tag tag-gold" style="font-size:8px;margin-left:4px;">Sv.${lv}/${bld.max}</span></div>
-        <div style="font-size:9px;color:var(--ink3);margin-top:2px;">Aktif: ${usedSlots}/${maxProd} · Bonus: %${Math.round(chance * 100)} ×${mult} · Tur sonu tüketilir 🍖</div>
+        <div style="font-family:var(--font-head);font-size:13px;color:var(--perg);display:flex;align-items:center;">
+          <span>Aşevi</span>
+          <span class="tag tag-gold" style="font-size:8px;margin-left:4px;">Sv.${lv}/${bld.max}</span>
+          <button class="info-btn" onclick="showInfoPop('Aşevi Bilgisi', 'Aktif Üretim: ${usedSlots}/${maxProd}<br>Bonus Şansı: %${Math.round(chance * 100)} ×${mult}<br>Yiyecekler tur sonunda tüketilir 🍖', this, '🍳')" title="Bina Bilgisi">ⓘ</button>
+        </div>
       </div>
     </div>`;
 
@@ -18374,13 +18418,9 @@
         upgHtml = `
       <div class="sec">GELİŞTİR</div>
       <div class="card row-between" style="margin-bottom:12px;">
-        <div>
-          <div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">Sv.${lv} → Sv.${nextLv}</div>
-          <div style="font-size:9px;color:var(--ink3);margin-top:3px;line-height:1.6;">
-            ${newRecipe ? `${newRecipe.icon} <b style="color:var(--perg2);">${newRecipe.name}</b> açılır<br>` : ''}
-            📦 Max üretim ${maxProd} → ${nextMax}<br>
-            ✨ Bonus %${Math.round(chance * 100)} ×${mult} → %${Math.round(nextBonus.chance * 100)} ×${nextBonus.mult}
-          </div>
+        <div style="display:flex;align-items:center;">
+          <span style="font-family:var(--font-head);font-size:12px;color:var(--perg);">Sv.${lv} → Sv.${nextLv}</span>
+          <button class="info-btn" onclick="showInfoPop('Geliştirme Detayı', '${newRecipe ? `${newRecipe.icon} <b style=&quot;color:var(--perg2);&quot;>${newRecipe.name}</b> açılır<br>` : ''}📦 Max üretim: ${maxProd} → ${nextMax}<br>✨ Bonus: %${Math.round(chance * 100)} ×${mult} → %${Math.round(nextBonus.chance * 100)} ×${nextBonus.mult}', this, '⬆')" title="Geliştirme Detayı">ⓘ</button>
         </div>
         <div style="text-align:right;">
           <button class="btn btn-sm" onclick="upgProd('kitchen',${uc})" ${G.gold >= uc && canAffordMats(buildingMatCost('prod_kitchen', lv)) ? '' : 'disabled'}>${uc}🪙</button>
@@ -18521,9 +18561,10 @@
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">
       <div style="width:42px;height:42px;border-radius:9px;background:var(--panel);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:22px;">🌾</div>
       <div style="flex:1;">
-        <div style="font-family:var(--font-head);font-size:13px;color:var(--perg);">Tarla <span class="tag tag-gold" style="font-size:8px;margin-left:4px;">Sv.${lv}/${bld.max}</span></div>
-        <div style="font-size:9px;color:var(--ink3);margin-top:2px;">
-          Ekili: ${usedSlots}/${farmUnlockedPlots().length} · Kare: ${farmUnlockedPlots().length}/16 · Bonus: %${Math.round(chance * 100)} ×${mult}${samanBonus > 0 ? ' · Saman +' + samanBonus : ''}
+        <div style="font-family:var(--font-head);font-size:13px;color:var(--perg);display:flex;align-items:center;">
+          <span>Tarla</span>
+          <span class="tag tag-gold" style="font-size:8px;margin-left:4px;">Sv.${lv}/${bld.max}</span>
+          <button class="info-btn" onclick="showInfoPop('Tarla Bilgisi', 'Ekili: ${usedSlots}/${farmUnlockedPlots().length}<br>Kareler: ${farmUnlockedPlots().length}/16<br>Bonus Şansı: %${Math.round(chance * 100)} ×${mult}${samanBonus > 0 ? '<br>Saman Bonusu: +' + samanBonus : ''}', this, '🌾')" title="Bina Bilgisi">ⓘ</button>
         </div>
       </div>
     </div>`;
@@ -18549,13 +18590,9 @@
         upgHtml = `
       <div class="sec">GELİŞTİR</div>
       <div class="card row-between" style="margin-bottom:12px;">
-        <div>
-          <div style="font-family:var(--font-head);font-size:12px;color:var(--perg);">Sv.${lv} → Sv.${nextLv}</div>
-          <div style="font-size:9px;color:var(--ink3);margin-top:3px;line-height:1.6;">
-            ${nextCrop ? `🌱 <b style="color:var(--perg2);">${nextCrop.name}</b> açılır<br>` : ''}
-            🟫 Kare hakkı ${maxSlots} → ${nextSlots} <span style="color:var(--gold2);">(+1 yeni kare)</span><br>
-            ✨ Bonus %${Math.round(chance * 100)} → %${Math.round(nextBonus.chance * 100)} ×${nextBonus.mult}
-          </div>
+        <div style="display:flex;align-items:center;">
+          <span style="font-family:var(--font-head);font-size:12px;color:var(--perg);">Sv.${lv} → Sv.${nextLv}</span>
+          <button class="info-btn" onclick="showInfoPop('Geliştirme Detayı', '${nextCrop ? `🌱 <b style=&quot;color:var(--perg2);&quot;>${nextCrop.name}</b> açılır<br>` : ''}🟫 Kare hakkı ${maxSlots} → ${nextSlots}<br>✨ Bonus %${Math.round(chance * 100)} → %${Math.round(nextBonus.chance * 100)} ×${nextBonus.mult}', this, '⬆')" title="Geliştirme Detayı">ⓘ</button>
         </div>
         <div style="text-align:right;">
           <button class="btn btn-sm" onclick="startFarmUpgrade(${uc})" ${G.gold >= uc ? '' : 'disabled'}>${uc}🪙</button>
