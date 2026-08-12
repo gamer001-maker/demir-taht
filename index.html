@@ -1417,11 +1417,12 @@
     }
 
     .zd-floor-node.current {
-      border-color: #f87171;
-      background: #3b0a0a;
-      color: #fca5a5;
-      font-weight: bold;
-      box-shadow: 0 0 8px rgba(248, 113, 113, 0.5);
+      border-color: #ef4444;
+      background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%);
+      color: #fee2e2;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.45);
+      transform: scale(1.08);
     }
 
     .zd-floor-node.locked {
@@ -1443,29 +1444,45 @@
       display: none;
     }
 
+    /* Zindan Kart Kapsayıcısı (Atmospheric Gradient Container) */
+    .zd-wrap-card {
+      background: linear-gradient(180deg, rgba(28, 20, 14, 0.95) 0%, rgba(14, 10, 8, 0.98) 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      max-width: 680px;
+      margin: 0 auto 16px;
+      box-sizing: border-box;
+    }
+
     /* Oda kartları */
     .zd-rooms {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+      max-width: 580px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .zd-room {
-      background: var(--panel2);
+      background: linear-gradient(180deg, rgba(38, 28, 20, 0.85) 0%, rgba(22, 14, 10, 0.95) 100%);
       border: 1px solid var(--border2);
       border-radius: 10px;
-      padding: 12px;
+      padding: 14px 10px;
       text-align: center;
       cursor: pointer;
-      transition: transform .2s, box-shadow .2s, border-color .2s;
+      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
       position: relative;
       overflow: hidden;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
     }
 
     .zd-room:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 20px #00000060;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
     }
 
     .zd-room.cleared {
@@ -1485,47 +1502,52 @@
 
     .zd-room-type-fight {
       border-color: #8b1e1e;
+      background: linear-gradient(180deg, rgba(42, 16, 16, 0.85), rgba(24, 10, 10, 0.95));
     }
 
     .zd-room-type-fight:hover {
       border-color: #f87171;
-      box-shadow: 0 6px 20px #8b1e1e50;
+      box-shadow: 0 6px 20px rgba(139, 30, 30, 0.5);
     }
 
     .zd-room-type-chest {
       border-color: #b08d57;
+      background: linear-gradient(180deg, rgba(45, 34, 16, 0.85), rgba(24, 18, 10, 0.95));
     }
 
     .zd-room-type-chest:hover {
       border-color: var(--gold2);
-      box-shadow: 0 6px 20px #b08d5750;
+      box-shadow: 0 6px 20px rgba(176, 141, 87, 0.5);
     }
 
     .zd-room-type-trap {
       border-color: #7a4a8a;
+      background: linear-gradient(180deg, rgba(38, 18, 45, 0.85), rgba(20, 10, 24, 0.95));
     }
 
     .zd-room-type-trap:hover {
       border-color: #c084fc;
-      box-shadow: 0 6px 20px #7a4a8a50;
+      box-shadow: 0 6px 20px rgba(122, 74, 138, 0.5);
     }
 
     .zd-room-type-rest {
       border-color: #2a6a2a;
+      background: linear-gradient(180deg, rgba(18, 42, 18, 0.85), rgba(10, 24, 10, 0.95));
     }
 
     .zd-room-type-rest:hover {
       border-color: #7aaa5a;
-      box-shadow: 0 6px 20px #2a6a2a50;
+      box-shadow: 0 6px 20px rgba(42, 106, 42, 0.5);
     }
 
     .zd-room-type-boss {
       border-color: #ff6a00;
       border-width: 2px;
+      background: linear-gradient(180deg, rgba(50, 25, 10, 0.9), rgba(30, 12, 5, 0.95));
     }
 
     .zd-room-type-boss:hover {
-      box-shadow: 0 6px 20px #ff6a0060;
+      box-shadow: 0 6px 20px rgba(255, 106, 0, 0.6);
     }
 
     .zd-room-icon {
@@ -10323,79 +10345,189 @@
          SILAHLAR — BIÇAK (Haydut)
          NPC satmaz — oyuncular arası + boss ödülü
       ══════════════════════════════════════ */
-      { id: 101, name: 'Paslı Bıçak', icon: '🗡', cat: 'weapon', grade: 'gray', price: 80, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Bıçak', reqLv: 1, tplId: 'paslibicak', material: null, desc: 'Çürümeye yüz tutmuş eski bıçak.', stats: { atk: 5, crit: 4 }, img: 'paslibicak', classBonus: { rogue: 'agi' } },
-      { id: 102, name: 'İlkel Bıçak', icon: '🗡', cat: 'weapon', grade: 'gray', price: 110, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Bıçak', reqLv: 1, tplId: 'ilkelbicak', material: null, desc: 'Taştan yontulmuş ilkel bıçak.', stats: { atk: 7, crit: 5 }, img: 'ilkelbicak', classBonus: { rogue: 'agi' } },
-      { id: 103, name: 'Kemik Bıçak', icon: '🗡', cat: 'weapon', grade: 'green', price: 280, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Bıçak', reqLv: 10, tplId: 'kemikbicak', material: null, desc: 'Canavar kemiğinden yapılmış.', stats: { atk: 14, crit: 10 }, img: 'kemikbicak', classBonus: { rogue: 'agi' } },
-      { id: 104, name: 'Runlu Bıçak', icon: '🗡', cat: 'weapon', grade: 'blue', price: 1200, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Bıçak', reqLv: 15, tplId: 'runlubicak', material: null, desc: 'Rune yazıları işlenmiş keskin bıçak.', stats: { atk: 28, crit: 18, agi: 4 }, img: 'runlubicak', classBonus: { rogue: 'agi' } },
-      { id: 106, name: 'Ejderha Bıçağı', icon: '🗡', cat: 'weapon', grade: 'purple', price: 4500, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Bıçak', reqLv: 20, tplId: 'ejderhabilicak', material: null, desc: 'Ejderha dişinden yontulmuş korkunç bıçak.', stats: { atk: 47, crit: 30, agi: 11 }, img: 'ejderhabilicak', classBonus: { rogue: 'agi' } },
+      { id: 101, name: 'Paslı Bıçak', icon: '🗡', cat: 'weapon', grade: 'gray', price: 80, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Bıçak', reqLv: 1, tplId: 'paslibicak', material: null, desc: 'Çürümeye yüz tutmuş eski bıçak.', stats: { atk: 11, crit: 4 }, img: 'paslibicak', classBonus: { rogue: 'agi' } },
+      { id: 102, name: 'İlkel Bıçak', icon: '🗡', cat: 'weapon', grade: 'gray', price: 110, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Bıçak', reqLv: 1, tplId: 'ilkelbicak', material: null, desc: 'Taştan yontulmuş ilkel bıçak.', stats: { atk: 11, crit: 5 }, img: 'ilkelbicak', classBonus: { rogue: 'agi' } },
+      { id: 103, name: 'Kemik Bıçak', icon: '🗡', cat: 'weapon', grade: 'green', price: 280, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Bıçak', reqLv: 10, tplId: 'kemikbicak', material: null, desc: 'Canavar kemiğinden yapılmış.', stats: { atk: 65, crit: 10 }, img: 'kemikbicak', classBonus: { rogue: 'agi' } },
+      { id: 104, name: 'Runlu Bıçak', icon: '🗡', cat: 'weapon', grade: 'blue', price: 1200, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Bıçak', reqLv: 15, tplId: 'runlubicak', material: null, desc: 'Rune yazıları işlenmiş keskin bıçak.', stats: { atk: 121, crit: 18, agi: 4 }, img: 'runlubicak', classBonus: { rogue: 'agi' } },
+      { id: 106, name: 'Ejderha Bıçağı', icon: '🗡', cat: 'weapon', grade: 'purple', price: 4500, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Bıçak', reqLv: 20, tplId: 'ejderhabilicak', material: null, desc: 'Ejderha dişinden yontulmuş korkunç bıçak.', stats: { atk: 202, crit: 30, agi: 11 }, img: 'ejderhabilicak', classBonus: { rogue: 'agi' } },
 
       /* ══════════════════════════════════════
          SILAHLAR — HANÇER (Haydut)
       ══════════════════════════════════════ */
-      { id: 111, name: 'Paslı Hançer', icon: '🗡', cat: 'weapon', grade: 'gray', price: 100, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Hançer', reqLv: 1, tplId: 'paslihancer', material: null, desc: 'Kullanılmış demir hançer.', stats: { atk: 6, crit: 8 }, img: 'paslihancer', classBonus: { rogue: 'agi' } },
-      { id: 114, name: 'İşlenmiş Hançer', icon: '🗡', cat: 'weapon', grade: 'gray', price: 200, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Hançer', reqLv: 5, tplId: 'islenmishancer', material: null, desc: 'Usta elinden çıkmış sağlam hançer.', stats: { atk: 11, crit: 11 }, img: 'islenmishancer', classBonus: { rogue: 'agi' } },
-      { id: 112, name: 'Element Hançer', icon: '🗡', cat: 'weapon', grade: 'blue', price: 1600, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Hançer', reqLv: 20, tplId: 'elementhancer', material: null, desc: '4 elementi barındıran hançer.', stats: { atk: 33, crit: 21, wis: 6 }, img: 'elementhancer', classBonus: { rogue: 'agi', mage: 'wis' } },
-      { id: 115, name: 'Ejderha Hançeri', icon: '🗡', cat: 'weapon', grade: 'purple', price: 5000, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Hançer', reqLv: 23, tplId: 'ejderhahancer', material: null, desc: 'Ejderha pençesinden yapılmış zehirli hançer.', stats: { atk: 57, crit: 36, agi: 13 }, img: 'ejderhahancer', classBonus: { rogue: 'agi' } },
-      { id: 113, name: 'Yadigar Hançer', icon: '🗡', cat: 'weapon', grade: 'orange', price: 9000, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Hançer', reqLv: 25, tplId: 'yadigarhancer', material: null, desc: 'Atadan kalma efsane hançer.', stats: { atk: 62, crit: 38, agi: 15 }, img: 'yadigarhancer', classBonus: { rogue: 'agi' } },
+      { id: 111, name: 'Paslı Hançer', icon: '🗡', cat: 'weapon', grade: 'gray', price: 100, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Hançer', reqLv: 1, tplId: 'paslihancer', material: null, desc: 'Kullanılmış demir hançer.', stats: { atk: 12, crit: 8 }, img: 'paslihancer', classBonus: { rogue: 'agi' } },
+      { id: 114, name: 'İşlenmiş Hançer', icon: '🗡', cat: 'weapon', grade: 'gray', price: 200, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Hançer', reqLv: 5, tplId: 'islenmishancer', material: null, desc: 'Usta elinden çıkmış sağlam hançer.', stats: { atk: 30, crit: 11 }, img: 'islenmishancer', classBonus: { rogue: 'agi' } },
+      { id: 112, name: 'Element Hançer', icon: '🗡', cat: 'weapon', grade: 'blue', price: 1600, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Hançer', reqLv: 20, tplId: 'elementhancer', material: null, desc: '4 elementi barındıran hançer.', stats: { atk: 181, crit: 21, wis: 6 }, img: 'elementhancer', classBonus: { rogue: 'agi', mage: 'wis' } },
+      { id: 115, name: 'Ejderha Hançeri', icon: '🗡', cat: 'weapon', grade: 'purple', price: 5000, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Hançer', reqLv: 23, tplId: 'ejderhahancer', material: null, desc: 'Ejderha pençesinden yapılmış zehirli hançer.', stats: { atk: 254, crit: 36, agi: 13 }, img: 'ejderhahancer', classBonus: { rogue: 'agi' } },
+      { id: 113, name: 'Yadigar Hançer', icon: '🗡', cat: 'weapon', grade: 'orange', price: 9000, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Hançer', reqLv: 25, tplId: 'yadigarhancer', material: null, desc: 'Atadan kalma efsane hançer.', stats: { atk: 352, crit: 38, agi: 15 }, img: 'yadigarhancer', classBonus: { rogue: 'agi' } },
 
       /* ══════════════════════════════════════
          SILAHLAR — KILIÇ (Savaşçı/Şövalye)
       ══════════════════════════════════════ */
-      { id: 123, name: 'Demir Kılıç', icon: '⚔', cat: 'weapon', grade: 'gray', price: 120, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Kılıç', reqLv: 1, tplId: 'demirkilic', material: null, desc: 'Sıradan demir kılıç.', stats: { atk: 9, str: 4 }, img: 'demirkilic', classBonus: { warrior: 'str', paladin: 'str' } },
-      { id: 124, name: 'Bakır Kılıç', icon: '⚔', cat: 'weapon', grade: 'green', price: 350, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Kılıç', reqLv: 8, tplId: 'bakirkilic', material: null, desc: 'Bakır işlemeli güçlü kılıç.', stats: { atk: 15, str: 7 }, img: 'bakirkilic', classBonus: { warrior: 'str', paladin: 'str' } },
-      { id: 121, name: 'Element Kılıcı', icon: '⚔', cat: 'weapon', grade: 'blue', price: 1800, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Kılıç', reqLv: 20, tplId: 'elementkilic', material: null, desc: 'Element gücü yüklü kılıç.', stats: { atk: 41, str: 11 }, img: 'elementkilic', classBonus: { warrior: 'str', paladin: 'str' } },
-      { id: 105, name: "Sef'in Kılıcı", icon: '⚔', cat: 'weapon', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: "Lonca Ödülü", type: 'Kılıç', reqLv: 25, tplId: 'sefinkilici', material: null, desc: "Sef'i yenen efsanevi savaşçılara düşer.", stats: { atk: 80, str: 22, crit: 16 }, img: 'sefinkilici', classBonus: { warrior: 'str', paladin: 'str' } },
+      { id: 123, name: 'Demir Kılıç', icon: '⚔', cat: 'weapon', grade: 'gray', price: 120, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Kılıç', reqLv: 1, tplId: 'demirkilic', material: null, desc: 'Sıradan demir kılıç.', stats: { atk: 15, str: 4 }, img: 'demirkilic', classBonus: { warrior: 'str', paladin: 'str' } },
+      { id: 124, name: 'Bakır Kılıç', icon: '⚔', cat: 'weapon', grade: 'green', price: 350, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Kılıç', reqLv: 8, tplId: 'bakirkilic', material: null, desc: 'Bakır işlemeli güçlü kılıç.', stats: { atk: 70, str: 7 }, img: 'bakirkilic', classBonus: { warrior: 'str', paladin: 'str' } },
+      { id: 121, name: 'Element Kılıcı', icon: '⚔', cat: 'weapon', grade: 'blue', price: 1800, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Kılıç', reqLv: 20, tplId: 'elementkilic', material: null, desc: 'Element gücü yüklü kılıç.', stats: { atk: 234, str: 11 }, img: 'elementkilic', classBonus: { warrior: 'str', paladin: 'str' } },
+      { id: 105, name: "Sef'in Kılıcı", icon: '⚔', cat: 'weapon', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: "Lonca Ödülü", type: 'Kılıç', reqLv: 25, tplId: 'sefinkilici', material: null, desc: "Sef'i yenen efsanevi savaşçılara düşer.", stats: { atk: 456, str: 22, crit: 16 }, img: 'sefinkilici', classBonus: { warrior: 'str', paladin: 'str' } },
 
       /* ══════════════════════════════════════
          SILAHLAR — ASA (Büyücü)
       ══════════════════════════════════════ */
-      { id: 131, name: 'Düz Sopa', icon: '🪄', cat: 'weapon', grade: 'gray', price: 90, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Asa', reqLv: 1, tplId: 'duzsopa', material: null, desc: 'Sıradan meşe dalı.', stats: { mgc: 6, wis: 3 }, img: 'duzsopa', classBonus: { mage: 'wis' } },
-      { id: 132, name: 'Basit Asa', icon: '🪄', cat: 'weapon', grade: 'gray', price: 130, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Asa', reqLv: 3, tplId: 'basitasa', material: null, desc: 'Büyücü çırağının asası.', stats: { mgc: 10, wis: 4 }, img: 'basitasa', classBonus: { mage: 'wis' } },
-      { id: 133, name: 'Alev Asası', icon: '🪄', cat: 'weapon', grade: 'green', price: 380, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Asa', reqLv: 8, tplId: 'alevasa', material: null, desc: 'Ucunda daima alev dans eder.', stats: { mgc: 18, wis: 6 }, img: 'alevsopasi', classBonus: { mage: 'wis' } },
-      { id: 135, name: 'Element Asası', icon: '🪄', cat: 'weapon', grade: 'blue', price: 1700, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Asa', reqLv: 20, tplId: 'elementasa', material: null, desc: 'Elementlerin gücünü bünyesinde barındırır.', stats: { mgc: 39, wis: 14 }, img: 'elementasa', classBonus: { mage: 'wis' } },
-      { id: 136, name: 'Ejderha Asası', icon: '🪄', cat: 'weapon', grade: 'purple', price: 5200, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Asa', reqLv: 23, tplId: 'ejderaasa', material: null, desc: 'Ejderha ruhunun gücüyle titreşen asa.', stats: { mgc: 60, wis: 20, crit: 11 }, img: 'ejderaasa', classBonus: { mage: 'wis' } },
+      { id: 131, name: 'Düz Sopa', icon: '🪄', cat: 'weapon', grade: 'gray', price: 90, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Asa', reqLv: 1, tplId: 'duzsopa', material: null, desc: 'Sıradan meşe dalı.', stats: { mgc: 13, wis: 3 }, img: 'duzsopa', classBonus: { mage: 'wis' } },
+      { id: 132, name: 'Basit Asa', icon: '🪄', cat: 'weapon', grade: 'gray', price: 130, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Asa', reqLv: 3, tplId: 'basitasa', material: null, desc: 'Büyücü çırağının asası.', stats: { mgc: 23, wis: 4 }, img: 'basitasa', classBonus: { mage: 'wis' } },
+      { id: 133, name: 'Alev Asası', icon: '🪄', cat: 'weapon', grade: 'green', price: 380, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Asa', reqLv: 8, tplId: 'alevasa', material: null, desc: 'Ucunda daima alev dans eder.', stats: { mgc: 64, wis: 6 }, img: 'alevsopasi', classBonus: { mage: 'wis' } },
+      { id: 135, name: 'Element Asası', icon: '🪄', cat: 'weapon', grade: 'blue', price: 1700, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Asa', reqLv: 20, tplId: 'elementasa', material: null, desc: 'Elementlerin gücünü bünyesinde barındırır.', stats: { mgc: 213, wis: 14 }, img: 'elementasa', classBonus: { mage: 'wis' } },
+      { id: 136, name: 'Ejderha Asası', icon: '🪄', cat: 'weapon', grade: 'purple', price: 5200, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Asa', reqLv: 23, tplId: 'ejderaasa', material: null, desc: 'Ejderha ruhunun gücüyle titreşen asa.', stats: { mgc: 299, wis: 20, crit: 11 }, img: 'ejderaasa', classBonus: { mage: 'wis' } },
 
       /* ══════════════════════════════════════
          SILAHLAR — SOPA (Genel/Savaşçı+Büyücü)
       ══════════════════════════════════════ */
-      { id: 151, name: 'İlkel Sopa', icon: '🏏', cat: 'weapon', grade: 'gray', price: 70, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Sopa', reqLv: 1, tplId: 'ilkelsopa', material: null, desc: 'Kaba yontulmuş meşe sopası.', stats: { atk: 5, def: 3 }, img: 'ilkelsopa', classBonus: null },
-      { id: 152, name: 'Kemik Sopa', icon: '🏏', cat: 'weapon', grade: 'green', price: 300, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Sopa', reqLv: 8, tplId: 'kemiksopa', material: null, desc: 'Canavar kemiğiyle sertleştirilmiş sopa.', stats: { atk: 12, def: 5 }, img: 'kemiksopa', classBonus: { warrior: 'str', paladin: 'str' } },
-      { id: 153, name: 'Ağır Sopa', icon: '🏏', cat: 'weapon', grade: 'blue', price: 900, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Sopa', reqLv: 15, tplId: 'agirsopa', material: null, desc: 'Demir çivili yıkıcı sopa.', stats: { atk: 26, def: 8 }, img: 'agirsopa', classBonus: { warrior: 'str', paladin: 'str' } },
-      { id: 154, name: 'Element Sopası', icon: '🏏', cat: 'weapon', grade: 'blue', price: 1600, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Sopa', reqLv: 20, tplId: 'elementsopasi', material: null, desc: 'Hem fiziksel hem büyüsel güç verir.', stats: { atk: 41, def: 10, mgc: 8 }, img: 'elementsopasi', classBonus: null },
-      { id: 155, name: 'Ruhlu Sopa', icon: '🏏', cat: 'weapon', grade: 'purple', price: 4800, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Sopa', reqLv: 23, tplId: 'ruhlusopa', material: null, desc: 'Antik ruhların gücüyle dolu sopa.', stats: { atk: 57, def: 13, mgc: 14 }, img: 'ruhlusopa', classBonus: null },
+      { id: 151, name: 'İlkel Sopa', icon: '🏏', cat: 'weapon', grade: 'gray', price: 70, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Sopa', reqLv: 1, tplId: 'ilkelsopa', material: null, desc: 'Kaba yontulmuş meşe sopası.', stats: { atk: 12, def: 3 }, img: 'ilkelsopa', classBonus: null },
+      { id: 152, name: 'Kemik Sopa', icon: '🏏', cat: 'weapon', grade: 'green', price: 300, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Sopa', reqLv: 8, tplId: 'kemiksopa', material: null, desc: 'Canavar kemiğiyle sertleştirilmiş sopa.', stats: { atk: 57, def: 5 }, img: 'kemiksopa', classBonus: { warrior: 'str', paladin: 'str' } },
+      { id: 153, name: 'Ağır Sopa', icon: '🏏', cat: 'weapon', grade: 'blue', price: 900, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Sopa', reqLv: 15, tplId: 'agirsopa', material: null, desc: 'Demir çivili yıkıcı sopa.', stats: { atk: 136, def: 8 }, img: 'agirsopa', classBonus: { warrior: 'str', paladin: 'str' } },
+      { id: 154, name: 'Element Sopası', icon: '🏏', cat: 'weapon', grade: 'blue', price: 1600, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Sopa', reqLv: 20, tplId: 'elementsopasi', material: null, desc: 'Hem fiziksel hem büyüsel güç verir.', stats: { atk: 192, def: 10, mgc: 77 }, img: 'elementsopasi', classBonus: null },
+      { id: 155, name: 'Ruhlu Sopa', icon: '🏏', cat: 'weapon', grade: 'purple', price: 4800, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Sopa', reqLv: 23, tplId: 'ruhlusopa', material: null, desc: 'Antik ruhların gücüyle dolu sopa.', stats: { atk: 269, def: 13, mgc: 108 }, img: 'ruhlusopa', classBonus: null },
 
       /* ══════════════════════════════════════
          SILAHLAR — YAY (Avcı) — rng→acc
       ══════════════════════════════════════ */
-      { id: 141, name: 'Basit Yay', icon: '🏹', cat: 'weapon', grade: 'gray', price: 100, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Yay', reqLv: 1, tplId: 'basityay', material: null, desc: 'Sıradan meşe yay.', stats: { atk: 6, acc: 8 }, img: 'basityay', classBonus: { ranger: 'agi' } },
-      { id: 142, name: 'Kemik Yay', icon: '🏹', cat: 'weapon', grade: 'green', price: 350, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Yay', reqLv: 10, tplId: 'kemikyay', material: null, desc: 'Canavar kemiğiyle güçlendirilmiş yay.', stats: { atk: 12, acc: 17 }, img: 'kemikyay', classBonus: { ranger: 'agi' } },
-      { id: 143, name: 'Element Yay', icon: '🏹', cat: 'weapon', grade: 'blue', price: 1800, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Yay', reqLv: 20, tplId: 'elementyay', material: null, desc: 'Elementlerin rüzgarını taşıyan yay.', stats: { atk: 30, acc: 33, agi: 8 }, img: 'elementyay', classBonus: { ranger: 'agi' } },
-      { id: 144, name: 'Karanlık Yay', icon: '🏹', cat: 'weapon', grade: 'purple', price: 4800, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Yay', reqLv: 23, tplId: 'karanlikyay', material: null, desc: 'Gece karanlığında hedefi asla kaçırmaz.', stats: { atk: 47, acc: 52, agi: 13 }, img: 'karanlikyay', classBonus: { ranger: 'agi' } },
-      { id: 145, name: "Thros'un Yayı", icon: '🏹', cat: 'weapon', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: "Lonca Ödülü", type: 'Yay', reqLv: 25, tplId: 'throsyay', material: null, desc: 'Thros Kanat\'ı yenenlere düşen efsanevi yay.', stats: { atk: 62, acc: 63, agi: 17 }, img: 'throsyay', classBonus: { ranger: 'agi' } },
+      { id: 141, name: 'Basit Yay', icon: '🏹', cat: 'weapon', grade: 'gray', price: 100, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Yay', reqLv: 1, tplId: 'basityay', material: null, desc: 'Sıradan meşe yay.', stats: { atk: 13, acc: 8 }, img: 'basityay', classBonus: { ranger: 'agi' } },
+      { id: 142, name: 'Kemik Yay', icon: '🏹', cat: 'weapon', grade: 'green', price: 350, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Yay', reqLv: 10, tplId: 'kemikyay', material: null, desc: 'Canavar kemiğiyle güçlendirilmiş yay.', stats: { atk: 77, acc: 17 }, img: 'kemikyay', classBonus: { ranger: 'agi' } },
+      { id: 143, name: 'Element Yay', icon: '🏹', cat: 'weapon', grade: 'blue', price: 1800, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Yay', reqLv: 20, tplId: 'elementyay', material: null, desc: 'Elementlerin rüzgarını taşıyan yay.', stats: { atk: 202, acc: 33, agi: 8 }, img: 'elementyay', classBonus: { ranger: 'agi' } },
+      { id: 144, name: 'Karanlık Yay', icon: '🏹', cat: 'weapon', grade: 'purple', price: 4800, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Yay', reqLv: 23, tplId: 'karanlikyay', material: null, desc: 'Gece karanlığında hedefi asla kaçırmaz.', stats: { atk: 284, acc: 52, agi: 13 }, img: 'karanlikyay', classBonus: { ranger: 'agi' } },
+      { id: 145, name: "Thros'un Yayı", icon: '🏹', cat: 'weapon', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: "Lonca Ödülü", type: 'Yay', reqLv: 25, tplId: 'throsyay', material: null, desc: 'Thros Kanat\'ı yenenlere düşen efsanevi yay.', stats: { atk: 394, acc: 63, agi: 17 }, img: 'throsyay', classBonus: { ranger: 'agi' } },
 
       /* ══════════════════════════════════════
-         ZIRH — TAHTA SET (gray, Lv.1)
+         ZIRH — TAHTA SET (gray, Lv.1) — Temel
       ══════════════════════════════════════ */
-      { id: 201, name: 'Tahta Göğüslük', icon: '🛡', cat: 'armor', grade: 'gray', price: 80, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 1, material: 'tahta', desc: 'Basit tahta göğüslük.', stats: { def: 4, hp: 15 }, img: 'tahtazirh', classBonus: null },
-      { id: 202, name: 'Tahta Kask', icon: '🪖', cat: 'armor', grade: 'gray', price: 60, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 1, material: 'tahta', desc: 'Başı koruyan tahta kask.', stats: { def: 3, hp: 10 }, img: 'tahtakask', classBonus: null },
-      { id: 203, name: 'Tahta Eldiven', icon: '🧤', cat: 'armor', grade: 'gray', price: 50, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 1, material: 'tahta', desc: 'Elleri koruyan tahta eldiven.', stats: { def: 2, hp: 8 }, img: 'tahtaeldiven', classBonus: null },
-      { id: 204, name: 'Tahta Bot', icon: '👢', cat: 'armor', grade: 'gray', price: 55, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 1, material: 'tahta', desc: 'Ayakları koruyan tahta bot.', stats: { def: 2, hp: 8 }, img: 'tahtabot', classBonus: null },
-
+      { id: 201, name: 'Tahta Göğüslük', icon: '🛡', cat: 'armor', grade: 'gray', price: 50, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 1, material: 'tahta', desc: 'Temel zırh parçası.', stats: { def: 4, hp: 15 }, img: 'tahtagogusluk', classBonus: null },
+      { id: 202, name: 'Tahta Kask', icon: '🪖', cat: 'armor', grade: 'gray', price: 30, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 1, material: 'tahta', desc: 'Temel zırh parçası.', stats: { def: 3, hp: 9 }, img: 'tahtakask', classBonus: null },
+      { id: 203, name: 'Tahta Eldiven', icon: '🧤', cat: 'armor', grade: 'gray', price: 25, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 1, material: 'tahta', desc: 'Temel zırh parçası.', stats: { def: 2, hp: 8 }, img: 'tahtaeldiven', classBonus: null },
+      { id: 204, name: 'Tahta Bot', icon: '👢', cat: 'armor', grade: 'gray', price: 25, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 1, material: 'tahta', desc: 'Temel zırh parçası.', stats: { def: 2, hp: 8 }, img: 'tahtabot', classBonus: null },
       /* ══════════════════════════════════════
-         ZIRH — DERİ SET (green, Lv.8)
+         ZIRH — DEMIR SET (green, Lv.5) — Ağır
       ══════════════════════════════════════ */
-      { id: 211, name: 'Deri Göğüslük', icon: '🛡', cat: 'armor', grade: 'green', price: 200, qty: 30, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 8, material: 'deri', desc: 'Hafif ve esnek deri göğüslük.', stats: { def: 6, agi: 3, hp: 20 }, img: 'derizirh', classBonus: null },
-      { id: 212, name: 'Deri Kask', icon: '🪖', cat: 'armor', grade: 'green', price: 150, qty: 30, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 8, material: 'deri', desc: 'Hafif deri kask.', stats: { def: 4, agi: 2, hp: 15 }, img: 'derikask', classBonus: null },
-      { id: 213, name: 'Deri Eldiven', icon: '🧤', cat: 'armor', grade: 'green', price: 120, qty: 30, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 8, material: 'deri', desc: 'Hareket kısıtlamayan deri eldiven.', stats: { def: 3, agi: 2, hp: 10 }, img: 'derieldiven', classBonus: null },
-      { id: 214, name: 'Deri Bot', icon: '👢', cat: 'armor', grade: 'green', price: 130, qty: 30, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 8, material: 'deri', desc: 'Sessiz adımlar için deri bot.', stats: { def: 3, agi: 2, hp: 10 }, img: 'deribot', classBonus: null },
-
+      { id: 205, name: 'Demir Göğüslük', icon: '🛡', cat: 'armor', grade: 'green', price: 150, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 5, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 8, hp: 25 }, img: 'demirgogusluk', classBonus: null },
+      { id: 206, name: 'Demir Kask', icon: '🪖', cat: 'armor', grade: 'green', price: 90, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 5, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 5, hp: 15 }, img: 'demirkask', classBonus: null },
+      { id: 207, name: 'Demir Eldiven', icon: '🧤', cat: 'armor', grade: 'green', price: 75, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 5, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 4, hp: 13 }, img: 'demireldiven', classBonus: null },
+      { id: 208, name: 'Demir Bot', icon: '👢', cat: 'armor', grade: 'green', price: 75, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 5, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 4, hp: 13 }, img: 'demirbot', classBonus: null },
       /* ══════════════════════════════════════
-         ZIRH — DEMİR SET (blue, Lv.15)
+         ZIRH — DERI SET (green, Lv.5) — Orta
       ══════════════════════════════════════ */
-      { id: 221, name: 'Demir Göğüslük', icon: '🛡', cat: 'armor', grade: 'blue', price: 600, qty: 10, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 15, material: 'demir', desc: 'Sağlam demir göğüslük.', stats: { def: 14, hp: 40 }, img: 'demirzirh', classBonus: null },
-      { id: 222, name: 'Demir Kask', icon: '🪖', cat: 'armor', grade: 'blue', price: 450, qty: 10, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 15, material: 'demir', desc: 'Kafayı tamamen koruyan demir kask.', stats: { def: 10, hp: 30 }, img: 'demirkask', classBonus: null },
-      { id: 223, name: 'Demir Eldiven', icon: '🧤', cat: 'armor', grade: 'blue', price: 380, qty: 10, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 15, material: 'demir', desc: 'Güçlü darbeler indiren demir eldiven.', stats: { def: 8, hp: 25 }, img: 'demireldiven', classBonus: null },
-      { id: 224, name: 'Demir Bot', icon: '👢', cat: 'armor', grade: 'blue', price: 400, qty: 10, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 15, material: 'demir', desc: 'Zırhlı demir bot.', stats: { def: 8, hp: 25 }, img: 'demirbot', classBonus: null },
+      { id: 209, name: 'Deri Göğüslük', icon: '🛡', cat: 'armor', grade: 'green', price: 120, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 5, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 5, hp: 15, agi: 3 }, img: 'derigogusluk', classBonus: null },
+      { id: 210, name: 'Deri Kask', icon: '🪖', cat: 'armor', grade: 'green', price: 72, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 5, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 3, hp: 9, agi: 2 }, img: 'derikask', classBonus: null },
+      { id: 211, name: 'Deri Eldiven', icon: '🧤', cat: 'armor', grade: 'green', price: 60, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 5, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 3, hp: 8, agi: 2 }, img: 'derieldiven', classBonus: null },
+      { id: 212, name: 'Deri Bot', icon: '👢', cat: 'armor', grade: 'green', price: 60, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 5, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 3, hp: 8, agi: 2 }, img: 'deribot', classBonus: null },
+      /* ══════════════════════════════════════
+         ZIRH — KUMAŞ SET (green, Lv.5) — Hafif
+      ══════════════════════════════════════ */
+      { id: 213, name: 'Kumaş Göğüslük', icon: '🛡', cat: 'armor', grade: 'green', price: 100, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 5, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 3, hp: 10, wis: 4 }, img: 'kumasgogusluk', classBonus: null },
+      { id: 214, name: 'Kumaş Kask', icon: '🪖', cat: 'armor', grade: 'green', price: 60, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 5, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 2, hp: 6, wis: 3 }, img: 'kumaskask', classBonus: null },
+      { id: 215, name: 'Kumaş Eldiven', icon: '🧤', cat: 'armor', grade: 'green', price: 50, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 5, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 2, hp: 5, wis: 2 }, img: 'kumaseldiven', classBonus: null },
+      { id: 216, name: 'Kumaş Bot', icon: '👢', cat: 'armor', grade: 'green', price: 50, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 5, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 2, hp: 5, wis: 2 }, img: 'kumasbot', classBonus: null },
+      /* ══════════════════════════════════════
+         ZIRH — ÇELIK SET (blue, Lv.10) — Ağır
+      ══════════════════════════════════════ */
+      { id: 217, name: 'Çelik Göğüslük', icon: '🛡', cat: 'armor', grade: 'blue', price: 350, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 10, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 15, hp: 45 }, img: 'celikgogusluk', classBonus: null },
+      { id: 218, name: 'Çelik Kask', icon: '🪖', cat: 'armor', grade: 'blue', price: 210, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 10, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 9, hp: 27 }, img: 'celikkask', classBonus: null },
+      { id: 219, name: 'Çelik Eldiven', icon: '🧤', cat: 'armor', grade: 'blue', price: 175, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 10, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 8, hp: 23 }, img: 'celikeldiven', classBonus: null },
+      { id: 220, name: 'Çelik Bot', icon: '👢', cat: 'armor', grade: 'blue', price: 175, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 10, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 8, hp: 23 }, img: 'celikbot', classBonus: null },
+      /* ══════════════════════════════════════
+         ZIRH — İŞLENMIŞ DERI SET (blue, Lv.10) — Orta
+      ══════════════════════════════════════ */
+      { id: 221, name: 'İşlenmiş Deri Göğüslük', icon: '🛡', cat: 'armor', grade: 'blue', price: 300, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 10, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 10, hp: 30, agi: 6 }, img: 'i̇slenmisderigogusluk', classBonus: null },
+      { id: 222, name: 'İşlenmiş Deri Kask', icon: '🪖', cat: 'armor', grade: 'blue', price: 180, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 10, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 6, hp: 18, agi: 4 }, img: 'i̇slenmisderikask', classBonus: null },
+      { id: 223, name: 'İşlenmiş Deri Eldiven', icon: '🧤', cat: 'armor', grade: 'blue', price: 150, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 10, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 5, hp: 15, agi: 3 }, img: 'i̇slenmisderieldiven', classBonus: null },
+      { id: 224, name: 'İşlenmiş Deri Bot', icon: '👢', cat: 'armor', grade: 'blue', price: 150, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 10, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 5, hp: 15, agi: 3 }, img: 'i̇slenmisderibot', classBonus: null },
+      /* ══════════════════════════════════════
+         ZIRH — İPEK SET (blue, Lv.10) — Hafif
+      ══════════════════════════════════════ */
+      { id: 225, name: 'İpek Göğüslük', icon: '🛡', cat: 'armor', grade: 'blue', price: 250, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 10, material: null, desc: 'Hafif zırh parçası.', stats: { def: 6, hp: 20, wis: 8 }, img: 'i̇pekgogusluk', classBonus: null },
+      { id: 226, name: 'İpek Kask', icon: '🪖', cat: 'armor', grade: 'blue', price: 150, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 10, material: null, desc: 'Hafif zırh parçası.', stats: { def: 4, hp: 12, wis: 5 }, img: 'i̇pekkask', classBonus: null },
+      { id: 227, name: 'İpek Eldiven', icon: '🧤', cat: 'armor', grade: 'blue', price: 125, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 10, material: null, desc: 'Hafif zırh parçası.', stats: { def: 3, hp: 10, wis: 4 }, img: 'i̇pekeldiven', classBonus: null },
+      { id: 228, name: 'İpek Bot', icon: '👢', cat: 'armor', grade: 'blue', price: 125, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 10, material: null, desc: 'Hafif zırh parçası.', stats: { def: 3, hp: 10, wis: 4 }, img: 'i̇pekbot', classBonus: null },
+      /* ══════════════════════════════════════
+         ZIRH — DÖVME ÇELIK SET (purple, Lv.15) — Ağır
+      ══════════════════════════════════════ */
+      { id: 229, name: 'Dövme Çelik Göğüslük', icon: '🛡', cat: 'armor', grade: 'purple', price: 800, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 15, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 25, hp: 75 }, img: 'dovmecelikgogusluk', classBonus: null },
+      { id: 230, name: 'Dövme Çelik Kask', icon: '🪖', cat: 'armor', grade: 'purple', price: 480, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 15, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 15, hp: 45 }, img: 'dovmecelikkask', classBonus: null },
+      { id: 231, name: 'Dövme Çelik Eldiven', icon: '🧤', cat: 'armor', grade: 'purple', price: 400, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 15, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 13, hp: 38 }, img: 'dovmecelikeldiven', classBonus: null },
+      { id: 232, name: 'Dövme Çelik Bot', icon: '👢', cat: 'armor', grade: 'purple', price: 400, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 15, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 13, hp: 38 }, img: 'dovmecelikbot', classBonus: null },
+      /* ══════════════════════════════════════
+         ZIRH — KALIN DERI SET (purple, Lv.15) — Orta
+      ══════════════════════════════════════ */
+      { id: 233, name: 'Kalın Deri Göğüslük', icon: '🛡', cat: 'armor', grade: 'purple', price: 700, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 15, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 16, hp: 50, agi: 10 }, img: 'kalinderigogusluk', classBonus: null },
+      { id: 234, name: 'Kalın Deri Kask', icon: '🪖', cat: 'armor', grade: 'purple', price: 420, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 15, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 10, hp: 30, agi: 6 }, img: 'kalinderikask', classBonus: null },
+      { id: 235, name: 'Kalın Deri Eldiven', icon: '🧤', cat: 'armor', grade: 'purple', price: 350, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 15, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 8, hp: 25, agi: 5 }, img: 'kalinderieldiven', classBonus: null },
+      { id: 236, name: 'Kalın Deri Bot', icon: '👢', cat: 'armor', grade: 'purple', price: 350, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 15, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 8, hp: 25, agi: 5 }, img: 'kalinderibot', classBonus: null },
+      /* ══════════════════════════════════════
+         ZIRH — KADIFE SET (purple, Lv.15) — Hafif
+      ══════════════════════════════════════ */
+      { id: 237, name: 'Kadife Büyücü Yeleği', icon: '🛡', cat: 'armor', grade: 'purple', price: 600, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 15, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 10, hp: 35, wis: 14 }, img: 'kadifebuyucuyelegi', classBonus: null },
+      { id: 238, name: 'Kadife Büyücü Şapkası', icon: '🪖', cat: 'armor', grade: 'purple', price: 360, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 15, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 6, hp: 21, wis: 9 }, img: 'kadifebuyucusapkasi', classBonus: null },
+      { id: 239, name: 'Kadife Büyücü Eldiveni', icon: '🧤', cat: 'armor', grade: 'purple', price: 300, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 15, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 5, hp: 18, wis: 7 }, img: 'kadifebuyucueldiveni', classBonus: null },
+      { id: 240, name: 'Kadife Büyücü Botu', icon: '👢', cat: 'armor', grade: 'purple', price: 300, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 15, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 5, hp: 18, wis: 7 }, img: 'kadifebuyucubotu', classBonus: null },
+      /* ══════════════════════════════════════
+         ZIRH — PLAKA SET (orange, Lv.22) — Ağır
+      ══════════════════════════════════════ */
+      { id: 241, name: 'Plaka Göğüslük', icon: '🛡', cat: 'armor', grade: 'orange', price: 1800, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 22, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 35, hp: 110, str: 5 }, img: 'plakagogusluk', classBonus: null },
+      { id: 242, name: 'Plaka Kask', icon: '🪖', cat: 'armor', grade: 'orange', price: 1080, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 22, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 21, hp: 66, str: 3 }, img: 'plakakask', classBonus: null },
+      { id: 243, name: 'Plaka Eldiven', icon: '🧤', cat: 'armor', grade: 'orange', price: 900, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 22, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 18, hp: 55, str: 3 }, img: 'plakaeldiven', classBonus: null },
+      { id: 244, name: 'Plaka Bot', icon: '👢', cat: 'armor', grade: 'orange', price: 900, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 22, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 18, hp: 55, str: 3 }, img: 'plakabot', classBonus: null },
+      /* ══════════════════════════════════════
+         ZIRH — PULLU DERI SET (orange, Lv.22) — Orta
+      ══════════════════════════════════════ */
+      { id: 245, name: 'Pullu Deri Göğüslük', icon: '🛡', cat: 'armor', grade: 'orange', price: 1500, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 22, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 23, hp: 70, agi: 15 }, img: 'pulluderigogusluk', classBonus: null },
+      { id: 246, name: 'Pullu Deri Kask', icon: '🪖', cat: 'armor', grade: 'orange', price: 900, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 22, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 14, hp: 42, agi: 9 }, img: 'pulluderikask', classBonus: null },
+      { id: 247, name: 'Pullu Deri Eldiven', icon: '🧤', cat: 'armor', grade: 'orange', price: 750, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 22, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 12, hp: 35, agi: 8 }, img: 'pulluderieldiven', classBonus: null },
+      { id: 248, name: 'Pullu Deri Bot', icon: '👢', cat: 'armor', grade: 'orange', price: 750, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 22, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 12, hp: 35, agi: 8 }, img: 'pulluderibot', classBonus: null },
+      /* ══════════════════════════════════════
+         ZIRH — İŞLEMELI KUMAŞ SET (orange, Lv.22) — Hafif
+      ══════════════════════════════════════ */
+      { id: 249, name: 'İşlemeli Kumaş Cübbe', icon: '🛡', cat: 'armor', grade: 'orange', price: 1300, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 22, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 14, hp: 50, wis: 20 }, img: 'i̇slemelikumascubbe', classBonus: null },
+      { id: 250, name: 'İşlemeli Kumaş Kask', icon: '🪖', cat: 'armor', grade: 'orange', price: 780, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 22, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 9, hp: 30, wis: 12 }, img: 'i̇slemelikumaskask', classBonus: null },
+      { id: 251, name: 'İşlemeli Kumaş Eldiven', icon: '🧤', cat: 'armor', grade: 'orange', price: 650, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 22, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 7, hp: 25, wis: 10 }, img: 'i̇slemelikumaseldiven', classBonus: null },
+      { id: 252, name: 'İşlemeli Kumaş Bot', icon: '👢', cat: 'armor', grade: 'orange', price: 650, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 22, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 7, hp: 25, wis: 10 }, img: 'i̇slemelikumasbot', classBonus: null },
+      /* ══════════════════════════════════════
+         ZIRH — TITANYUM SET (orange, Lv.30) — Ağır
+      ══════════════════════════════════════ */
+      { id: 253, name: 'Titanyum Göğüslük', icon: '🛡', cat: 'armor', grade: 'orange', price: 3500, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 30, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 48, hp: 150, str: 10 }, img: 'titanyumgogusluk', classBonus: null },
+      { id: 254, name: 'Titanyum Kask', icon: '🪖', cat: 'armor', grade: 'orange', price: 2100, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 30, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 29, hp: 90, str: 6 }, img: 'titanyumkask', classBonus: null },
+      { id: 255, name: 'Titanyum Eldiven', icon: '🧤', cat: 'armor', grade: 'orange', price: 1750, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 30, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 24, hp: 75, str: 5 }, img: 'titanyumeldiven', classBonus: null },
+      { id: 256, name: 'Titanyum Bot', icon: '👢', cat: 'armor', grade: 'orange', price: 1750, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 30, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 24, hp: 75, str: 5 }, img: 'titanyumbot', classBonus: null },
+      /* ══════════════════════════════════════
+         ZIRH — AĞIR DERI SET (orange, Lv.30) — Orta
+      ══════════════════════════════════════ */
+      { id: 257, name: 'Ağır Deri Göğüslük', icon: '🛡', cat: 'armor', grade: 'orange', price: 3000, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 30, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 32, hp: 95, agi: 22, crit: 2 }, img: 'agirderigogusluk', classBonus: null },
+      { id: 258, name: 'Ağır Deri Kask', icon: '🪖', cat: 'armor', grade: 'orange', price: 1800, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 30, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 20, hp: 57, agi: 14, crit: 2 }, img: 'agirderikask', classBonus: null },
+      { id: 259, name: 'Ağır Deri Eldiven', icon: '🧤', cat: 'armor', grade: 'orange', price: 1500, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 30, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 16, hp: 48, agi: 11, crit: 1 }, img: 'agirderieldiven', classBonus: null },
+      { id: 260, name: 'Ağır Deri Bot', icon: '👢', cat: 'armor', grade: 'orange', price: 1500, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 30, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 16, hp: 48, agi: 11, crit: 1 }, img: 'agirderibot', classBonus: null },
+      /* ══════════════════════════════════════
+         ZIRH — MISTIK KUMAŞ SET (orange, Lv.30) — Hafif
+      ══════════════════════════════════════ */
+      { id: 261, name: 'Mistik Kumaş Cübbe', icon: '🛡', cat: 'armor', grade: 'orange', price: 2600, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 30, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 20, hp: 70, wis: 28, mgc: 5 }, img: 'mistikkumascubbe', classBonus: null },
+      { id: 262, name: 'Mistik Kumaş Kask', icon: '🪖', cat: 'armor', grade: 'orange', price: 1560, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 30, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 12, hp: 42, wis: 17, mgc: 3 }, img: 'mistikkumaskask', classBonus: null },
+      { id: 263, name: 'Mistik Kumaş Eldiven', icon: '🧤', cat: 'armor', grade: 'orange', price: 1300, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 30, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 10, hp: 35, wis: 14, mgc: 3 }, img: 'mistikkumaseldiven', classBonus: null },
+      { id: 264, name: 'Mistik Kumaş Bot', icon: '👢', cat: 'armor', grade: 'orange', price: 1300, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 30, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 10, hp: 35, wis: 14, mgc: 3 }, img: 'mistikkumasbot', classBonus: null },
+      /* ══════════════════════════════════════
+         ZIRH — KARA ÇELIK SET (orange, Lv.40) — Ağır
+      ══════════════════════════════════════ */
+      { id: 265, name: 'Kara Çelik Göğüslük', icon: '🛡', cat: 'armor', grade: 'orange', price: 7000, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 40, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 65, hp: 200, str: 18 }, img: 'karacelikgogusluk', classBonus: null },
+      { id: 266, name: 'Kara Çelik Kask', icon: '🪖', cat: 'armor', grade: 'orange', price: 4200, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 40, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 39, hp: 120, str: 11 }, img: 'karacelikkask', classBonus: null },
+      { id: 267, name: 'Kara Çelik Eldiven', icon: '🧤', cat: 'armor', grade: 'orange', price: 3500, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 40, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 33, hp: 100, str: 9 }, img: 'karacelikeldiven', classBonus: null },
+      { id: 268, name: 'Kara Çelik Bot', icon: '👢', cat: 'armor', grade: 'orange', price: 3500, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 40, material: 'demir', desc: 'Ağır zırh parçası.', stats: { def: 33, hp: 100, str: 9 }, img: 'karacelikbot', classBonus: null },
+      /* ══════════════════════════════════════
+         ZIRH — GÖLGE DERI SET (orange, Lv.40) — Orta
+      ══════════════════════════════════════ */
+      { id: 269, name: 'Gölge Deri Göğüslük', icon: '🛡', cat: 'armor', grade: 'orange', price: 6200, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 40, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 42, hp: 130, agi: 30, crit: 4 }, img: 'golgederigogusluk', classBonus: null },
+      { id: 270, name: 'Gölge Deri Kask', icon: '🪖', cat: 'armor', grade: 'orange', price: 3720, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 40, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 26, hp: 78, agi: 18, crit: 3 }, img: 'golgederikask', classBonus: null },
+      { id: 271, name: 'Gölge Deri Eldiven', icon: '🧤', cat: 'armor', grade: 'orange', price: 3100, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 40, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 21, hp: 65, agi: 15, crit: 2 }, img: 'golgederieldiven', classBonus: null },
+      { id: 272, name: 'Gölge Deri Bot', icon: '👢', cat: 'armor', grade: 'orange', price: 3100, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 40, material: 'deri', desc: 'Orta zırh parçası.', stats: { def: 21, hp: 65, agi: 15, crit: 2 }, img: 'golgederibot', classBonus: null },
+      /* ══════════════════════════════════════
+         ZIRH — KARANLIK DOKUMA SET (orange, Lv.40) — Hafif
+      ══════════════════════════════════════ */
+      { id: 273, name: 'Karanlık Dokuma Cübbe', icon: '🛡', cat: 'armor', grade: 'orange', price: 5500, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Göğüslük', reqLv: 40, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 28, hp: 95, wis: 38, mgc: 12 }, img: 'karanlikdokumacubbe', classBonus: null },
+      { id: 274, name: 'Karanlık Dokuma Kask', icon: '🪖', cat: 'armor', grade: 'orange', price: 3300, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Kask', reqLv: 40, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 17, hp: 57, wis: 23, mgc: 8 }, img: 'karanlikdokumakask', classBonus: null },
+      { id: 275, name: 'Karanlık Dokuma Eldiven', icon: '🧤', cat: 'armor', grade: 'orange', price: 2750, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Eldiven', reqLv: 40, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 14, hp: 48, wis: 19, mgc: 6 }, img: 'karanlikdokumaeldiven', classBonus: null },
+      { id: 276, name: 'Karanlık Dokuma Bot', icon: '👢', cat: 'armor', grade: 'orange', price: 2750, qty: 99, seller: 'npc', sellerName: 'Zırh Ustası', type: 'Bot', reqLv: 40, material: 'kumas', desc: 'Hafif zırh parçası.', stats: { def: 14, hp: 48, wis: 19, mgc: 6 }, img: 'karanlikdokumabot', classBonus: null },
 
       /* ══════════════════════════════════════
          BALIKÇILIK
@@ -10410,11 +10542,11 @@
       /* ══════════════════════════════════════
          NEKRO SET (Mağara Girişi boss dropu)
       ══════════════════════════════════════ */
-      { id: 800, name: 'Nekro Kılıç', icon: '⚔', cat: 'weapon', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: 'Mağara', type: 'Kılıç', reqLv: 50, tplId: 'necrokilic', material: null, desc: '3 Başlı Yılan\'ı yenenlere düşen efsanevi kılıç.', stats: { atk: 150, str: 40, crit: 22 }, img: 'necrokilic', classBonus: { warrior: 'str', paladin: 'str' } },
-      { id: 801, name: 'Nekro Zırh', icon: '🛡', cat: 'armor', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: 'Mağara', type: 'Zırh', reqLv: 50, tplId: null, material: null, desc: 'Karanlık enerjilerle dolu, bedeni saran nekro zırh.', stats: { def: 70, hp: 200, str: 25 }, img: 'necrozirh', classBonus: null },
-      { id: 802, name: 'Nekro Kask', icon: '🪖', cat: 'armor', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: 'Mağara', type: 'Kask', reqLv: 50, tplId: null, material: null, desc: 'Zihni karanlıkla örten, düşman sihirlerine direnen kask.', stats: { def: 40, hp: 120, wis: 20 }, img: 'necrokask', classBonus: null },
-      { id: 803, name: 'Nekro Eldiven', icon: '🧤', cat: 'armor', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: 'Mağara', type: 'Eldiven', reqLv: 50, tplId: null, material: null, desc: 'Dokunduğu her şeyi soldurur.', stats: { def: 30, agi: 30, crit: 20 }, img: 'necroeldiven', classBonus: null },
-      { id: 804, name: 'Nekro Bot', icon: '👢', cat: 'armor', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: 'Mağara', type: 'Bot', reqLv: 50, tplId: null, material: null, desc: 'Karanlık topraklarda sessizce yürür.', stats: { def: 30, agi: 25, hp: 100 }, img: 'necrobot', classBonus: null },
+      { id: 800, name: 'Nekro Kılıç', icon: '⚔', cat: 'weapon', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: 'Mağara', type: 'Kılıç', reqLv: 50, tplId: 'necrokilic', material: null, desc: '3 Başlı Yılan\'ı yenenlere düşen efsanevi kılıç.', stats: { atk: 1090, str: 40, crit: 22 }, img: 'necrokilic', classBonus: { warrior: 'str', paladin: 'str' } },
+      { id: 801, name: 'Nekro Göğüslük', icon: '🛡', cat: 'armor', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: 'Mağara', type: 'Göğüslük', reqLv: 50, tplId: null, material: 'demir', desc: 'Karanlık enerjilerle dolu, bedeni saran zirve zırh.', stats: { def: 85, hp: 280, str: 20, agi: 20, wis: 20, crit: 4, mgc: 10 }, img: 'necrozirh', classBonus: null },
+      { id: 802, name: 'Nekro Kask', icon: '🪖', cat: 'armor', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: 'Mağara', type: 'Kask', reqLv: 50, tplId: null, material: 'demir', desc: 'Zihni karanlıkla örten zirve kask.', stats: { def: 51, hp: 168, str: 12, agi: 12, wis: 12, crit: 2, mgc: 6 }, img: 'necrokask', classBonus: null },
+      { id: 803, name: 'Nekro Eldiven', icon: '🧤', cat: 'armor', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: 'Mağara', type: 'Eldiven', reqLv: 50, tplId: null, material: 'demir', desc: 'Dokunduğu her şeyi solduran zirve eldiven.', stats: { def: 42, hp: 140, str: 10, agi: 10, wis: 10, crit: 2, mgc: 5 }, img: 'necroeldiven', classBonus: null },
+      { id: 804, name: 'Nekro Bot', icon: '👢', cat: 'armor', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: 'Mağara', type: 'Bot', reqLv: 50, tplId: null, material: 'demir', desc: 'Karanlık topraklarda sessizce yürüyen zirve bot.', stats: { def: 42, hp: 140, str: 10, agi: 10, wis: 10, crit: 2, mgc: 5 }, img: 'necrobot', classBonus: null },
 
       /* ══════════════════════════════════════
          TÜKETİLEBİLİR
@@ -12686,21 +12818,24 @@
         let valsHtml = statRows(stats, diffBase);
         const effInfo = getItemEffectInfo(item, plus);
         if (effInfo) {
+          let effHtml = '';
           if (effInfo.fxText) {
             const diffInfo = isAfter ? getItemEffectInfo(item, plus - 1) : null;
             const valDiff = (diffInfo && effInfo.pctVal != null && diffInfo.pctVal != null)
               ? (Math.round((effInfo.pctVal - diffInfo.pctVal) * 10) / 10)
               : null;
             const diffTag = valDiff != null && valDiff > 0 ? ` <span style="color:var(--gold2);font-size:11px;margin-left:3px;">▲+${valDiff}</span>` : '';
-            valsHtml = `
+            effHtml = `
               <div style="font-size:11px;color:#9bd17a;line-height:1.45;margin-bottom:5px;padding:5px 7px;background:#0e1a08;border:1px solid #2a4a18;border-radius:5px;text-align:center;">
                 ✨ <b>${effInfo.fxText}</b>${diffTag}
               </div>
               ${effInfo.desc ? `<div style="font-size:10px;color:var(--ink3);font-style:italic;text-align:center;line-height:1.3;">"${effInfo.desc}"</div>` : ''}
             `;
           } else if (effInfo.desc) {
-            valsHtml = `<div style="font-size:10px;color:var(--ink3);font-style:italic;text-align:center;line-height:1.3;">"${effInfo.desc}"</div>`;
+            effHtml = `<div style="font-size:10px;color:var(--ink3);font-style:italic;text-align:center;line-height:1.3;">"${effInfo.desc}"</div>`;
           }
+          // Stats ve effect i birleştir
+          valsHtml = valsHtml ? valsHtml + '<div style="height:8px;"></div>' + effHtml : effHtml;
         }
 
         return `<div class="enh-stat-box${isAfter ? ' after' : ''}">
@@ -14063,17 +14198,6 @@
       el.innerHTML = `<div id="zindan-wrap">${zdFloorHTML()}</div>`;
     }
 
-    function showZdInfoPop(btn) {
-      const tier = zdPlayerTier();
-      const T = ZD_TIERS[tier] || ZD_TIERS[1];
-      const mobNames = T.mobs.map(m => m.name).join(', ');
-      const finalNote = tier === 5
-        ? `👿 Son katta <b style="color:#c9a646;">${T.boss.name}</b> — %${Math.round(ZD_STRONG_BOSS_CHANCE * 100)} şansla <b style="color:#f87171;">${T.strongBoss.name}</b>! <b style="color:#c9a646;">Sv.50 Nekro eşyaları</b> yalnızca burada düşer!`
-        : `👿 Son katta <b style="color:#c9a646;">${T.boss.name}</b> — %${Math.round(ZD_STRONG_BOSS_CHANCE * 100)} şansla <b style="color:#f87171;">${T.strongBoss.name}</b> çıkar (daha güçlü, daha cömert)!`;
-      const html = `🏚 <b style="color:var(--perg2);">5 kat</b>, her katta odalar<br>🐾 Canavarlar: <b style="color:var(--perg2);">${mobNames}</b><br>⚔ Tur bazlı savaş (Saldır/Savun/Büyü/Sıyrıl)<br>🗡 Bosslar <b style="color:var(--perg2);">Sv.${T.lv[0]}–${T.lv[1]}</b> silah ve küpe düşürür<br>${finalNote}<br>💀 Ölürsen zindandan çıkarsın`;
-      showInfoPop(`${tier}. Seviye Zindan Bilgisi`, html, btn, '🗡');
-    }
-
     /* ── GİRİŞ EKRANI — kademeye göre arka plan + kadro bilgisi ── */
     function zdEntranceHTML() {
       zdCheckTicketReset();
@@ -14083,8 +14207,12 @@
       const ticketsHTML = Array.from({ length: ZD_MAX_TICKETS }, (_, i) =>
         `<div class="zd-ticket${i >= ZD.tickets ? ' used' : ''}">🗝</div>`
       ).join('');
+      const mobNames = T.mobs.map(m => m.name).join(', ');
+      const finalNote = tier === 5
+        ? `👿 Son katta <b style="color:#c9a646;">${T.boss.name}</b> — %${Math.round(ZD_STRONG_BOSS_CHANCE * 100)} şansla <b style="color:#f87171;">${T.strongBoss.name}</b>! <b style="color:#c9a646;">Sv.50 Nekro eşyaları</b> yalnızca burada düşer!`
+        : `👿 Son katta <b style="color:#c9a646;">${T.boss.name}</b> — %${Math.round(ZD_STRONG_BOSS_CHANCE * 100)} şansla <b style="color:#f87171;">${T.strongBoss.name}</b> çıkar (daha güçlü, daha cömert)!`;
 
-      return `
+      return `<div class="zd-wrap-card">
     <!-- Kademe girişi (arka plan görseli — 16:9 oranı korunur) -->
     <div class="zd-entrance" style="height:auto;aspect-ratio:16/9;max-width:760px;margin:0 auto 16px;">
       <img src="${IMG_BASE}${T.img}.webp" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"/>
@@ -14105,18 +14233,20 @@
     <!-- Zindan Bilgisi Butonu -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:8px 12px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;">
       <span style="font-family:var(--font-head);font-size:11px;color:var(--perg2);">${tier}. SEVİYE ZİNDAN</span>
-      <button class="info-btn" style="width:auto;border-radius:12px;padding:2px 8px;font-size:10px;" onclick="showZdInfoPop(this)" title="Zindan Bilgisi">ⓘ Zindan Bilgisi</button>
+      <button class="info-btn" style="width:auto;border-radius:12px;padding:2px 8px;font-size:10px;" onclick="showInfoPop('${tier}. Seviye Zindan Bilgisi', '🏚 <b style=&quot;color:var(--perg2);&quot;>5 kat</b>, her katta odalar<br>🐾 Canavarlar: <b style=&quot;color:var(--perg2);&quot;>${mobNames.replace(/'/g, "\\'")}</b><br>⚔ Tur bazlı savaş (Saldır/Savun/Büyü/Sıyrıl)<br>🗡 Bosslar <b style=&quot;color:var(--perg2);&quot;>Sv.${T.lv[0]}–${T.lv[1]}</b> silah ve küpe düşürür<br>${finalNote.replace(/'/g, "\\'")}<br>💀 Ölürsen zindandan çıkarsın', this, '🗡')" title="Zindan Bilgisi">ⓘ Zindan Bilgisi</button>
     </div>
 
     <!-- Giriş butonu -->
-    <button class="btn" style="width:100%;font-size:14px;padding:14px;${!canEnter ? 'opacity:.5;cursor:not-allowed;' : ''}"
-      onclick="${canEnter ? 'zdEnter()' : 'void(0)'}">
-      ${canEnter ? `🗝 ${tier}. Seviye Zindana Gir` : '🔒 Günlük Hak Bitti'}
-    </button>
+    <div style="text-align:center;">
+      <button class="btn" style="max-width:360px;width:100%;font-size:14px;padding:12px 20px;${!canEnter ? 'opacity:.5;cursor:not-allowed;' : ''}"
+        onclick="${canEnter ? 'zdEnter()' : 'void(0)'}">
+        ${canEnter ? `🗝 ${tier}. Seviye Zindana Gir` : '🔒 Günlük Hak Bitti'}
+      </button>
+    </div>
     ${ZD.totalGold > 0 ? `<div style="margin-top:10px;text-align:center;font-size:11px;color:var(--ink3);">
       Son zindan: <span style="color:var(--gold);">+${ZD.totalGold}🪙</span> · <span style="color:#7aaa5a;">+${ZD.totalXP}XP</span>
     </div>`: ''}
-  `;
+  </div>`;
     }
 
     /* ── KAT EKRANI ── */
@@ -14143,7 +14273,7 @@
       const canAdvance = allCleared && ZD.floor < ZD_FLOORS;
       const isComplete = allCleared && ZD.floor >= ZD_FLOORS;
 
-      return `
+      return `<div class="zd-wrap-card">
     <!-- Kat göstergesi -->
     <div style="text-align:center;font-family:var(--font-head);font-size:11px;color:var(--ink3);margin-bottom:8px;letter-spacing:2px;">
       <span style="color:var(--gold);">${ZD.tier}. SEVİYE ZİNDAN</span> · KAT ${ZD.floor} / ${ZD_FLOORS}
@@ -14159,19 +14289,23 @@
     </div>
 
     <!-- Odalar -->
-    <div class="sec" style="margin:0 0 8px;">ODALAR</div>
+    <div class="sec" style="margin:0 0 10px;text-align:center;">ODALAR</div>
     <div class="zd-rooms">${roomsHTML}</div>
 
-    <!-- İlerleme / Çıkış -->
-    ${canAdvance ? `<button class="btn" style="width:100%;margin-bottom:8px;" onclick="zdNextFloor()">
-      ⬇ ${ZD.floor + 1}. Kata İn</button>` : ''}
-    ${isComplete ? `<div style="text-align:center;padding:12px;background:linear-gradient(135deg,#1a0e02,#0e1a08);border:1px solid var(--gold);border-radius:8px;margin-bottom:8px;">
-      <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);margin-bottom:6px;">🏆 ZİNDAN TAMAMLANDI!</div>
-      <div style="font-size:11px;color:var(--perg2);margin-bottom:4px;">+${ZD.totalGold}🪙 · +${ZD.totalXP}XP kazandın</div>
-      <div style="font-size:10px;color:var(--ink3);">⚔ 4 silah (1-4. kat boss) + <span style="color:#c9a646;">☀ 1 Güneş Silahı</span> (Altın Şövalye) kazandın!</div>
-    </div>`: ''}
-    <button class="btn btn-ghost" style="width:100%;" onclick="zdExit()">🚪 Zindandan Çık</button>
-  `;
+    <!-- İlerleme / Çıkış Butonları -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:16px;">
+      ${canAdvance ? `<button class="btn" style="max-width:320px;width:100%;font-size:14px;padding:12px 20px;background:linear-gradient(180deg, #b08d57 0%, #7a5c2d 100%);border:1px solid var(--gold);box-shadow:0 4px 14px rgba(176,141,87,0.3);" onclick="zdNextFloor()">
+        ⬇ ${ZD.floor + 1}. Kata İn</button>` : ''}
+      ${isComplete ? `<div style="text-align:center;padding:12px;background:linear-gradient(135deg,#1a0e02,#0e1a08);border:1px solid var(--gold);border-radius:8px;width:100%;max-width:360px;box-sizing:border-box;">
+        <div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);margin-bottom:6px;">🏆 ZİNDAN TAMAMLANDI!</div>
+        <div style="font-size:11px;color:var(--perg2);margin-bottom:4px;">+${ZD.totalGold}🪙 · +${ZD.totalXP}XP kazandın</div>
+        <div style="font-size:10px;color:var(--ink3);">⚔ 4 silah + <span style="color:#c9a646;">☀ 1 Güneş Silahı</span> kazandın!</div>
+      </div>`: ''}
+      <button class="btn btn-ghost" style="max-width:320px;width:100%;font-size:13px;padding:10px 18px;background:linear-gradient(180deg, #2a1616 0%, #1a0a0a 100%);border:1px solid #7f1d1d;color:#fca5a5;" onclick="zdExit()">
+        🚪 Zindandan Çık
+      </button>
+    </div>
+  </div>`;
     }
 
     /* ── SAVAŞ EKRANI ── */
