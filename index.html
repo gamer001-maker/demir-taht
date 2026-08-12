@@ -10198,28 +10198,86 @@
        (eski sabit değerler aralığın ortasına denk gelir, ~±%20)
     ══════════════════════════════════════ */
     const ARMOR_TEMPLATES = {
-      /* Tahta set */
-      tahtazirh: { statRanges: { def: [3, 5], hp: [12, 18] } },
-      tahtakask: { statRanges: { def: [2, 4], hp: [8, 12] } },
+      tahtagogusluk: { statRanges: { def: [3, 5], hp: [12, 18] } },
+      tahtakask: { statRanges: { def: [2, 4], hp: [7, 11] } },
       tahtaeldiven: { statRanges: { def: [1, 3], hp: [6, 10] } },
       tahtabot: { statRanges: { def: [1, 3], hp: [6, 10] } },
-      /* Deri set */
-      derizirh: { statRanges: { def: [5, 8], agi: [2, 4], hp: [16, 24] } },
-      derikask: { statRanges: { def: [3, 5], agi: [1, 3], hp: [12, 18] } },
-      derieldiven: { statRanges: { def: [2, 4], agi: [1, 3], hp: [8, 12] } },
-      deribot: { statRanges: { def: [2, 4], agi: [1, 3], hp: [8, 12] } },
-      /* Demir set */
-      demirzirh: { statRanges: { def: [11, 17], hp: [32, 48] } },
-      demirkask: { statRanges: { def: [8, 12], hp: [24, 36] } },
-      demireldiven: { statRanges: { def: [6, 10], hp: [20, 30] } },
-      demirbot: { statRanges: { def: [6, 10], hp: [20, 30] } },
-      /* Nekro set (mağara boss dropu) */
-      necrozirh: { statRanges: { def: [56, 84], hp: [160, 240], str: [20, 30] } },
-      necrokask: { statRanges: { def: [32, 48], hp: [96, 144], wis: [16, 24] } },
-      necroeldiven: { statRanges: { def: [24, 36], agi: [24, 36], crit: [16, 24] } },
-      necrobot: { statRanges: { def: [24, 36], agi: [20, 30], hp: [80, 120] } },
-      /* Takı */
-      bakiryuzuk: { statRanges: { mgc: [2, 4], wis: [1, 3] } },
+      demirgogusluk: { statRanges: { def: [6, 10], hp: [20, 30] } },
+      demirkask: { statRanges: { def: [4, 6], hp: [12, 18] } },
+      demireldiven: { statRanges: { def: [3, 5], hp: [10, 16] } },
+      demirbot: { statRanges: { def: [3, 5], hp: [10, 16] } },
+      derigogusluk: { statRanges: { def: [4, 6], hp: [12, 18], agi: [2, 4] } },
+      derikask: { statRanges: { def: [2, 4], hp: [7, 11], agi: [1, 3] } },
+      derieldiven: { statRanges: { def: [2, 4], hp: [6, 10], agi: [1, 3] } },
+      deribot: { statRanges: { def: [2, 4], hp: [6, 10], agi: [1, 3] } },
+      kumasgogusluk: { statRanges: { def: [2, 4], hp: [8, 12], wis: [3, 5] } },
+      kumaskask: { statRanges: { def: [1, 3], hp: [4, 8], wis: [2, 4] } },
+      kumaseldiven: { statRanges: { def: [1, 3], hp: [4, 6], wis: [1, 3] } },
+      kumasbot: { statRanges: { def: [1, 3], hp: [4, 6], wis: [1, 3] } },
+      celikgogusluk: { statRanges: { def: [12, 18], hp: [36, 54] } },
+      celikkask: { statRanges: { def: [7, 11], hp: [21, 33] } },
+      celikeldiven: { statRanges: { def: [6, 10], hp: [18, 28] } },
+      celikbot: { statRanges: { def: [6, 10], hp: [18, 28] } },
+      i̇slenmisderigogusluk: { statRanges: { def: [8, 12], hp: [24, 36], agi: [4, 8] } },
+      i̇slenmisderikask: { statRanges: { def: [4, 8], hp: [14, 22], agi: [3, 5] } },
+      i̇slenmisderieldiven: { statRanges: { def: [4, 6], hp: [12, 18], agi: [2, 4] } },
+      i̇slenmisderibot: { statRanges: { def: [4, 6], hp: [12, 18], agi: [2, 4] } },
+      i̇pekgogusluk: { statRanges: { def: [4, 8], hp: [16, 24], wis: [6, 10] } },
+      i̇pekkask: { statRanges: { def: [3, 5], hp: [9, 15], wis: [4, 6] } },
+      i̇pekeldiven: { statRanges: { def: [2, 4], hp: [8, 12], wis: [3, 5] } },
+      i̇pekbot: { statRanges: { def: [2, 4], hp: [8, 12], wis: [3, 5] } },
+      dovmecelikgogusluk: { statRanges: { def: [20, 30], hp: [60, 90] } },
+      dovmecelikkask: { statRanges: { def: [12, 18], hp: [36, 54] } },
+      dovmecelikeldiven: { statRanges: { def: [10, 16], hp: [30, 46] } },
+      dovmecelikbot: { statRanges: { def: [10, 16], hp: [30, 46] } },
+      kalinderigogusluk: { statRanges: { def: [12, 20], hp: [40, 60], agi: [8, 12] } },
+      kalinderikask: { statRanges: { def: [8, 12], hp: [24, 36], agi: [4, 8] } },
+      kalinderieldiven: { statRanges: { def: [6, 10], hp: [20, 30], agi: [4, 6] } },
+      kalinderibot: { statRanges: { def: [6, 10], hp: [20, 30], agi: [4, 6] } },
+      kadifebuyucuyelegi: { statRanges: { def: [8, 12], hp: [28, 42], wis: [11, 17] } },
+      kadifebuyucusapkasi: { statRanges: { def: [4, 8], hp: [16, 26], wis: [7, 11] } },
+      kadifebuyucueldiveni: { statRanges: { def: [4, 6], hp: [14, 22], wis: [5, 9] } },
+      kadifebuyucubotu: { statRanges: { def: [4, 6], hp: [14, 22], wis: [5, 9] } },
+      plakagogusluk: { statRanges: { def: [28, 42], hp: [88, 132], str: [4, 6] } },
+      plakakask: { statRanges: { def: [16, 26], hp: [52, 80], str: [2, 4] } },
+      plakaeldiven: { statRanges: { def: [14, 22], hp: [44, 66], str: [2, 4] } },
+      plakabot: { statRanges: { def: [14, 22], hp: [44, 66], str: [2, 4] } },
+      pulluderigogusluk: { statRanges: { def: [18, 28], hp: [56, 84], agi: [12, 18] } },
+      pulluderikask: { statRanges: { def: [11, 17], hp: [33, 51], agi: [7, 11] } },
+      pulluderieldiven: { statRanges: { def: [9, 15], hp: [28, 42], agi: [6, 10] } },
+      pulluderibot: { statRanges: { def: [9, 15], hp: [28, 42], agi: [6, 10] } },
+      i̇slemelikumascubbe: { statRanges: { def: [11, 17], hp: [40, 60], wis: [16, 24] } },
+      i̇slemelikumaskask: { statRanges: { def: [7, 11], hp: [24, 36], wis: [9, 15] } },
+      i̇slemelikumaseldiven: { statRanges: { def: [5, 9], hp: [20, 30], wis: [8, 12] } },
+      i̇slemelikumasbot: { statRanges: { def: [5, 9], hp: [20, 30], wis: [8, 12] } },
+      titanyumgogusluk: { statRanges: { def: [38, 58], hp: [120, 180], str: [8, 12] } },
+      titanyumkask: { statRanges: { def: [23, 35], hp: [72, 108], str: [4, 8] } },
+      titanyumeldiven: { statRanges: { def: [19, 29], hp: [60, 90], str: [4, 6] } },
+      titanyumbot: { statRanges: { def: [19, 29], hp: [60, 90], str: [4, 6] } },
+      agirderigogusluk: { statRanges: { def: [25, 39], hp: [76, 114], agi: [17, 27], crit: [1, 3] } },
+      agirderikask: { statRanges: { def: [16, 24], hp: [45, 69], agi: [11, 17], crit: [1, 3] } },
+      agirderieldiven: { statRanges: { def: [12, 20], hp: [38, 58], agi: [8, 14], crit: [0, 2] } },
+      agirderibot: { statRanges: { def: [12, 20], hp: [38, 58], agi: [8, 14], crit: [0, 2] } },
+      mistikkumascubbe: { statRanges: { def: [16, 24], hp: [56, 84], wis: [22, 34], mgc: [4, 6] } },
+      mistikkumaskask: { statRanges: { def: [9, 15], hp: [33, 51], wis: [13, 21], mgc: [2, 4] } },
+      mistikkumaseldiven: { statRanges: { def: [8, 12], hp: [28, 42], wis: [11, 17], mgc: [2, 4] } },
+      mistikkumasbot: { statRanges: { def: [8, 12], hp: [28, 42], wis: [11, 17], mgc: [2, 4] } },
+      karacelikgogusluk: { statRanges: { def: [52, 78], hp: [160, 240], str: [14, 22] } },
+      karacelikkask: { statRanges: { def: [31, 47], hp: [96, 144], str: [8, 14] } },
+      karacelikeldiven: { statRanges: { def: [26, 40], hp: [80, 120], str: [7, 11] } },
+      karacelikbot: { statRanges: { def: [26, 40], hp: [80, 120], str: [7, 11] } },
+      golgederigogusluk: { statRanges: { def: [33, 51], hp: [104, 156], agi: [24, 36], crit: [3, 5] } },
+      golgederikask: { statRanges: { def: [20, 32], hp: [62, 94], agi: [14, 22], crit: [2, 4] } },
+      golgederieldiven: { statRanges: { def: [16, 26], hp: [52, 78], agi: [12, 18], crit: [1, 3] } },
+      golgederibot: { statRanges: { def: [16, 26], hp: [52, 78], agi: [12, 18], crit: [1, 3] } },
+      karanlikdokumacubbe: { statRanges: { def: [22, 34], hp: [76, 114], wis: [30, 46], mgc: [9, 15] } },
+      karanlikdokumakask: { statRanges: { def: [13, 21], hp: [45, 69], wis: [18, 28], mgc: [6, 10] } },
+      karanlikdokumaeldiven: { statRanges: { def: [11, 17], hp: [38, 58], wis: [15, 23], mgc: [4, 8] } },
+      karanlikdokumabot: { statRanges: { def: [11, 17], hp: [38, 58], wis: [15, 23], mgc: [4, 8] } },
+      necrozirh: { statRanges: { def: [68, 102], hp: [224, 336], str: [16, 24], agi: [16, 24], wis: [16, 24], crit: [3, 5], mgc: [8, 12] } },
+      necrokask: { statRanges: { def: [40, 62], hp: [134, 202], str: [9, 15], agi: [9, 15], wis: [9, 15], crit: [1, 3], mgc: [4, 8] } },
+      necroeldiven: { statRanges: { def: [33, 51], hp: [112, 168], str: [8, 12], agi: [8, 12], wis: [8, 12], crit: [1, 3], mgc: [4, 6] } },
+      necrobot: { statRanges: { def: [33, 51], hp: [112, 168], str: [8, 12], agi: [8, 12], wis: [8, 12], crit: [1, 3], mgc: [4, 6] } },
     };
 
     /* Şablondan rastgele stat üretir — her edinimde çağrılır */
@@ -10266,7 +10324,7 @@
       if (!item) return null;
       const key = item.tplId || item.img;
       if (!key) return null;
-      return WEAPON_TEMPLATES[key] || ARMOR_TEMPLATES[key] || null;
+      return WEAPON_TEMPLATES[key] || ARMOR_TEMPLATES[key] || RING_TEMPLATES[key] || EARRING_TEMPLATES[key] || null;
     }
 
     /* ══════════════════════════════════════
@@ -12211,13 +12269,13 @@
        Görsel dosya adı = tplId (images/<tplId>.webp)
     ══════════════════════════════════════════════════════════════ */
     const EARRING_TEMPLATES = {
-      tahtakupe: { name: 'Tahta Küpe', fx: 'maxhp', baseVal: 25, per: 0.5, grade: 'gray', reqLv: 1, desc: 'Sağlığı artırır.', fxTxt: p => `Maksimum Can +${p}` },
-      yesimtasikupe: { name: 'Yeşim Taşı Küpe', fx: 'enhance', baseVal: 1.0, per: 0.5, grade: 'green', reqLv: 1, desc: 'Demirci ocağında şansını artırır.', fxTxt: p => `Geliştirme Başarı Şansı +%${p}` },
-      incikupe: { name: 'İnci Küpe', fx: 'regen', baseVal: 1.0, per: 0.5, grade: 'blue', reqLv: 1, desc: 'Denizden gelen tazelikle can yeniler.', fxTxt: p => `Savaşta tur başı azami canının %${p} kadarı yenilenir` },
-      kantasikupe: { name: 'Kan Taşı Küpe', fx: 'lifesteal', baseVal: 1.5, per: 0.5, grade: 'purple', reqLv: 1, desc: 'Verdiğin darbeden can çeker.', fxTxt: p => `Verdiğin hasarın %${p} kadarı can olarak döner` },
-      obsidyenkupe: { name: 'Obsidyen Küpe', fx: 'crit', baseVal: 2.0, per: 0.5, grade: 'purple', reqLv: 1, desc: 'Keskin siyah cam gibi kritik şansı verir.', fxTxt: p => `Kritik Vuruş Şansı +%${p}` },
-      okyanusungozu: { name: 'Okyanusun Gözü', fx: 'scoutLoot', baseVal: 2.5, per: 0.5, grade: 'orange', reqLv: 1, desc: 'Zindan ve harabelerde kısmetini açar.', fxTxt: p => `Zindan & Harabe ganimeti +%${p}` },
-      ruyayildizi: { name: 'Rüya Yıldızı', fx: 'xp', baseVal: 3.0, per: 0.5, grade: 'orange', reqLv: 1, desc: 'Kutsal ışığıyla XP kazanımını artırır.', fxTxt: p => `Savaş ve görev XP kazanımı +%${p}` },
+      tahtakupe: { name: 'Tahta Küpe', fx: 'maxhp', baseVal: 25, per: 0.5, grade: 'gray', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Sağlığı artırır.', fxTxt: p => `Maksimum Can +${p}` },
+      yesimtasikupe: { name: 'Yeşim Taşı Küpe', fx: 'enhance', baseVal: 1.0, per: 0.5, grade: 'green', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Demirci ocağında şansını artırır.', fxTxt: p => `Geliştirme Başarı Şansı +%${p}` },
+      incikupe: { name: 'İnci Küpe', fx: 'regen', baseVal: 1.0, per: 0.5, grade: 'blue', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Denizden gelen tazelikle can yeniler.', fxTxt: p => `Savaşta tur başı azami canının %${p} kadarı yenilenir` },
+      kantasikupe: { name: 'Kan Taşı Küpe', fx: 'lifesteal', baseVal: 1.5, per: 0.5, grade: 'purple', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Verdiğin darbeden can çeker.', fxTxt: p => `Verdiğin hasarın %${p} kadarı can olarak döner` },
+      obsidyenkupe: { name: 'Obsidyen Küpe', fx: 'crit', baseVal: 2.0, per: 0.5, grade: 'purple', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Keskin siyah cam gibi kritik şansı verir.', fxTxt: p => `Kritik Vuruş Şansı +%${p}` },
+      okyanusungozu: { name: 'Okyanusun Gözü', fx: 'scoutLoot', baseVal: 2.5, per: 0.5, grade: 'orange', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Zindan ve harabelerde kısmetini açar.', fxTxt: p => `Zindan & Harabe ganimeti +%${p}` },
+      ruyayildizi: { name: 'Rüya Yıldızı', fx: 'xp', baseVal: 3.0, per: 0.5, grade: 'orange', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Kutsal ışığıyla XP kazanımını artırır.', fxTxt: p => `Savaş ve görev XP kazanımı +%${p}` },
     };
     const EARRING_SLOTS = ['earring', 'earring2'];
 
@@ -12518,48 +12576,48 @@
     const RING_TEMPLATES = {
       /* ── SAVAŞ ── */
       arinmayuzugu: {
-        name: 'Arınma Yüzüğü', fx: 'regen', per: 0.5, grade: 'blue', reqLv: 5, tier: 'savas',
+        name: 'Arınma Yüzüğü', fx: 'regen', per: 0.5, grade: 'blue', reqLv: 5, tier: 'savas', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Her tur azami canının bir kısmını yeniler.', fxTxt: p => `Her tur azami canının %${p} kadarı yenilenir`
       },
       atesyuzugu: {
-        name: 'Ateş Yüzüğü', fx: 'burn', per: 0.5, grade: 'blue', reqLv: 5, tier: 'savas',
+        name: 'Ateş Yüzüğü', fx: 'burn', per: 0.5, grade: 'blue', reqLv: 5, tier: 'savas', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Vuruşların düşmanı tutuşturabilir.', fxTxt: p => `%${p} ihtimalle yakma (5 tur boyunca tur başı %1 can, üst üste binebilir)`
       },
       kanyuzugu: {
-        name: 'Kan Yüzüğü', fx: 'lifesteal', per: 0.5, grade: 'purple', reqLv: 5, tier: 'savas',
+        name: 'Kan Yüzüğü', fx: 'lifesteal', per: 0.5, grade: 'purple', reqLv: 5, tier: 'savas', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Verdiğin hasarın bir kısmını cana çevirir.', fxTxt: p => `Verdiğin hasarın %${p} kadarı can olarak döner`
       },
       necruyuzugu: {
-        name: 'Necro Yüzüğü', fx: 'curse', per: 0.5, grade: 'purple', reqLv: 5, tier: 'savas',
+        name: 'Necro Yüzüğü', fx: 'curse', per: 0.5, grade: 'purple', reqLv: 5, tier: 'savas', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Düşmanı lanetler, aldığı iyileşmeyi kırar.', fxTxt: p => `Düşmanın iyileşmesi %${p} azalır`
       },
       ofkekristaliyuzugu: {
-        name: 'Öfke Kristali', fx: 'rage', per: 0.5, grade: 'orange', reqLv: 5, tier: 'savas',
+        name: 'Öfke Kristali', fx: 'rage', per: 0.5, grade: 'orange', reqLv: 5, tier: 'savas', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Yaralandıkça öfken hasara dönüşür.', fxTxt: p => `Eksik her %10 can için +%${p} hasar`
       },
       elementalekipyuzugu: {
-        name: 'Elementel Ekip Yüzüğü', fx: 'guildboss', per: 1.0, grade: 'orange', reqLv: 5, tier: 'savas',
+        name: 'Elementel Ekip Yüzüğü', fx: 'guildboss', per: 1.0, grade: 'orange', reqLv: 5, tier: 'savas', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Lonca kardeşlerinle avlanırken güç verir.', fxTxt: p => `Lonca boss savaşında +%${p} güç`
       },
       /* ── GELİŞİM ── */
       nehirruhuyuzugu: {
-        name: 'Nehir Ruhu Yüzüğü', fx: 'commission', per: 0.5, grade: 'blue', reqLv: 5, tier: 'gelisim',
+        name: 'Nehir Ruhu Yüzüğü', fx: 'commission', per: 0.5, grade: 'blue', reqLv: 5, tier: 'gelisim', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Tüccarlar sana daha az komisyon keser.', fxTxt: p => `Pazar komisyonu %${p} puan azalır`
       },
       ormanruhuyuzugu: {
-        name: 'Orman Ruhu Yüzüğü', fx: 'yield', per: 0.5, grade: 'purple', reqLv: 5, tier: 'gelisim',
+        name: 'Orman Ruhu Yüzüğü', fx: 'yield', per: 0.5, grade: 'purple', reqLv: 5, tier: 'gelisim', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Toprak ve hayvan sana daha cömert davranır.', fxTxt: p => `Tarla ve çiftlik üretim miktarı +%${p}`
       },
       ustayuzugu: {
-        name: 'Usta Yüzüğü', fx: 'prodspeed', per: 0.5, grade: 'purple', reqLv: 5, tier: 'gelisim',
+        name: 'Usta Yüzüğü', fx: 'prodspeed', per: 0.5, grade: 'purple', reqLv: 5, tier: 'gelisim', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Bütün atölyelerin daha hızlı çalışır.', fxTxt: p => `Tarla, Çiftlik, Değirmen ve Aşevi süresi -%${p}`
       },
       sansyuzugu: {
-        name: 'Şans Yüzüğü', fx: 'enhance', per: 0.5, grade: 'blue', reqLv: 5, tier: 'gelisim',
+        name: 'Şans Yüzüğü', fx: 'enhance', per: 0.5, grade: 'blue', reqLv: 5, tier: 'gelisim', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Örsün başında talih senden yana.', fxTxt: p => `Eşya geliştirme başarı şansı +%${p}`
       },
       bakiryuzuk: {
-        name: 'Bakır Yüzük', fx: null, per: 0, grade: 'gray', reqLv: 1, tier: 'gelisim',
+        name: 'Bakır Yüzük', fx: null, per: 0, grade: 'gray', reqLv: 1, tier: 'gelisim', statRanges: { hp: [0, 5], def: [0, 1] },
         desc: 'Sıradan bakır yüzük.', fxTxt: () => 'Özel bir etkisi yok'
       },
     };
