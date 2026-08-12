@@ -10343,36 +10343,36 @@
        50-75% Epik · 75-100% Efsanevi
     ══════════════════════════════════════ */
     const ROLL_GRADES = {
-      siradan: { label: 'Sıradan', color: '#8a8276' },
-      nadir: { label: 'Nadir', color: '#7aaa5a' },
-      degerli: { label: 'Değerli', color: '#5a8aaa' },
-      epik: { label: 'Epik', color: '#b06ae0' },
-      efsanevi: { label: 'Efsanevi', color: '#f0a030' },
+      siradan: { label: 'Sıradan', color: '#8a8276', gradeId: 'gray' },
+      nadir: { label: 'Nadir', color: '#7aaa5a', gradeId: 'green' },
+      degerli: { label: 'Değerli', color: '#5a8aaa', gradeId: 'blue' },
+      epik: { label: 'Epik', color: '#b06ae0', gradeId: 'purple' },
+      efsanevi: { label: 'Efsanevi', color: '#f0a030', gradeId: 'orange' },
     };
     function getRollGrade(item) {
       const tpl = getItemTemplate(item);
       if (!tpl) return null;
       const src = item.baseStats || item.stats || {};
       let minS = 0, maxS = 0, val = 0;
-      if (!tpl.statRanges) return { labelId: 'siradan', gradeId: 'gray' };
+      if (!tpl.statRanges) return 'siradan';
       Object.entries(tpl.statRanges).forEach(([k, [mn, mx]]) => {
         minS += mn; maxS += mx;
         val += Math.max(mn, Math.min(mx, src[k] ?? mn));
       });
-      if (maxS <= minS) return { labelId: 'siradan', gradeId: 'gray' };
+      if (maxS <= minS) return 'siradan';
       const q = (val - minS) / (maxS - minS);
       // Stricter percentiles as requested by user
-      if (q < 0.40) return { labelId: 'siradan', gradeId: 'gray' };
-      if (q < 0.70) return { labelId: 'nadir', gradeId: 'green' };
-      if (q < 0.85) return { labelId: 'degerli', gradeId: 'blue' };
-      if (q < 0.95) return { labelId: 'epik', gradeId: 'purple' };
-      return { labelId: 'efsanevi', gradeId: 'orange' };
+      if (q < 0.40) return 'siradan';
+      if (q < 0.70) return 'nadir';
+      if (q < 0.85) return 'degerli';
+      if (q < 0.95) return 'epik';
+      return 'efsanevi';
     }
     // Nadirlik sadece silah/zırhta (ileride takı ve birliklerde) gösterilir —
     // materyal/hayvan/iksir gibi eşyalar hep "sıradan" olduğundan rozet taşımaz.
     function rollGradeLabel(item) {
       const g = getRollGrade(item);
-      if (g && ROLL_GRADES[g.labelId]) return ROLL_GRADES[g.labelId].label;
+      if (g && ROLL_GRADES[g]) return ROLL_GRADES[g].label;
       return rarityEligible(item) ? (GRADES[item?.grade]?.name || '') : '';
     }
     /* Çerçeve sınıfı: şablonlu eşyada zar kalitesi, diğerlerinde eski grade — ama sadece nadirliğe uygun eşyalarda */
@@ -12219,7 +12219,7 @@
         seller: 'player', sellerName: G.heroName || G.username,
       };
       const g = getRollGrade(earring);
-      if (g && g.gradeId) earring.grade = g.gradeId;
+      if (g && ROLL_GRADES[g]) earring.grade = ROLL_GRADES[g].gradeId;
       return earring;
 
     }
@@ -14184,8 +14184,8 @@
       ).join('');
       const mobNames = T.mobs.map(m => m.name).join(', ');
       const finalNote = tier === 5
-        ? `👿 Son katta <b style="color:#c9a646;">${T.boss.name}</b> — %${Math.round(ZD_STRONG_BOSS_CHANCE * 100)} şansla <b style="color:#f87171;">${T.strongBoss.name}</b>! <b style="color:#c9a646;">Sv.50 Nekro eşyaları</b> yalnızca burada düşer!`
-        : `👿 Son katta <b style="color:#c9a646;">${T.boss.name}</b> — %${Math.round(ZD_STRONG_BOSS_CHANCE * 100)} şansla <b style="color:#f87171;">${T.strongBoss.name}</b> çıkar (daha güçlü, daha cömert)!`;
+        ? `👿 Son katta <b style=&quot;color:#c9a646;&quot;>${T.boss.name}</b> — %${Math.round(ZD_STRONG_BOSS_CHANCE * 100)} şansla <b style=&quot;color:#f87171;&quot;>${T.strongBoss.name}</b>! <b style=&quot;color:#c9a646;&quot;>Sv.50 Nekro eşyaları</b> yalnızca burada düşer!`
+        : `👿 Son katta <b style=&quot;color:#c9a646;&quot;>${T.boss.name}</b> — %${Math.round(ZD_STRONG_BOSS_CHANCE * 100)} şansla <b style=&quot;color:#f87171;&quot;>${T.strongBoss.name}</b> çıkar (daha güçlü, daha cömert)!`;
 
       return `<div class="zd-wrap-card">
     <!-- Kademe girişi (arka plan görseli — 16:9 oranı korunur) -->
@@ -14742,7 +14742,7 @@
         seller: 'player', sellerName: G.heroName || G.username,
       };
       const g = getRollGrade(ring);
-      if (g && g.gradeId) ring.grade = g.gradeId;
+      if (g && ROLL_GRADES[g]) ring.grade = ROLL_GRADES[g].gradeId;
       return ring;
 
     }
@@ -14788,7 +14788,7 @@
       };
 
       const aG = getRollGrade(armor);
-      if (aG && aG.gradeId) armor.grade = aG.gradeId;
+      if (aG && ROLL_GRADES[aG]) armor.grade = ROLL_GRADES[aG].gradeId;
 
       G.inventory.push(armor);
       setTimeout(() => { toast(`🛡 ${note || 'Zırh'}: ${armor.name}${armor.enhPlus > 0 ? ' +' + armor.enhPlus : ''} (${rollGradeLabel(armor)}) düştü!`); }, 800);
@@ -14881,7 +14881,7 @@
         sellerName: G.heroName || G.username,
       };
       const wG = getRollGrade(weapon);
-      if (wG && wG.gradeId) weapon.grade = wG.gradeId;
+      if (wG && ROLL_GRADES[wG]) weapon.grade = ROLL_GRADES[wG].gradeId;
       G.inventory.push(weapon);
       // Kısa gecikme ile drop mesajı (kill toast'tan sonra görünsün)
       setTimeout(() => {
