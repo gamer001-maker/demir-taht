@@ -3430,6 +3430,12 @@
       filter: drop-shadow(0 3px 5px #000a);
     }
     .zg-unit .zg-emo { font-size: clamp(18px, 4.6vw, 30px); filter: drop-shadow(0 3px 5px #000a); }
+    /* Karakter vurus kareleri: 3 gorsel ust uste durur, sadece biri gorunur.
+       Boylece kare degistirirken ag istegi olmaz, titreme yasanmaz. */
+    .zg-sprite { position: relative; width: 100%; height: 100%; }
+    .zg-sprite.flip { transform: scaleX(-1); }
+    .zg-sprite .zg-fr { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: none; filter: drop-shadow(0 3px 5px #000a); }
+    .zg-sprite .zg-fr.on { display: block; }
     #zg-player img, #zg-player .zg-emo { animation: zd-enemy-idle 2.4s ease-in-out infinite; }
     #zg-player.walking img, #zg-player.walking .zg-emo { animation: zg-step .19s linear infinite; }
     @keyframes zg-step { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9%); } }
@@ -3473,6 +3479,7 @@
     /* Alt kontrol barı */
     #zg-bar { margin-top: 8px; }
     .zg-btn-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+    .zg-btn-wide { width: 100%; margin-top: 5px; }
     .zg-btn {
       font-family: var(--font-head);
       font-size: clamp(9px, 2.1vw, 11px);
@@ -14889,6 +14896,7 @@
       PULL_CD: 12000,       // Canavar Çek bekleme süresi
       POTION_CD: 3000,      // iksir bekleme (tur-tabanlıdaki "1 tur" karşılığı)
       AUTO_XP: 0.90,        // oto-saldırıda XP çarpanı
+      AUTOPOT_AT: 0.40,     // oto pot: canın bu oranın altında iksir içilir
       TROOP_SHARE: 0.6,     // birliklerin vuruşa kattığı hasar oranı
       ELITE: { hp: 3.0, atk: 1.35, xp: 2.2, gold: 2.0 },
       RANGE: { warrior: 1, knight: 1, rogue: 1, mage: 3, ranger: 4 },
@@ -14917,6 +14925,7 @@
         kills: 0, quota: zgKillQuota(ZD.floor),
         bossSpawned: false, bossDead: false,
         auto: (keepBag && old) ? old.auto : false,
+        autoPot: (keepBag && old) ? old.autoPot : false,
         bag: (keepBag && old) ? old.bag : { gold: 0, xp: 0, items: [], mats: {} },
         over: false,
       };
@@ -15051,6 +15060,7 @@
       const troopDmg = armedTroops().reduce((a, c) => a + troopAttackDmg(c), 0);
       if (troopDmg > 0) dmg += Math.max(1, Math.floor(troopDmg * ZG.TROOP_SHARE));
       m.hp = Math.max(0, m.hp - dmg);
+      zgPlayAttack(m.x < g.px);   // 1→2→3 vuruş karesi + yön çevirme
       zgFloat(m.x, m.y, tag + dmg, tag ? '#ffd166' : '#ffffff');
       zgFlash(m.uid);
       const r = ringOnHit(m.st, dmg, g.hp, eff.maxhp);
@@ -15155,6 +15165,9 @@
         g.stepT0 = now;
         if (!g.path.length) zgSetWalking(false);
       }
+      // Oto mod AFK yürüyüşü — 'moving' bundan SONRA hesaplanmalı ki
+      // hedef menzile girdiği tick'te saldırı da yapılabilsin.
+      if (g.auto) zgAutoMove();
       const moving = g.path.length > 0;
 
       const spawnMs = g.auto ? ZG.SPAWN_MS_AUTO : ZG.SPAWN_MS;
@@ -15186,6 +15199,7 @@
       }
 
       if (now - g.lastSec >= 1000) { g.lastSec = now; zgRingSecond(eff); }
+      zgAutoPotion(eff);
       if (g.hp <= 0) { zgDeath(); return; }
       zgPaint();
     }
@@ -15193,6 +15207,83 @@
     /* ── RENDER ──
        Sahne bir kez kurulur; her tick'te yalnızca transform ve can barları
        güncellenir (innerHTML yeniden basılırsa görseller titrer). */
+    /* ── KARAKTER SPRITE'LARI ──
+       Dosya deseni: <sınıf>_<varyant>_<kare>.webp — kare 1→2→3 birbirini
+       takip eden vuruş görselleri (4 sınıf × 4 varyant × 3 kare = 48 dosya).
+       VARSAYIM: varyant oyuncunun seviyesinden gelir, 10 seviyede bir görünüm
+       yükselir (Sv.1-10 → 0, 11-20 → 1, 21-30 → 2, 31+ → 3). Sabit görünüm ya
+       da başka bir eşleme istenirse yalnızca zgSpriteVariant() değişir. */
+    function zgSpriteVariant() {
+      return Math.max(0, Math.min(3, Math.floor(((G.level || 1) - 1) / 10)));
+    }
+    function zgFrameSrc(frame) {
+      return IMG_BASE + (G.classId || 'warrior') + '_' + zgSpriteVariant() + '_' + frame + '.webp';
+    }
+    /* Sprite yoksa emojiye düş — kareleri tek tek gizlemeye gerek yok */
+    function zgSpriteFallback(img) {
+      const sp = img.closest('.zg-sprite'); if (!sp) return;
+      sp.querySelectorAll('.zg-fr').forEach(f => f.remove());
+      const emo = sp.querySelector('.zg-emo');
+      if (emo) emo.style.display = 'inline-block';
+    }
+    /* Vuruş animasyonu: 1 → 2 → 3 → 1. dirLeft true ise sprite yatay çevrilir. */
+    function zgPlayAttack(dirLeft) {
+      const sp = document.getElementById('zg-sprite'); if (!sp) return;
+      if (dirLeft != null) sp.classList.toggle('flip', !!dirLeft);
+      const fr = sp.querySelectorAll('.zg-fr');
+      if (fr.length < 3) return;
+      const show = n => fr.forEach((f, k) => f.classList.toggle('on', k === n));
+      clearTimeout(sp._t1); clearTimeout(sp._t2);
+      show(1);
+      sp._t1 = setTimeout(() => show(2), 80);
+      sp._t2 = setTimeout(() => show(0), 175);
+    }
+
+    /* ── OTO POT ──
+       İsrafı azaltmak için eksik canı kapatan EN KÜÇÜK iksiri seçer;
+       hiçbiri yetmiyorsa eldeki en büyüğünü içer. */
+    function zgPotionList() {
+      return G.inventory.filter(i => (i.cat === 'consumable' || i.type === 'İksir')
+        && (i.stats && (i.stats.hp_restore || i.stats.hp_restore_pct)));
+    }
+    function zgPotionHeal(p, maxhp) {
+      return p.stats.hp_restore_pct
+        ? Math.floor(maxhp * p.stats.hp_restore_pct / 100 * potionPowerMult())
+        : Math.floor((p.stats.hp_restore || 0) * potionPowerMult());
+    }
+    function zgAutoPotion(eff) {
+      const g = ZD.g;
+      if (!g.autoPot || g.hp <= 0) return;
+      if (g.hp / eff.maxhp >= ZG.AUTOPOT_AT) return;
+      if (Date.now() - g.lastPotion < ZG.POTION_CD) return;
+      const list = zgPotionList();
+      if (!list.length) return;
+      const missing = eff.maxhp - g.hp;
+      const sorted = list.slice().sort((a, b) => zgPotionHeal(a, eff.maxhp) - zgPotionHeal(b, eff.maxhp));
+      const pick = sorted.find(p => zgPotionHeal(p, eff.maxhp) >= missing) || sorted[sorted.length - 1];
+      zgUsePotion(pick.id);
+    }
+
+    /* ── OTO YÜRÜYÜŞ (AFK) ──
+       Menzilde hedef yoksa en yakın canavara doğru yürür; hedef menzile
+       girince yürüyüşü keser, böylece "yürürken saldıramaz" kuralı yüzünden
+       sonsuza kadar yürümez. */
+    function zgAutoMove() {
+      const g = ZD.g;
+      if (zgPickTarget()) {
+        if (g.path.length) { g.path = []; zgSetWalking(false); }
+        return;
+      }
+      if (g.path.length) return;
+      let near = null, nd = 99;
+      for (const m of g.mobs) {
+        if (m.hp <= 0) continue;
+        const d = zgDist(m.x, m.y, g.px, g.py);
+        if (d < nd) { nd = d; near = m; }
+      }
+      if (near) zgMoveTo(near.x, near.y);
+    }
+
     function zgUnitAt(el, x, y) { el.style.transform = 'translate(' + (x * 100) + '%,' + (y * 100) + '%)'; }
     function zgSetWalking(on) {
       const pe = document.getElementById('zg-player');
@@ -15223,7 +15314,14 @@
         const cls = CLASSES.find(c => c.id === G.classId) || CLASSES[0];
         pe = document.createElement('div');
         pe.className = 'zg-unit'; pe.id = 'zg-player';
-        pe.innerHTML = '<img src="' + cls.img + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-block\'"><span class="zg-emo" style="display:none;">' + cls.icon + '</span>';
+        // 3 vuruş karesi üst üste yüklenir; sadece biri görünür olur
+        let frames = '';
+        for (let f = 1; f <= 3; f++) {
+          frames += '<img class="zg-fr' + (f === 1 ? ' on' : '') + '" src="' + zgFrameSrc(f) + '"'
+            + (f === 1 ? ' onerror="zgSpriteFallback(this)"' : '') + '>';
+        }
+        pe.innerHTML = '<div class="zg-sprite" id="zg-sprite">' + frames
+          + '<span class="zg-emo" style="display:none;">' + cls.icon + '</span></div>';
         pe.style.transition = 'transform ' + ZG.WALK_MS + 'ms linear';
         layer.appendChild(pe);
       }
@@ -15304,9 +15402,10 @@
         + '<div class="zg-btn-row">'
         + '<button class="zg-btn ' + (g.auto ? 'on' : '') + '" onclick="zgToggleAuto()">' + (g.auto ? '⚡ OTO AÇIK' : '⚡ Oto Saldırı') + sub(g.auto ? 'çok canavar · −%10 XP' : 'XP tam') + '</button>'
         + '<button class="zg-btn" onclick="zgPull()" ' + (pullLeft > 0 || g.bossSpawned ? 'disabled' : '') + '>👹 Canavar Çek' + sub(pullLeft > 0 ? pullLeft + 'sn' : '+XP +ganimet') + '</button>'
-        + '<button class="zg-btn" onclick="zgPotion()">🧪 İksir' + sub('can bas') + '</button>'
-        + lastBtn
+        + '<button class="zg-btn ' + (g.autoPot ? 'on' : '') + '" onclick="zgToggleAutoPot()">' + (g.autoPot ? '❤️ OTO POT' : '❤️ Oto Pot') + sub('can %' + Math.round(ZG.AUTOPOT_AT * 100) + ' altı') + '</button>'
+        + '<button class="zg-btn" onclick="zgPotion()">🧪 İksir' + sub('elle iç') + '</button>'
         + '</div>'
+        + lastBtn.replace('class="zg-btn', 'class="zg-btn-wide zg-btn')
         + ((canDescend || finished) ? '<button class="zg-btn danger" style="width:100%;margin-top:5px;" onclick="zgExit()">🚪 Zindandan Çık — ganimeti garantiye al</button>' : '');
     }
 
@@ -15315,6 +15414,13 @@
       const g = ZD.g; if (!g) return;
       g.auto = !g.auto;
       toast(g.auto ? '⚡ Oto saldırı açık — daha çok canavar, −%10 XP' : '⚡ Oto saldırı kapalı');
+      zgRenderBar();
+    }
+    function zgToggleAutoPot() {
+      const g = ZD.g; if (!g) return;
+      g.autoPot = !g.autoPot;
+      if (g.autoPot && !zgPotionList().length) toast('❤️ Oto pot açık ama envanterinde iksir yok!');
+      else toast(g.autoPot ? '❤️ Oto pot açık — can %' + Math.round(ZG.AUTOPOT_AT * 100) + ' altına düşünce içilir' : '❤️ Oto pot kapalı');
       zgRenderBar();
     }
     function zgPull() {
@@ -15330,13 +15436,11 @@
     function zgPotion() {
       const g = ZD.g; if (!g || g.over) return;
       if (Date.now() - g.lastPotion < ZG.POTION_CD) { toast('🧪 İksir hazır değil.'); return; }
-      const potions = G.inventory.filter(i => (i.cat === 'consumable' || i.type === 'İksir') && (i.stats && (i.stats.hp_restore || i.stats.hp_restore_pct)));
+      const potions = zgPotionList();
       if (!potions.length) { toast('🧪 Envanterinde can iksiri yok!'); return; }
       const eff = getEffectiveStats();
       const rows = potions.map(p => {
-        const heal = p.stats.hp_restore_pct
-          ? Math.floor(eff.maxhp * p.stats.hp_restore_pct / 100 * potionPowerMult())
-          : Math.floor(p.stats.hp_restore * potionPowerMult());
+        const heal = zgPotionHeal(p, eff.maxhp);
         return '<div onclick="closeGModal();zgUsePotion(' + p.id + ')" style="display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:6px;border-radius:8px;border:1px solid var(--border2);background:var(--panel2);cursor:pointer;">'
           + '<span style="font-size:24px;">' + p.icon + '</span>'
           + '<div style="flex:1;text-align:left;">'
@@ -15356,9 +15460,7 @@
       if (idx < 0) { toast('İksir bulunamadı.'); return; }
       const p = G.inventory[idx];
       const eff = getEffectiveStats();
-      const heal = p.stats.hp_restore_pct
-        ? Math.floor(eff.maxhp * p.stats.hp_restore_pct / 100 * potionPowerMult())
-        : Math.floor((p.stats.hp_restore || 0) * potionPowerMult());
+      const heal = zgPotionHeal(p, eff.maxhp);
       const gained = Math.min(heal, eff.maxhp - g.hp);
       g.hp = Math.min(eff.maxhp, g.hp + heal);
       g.lastPotion = Date.now();
