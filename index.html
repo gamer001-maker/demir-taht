@@ -3383,6 +3383,130 @@
       animation: wmPulse 2.2s ease-in-out infinite;
     }
 
+
+    /* ══════════════════════════════════════
+       ZİNDAN — GERÇEK ZAMANLI 7×7 IZGARA
+       Birimler .zg-unit ile konumlanır: eleman tam olarak 1/7 kare
+       olduğu için transform:translate(x*100%, y*100%) tam kare kaydırır.
+    ══════════════════════════════════════ */
+    #zg-stage {
+      position: relative;
+      width: 100%;
+      max-width: 560px;
+      margin: 0 auto;
+      aspect-ratio: 1;
+      border: 2px solid var(--border2);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #0b0a08 center/cover no-repeat;
+      touch-action: manipulation;
+      user-select: none;
+    }
+    #zg-cells {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      grid-template-rows: repeat(7, 1fr);
+      z-index: 2;
+    }
+    .zg-cell { border: 1px solid #ffffff0d; cursor: pointer; }
+    .zg-cell:active { background: #ffd88a26; }
+    @media (hover:hover) { .zg-cell:hover { background: #ffd88a1a; } }
+    #zg-units { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+    .zg-unit {
+      position: absolute;
+      left: 0; top: 0;
+      width: 14.2857%;
+      height: 14.2857%;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      will-change: transform;
+    }
+    .zg-unit img {
+      width: 92%; height: 92%;
+      object-fit: contain;
+      filter: drop-shadow(0 3px 5px #000a);
+    }
+    .zg-unit .zg-emo { font-size: clamp(18px, 4.6vw, 30px); filter: drop-shadow(0 3px 5px #000a); }
+    #zg-player img, #zg-player .zg-emo { animation: zd-enemy-idle 2.4s ease-in-out infinite; }
+    #zg-player.walking img, #zg-player.walking .zg-emo { animation: zg-step .19s linear infinite; }
+    @keyframes zg-step { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9%); } }
+    .zg-mob img, .zg-mob .zg-emo { animation: zd-enemy-idle 2s ease-in-out infinite; }
+    .zg-mob.elite img, .zg-mob.elite .zg-emo { filter: drop-shadow(0 0 5px #ffb347) drop-shadow(0 0 11px #ff7b00); }
+    .zg-mob.boss img, .zg-mob.boss .zg-emo { filter: drop-shadow(0 0 6px #f87171) drop-shadow(0 0 14px #b91c1c); }
+    .zg-mob.boss img { width: 132%; height: 132%; }
+    .zg-hurt { animation: zd-hit-flash .3s ease; }
+    .zg-hpbar {
+      position: absolute;
+      left: 10%; right: 10%; bottom: -1px;
+      height: 4px;
+      background: #000000b0;
+      border-radius: 2px;
+      overflow: hidden;
+      border: 1px solid #00000060;
+    }
+    .zg-hpbar i { display: block; height: 100%; background: linear-gradient(90deg, #d94a4a, #ff8a6a); transition: width .15s linear; }
+    #zg-fx { position: absolute; inset: 0; z-index: 6; pointer-events: none; overflow: hidden; }
+    .zg-dmg {
+      position: absolute;
+      font-family: var(--font-head);
+      font-size: clamp(11px, 2.6vw, 15px);
+      font-weight: 700;
+      text-shadow: 0 2px 4px #000, 0 0 6px #000;
+      animation: zd-dmg-rise .85s ease forwards;
+      transform: translate(-50%, -50%);
+      white-space: nowrap;
+    }
+    #zg-mark {
+      position: absolute;
+      width: 14.2857%; height: 14.2857%;
+      left: 0; top: 0;
+      z-index: 1;
+      pointer-events: none;
+      border: 2px dashed var(--gold2);
+      border-radius: 6px;
+      opacity: .75;
+      box-sizing: border-box;
+    }
+    /* Alt kontrol barı */
+    #zg-bar { margin-top: 8px; }
+    .zg-btn-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+    .zg-btn {
+      font-family: var(--font-head);
+      font-size: clamp(9px, 2.1vw, 11px);
+      padding: 9px 3px;
+      border-radius: 8px;
+      border: 1px solid var(--border2);
+      background: var(--panel3);
+      color: var(--perg2);
+      cursor: pointer;
+      text-align: center;
+      line-height: 1.3;
+      transition: border-color .15s, background .15s;
+    }
+    .zg-btn:hover:not(:disabled) { border-color: var(--gold2); }
+    .zg-btn:disabled { opacity: .42; cursor: not-allowed; }
+    .zg-btn.on { border-color: #7aff9a; background: #132014; color: #9df5b3; }
+    .zg-btn.danger { border-color: #7a3a3a; color: #f0a0a0; }
+    .zg-bag {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      background: var(--panel3);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 7px 10px;
+      margin-bottom: 6px;
+      font-size: 10.5px;
+    }
+    .zg-bag b { font-family: var(--font-head); color: var(--gold2); }
+    .zg-top {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      margin-bottom: 6px; font-size: 10.5px; color: var(--ink3);
+    }
+    .zg-hp-wrap { flex: 1; min-width: 90px; height: 10px; background: var(--panel3); border: 1px solid var(--border2); border-radius: 6px; overflow: hidden; }
+    .zg-hp-wrap i { display: block; height: 100%; background: linear-gradient(90deg, #b91c1c, #ef4444); transition: width .2s linear; }
+
     @keyframes wmPulse {
 
       0%,
@@ -11235,6 +11359,9 @@
        PAGE NAVIGATION
     ══════════════════════════════════════ */
     function showPage(p) {
+      // Zindandan ayrılmak = GÜVENLİ ÇIKIŞ. Bilinçli olarak "duraklat" hâli yok:
+      // olsaydı oyuncu savaşın ortasında pazara gidip iksir alıp dönebilirdi.
+      if (ZD.active && p !== 'game') zgExit(true);
       document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
       document.getElementById('p-' + p).classList.add('active');
       document.querySelectorAll('.bnav-btn').forEach(el => el.classList.remove('active'));
@@ -11312,6 +11439,7 @@
       if (btn) btn.classList.add('cs-active');
     }
     function ggo(s) {
+      if (ZD.active && s !== 'zindan') zgExit(true);   // sekme değiştirmek = güvenli çıkış
       document.querySelectorAll('[id^="gs-"]').forEach(el => { el.style.display = 'none'; });
       document.querySelectorAll('[id^="gt-"]').forEach(el => el.classList.remove('active'));
       document.getElementById('gs-' + s).style.display = 'block';
@@ -14054,6 +14182,7 @@
       totalXP: 0,
       // Savaş state
       battle: null,         // {enemy, enemyHp, playerHp, defending, log}
+      g: null,              // ızgara koşusu (zgNewRun) — 7×7 gerçek zamanlı mod
     };
 
     function zdGetTicketKey() { try { return getServerNow().toISOString().slice(0, 10); } catch (e) { return new Date().toISOString().slice(0, 10); } }
@@ -14167,15 +14296,17 @@
       if (!el) return;
       zdCheckTicketReset();
 
-      if (ZD.battle) {
-        el.innerHTML = `<div id="zindan-wrap">${zdBattleHTML()}</div>`;
-        return;
-      }
       if (!ZD.active) {
+        zgStopLoop();
         el.innerHTML = `<div id="zindan-wrap">${zdEntranceHTML()}</div>`;
         return;
       }
-      el.innerHTML = `<div id="zindan-wrap">${zdFloorHTML()}</div>`;
+      // Izgara modu: sahne bir kez kurulur, döngü transform'ları günceller
+      if (!ZD.g) zgNewRun(false);
+      el.innerHTML = `<div id="zindan-wrap">${zgStageHTML()}</div>`;
+      zgRenderBar();
+      zgPaint();
+      zgStartLoop();
     }
 
     /* ── GİRİŞ EKRANI — kademeye göre arka plan + kadro bilgisi ── */
@@ -14370,11 +14501,11 @@
       ZD.active = true;
       ZD.tier = zdPlayerTier(); // kademe girişte kilitlenir (içeride seviye atlansa da değişmez)
       ZD.floor = 1;
-      ZD.rooms = zdGenFloor(1);
       ZD.currentRoom = null;
       ZD.totalGold = 0;
       ZD.totalXP = 0;
       ZD.battle = null;
+      zgNewRun(false);   // 7×7 ızgara koşusu başlar
       updateHUD();
       if (currentUser) sbSave();
       renderZindan();
@@ -14724,6 +14855,604 @@
     </div>
     <button class="btn" style="width:100%;" onclick="closeGModal();renderZindan();">Tamam</button>
   `);
+      renderZindan();
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       ZİNDAN — GERÇEK ZAMANLI 7×7 IZGARA DÖVÜŞÜ
+       Eski tur-tabanlı oda sistemi (zdGenFloor/zdFloorHTML/zdBattleHTML/
+       zdAction/zdEnterRoom) artık ÇAĞRILMIYOR — ölü kod olarak duruyor,
+       temizliği TODO'da.
+
+       Tasarım kararları:
+       - Yürürken SALDIRAMAZSIN ama vurulabilirsin (dokunulmazlık yok).
+       - Tüm canavarlar yakın dövüşçü; oyuncuya doğru kare kare yürürler.
+       - Menzil sınıfa bağlı (zgRange): Savaşçı/Haydut 1, Büyücü 3, Avcı 4.
+       - Saldırı hızı çeviklikten gelir (zgAtkInterval).
+       - Ganimet önce ÇANTAYA girer; güvenli çıkışta envantere aktarılır,
+         ölünce kaybedilir (1. kademede yarısı korunur).
+       - Sekme değiştirmek = güvenli çıkış. "Duraklat" hâli YOK; olsaydı
+         oyuncu savaşın ortasında iksir alıp geri dönerdi.
+       - Birimler .zg-unit ile konumlanır; eleman tam 1/7 kare olduğu için
+         transform:translate(x*100%, y*100%) tam kare kaydırır.
+    ══════════════════════════════════════════════════════════════ */
+    const ZG = {
+      W: 7, H: 7,
+      TICK: 100,            // oyun döngüsü periyodu (ms)
+      SPAWN_MS: 1000,       // canavar doğma aralığı
+      SPAWN_MS_AUTO: 500,   // oto-saldırıda daha sık doğar
+      MAX_MOBS: 6,          // aynı anda 8 kare komşu olduğu için tavan düşük
+      MAX_MOBS_AUTO: 9,
+      MOB_STEP_MS: 850,     // canavarın 1 kare ilerleme süresi
+      MOB_HIT_MS: 1500,     // canavarın saldırı aralığı
+      WALK_MS: 190,         // oyuncunun 1 kare yürüme süresi
+      PULL_CD: 12000,       // Canavar Çek bekleme süresi
+      POTION_CD: 3000,      // iksir bekleme (tur-tabanlıdaki "1 tur" karşılığı)
+      AUTO_XP: 0.90,        // oto-saldırıda XP çarpanı
+      TROOP_SHARE: 0.6,     // birliklerin vuruşa kattığı hasar oranı
+      ELITE: { hp: 3.0, atk: 1.35, xp: 2.2, gold: 2.0 },
+      RANGE: { warrior: 1, knight: 1, rogue: 1, mage: 3, ranger: 4 },
+    };
+    let zgLoopId = null;
+
+    function zgRange() { return ZG.RANGE[G.classId] || 1; }
+    function zgAtkInterval() {
+      const agi = getEffectiveStats().agi || 0;
+      return Math.max(420, Math.round(1400 - agi * 26));
+    }
+    function zgKillQuota(floor) { return 8 + floor * 2; }
+    function zgIn(x, y) { return x >= 0 && y >= 0 && x < ZG.W && y < ZG.H; }
+    function zgDist(ax, ay, bx, by) { return Math.max(Math.abs(ax - bx), Math.abs(ay - by)); }
+
+    /* ── Koşu durumu ── */
+    function zgNewRun(keepBag) {
+      const old = ZD.g;
+      ZD.g = {
+        px: 3, py: 3,
+        path: [], stepT0: 0,
+        mobs: [], uid: 1,
+        hp: (keepBag && old) ? old.hp : Math.max(1, G.stats.hp || 1),
+        lastSpawn: 0, lastAtk: 0, lastSec: Date.now(),
+        lastPull: Date.now() - ZG.PULL_CD, lastPotion: 0,
+        kills: 0, quota: zgKillQuota(ZD.floor),
+        bossSpawned: false, bossDead: false,
+        auto: (keepBag && old) ? old.auto : false,
+        bag: (keepBag && old) ? old.bag : { gold: 0, xp: 0, items: [], mats: {} },
+        over: false,
+      };
+    }
+    function zgStartLoop() { if (!zgLoopId) zgLoopId = setInterval(zgTick, ZG.TICK); }
+    function zgStopLoop() { if (zgLoopId) { clearInterval(zgLoopId); zgLoopId = null; } }
+
+    /* Sayfa arkaplana düşerse döngü dursun — oyunun geri kalanına da
+       erişilemediği için burada istismar yok. */
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) zgStopLoop();
+      else if (ZD.active && ZD.g && !ZD.g.over) { ZD.g.lastSec = Date.now(); zgStartLoop(); }
+    });
+
+    /* ── Doğuş ── */
+    function zgFreeSpot(minDist) {
+      const g = ZD.g;
+      for (let i = 0; i < 80; i++) {
+        const x = Math.floor(Math.random() * ZG.W), y = Math.floor(Math.random() * ZG.H);
+        if (zgDist(x, y, g.px, g.py) < minDist) continue;
+        if (g.mobs.some(m => m.hp > 0 && m.x === x && m.y === y)) continue;
+        return { x, y };
+      }
+      return null;
+    }
+    function zgSpawnMob(elite) {
+      const g = ZD.g; if (!g) return null;
+      const T = ZD_TIERS[ZD.tier || 1] || ZD_TIERS[1];
+      const pool = zdRegionMobs(T.mobs);
+      const base = pool[Math.floor(Math.random() * pool.length)];
+      const mult = 1 + (ZD.floor - 1) * 0.25;
+      const e = elite ? ZG.ELITE : { hp: 1, atk: 1, xp: 1, gold: 1 };
+      const spot = zgFreeSpot(elite ? 2 : 3);
+      if (!spot) return null;
+      const hp = Math.max(1, Math.floor(base.hp * mult * e.hp));
+      const now = Date.now();
+      const m = {
+        uid: g.uid++, id: base.id, name: (elite ? 'Azılı ' : '') + base.name,
+        icon: base.icon, img: base.img, x: spot.x, y: spot.y,
+        hp, maxHp: hp,
+        atk: Math.max(1, Math.floor(base.atk * mult * e.atk)),
+        def: Math.floor(base.def * mult),
+        xp: Math.max(1, Math.floor(base.xp * mult * e.xp)),
+        gold: Math.max(1, Math.floor(base.gold * mult * e.gold)),
+        elite: !!elite, boss: false, st: {},
+        lastStep: now, lastHit: now,
+      };
+      g.mobs.push(m);
+      return m;
+    }
+    function zgSpawnBoss() {
+      const g = ZD.g;
+      const T = ZD_TIERS[ZD.tier || 1] || ZD_TIERS[1];
+      const isFinal = ZD.floor >= ZD_FLOORS;
+      let base;
+      if (isFinal) {
+        base = { ...(Math.random() < ZD_STRONG_BOSS_CHANCE ? T.strongBoss : T.boss) };
+      } else {
+        const pool = zdRegionMobs(T.mobs);
+        const b = pool[Math.floor(Math.random() * pool.length)];
+        const mult = 1 + (ZD.floor - 1) * 0.25;
+        base = {
+          ...b, name: 'Azılı ' + b.name,
+          hp: Math.floor(b.hp * mult * 3.5), atk: Math.floor(b.atk * mult * 1.3),
+          def: Math.floor(b.def * mult * 1.2), gold: Math.floor(b.gold * mult * 3),
+          xp: Math.floor(b.xp * mult * 3),
+        };
+      }
+      const spot = zgFreeSpot(4) || zgFreeSpot(2) || { x: 0, y: 0 };
+      const now = Date.now();
+      g.mobs.push({
+        uid: g.uid++, id: base.id, name: base.name, icon: base.icon, img: base.img,
+        x: spot.x, y: spot.y, hp: base.hp, maxHp: base.hp,
+        atk: base.atk, def: base.def, xp: base.xp, gold: base.gold,
+        elite: false, boss: true, st: {}, lastStep: now, lastHit: now,
+      });
+      g.bossSpawned = true;
+      slideNotif('👿', base.name + ' belirdi!', isFinal ? 'Kat sonu boss savaşı' : 'Kat muhafızı');
+      zgRenderBar();
+    }
+
+    /* ── Hareket ── */
+    function zgStepToward(m) {
+      const g = ZD.g;
+      const dx = Math.sign(g.px - m.x), dy = Math.sign(g.py - m.y);
+      const tries = [{ x: m.x + dx, y: m.y + dy }, { x: m.x + dx, y: m.y }, { x: m.x, y: m.y + dy }];
+      for (const t of tries) {
+        if (t.x === m.x && t.y === m.y) continue;
+        if (!zgIn(t.x, t.y)) continue;
+        if (t.x === g.px && t.y === g.py) continue;
+        if (g.mobs.some(o => o.hp > 0 && o.uid !== m.uid && o.x === t.x && o.y === t.y)) continue;
+        m.x = t.x; m.y = t.y; return;
+      }
+    }
+    function zgMoveTo(x, y) {
+      const g = ZD.g;
+      if (!ZD.active || !g || g.over) return;
+      if (!zgIn(x, y)) return;
+      if (x === g.px && y === g.py) { g.path = []; zgSetWalking(false); return; }
+      // Faz 1'de duvar yok — hedefe doğru kare kare ilerlenir
+      const path = [];
+      let cx = g.px, cy = g.py, guard = 0;
+      while ((cx !== x || cy !== y) && guard++ < 20) {
+        cx += Math.sign(x - cx); cy += Math.sign(y - cy);
+        path.push({ x: cx, y: cy });
+      }
+      g.path = path;
+      g.stepT0 = Date.now();
+      zgSetWalking(true);
+    }
+
+    /* ── Dövüş ── */
+    function zgPickTarget() {
+      const g = ZD.g, r = zgRange();
+      let best = null, bd = 99;
+      for (const m of g.mobs) {
+        if (m.hp <= 0) continue;
+        const d = zgDist(m.x, m.y, g.px, g.py);
+        if (d > r) continue;
+        if (d < bd || (d === bd && best && m.hp < best.hp)) { best = m; bd = d; }
+      }
+      return best;
+    }
+    function zgHit(m, eff) {
+      const g = ZD.g;
+      const rage = ringRageMult(g.hp, eff.maxhp);
+      let dmg = Math.max(1, Math.floor(eff.physDmg * (0.85 + Math.random() * 0.3) * rage) - Math.floor((m.def || 0) * 0.5));
+      let tag = '';
+      const critMult = 1 + Math.max(0.5, (eff.crit || 0) / 100);
+      if (Math.random() < eff.critChance) { dmg = Math.floor(dmg * critMult); tag = '💥'; }
+      else if (G.classId === 'ranger' && Math.random() < (eff.trueDmgChance || 0)) { dmg = Math.floor(dmg * 1.30); tag = '🎯'; }
+      const troopDmg = armedTroops().reduce((a, c) => a + troopAttackDmg(c), 0);
+      if (troopDmg > 0) dmg += Math.max(1, Math.floor(troopDmg * ZG.TROOP_SHARE));
+      m.hp = Math.max(0, m.hp - dmg);
+      zgFloat(m.x, m.y, tag + dmg, tag ? '#ffd166' : '#ffffff');
+      zgFlash(m.uid);
+      const r = ringOnHit(m.st, dmg, g.hp, eff.maxhp);
+      g.hp = r.hp;
+      if (r.heal > 0) zgFloat(g.px, g.py, '+' + r.heal, '#7aff9a');
+      if (m.hp <= 0) zgKill(m);
+    }
+    function zgMobHit(m, eff) {
+      const g = ZD.g;
+      if (Math.random() < (eff.dodgeChance || 0)) { zgFloat(g.px, g.py, 'kaçtın', '#9fd0ff'); return; }
+      const troopRed = Math.min(0.25, troopArmorDef() * 0.005);
+      const red = Math.min(0.80, (eff.damageReduction || 0) + troopRed);
+      const dmg = Math.max(1, Math.floor(m.atk * (0.85 + Math.random() * 0.3) * (1 - red)));
+      g.hp = Math.max(0, g.hp - dmg);
+      zgFloat(g.px, g.py, '-' + dmg, '#ff8a8a');
+      zgFlash('player');
+    }
+    function zgRingSecond(eff) {
+      const g = ZD.g;
+      for (const m of [...g.mobs]) {
+        if (m.hp <= 0) continue;
+        const burn = ringBurnTick(m.st, m.maxHp);
+        if (burn > 0) {
+          m.hp = Math.max(0, m.hp - burn);
+          zgFloat(m.x, m.y, '🔥' + burn, '#ff9d5c');
+          if (m.hp <= 0) zgKill(m);
+        }
+      }
+      // Arınma iyileşmesi saniyede BİR kez — canavar sayısıyla çarpılmamalı
+      const rg = ringRegenHeal(eff.maxhp);
+      if (rg > 0 && g.hp > 0 && g.hp < eff.maxhp) {
+        const healed = Math.min(rg, eff.maxhp - g.hp);
+        g.hp += healed;
+        zgFloat(g.px, g.py, '+' + healed, '#9ad8ff');
+      }
+    }
+
+    /* ── Ganimet (çantaya) ──
+       Mevcut drop fonksiyonları eşyayı doğrudan G.inventory'ye ekliyor.
+       Izgara modunda ganimet önce çantaya girmeli, bu yüzden eklenen
+       eşyayı envanterden alıp çantaya taşıyoruz. */
+    function zgBagRoom() { return invCount() + ZD.g.bag.items.length < invCap(); }
+    function zgCapture(fn) {
+      const before = G.inventory.length;
+      fn();
+      const added = G.inventory.splice(before);
+      if (added.length) ZD.g.bag.items.push(...added);
+      return added;
+    }
+    function zgBagMaterial(m, guaranteed) {
+      const pool = MOB_DROPS[m.id];
+      if (!pool || !pool.length) return;
+      if (!guaranteed && Math.random() >= 0.55) return;
+      const key = pool[Math.floor(Math.random() * pool.length)];
+      const amt = guaranteed ? (1 + Math.floor(Math.random() * 2)) : 1;
+      ZD.g.bag.mats[key] = (ZD.g.bag.mats[key] || 0) + amt;
+    }
+    function zgBagEquipment(m, isFinal) {
+      const tier = ZD.tier || 1;
+      if (!zgBagRoom()) { toast('⚠ Envanter dolu — eşya düşmedi!'); return; }
+      if (isFinal || Math.random() < ZD_MIDBOSS_WEAPON_CHANCE) {
+        zgCapture(() => {
+          if (Math.random() < 0.5) zdBossWeaponDrop(m, ZD.floor);
+          else dropRandomArmor(tier, 'Zindan Zırhı');
+        });
+      }
+      if (Math.random() < (isFinal ? 0.30 : 0.18) && zgBagRoom()) {
+        zgCapture(() => dropRandomRing(zdRingPool(tier), Math.max(0, tier - 2), 'Zindan yüzüğü'));
+      }
+    }
+    function zgKill(m) {
+      const g = ZD.g;
+      const xpMult = g.auto ? ZG.AUTO_XP : 1;
+      g.bag.gold += m.gold;
+      g.bag.xp += Math.max(1, Math.round(m.xp * xpMult));
+      g.kills++;
+      awardTroopCombatXP(Math.max(3, Math.floor(m.xp * 0.4)));
+      zgFloat(m.x, m.y, '+' + m.gold + '🪙', '#e8c07a');
+      zgBagMaterial(m, m.boss || m.elite);
+      if (m.boss) {
+        g.bossDead = true;
+        trackAch('zdboss');
+        zgBagEquipment(m, ZD.floor >= ZD_FLOORS);
+        slideNotif('🏆', m.name + ' yenildi!', ZD.floor >= ZD_FLOORS ? 'Zindan tamamlandı' : 'Alt kata inebilirsin');
+      }
+      g.mobs = g.mobs.filter(x => x.uid !== m.uid);
+      const el = document.getElementById('zg-u-' + m.uid);
+      if (el) el.remove();
+      zgRenderBar();
+    }
+
+    /* ── Ana döngü ── */
+    function zgTick() {
+      const g = ZD.g;
+      if (!ZD.active || !g || g.over) return;
+      const now = Date.now();
+      const eff = getEffectiveStats();
+
+      if (g.path.length && now - g.stepT0 >= ZG.WALK_MS) {
+        const n = g.path.shift();
+        g.px = n.x; g.py = n.y;
+        g.stepT0 = now;
+        if (!g.path.length) zgSetWalking(false);
+      }
+      const moving = g.path.length > 0;
+
+      const spawnMs = g.auto ? ZG.SPAWN_MS_AUTO : ZG.SPAWN_MS;
+      const cap = g.auto ? ZG.MAX_MOBS_AUTO : ZG.MAX_MOBS;
+      // Doğuş yalnızca kat muhafızı SAHADAYKEN durur (boss dövüşü temiz olsun).
+      // Boss öldükten sonra tekrar başlar — oyuncu isterse katta grind'e devam eder,
+      // inmeye ya da çıkmaya kendi karar verir.
+      const bossAlive = g.bossSpawned && !g.bossDead;
+      if (!bossAlive && now - g.lastSpawn >= spawnMs && g.mobs.length < cap) {
+        g.lastSpawn = now;
+        zgSpawnMob(false);
+      }
+      if (!g.bossSpawned && g.kills >= g.quota) zgSpawnBoss();
+
+      // Yürürken saldıramaz — hareketin bedeli bu
+      if (!moving && now - g.lastAtk >= zgAtkInterval()) {
+        const t = zgPickTarget();
+        if (t) { g.lastAtk = now; zgHit(t, eff); }
+      }
+
+      for (const m of g.mobs) {
+        if (m.hp <= 0) continue;
+        if (zgDist(m.x, m.y, g.px, g.py) <= 1) {
+          if (now - m.lastHit >= ZG.MOB_HIT_MS) { m.lastHit = now; zgMobHit(m, eff); }
+        } else if (now - m.lastStep >= ZG.MOB_STEP_MS) {
+          m.lastStep = now;
+          zgStepToward(m);
+        }
+      }
+
+      if (now - g.lastSec >= 1000) { g.lastSec = now; zgRingSecond(eff); }
+      if (g.hp <= 0) { zgDeath(); return; }
+      zgPaint();
+    }
+
+    /* ── RENDER ──
+       Sahne bir kez kurulur; her tick'te yalnızca transform ve can barları
+       güncellenir (innerHTML yeniden basılırsa görseller titrer). */
+    function zgUnitAt(el, x, y) { el.style.transform = 'translate(' + (x * 100) + '%,' + (y * 100) + '%)'; }
+    function zgSetWalking(on) {
+      const pe = document.getElementById('zg-player');
+      if (pe) pe.classList.toggle('walking', !!on);
+    }
+    function zgFloat(x, y, text, color) {
+      const fx = document.getElementById('zg-fx'); if (!fx) return;
+      const d = document.createElement('div');
+      d.className = 'zg-dmg';
+      d.style.color = color || '#fff';
+      d.style.left = ((x + 0.5) * 100 / ZG.W) + '%';
+      d.style.top = ((y + 0.35) * 100 / ZG.H) + '%';
+      d.textContent = text;
+      fx.appendChild(d);
+      setTimeout(() => d.remove(), 900);
+    }
+    function zgFlash(uid) {
+      const el = document.getElementById(uid === 'player' ? 'zg-player' : 'zg-u-' + uid);
+      if (!el) return;
+      el.classList.remove('zg-hurt'); void el.offsetWidth; el.classList.add('zg-hurt');
+      setTimeout(() => el.classList.remove('zg-hurt'), 320);
+    }
+    function zgPaint() {
+      const g = ZD.g; if (!g) return;
+      const layer = document.getElementById('zg-units'); if (!layer) return;
+      let pe = document.getElementById('zg-player');
+      if (!pe) {
+        const cls = CLASSES.find(c => c.id === G.classId) || CLASSES[0];
+        pe = document.createElement('div');
+        pe.className = 'zg-unit'; pe.id = 'zg-player';
+        pe.innerHTML = '<img src="' + cls.img + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-block\'"><span class="zg-emo" style="display:none;">' + cls.icon + '</span>';
+        pe.style.transition = 'transform ' + ZG.WALK_MS + 'ms linear';
+        layer.appendChild(pe);
+      }
+      zgUnitAt(pe, g.px, g.py);
+      for (const m of g.mobs) {
+        let e = document.getElementById('zg-u-' + m.uid);
+        if (!e) {
+          e = document.createElement('div');
+          e.id = 'zg-u-' + m.uid;
+          e.className = 'zg-unit zg-mob' + (m.elite ? ' elite' : '') + (m.boss ? ' boss' : '');
+          e.innerHTML = '<img src="' + IMG_BASE + m.img + '.webp" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-block\'">'
+            + '<span class="zg-emo" style="display:none;">' + m.icon + '</span>'
+            + '<span class="zg-hpbar"><i style="width:100%"></i></span>';
+          e.style.transition = 'transform ' + ZG.MOB_STEP_MS + 'ms linear';
+          layer.appendChild(e);
+        }
+        zgUnitAt(e, m.x, m.y);
+        const bar = e.querySelector('.zg-hpbar i');
+        if (bar) bar.style.width = Math.max(0, Math.round(m.hp / m.maxHp * 100)) + '%';
+      }
+      const eff = getEffectiveStats();
+      const fill = document.getElementById('zg-hp-fill');
+      if (fill) fill.style.width = Math.max(0, Math.round(g.hp / eff.maxhp * 100)) + '%';
+      const txt = document.getElementById('zg-hp-txt');
+      if (txt) txt.textContent = Math.max(0, Math.round(g.hp)) + '/' + eff.maxhp;
+      const mk = document.getElementById('zg-mark');
+      if (mk) {
+        if (g.path.length) { const last = g.path[g.path.length - 1]; mk.style.display = 'block'; zgUnitAt(mk, last.x, last.y); }
+        else mk.style.display = 'none';
+      }
+    }
+    function zgStageHTML() {
+      const g = ZD.g;
+      const eff = getEffectiveStats();
+      const bg = IMG_BASE + (ZD.tier || 1) + 'zindan' + (ZD.floor || 1) + 'kat.webp';
+      let cells = '';
+      for (let i = 0; i < ZG.W * ZG.H; i++) {
+        cells += '<div class="zg-cell" onclick="zgMoveTo(' + (i % ZG.W) + ',' + Math.floor(i / ZG.W) + ')"></div>';
+      }
+      const hpPct = g ? Math.max(0, Math.round(g.hp / eff.maxhp * 100)) : 100;
+      return '<div id="zg-wrap">'
+        + '<div class="zg-top">'
+        + '<span style="font-family:var(--font-head);color:var(--gold);white-space:nowrap;">' + (ZD.tier || 1) + '. SEVİYE · KAT ' + (ZD.floor || 1) + '/' + ZD_FLOORS + '</span>'
+        + '<span class="zg-hp-wrap"><i id="zg-hp-fill" style="width:' + hpPct + '%"></i></span>'
+        + '<span id="zg-hp-txt" style="font-family:var(--font-head);color:var(--hp);white-space:nowrap;">' + (g ? Math.round(g.hp) : 0) + '/' + eff.maxhp + '</span>'
+        + '</div>'
+        + '<div id="zg-stage" style="background-image:url(\'' + bg + '\')">'
+        + '<div id="zg-mark" style="display:none;"></div>'
+        + '<div id="zg-cells">' + cells + '</div>'
+        + '<div id="zg-units"></div>'
+        + '<div id="zg-fx"></div>'
+        + '</div>'
+        + '<div id="zg-bar"></div>'
+        + '</div>';
+    }
+    function zgRenderBar() {
+      const el = document.getElementById('zg-bar'); if (!el) return;
+      const g = ZD.g; if (!g) return;
+      const pullLeft = Math.max(0, Math.ceil((g.lastPull + ZG.PULL_CD - Date.now()) / 1000));
+      const canDescend = g.bossDead && ZD.floor < ZD_FLOORS;
+      const finished = g.bossDead && ZD.floor >= ZD_FLOORS;
+      const matCount = Object.values(g.bag.mats).reduce((a, b) => a + b, 0);
+      const prog = g.bossSpawned
+        ? (g.bossDead ? '<b style="color:#7aff9a;">Kat temizlendi</b>' : '<b style="color:#f87171;">Kat muhafızı sahada!</b>')
+        : 'Canavar <b>' + g.kills + '/' + g.quota + '</b>';
+      const sub = s => '<br><span style="font-size:8.5px;opacity:.72;">' + s + '</span>';
+      const lastBtn = finished
+        ? '<button class="zg-btn on" onclick="zgExit()">🏁 Zindanı Bitir' + sub('ganimeti al') + '</button>'
+        : canDescend
+          ? '<button class="zg-btn on" onclick="zgDescend()">⬇ Alt Kata İn' + sub('kat ' + (ZD.floor + 1)) + '</button>'
+          : '<button class="zg-btn danger" onclick="zgExit()">🚪 Zindandan Çık' + sub('ganimeti al') + '</button>';
+      el.innerHTML =
+        '<div class="zg-bag">'
+        + '<span>🎒</span><span><b>' + g.bag.gold + '</b>🪙</span><span><b>' + g.bag.xp + '</b>XP</span>'
+        + '<span><b>' + g.bag.items.length + '</b> eşya</span><span><b>' + matCount + '</b> materyal</span>'
+        + '<span style="margin-left:auto;">' + prog + '</span>'
+        + '</div>'
+        + '<div class="zg-btn-row">'
+        + '<button class="zg-btn ' + (g.auto ? 'on' : '') + '" onclick="zgToggleAuto()">' + (g.auto ? '⚡ OTO AÇIK' : '⚡ Oto Saldırı') + sub(g.auto ? 'çok canavar · −%10 XP' : 'XP tam') + '</button>'
+        + '<button class="zg-btn" onclick="zgPull()" ' + (pullLeft > 0 || g.bossSpawned ? 'disabled' : '') + '>👹 Canavar Çek' + sub(pullLeft > 0 ? pullLeft + 'sn' : '+XP +ganimet') + '</button>'
+        + '<button class="zg-btn" onclick="zgPotion()">🧪 İksir' + sub('can bas') + '</button>'
+        + lastBtn
+        + '</div>'
+        + ((canDescend || finished) ? '<button class="zg-btn danger" style="width:100%;margin-top:5px;" onclick="zgExit()">🚪 Zindandan Çık — ganimeti garantiye al</button>' : '');
+    }
+
+    /* ── Butonlar ── */
+    function zgToggleAuto() {
+      const g = ZD.g; if (!g) return;
+      g.auto = !g.auto;
+      toast(g.auto ? '⚡ Oto saldırı açık — daha çok canavar, −%10 XP' : '⚡ Oto saldırı kapalı');
+      zgRenderBar();
+    }
+    function zgPull() {
+      const g = ZD.g; if (!g || g.over) return;
+      if (g.bossSpawned) { toast('Kat muhafızı sahadayken canavar çekemezsin!'); return; }
+      const now = Date.now();
+      if (now - g.lastPull < ZG.PULL_CD) { toast('Biraz bekle...'); return; }
+      g.lastPull = now;
+      const m = zgSpawnMob(true);
+      if (m) { toast('👹 ' + m.name + ' geliyor! Daha çok XP ve ganimet.'); zgRenderBar(); }
+      else toast('Yer yok — önce biraz temizle.');
+    }
+    function zgPotion() {
+      const g = ZD.g; if (!g || g.over) return;
+      if (Date.now() - g.lastPotion < ZG.POTION_CD) { toast('🧪 İksir hazır değil.'); return; }
+      const potions = G.inventory.filter(i => (i.cat === 'consumable' || i.type === 'İksir') && (i.stats && (i.stats.hp_restore || i.stats.hp_restore_pct)));
+      if (!potions.length) { toast('🧪 Envanterinde can iksiri yok!'); return; }
+      const eff = getEffectiveStats();
+      const rows = potions.map(p => {
+        const heal = p.stats.hp_restore_pct
+          ? Math.floor(eff.maxhp * p.stats.hp_restore_pct / 100 * potionPowerMult())
+          : Math.floor(p.stats.hp_restore * potionPowerMult());
+        return '<div onclick="closeGModal();zgUsePotion(' + p.id + ')" style="display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:6px;border-radius:8px;border:1px solid var(--border2);background:var(--panel2);cursor:pointer;">'
+          + '<span style="font-size:24px;">' + p.icon + '</span>'
+          + '<div style="flex:1;text-align:left;">'
+          + '<div style="font-size:14px;color:var(--perg);">' + esc(p.name) + (p.qty && p.qty > 1 ? ' <span style="color:var(--gold);">x' + p.qty + '</span>' : '') + '</div>'
+          + '<div style="font-size:11px;color:var(--g-green);">+' + heal + ' can</div>'
+          + '</div></div>';
+      }).join('');
+      showGModal('<div style="text-align:center;margin-bottom:10px;">'
+        + '<div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);">🧪 İKSİR KULLAN</div>'
+        + '<div style="font-size:11px;color:#f0a050;margin-top:4px;">⚠ Savaş durmaz — canavarlar vurmaya devam eder!</div>'
+        + '</div>' + rows
+        + '<button class="btn btn-ghost" style="width:100%;margin-top:6px;" onclick="closeGModal()">Vazgeç</button>');
+    }
+    function zgUsePotion(itemId) {
+      const g = ZD.g; if (!g || g.over) return;
+      const idx = G.inventory.findIndex(i => i.id === itemId);
+      if (idx < 0) { toast('İksir bulunamadı.'); return; }
+      const p = G.inventory[idx];
+      const eff = getEffectiveStats();
+      const heal = p.stats.hp_restore_pct
+        ? Math.floor(eff.maxhp * p.stats.hp_restore_pct / 100 * potionPowerMult())
+        : Math.floor((p.stats.hp_restore || 0) * potionPowerMult());
+      const gained = Math.min(heal, eff.maxhp - g.hp);
+      g.hp = Math.min(eff.maxhp, g.hp + heal);
+      g.lastPotion = Date.now();
+      if (p.qty && p.qty > 1) p.qty--; else G.inventory.splice(idx, 1);
+      zgFloat(g.px, g.py, '+' + gained, '#7aff9a');
+      toast('🧪 ' + p.name + ' içtin (+' + gained + ' can)');
+      updateInvStrip();
+    }
+    function zgDescend() {
+      const g = ZD.g;
+      if (!g || !g.bossDead || ZD.floor >= ZD_FLOORS) return;
+      ZD.floor++;
+      zgNewRun(true); // çanta ve can alt kata iner — derinleştikçe risk büyür
+      toast('⬇ ' + ZD.floor + '. kata indin.');
+      renderZindan();
+    }
+
+    /* ── Çıkış / ölüm ── */
+    function zgBankBag(ratio) {
+      const g = ZD.g; if (!g) return { gold: 0, xp: 0, items: 0, mats: 0 };
+      const r = (ratio == null) ? 1 : ratio;
+      const gold = Math.floor(g.bag.gold * r);
+      const xp = Math.floor(g.bag.xp * r);
+      let items = 0, mats = 0;
+      if (gold > 0) { G.gold += gold; ZD.totalGold += gold; }
+      if (xp > 0) { gainXP(xp); ZD.totalXP += xp; }
+      for (const it of g.bag.items) {
+        if (r < 1 && Math.random() >= r) continue;   // kısmi kurtarmada eşya başına zar
+        if (invCount() >= invCap()) break;
+        G.inventory.push(it); items++;
+      }
+      for (const k of Object.keys(g.bag.mats)) {
+        const n = Math.floor(g.bag.mats[k] * r);
+        if (n > 0) { G.prodInv[k] = (G.prodInv[k] || 0) + n; mats += n; }
+      }
+      g.bag = { gold: 0, xp: 0, items: [], mats: {} };
+      return { gold, xp, items, mats };
+    }
+    function zgFinish() {
+      const g = ZD.g;
+      if (g) { g.over = true; G.stats.hp = Math.max(1, Math.round(g.hp)); }
+      zgStopLoop();
+      ZD.active = false;
+      ZD.battle = null;
+      ZD.g = null;
+      updateHUD();
+      if (currentUser) sbSave();
+    }
+    /* silent=true → sekme değiştirince otomatik güvenli çıkış */
+    function zgExit(silent) {
+      const g = ZD.g;
+      if (!ZD.active || !g) return;
+      const got = zgBankBag(1);
+      zgFinish();
+      if (silent) {
+        if (got.gold || got.xp || got.items || got.mats) {
+          toast('🚪 Zindandan çıktın — ganimet çantandan envantere geçti.');
+        }
+        return;
+      }
+      showGModal('<div style="text-align:center;margin-bottom:16px;">'
+        + '<div style="font-size:46px;margin-bottom:8px;">🎒</div>'
+        + '<div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);margin-bottom:8px;">SAĞ SALİM ÇIKTIN</div>'
+        + '<div style="font-size:12px;color:var(--ink3);line-height:1.9;">'
+        + 'Çantandakiler envanterine geçti:<br>'
+        + '<span style="color:var(--gold);">+' + got.gold + '🪙</span> · <span style="color:#7aaa5a;">+' + got.xp + 'XP</span><br>'
+        + '<span style="color:var(--perg2);">' + got.items + ' eşya · ' + got.mats + ' materyal</span>'
+        + '</div></div>'
+        + '<button class="btn" style="width:100%;" onclick="closeGModal();renderZindan();">Tamam</button>');
+      renderZindan();
+    }
+    function zgDeath() {
+      const g = ZD.g;
+      if (!g || g.over) return;
+      g.over = true;
+      zgStopLoop();
+      // 1. kademe bağışlayıcı: ganimetin yarısı kurtulur. Üstü tamamen gider.
+      const tier = ZD.tier || 1;
+      const ratio = tier === 1 ? 0.5 : 0;
+      const lostGold = g.bag.gold, lostXp = g.bag.xp, lostItems = g.bag.items.length;
+      const got = zgBankBag(ratio);
+      ZD.active = false; ZD.battle = null; ZD.g = null;
+      G.stats.hp = Math.max(1, Math.floor(getEffectiveStats().maxhp * 0.3));
+      updateHUD();
+      if (currentUser) sbSave();
+      showGModal('<div style="text-align:center;margin-bottom:16px;">'
+        + '<div style="font-size:52px;margin-bottom:8px;">💀</div>'
+        + '<div style="font-family:var(--font-head);font-size:16px;color:#f87171;margin-bottom:8px;">DÜŞTÜN!</div>'
+        + '<div style="font-size:12px;color:var(--ink3);line-height:1.9;">'
+        + (ratio > 0
+          ? 'Çantandakilerin <b style="color:var(--gold2);">yarısını</b> kurtardın:<br><span style="color:var(--gold);">+' + got.gold + '🪙</span> · <span style="color:#7aaa5a;">+' + got.xp + 'XP</span> · ' + got.items + ' eşya'
+          : '<b style="color:#f87171;">Çantandaki her şey kayboldu.</b><br>' + lostGold + '🪙 · ' + lostXp + 'XP · ' + lostItems + ' eşya gitti')
+        + '<br>Can %30\'a düştü.</div></div>'
+        + '<button class="btn" style="width:100%;" onclick="closeGModal();renderZindan();">Tamam</button>');
       renderZindan();
     }
 
