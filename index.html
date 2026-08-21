@@ -3452,7 +3452,10 @@
     @media(max-width:640px) {
       #zg-player .zg-sprite { --zg-scale: 2; }
     }
-    #zg-player img, #zg-player .zg-emo { animation: zd-enemy-idle 2.4s ease-in-out infinite; }
+    /* Oyuncunun boşta süzülme animasyonu KASITLI olarak yok — karakter
+       yerinde sabit durur, dalgalanma sadece canavarlarda kalır ki hareket
+       eden şey göze düşman gibi görünsün. Yürüme sekmesi (zg-step) duruyor,
+       o boşta değil sadece .walking sınıfı varken çalışıyor. */
     #zg-player.walking img, #zg-player.walking .zg-emo { animation: zg-step .19s linear infinite; }
     @keyframes zg-step { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9%); } }
     /* Canavar görselleri SOLA bakar (eski zindanda oyuncu solda, canavar
@@ -6158,14 +6161,30 @@
 
     /* ── Üst alan: Avatar + Kimlik ── */
     .char-top {
-      display: flex;
-      gap: 18px;
-      align-items: flex-start;
       padding: 16px;
       background: radial-gradient(ellipse at 30% 50%, #2e2010 0%, #1e1608 100%);
       border: 1px solid var(--border2);
       border-radius: 10px;
       box-shadow: inset 0 1px 0 #ffffff08, 0 3px 10px #00000060;
+    }
+
+    /* Avatar + kimlik yan yana; Can/Deneyim barları bunun ALTINDA.
+       Barlar eskiden .char-identity içindeydi ama oraya sığmıyorlardı:
+       bar satırının kendisi sabit 148px istiyor (68px etiket + 64px değer
+       + boşluklar), sol sütun ise 360px sabit ve avatar 160px alıyor.
+       Masaüstünde çubuğa ~2px kalıyordu, mobilde (kimlik ~110px) hiç. */
+    .char-top-row {
+      display: flex;
+      gap: 18px;
+      align-items: flex-start;
+    }
+
+    .char-bars {
+      margin-top: 14px;
+    }
+
+    .char-bars .mbar-wrap:last-child {
+      margin-bottom: 0;
     }
 
     /* ── Kalkan/Metal çerçeve ── */
@@ -7773,20 +7792,25 @@
 
               <!-- Avatar + Kimlik + Barlar -->
               <div class="char-top">
-                <div class="char-shield-wrap">
-                  <div class="char-shield" id="g-portrait"><svg></svg></div>
-                  <div class="char-shield-corner tl"></div>
-                  <div class="char-shield-corner tr"></div>
-                  <div class="char-shield-corner bl"></div>
-                  <div class="char-shield-corner br"></div>
-                </div>
-                <div class="char-identity">
-                  <div class="char-name" id="g-name">—</div>
-                  <div class="char-class" id="g-class">—</div>
-                  <div class="char-badges">
-                    <span class="char-badge badge-gold" id="g-lvl">Sv.1</span>
-                    <span class="char-badge badge-hp" id="g-hp-badge">❤ 100</span>
+                <div class="char-top-row">
+                  <div class="char-shield-wrap">
+                    <div class="char-shield" id="g-portrait"><svg></svg></div>
+                    <div class="char-shield-corner tl"></div>
+                    <div class="char-shield-corner tr"></div>
+                    <div class="char-shield-corner bl"></div>
+                    <div class="char-shield-corner br"></div>
                   </div>
+                  <div class="char-identity">
+                    <div class="char-name" id="g-name">—</div>
+                    <div class="char-class" id="g-class">—</div>
+                    <div class="char-badges">
+                      <span class="char-badge badge-gold" id="g-lvl">Sv.1</span>
+                      <span class="char-badge badge-hp" id="g-hp-badge">❤ 100</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- Barlar avatarın ALTINDA, tam genişlikte — yanına sığmıyorlar -->
+                <div class="char-bars">
                   <div class="mbar-wrap">
                     <div class="mbar-label">CAN</div>
                     <div class="mbar-bg">
@@ -20983,6 +21007,15 @@
         setTimeout(() => sbSave(), 1200);
       }
       if (p.mat_inv && typeof p.mat_inv === 'object') G.matInv = { ...G.matInv, ...p.mat_inv };
+      // Zindan oto pot eşiği: sunucudaki değer localStorage'ı ezer (hesap her
+      // cihazda aynı davransın). Sütun henüz yoksa undefined gelir, dokunulmaz.
+      if (p.autopot_at !== undefined && p.autopot_at !== null) {
+        const apAt = zgCfgClamp('at', p.autopot_at);
+        if (apAt != null) {
+          ZGCFG.at = apAt;
+          try { localStorage.setItem(ZGCFG_KEY, JSON.stringify(ZGCFG)); } catch (e) { }
+        }
+      }
       // Oyuncu envanteri ve kuşanılan eşyalar
       if (p.inventory && Array.isArray(p.inventory)) G.inventory = p.inventory;
       if (p.equipped && typeof p.equipped === 'object') G.equipped = { ...G.equipped, ...p.equipped };
@@ -21290,6 +21323,7 @@
             completed: [...(G.completedQuests || [])],
             dailyCollected: { date: questDateKey(), ids: [...(G.dailyCollected || [])] },
           },
+          autopot_at: ZGCFG.at,   // zindan oto pot eşiği (sütun yoksa güvenlik ağı atlar)
           farm_layout: { plots: farmUnlockedPlots() },
           companions: G.companions,
           captured_troops: G.capturedTroops,
