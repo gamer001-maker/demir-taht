@@ -3491,10 +3491,19 @@
       font-size: clamp(11px, 2.6vw, 15px);
       font-weight: 700;
       text-shadow: 0 2px 4px #000, 0 0 6px #000;
-      animation: zd-dmg-rise .85s ease forwards;
-      transform: translate(-50%, -50%);
+      animation: zg-dmg-rise .85s ease forwards;
       white-space: nowrap;
     }
+    /* Ortalama translate'i keyframe'in İÇİNDE olmak zorunda: animasyon
+       transform'u ezdiği için .zg-dmg üzerindeki ayrı translate hiç
+       uygulanmıyordu, yazılar kare merkezinden sağa kaçıyordu.
+       Eski tur-tabanlı zindanın .zd-dmg-popup'ı ortalama kullanmadığı için
+       zd-dmg-rise'a dokunmuyoruz — ona ayrı keyframe. */
+    @keyframes zg-dmg-rise {
+      0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, calc(-50% - 40px)) scale(1.3); }
+    }
+    .zg-pot-ico { width: 15px; height: 15px; object-fit: contain; vertical-align: -3px; }
     #zg-mark {
       position: absolute;
       width: 14.2857%; height: 14.2857%;
@@ -14924,9 +14933,13 @@
       MOB_HIT_MS: 1500,     // canavarın saldırı aralığı
       WALK_MS: 190,         // oyuncunun 1 kare yürüme süresi
       PULL_CD: 12000,       // Canavar Çek bekleme süresi
-      POTION_CD: 3000,      // iksir bekleme (tur-tabanlıdaki "1 tur" karşılığı)
       AUTO_XP: 0.90,        // oto-saldırıda XP çarpanı
-      AUTOPOT_AT: 0.40,     // oto pot: canın bu oranın altında iksir içilir
+      /* İksirler arası en az süre. Ayarlanabilir DEĞİL: "ne zaman içilsin"
+         sorusunu zaten eşik (ZGCFG.at) cevaplıyor, ikinci bir kadran aynı
+         şeyi kontrol ederdi. Burası sadece teknik taban — eşiğin altına
+         düşünce saniyede bir yudum. 500'e çekilmesi canı saniyede %20
+         doldurur ve oyuncuyu pratikte ölümsüz yapar. */
+      POTION_CD: 1000,
       TROOP_SHARE: 0.6,     // birliklerin vuruşa kattığı hasar oranı
       ELITE: { hp: 3.0, atk: 1.35, xp: 2.2, gold: 2.0 },
       RANGE: { warrior: 1, knight: 1, rogue: 1, mage: 3, ranger: 4 },
@@ -14955,7 +14968,9 @@
         kills: 0, quota: zgKillQuota(ZD.floor),
         bossSpawned: false, bossDead: false,
         auto: (keepBag && old) ? old.auto : false,
-        autoPot: (keepBag && old) ? old.autoPot : false,
+        // Oto pot hep açık — kapatmanın oyuncuya bir faydası yok.
+        // potionKey: oyuncunun seçtiği iksirin stackKeyOf'u (null = otomatik seç)
+        potionKey: (keepBag && old) ? old.potionKey : null,
         bag: (keepBag && old) ? old.bag : { gold: 0, xp: 0, items: [], mats: {} },
         over: false,
       };
@@ -15164,11 +15179,13 @@
     function zgKill(m) {
       const g = ZD.g;
       const xpMult = g.auto ? ZG.AUTO_XP : 1;
+      const xpGain = Math.max(1, Math.round(m.xp * xpMult));
       g.bag.gold += m.gold;
-      g.bag.xp += Math.max(1, Math.round(m.xp * xpMult));
+      g.bag.xp += xpGain;
       g.kills++;
       awardTroopCombatXP(Math.max(3, Math.floor(m.xp * 0.4)));
-      zgFloat(m.x, m.y, '+' + m.gold + '🪙', '#e8c07a');
+      // Altın + XP tek satırda, hasar yazısının üstündeki şeritte (lane 1)
+      zgFloat(m.x, m.y, '+' + m.gold + '🪙 +' + xpGain + 'XP', '#e8c07a', 1);
       zgBagMaterial(m, m.boss || m.elite);
       if (m.boss) {
         g.bossDead = true;
@@ -15277,9 +15294,49 @@
       sp._t2 = setTimeout(() => show(0), 175);
     }
 
+    /* ── OTO POT AYARLARI ──
+       Tek ayar var: at = canın bu yüzdesinin altında iksir içilir.
+       Bekleme süresi bilerek ayarlanabilir DEĞİL (ZG.POTION_CD sabit) —
+       oyuncuya bırakılsa 0.01sn yazıp canını anında doldurur, ölümsüz olur.
+       Sunucu kayıt şeması alan alan yazıldığı için (bkz. _sbSaveNow) bu
+       tercih localStorage'da tutulur; cihaz başına kalıcı. */
+    const ZGCFG_KEY = 'dt_zg_autopot';
+    const ZGCFG_LIMITS = { at: [10, 95] };
+    /* Sınırlara oturt. Hem kutudan gelen hem localStorage'dan okunan değer
+       buradan geçer — kayıt elle kurcalanırsa da sınır dışına çıkamaz. */
+    function zgCfgClamp(key, raw) {
+      const lim = ZGCFG_LIMITS[key];
+      const n = Math.round(Number(raw));
+      if (!lim || !isFinite(n)) return null;
+      return Math.min(lim[1], Math.max(lim[0], n));
+    }
+    const ZGCFG = (() => {
+      try {
+        const raw = JSON.parse(localStorage.getItem(ZGCFG_KEY) || '{}');
+        const at = zgCfgClamp('at', raw.at);
+        if (at != null) return { at };
+      } catch (e) { }
+      return { at: 40 };
+    })();
+    function zgAutoPotAt() { return ZGCFG.at / 100; }
+    /* onchange ile çağrılıyor (oninput değil): yazarken kırpılsaydı "50"
+       yazmak için basılan ilk "5" anında 10'a çekilir, sayıyı yazmak
+       imkânsızlaşırdı. */
+    function zgCfgInput(key, raw) {
+      const v = zgCfgClamp(key, raw);
+      if (v != null) {
+        ZGCFG[key] = v;
+        try { localStorage.setItem(ZGCFG_KEY, JSON.stringify(ZGCFG)); } catch (e) { }
+      }
+      const el = document.getElementById('zg-cfg-' + key);
+      if (el) el.value = ZGCFG[key];   // kırpılan/geçersiz değeri kutuya geri yansıt
+      zgRenderBar();
+    }
+
     /* ── OTO POT ──
-       İsrafı azaltmak için eksik canı kapatan EN KÜÇÜK iksiri seçer;
-       hiçbiri yetmiyorsa eldeki en büyüğünü içer. */
+       Hep açık. Hangi iksiri içeceğini oyuncu seçer (büyük iksiri
+       harcamak istemeyebilir); seçimi yoksa ya da seçtiği tükendiyse
+       eldeki EN KÜÇÜĞE düşer — israfı en aza indiren varsayılan. */
     function zgPotionList() {
       return G.inventory.filter(i => (i.cat === 'consumable' || i.type === 'İksir')
         && (i.stats && (i.stats.hp_restore || i.stats.hp_restore_pct)));
@@ -15289,16 +15346,38 @@
         ? Math.floor(maxhp * p.stats.hp_restore_pct / 100 * potionPowerMult())
         : Math.floor((p.stats.hp_restore || 0) * potionPowerMult());
     }
+    /* Envanterde aynı iksirden toplam kaç adet var (yığınlar ayrılmışsa da doğru) */
+    function zgPotionQty(p) {
+      const key = stackKeyOf(p);
+      if (!key) return p.qty || 1;
+      return G.inventory.reduce((a, x) => a + (stackKeyOf(x) === key ? (x.qty || 1) : 0), 0);
+    }
+    /* Buton dar — "Küçük Can İksiri" yerine ilk kelime yeter */
+    function zgPotionShort(p) { return String(p.name || '').split(' ')[0]; }
+    /* Oto potun içeceği iksir. Seçim tükendiyse potionKey en küçüğe kaydırılır,
+       böylece buton da otomatik olarak yeni iksiri gösterir. */
+    function zgPotionPick() {
+      const g = ZD.g; if (!g) return null;
+      const list = zgPotionList();
+      if (!list.length) return null;
+      if (g.potionKey) {
+        const sel = list.find(p => stackKeyOf(p) === g.potionKey);
+        if (sel) return sel;
+      }
+      const eff = getEffectiveStats();
+      const smallest = list.slice().sort((a, b) => zgPotionHeal(a, eff.maxhp) - zgPotionHeal(b, eff.maxhp))[0];
+      g.potionKey = stackKeyOf(smallest);
+      return smallest;
+    }
     function zgAutoPotion(eff) {
       const g = ZD.g;
-      if (!g.autoPot || g.hp <= 0) return;
-      if (g.hp / eff.maxhp >= ZG.AUTOPOT_AT) return;
+      if (g.hp <= 0) return;
+      if (g.hp / eff.maxhp >= zgAutoPotAt()) return;
       if (Date.now() - g.lastPotion < ZG.POTION_CD) return;
-      const list = zgPotionList();
-      if (!list.length) return;
-      const missing = eff.maxhp - g.hp;
-      const sorted = list.slice().sort((a, b) => zgPotionHeal(a, eff.maxhp) - zgPotionHeal(b, eff.maxhp));
-      const pick = sorted.find(p => zgPotionHeal(p, eff.maxhp) >= missing) || sorted[sorted.length - 1];
+      const before = g.potionKey;
+      const pick = zgPotionPick();
+      if (!pick) return;
+      if (before && before !== g.potionKey) toast('🧪 İksir bitti — ' + pick.name + "'ne geçildi");
       zgUsePotion(pick.id);
     }
 
@@ -15327,13 +15406,28 @@
       const pe = document.getElementById('zg-player');
       if (pe) pe.classList.toggle('walking', !!on);
     }
-    function zgFloat(x, y, text, color) {
+    /* Yüzen yazı. Aynı kareye aynı anda birden çok yazı düşebiliyor
+       (öldürücü vuruşun hasarı + ölüm ödülü) — hepsi aynı piksele bastığı
+       için okunmuyordu. İki ayrı çözüm:
+       - lane=1 (ödül) hasarın üstünde ayrı bir şeride gider,
+       - kısa süre içinde aynı şeride gelenler kademeli kaydırılır.
+       Üst kenardaki karelerde kaydırma yönü aşağı çevrilir, yoksa
+       #zg-fx'in overflow:hidden'ı yazıyı yutuyor. */
+    const _zgFloatSlot = Object.create(null);
+    function zgFloat(x, y, text, color, lane) {
       const fx = document.getElementById('zg-fx'); if (!fx) return;
+      const now = Date.now();
+      const key = x + ',' + y + ',' + (lane || 0);
+      const prev = _zgFloatSlot[key];
+      const n = (prev && now - prev.t < 650) ? (prev.n + 1) % 4 : 0;
+      _zgFloatSlot[key] = { t: now, n };
+      const base = y + (lane ? -0.1 : 0.4);
+      const dir = (base - 0.6 < 0) ? 1 : -1;
       const d = document.createElement('div');
       d.className = 'zg-dmg';
       d.style.color = color || '#fff';
       d.style.left = ((x + 0.5) * 100 / ZG.W) + '%';
-      d.style.top = ((y + 0.35) * 100 / ZG.H) + '%';
+      d.style.top = ((base + dir * n * 0.2) * 100 / ZG.H) + '%';
       d.textContent = text;
       fx.appendChild(d);
       setTimeout(() => d.remove(), 900);
@@ -15436,6 +15530,19 @@
         ? (g.bossDead ? '<b style="color:#7aff9a;">Kat temizlendi</b>' : '<b style="color:#f87171;">Kat muhafızı sahada!</b>')
         : 'Canavar <b>' + g.kills + '/' + g.quota + '</b>';
       const sub = s => '<br><span style="font-size:8.5px;opacity:.72;">' + s + '</span>';
+      /* Oto pot butonu: hangi iksirin kullanıldığını ve kaç adet kaldığını
+         gösterir; tıklayınca iksir seçme penceresi açılır. İksir görselleri
+         aynı emojiyi (🧪) paylaştığı için ayırt etmek webp'ye bağlı —
+         yüklenmezse emojiye düşer, alt satırdaki isim yine ayırt ettirir. */
+      const pot = zgPotionPick();
+      const potIco = !pot ? ''
+        : pot.img
+          ? '<img class="zg-pot-ico" src="' + IMG_BASE + pot.img + '.webp" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'"><span style="display:none;">' + pot.icon + '</span>'
+          : pot.icon;
+      const potBtn = pot
+        ? '<button class="zg-btn" onclick="zgPotionPicker()">❤️ ' + potIco + ' ×' + zgPotionQty(pot)
+          + sub(zgPotionShort(pot) + ' · %' + ZGCFG.at + ' altı') + '</button>'
+        : '<button class="zg-btn" onclick="zgPotionPicker()">❤️ —' + sub('iksir yok') + '</button>';
       const lastBtn = finished
         ? '<button class="zg-btn on" onclick="zgExit()">🏁 Zindanı Bitir' + sub('ganimeti al') + '</button>'
         : canDescend
@@ -15450,7 +15557,7 @@
         + '<div class="zg-btn-row">'
         + '<button class="zg-btn ' + (g.auto ? 'on' : '') + '" onclick="zgToggleAuto()">' + (g.auto ? '⚡ OTO AÇIK' : '⚡ Oto Saldırı') + sub(g.auto ? 'çok canavar · −%10 XP' : 'XP tam') + '</button>'
         + '<button class="zg-btn" onclick="zgPull()" ' + (pullLeft > 0 || g.bossSpawned ? 'disabled' : '') + '>👹 Canavar Çek' + sub(pullLeft > 0 ? pullLeft + 'sn' : '+XP +ganimet') + '</button>'
-        + '<button class="zg-btn ' + (g.autoPot ? 'on' : '') + '" onclick="zgToggleAutoPot()">' + (g.autoPot ? '❤️ OTO POT' : '❤️ Oto Pot') + sub('can %' + Math.round(ZG.AUTOPOT_AT * 100) + ' altı') + '</button>'
+        + potBtn
         + '<button class="zg-btn" onclick="zgPotion()">🧪 İksir' + sub('elle iç') + '</button>'
         + '</div>'
         + lastBtn.replace('class="zg-btn', 'class="zg-btn-wide zg-btn')
@@ -15464,11 +15571,49 @@
       toast(g.auto ? '⚡ Oto saldırı açık — daha çok canavar, −%10 XP' : '⚡ Oto saldırı kapalı');
       zgRenderBar();
     }
-    function zgToggleAutoPot() {
+    /* Oto potun kullanacağı iksiri seç. Elle içmek için ayrı 🧪 butonu var. */
+    function zgPotionPicker() {
+      const g = ZD.g; if (!g || g.over) return;
+      const list = zgPotionList();
+      if (!list.length) { toast('🧪 Envanterinde can iksiri yok!'); return; }
+      const eff = getEffectiveStats();
+      const cur = zgPotionPick();
+      const curKey = cur ? stackKeyOf(cur) : null;
+      const rows = list.slice()
+        .sort((a, b) => zgPotionHeal(a, eff.maxhp) - zgPotionHeal(b, eff.maxhp))
+        .map(p => {
+          const on = stackKeyOf(p) === curKey;
+          return '<div onclick="zgSetPotion(' + p.id + ')" style="display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:6px;border-radius:8px;border:1px solid ' + (on ? 'var(--gold2)' : 'var(--border2)') + ';background:var(--panel2);cursor:pointer;">'
+            + '<span style="font-size:24px;">' + p.icon + '</span>'
+            + '<div style="flex:1;text-align:left;">'
+            + '<div style="font-size:14px;color:var(--perg);">' + esc(p.name) + ' <span style="color:var(--gold);">×' + zgPotionQty(p) + '</span></div>'
+            + '<div style="font-size:11px;color:var(--g-green);">+' + zgPotionHeal(p, eff.maxhp) + ' can</div>'
+            + '</div>'
+            + (on ? '<span style="color:var(--gold2);font-size:11px;white-space:nowrap;">● seçili</span>' : '')
+            + '</div>';
+        }).join('');
+      const inpCss = 'width:100%;margin-top:5px;padding:8px;border-radius:7px;border:1px solid var(--border2);background:var(--panel3);color:var(--perg);font-family:var(--font-head);font-size:17px;text-align:center;';
+      showGModal('<div style="text-align:center;margin-bottom:10px;">'
+        + '<div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);">❤️ OTO POT</div>'
+        + '<div style="font-size:11px;color:var(--ink3);margin-top:4px;line-height:1.6;">Oto pot hep açıktır. Can bu eşiğin altına düştükçe saniyede bir yudum içilir; seçtiğin iksir bitince eldeki en küçüğe geçilir.</div>'
+        + '</div>'
+        + '<div style="max-width:180px;margin:0 auto 12px;">'
+        + '<label style="text-align:left;font-size:10.5px;color:var(--ink3);">İçme eşiği (%)'
+        + '<input id="zg-cfg-at" type="number" inputmode="numeric"'
+        + ' min="' + ZGCFG_LIMITS.at[0] + '" max="' + ZGCFG_LIMITS.at[1] + '"'
+        + ' value="' + ZGCFG.at + '" onchange="zgCfgInput(\'at\',this.value)" style="' + inpCss + '">'
+        + '<span style="display:block;margin-top:3px;opacity:.7;text-align:center;">' + ZGCFG_LIMITS.at[0] + '–' + ZGCFG_LIMITS.at[1] + ' arası</span></label>'
+        + '</div>'
+        + '<div style="font-family:var(--font-head);font-size:12px;color:var(--gold2);text-align:left;margin-bottom:6px;">KULLANILACAK İKSİR</div>'
+        + rows
+        + '<button class="btn btn-ghost" style="width:100%;margin-top:6px;" onclick="closeGModal()">Kapat</button>');
+    }
+    function zgSetPotion(itemId) {
       const g = ZD.g; if (!g) return;
-      g.autoPot = !g.autoPot;
-      if (g.autoPot && !zgPotionList().length) toast('❤️ Oto pot açık ama envanterinde iksir yok!');
-      else toast(g.autoPot ? '❤️ Oto pot açık — can %' + Math.round(ZG.AUTOPOT_AT * 100) + ' altına düşünce içilir' : '❤️ Oto pot kapalı');
+      const p = G.inventory.find(i => i.id === itemId); if (!p) return;
+      g.potionKey = stackKeyOf(p);
+      closeGModal();
+      toast('❤️ Oto pot: ' + p.name);
       zgRenderBar();
     }
     function zgPull() {
@@ -15516,6 +15661,7 @@
       zgFloat(g.px, g.py, '+' + gained, '#7aff9a');
       toast('🧪 ' + p.name + ' içtin (+' + gained + ' can)');
       updateInvStrip();
+      zgRenderBar();   // butondaki iksir sayacı azalsın
     }
     function zgDescend() {
       const g = ZD.g;
@@ -17182,6 +17328,11 @@
       document.getElementById('market-content').innerHTML = bodyHtml
         || `<div style="text-align:center;padding:30px;font-size: 12px;color:var(--ink3);font-style:italic;">İlan bulunamadı.</div>`;
     }
+    /* Pazardan alışveriş XP VERMEZ. Eskiden her alım 3-10 XP kazandırıyordu;
+       iksir gibi yığılabilir eşyalarda art arda tıklayarak altın karşılığı
+       seviye satın alınabiliyordu. XP savaştan ve görevden gelmeli.
+       Görev sayacı (marketBuy1) ve başarım (market) yerinde duruyor —
+       onlar günde bir kez ödül veriyor, istismara açık değil. */
     function buyItem(id) {
       const item = MARKET_ITEMS.find(x => x.id === id);
       if (!item) return;
@@ -17197,7 +17348,6 @@
       if (item.isAnimal && item.animalKey) {
         if (!G.animals) G.animals = { tavuk: 0, koyun: 0, inek: 0, ari: 0, at: 0 };
         G.animals[item.animalKey] = (G.animals[item.animalKey] || 0) + 1;
-        gainXP(5);
         toast(`${item.name} çiftliğine eklendi! -${item.price}🪙`);
         updateHUD(); renderMarket(); if (PROD_BUILDINGS.ranch.level > 0) renderRanch();
         if (currentUser) sbSave();
@@ -17207,7 +17357,6 @@
       // Tohum ise prodInv'e ekle
       if (item.isSeed && item.seedKey) {
         G.prodInv[item.seedKey] = (G.prodInv[item.seedKey] || 0) + 1;
-        gainXP(5);
         toast(`${item.name} tohum deposuna eklendi! -${item.price}🪙`);
         updateHUD(); updateInvStrip(); renderMarket();
         if (currentUser) sbSave();
@@ -17217,7 +17366,6 @@
       // Geliştirme materyali ise matInv'e ekle
       if (item.isMat && item.matKey) {
         G.matInv[item.matKey] = (G.matInv[item.matKey] || 0) + 1;
-        gainXP(3);
         toast(`${item.name} materyal deposuna eklendi! -${item.price}🪙`);
         updateHUD(); renderMarket();
         if (currentUser) sbSave();
@@ -17230,7 +17378,6 @@
         if (invCount() >= invCap()) { toast('Envanter dolu! Önce bir eşya sat.'); G.gold += item.price; return; }
         const sInv = { id: newItemId(), name: item.name, icon: item.icon, type: item.type || 'Tezgah', grade: item.grade || 'purple', price: item.price, stats: {}, desc: item.desc || '', seller: 'player', sellerName: G.heroName || G.username, img: item.img || null, reqLv: 1, material: null, classBonus: null, tplId: item.id, cat: 'consumable', isStallItem: true };
         G.inventory.push(sInv);
-        gainXP(5);
         toast(`${item.name} envantere eklendi! -${item.price}🪙`);
         updateHUD(); renderMarket(); renderKarakter();
         if (currentUser) sbSave();
@@ -17253,7 +17400,6 @@
         const exist = key ? G.inventory.find(x => stackKeyOf(x) === key) : null;
         if (!exist && invCount() >= invCap()) { toast('Envanter dolu! Önce bir eşya sat.'); G.gold += item.price; if (limitedStock) item.qty++; return; }
         const placed = addItemStacked(cInv);
-        gainXP(exist ? 5 : 10);
         toast(exist ? `${item.name} x${placed.qty} (yığıldı) -${item.price}🪙` : `${item.name} envantere eklendi! -${item.price}🪙`);
         trackQuest('marketBuy1');
         updateHUD(); renderMarket(); renderKarakter();
@@ -17284,7 +17430,6 @@
         enhPlus: item.enhPlus || 0,
       };
       G.inventory.push(invItem);
-      gainXP(10);
       toast(`${item.name}${buyRolled ? ` (${rollGradeLabel(invItem)})` : ''} envantere eklendi! -${item.price}🪙`);
       trackQuest('marketBuy1');
       updateHUD(); renderMarket(); renderKarakter();
@@ -17351,13 +17496,11 @@
       if (listing.type === 'Hayvan' && listing.stats?.animalKey) {
         if (!G.animals) G.animals = { tavuk: 0, koyun: 0, inek: 0, ari: 0, at: 0 };
         G.animals[listing.stats.animalKey] = (G.animals[listing.stats.animalKey] || 0) + 1;
-        gainXP(5);
         toast(`${listing.name} çiftliğine eklendi! -${listing.price}🪙`);
         updateHUD(); renderMarket(); if (PROD_BUILDINGS.ranch.level > 0) renderRanch();
         if (currentUser) sbSave();
       } else {
         addItemStacked(invItem); // iksir gibi yığılabilirler mevcut yığına eklenir
-        gainXP(10);
         const enhLabel = (listing.enhPlus > 0) ? ` +${listing.enhPlus}` : '';
         toast(`${listing.name}${enhLabel} satın alındı! -${listing.price}🪙`);
         trackQuest('marketBuy1');
