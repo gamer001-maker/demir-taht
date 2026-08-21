@@ -3432,13 +3432,43 @@
     .zg-unit .zg-emo { font-size: clamp(18px, 4.6vw, 30px); filter: drop-shadow(0 3px 5px #000a); }
     /* Karakter vurus kareleri: 3 gorsel ust uste durur, sadece biri gorunur.
        Boylece kare degistirirken ag istegi olmaz, titreme yasanmaz. */
-    .zg-sprite { position: relative; width: 100%; height: 100%; }
-    .zg-sprite.flip { transform: scaleX(-1); }
+    /* --zg-scale: karakterin kareden taşma oranı. Ölçek AYAKLARDAN büyür
+       (transform-origin: alt-orta), böylece hangi karede durduğu değişmez —
+       .zg-unit hâlâ tam 1/7 kare, translate matematiği bozulmaz.
+       --zg-flip yön çevirmeyi aynı transform içinde taşır; ayrı bir
+       transform kuralı olsaydı ölçeği ezerdi. */
+    .zg-sprite {
+      position: relative; width: 100%; height: 100%;
+      --zg-scale: 1;
+      --zg-flip: 1;
+      transform: scale(calc(var(--zg-scale) * var(--zg-flip)), var(--zg-scale));
+      transform-origin: 50% 100%;
+    }
+    .zg-sprite.flip { --zg-flip: -1; }
     .zg-sprite .zg-fr { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: none; filter: drop-shadow(0 3px 5px #000a); }
     .zg-sprite .zg-fr.on { display: block; }
+    /* Mobilde 7×7 ızgara ~50px kareye düşüyor, vuruş kareleri okunmuyor.
+       Karakter 2 kat büyütülür — büyüklüğü ayarlamak için tek sayı burası. */
+    @media(max-width:640px) {
+      #zg-player .zg-sprite { --zg-scale: 2; }
+    }
     #zg-player img, #zg-player .zg-emo { animation: zd-enemy-idle 2.4s ease-in-out infinite; }
     #zg-player.walking img, #zg-player.walking .zg-emo { animation: zg-step .19s linear infinite; }
     @keyframes zg-step { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9%); } }
+    /* Canavar görselleri SOLA bakar (eski zindanda oyuncu solda, canavar
+       sağdaydı). Oyuncu canavarın sağına geçince sprite aynalanır.
+       Flip doğrudan .zg-unit'e konamaz — orası konum transform'unu taşıyor;
+       img'ye de konamaz — zd-enemy-idle animasyonu transform'u ezer.
+       Bu yüzden arada ayrı bir katman var. Can barı bu katmanın DIŞINDA
+       kalır, yoksa o da aynalanıp ters yönde dolardı. */
+    .zg-mob-sprite {
+      width: 100%; height: 100%;
+      min-width: 0;   /* boss img %132 — flex min-width:auto katmanı şişirmesin */
+      display: flex; align-items: flex-end; justify-content: center;
+      --zg-flip: 1;
+      transform: scaleX(var(--zg-flip));
+    }
+    .zg-mob-sprite.flip { --zg-flip: -1; }
     .zg-mob img, .zg-mob .zg-emo { animation: zd-enemy-idle 2s ease-in-out infinite; }
     .zg-mob.elite img, .zg-mob.elite .zg-emo { filter: drop-shadow(0 0 5px #ffb347) drop-shadow(0 0 11px #ff7b00); }
     .zg-mob.boss img, .zg-mob.boss .zg-emo { filter: drop-shadow(0 0 6px #f87171) drop-shadow(0 0 14px #b91c1c); }
@@ -15060,7 +15090,7 @@
       const troopDmg = armedTroops().reduce((a, c) => a + troopAttackDmg(c), 0);
       if (troopDmg > 0) dmg += Math.max(1, Math.floor(troopDmg * ZG.TROOP_SHARE));
       m.hp = Math.max(0, m.hp - dmg);
-      zgPlayAttack(m.x < g.px);   // 1→2→3 vuruş karesi + yön çevirme
+      zgPlayAttack(m.x === g.px ? null : m.x < g.px);   // 1→2→3 vuruş karesi + yön çevirme
       zgFloat(m.x, m.y, tag + dmg, tag ? '#ffd166' : '#ffffff');
       zgFlash(m.uid);
       const r = ringOnHit(m.st, dmg, g.hp, eff.maxhp);
@@ -15161,6 +15191,7 @@
 
       if (g.path.length && now - g.stepT0 >= ZG.WALK_MS) {
         const n = g.path.shift();
+        if (n.x !== g.px) zgFace(n.x < g.px);   // yürürken de gittiği yöne baksın
         g.px = n.x; g.py = n.y;
         g.stepT0 = now;
         if (!g.path.length) zgSetWalking(false);
@@ -15226,10 +15257,17 @@
       const emo = sp.querySelector('.zg-emo');
       if (emo) emo.style.display = 'inline-block';
     }
+    /* Yön çevirme. Sprite'lar SAĞA bakar; sola dönerken aynalanır.
+       left == null → yön korunur (aynı sütundaki hedef için dönmesin). */
+    function zgFace(left) {
+      if (left == null) return;
+      const sp = document.getElementById('zg-sprite');
+      if (sp) sp.classList.toggle('flip', !!left);
+    }
     /* Vuruş animasyonu: 1 → 2 → 3 → 1. dirLeft true ise sprite yatay çevrilir. */
     function zgPlayAttack(dirLeft) {
       const sp = document.getElementById('zg-sprite'); if (!sp) return;
-      if (dirLeft != null) sp.classList.toggle('flip', !!dirLeft);
+      zgFace(dirLeft);
       const fr = sp.querySelectorAll('.zg-fr');
       if (fr.length < 3) return;
       const show = n => fr.forEach((f, k) => f.classList.toggle('on', k === n));
@@ -15332,15 +15370,25 @@
           e = document.createElement('div');
           e.id = 'zg-u-' + m.uid;
           e.className = 'zg-unit zg-mob' + (m.elite ? ' elite' : '') + (m.boss ? ' boss' : '');
-          e.innerHTML = '<img src="' + IMG_BASE + m.img + '.webp" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-block\'">'
+          e.innerHTML = '<div class="zg-mob-sprite">'
+            + '<img src="' + IMG_BASE + m.img + '.webp" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-block\'">'
             + '<span class="zg-emo" style="display:none;">' + m.icon + '</span>'
+            + '</div>'
             + '<span class="zg-hpbar"><i style="width:100%"></i></span>';
           e.style.transition = 'transform ' + ZG.MOB_STEP_MS + 'ms linear';
+          // Tick başına querySelector yapmamak için düğümleri sakla
+          e._sp = e.querySelector('.zg-mob-sprite');
+          e._bar = e.querySelector('.zg-hpbar i');
           layer.appendChild(e);
         }
         zgUnitAt(e, m.x, m.y);
-        const bar = e.querySelector('.zg-hpbar i');
-        if (bar) bar.style.width = Math.max(0, Math.round(m.hp / m.maxHp * 100)) + '%';
+        // Oyuncu sağdaysa canavar sağa döner. Aynı sütundaysa yön korunur —
+        // yoksa oyuncu üstünde/altındayken sprite gereksiz yere zıplar.
+        if (e._sp && g.px !== m.x) {
+          const fl = g.px > m.x;
+          if (e._flip !== fl) { e._flip = fl; e._sp.classList.toggle('flip', fl); }
+        }
+        if (e._bar) e._bar.style.width = Math.max(0, Math.round(m.hp / m.maxHp * 100)) + '%';
       }
       const eff = getEffectiveStats();
       const fill = document.getElementById('zg-hp-fill');
