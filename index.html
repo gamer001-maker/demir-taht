@@ -11432,14 +11432,44 @@
       const pe = document.getElementById('prod-gold'); if (pe) pe.textContent = Math.floor(G.gold);
       checkAchievements(); // canlı değerli başarımlar (zafer, seviye, lonca) her aksiyonda kontrol edilir
     }
+    /* ── SEVİYE EĞRİSİ ──
+       XP_NEED[L] = L → L+1 için gereken XP. Bileşik büyüme, tabanı
+       kademeli olarak yavaşlıyor:
+         Sv. 2-20 → ×1.24   erken oyun gerçekten oynansın; 20'ye uçulmasın,
+                            oyuncu o aralığın eşyalarını kuşanmaya vakit bulsun
+         Sv.21-35 → ×1.16
+         Sv.36+   → ×1.12
+       Yavaşlama son seviyeleri KOLAYLAŞTIRMIYOR: taban zaten yükselmiş
+       olduğu için 49→50 hâlâ ~270k XP (~700 canavar / ~9 tam zindan koşusu).
+       Canavar XP'si kademeler arası ~2.3 kat sıçradığı için her kademe
+       geçişinde gereken canavar sayısı bir kez düşer — kasıtlı, yeni
+       kademeye ulaşmak ödül gibi hissettirsin diye.
+       Değerler tabloya bir kez hesaplanır; gainXP döngüsü her seviyede
+       yeniden üs almasın. */
+    const XP_NEED = (() => {
+      const a = [0, 100];   // a[1] = Sv.1 → Sv.2
+      for (let L = 2; L <= 300; L++) {
+        a[L] = Math.round(a[L - 1] * (L <= 20 ? 1.24 : L <= 35 ? 1.16 : 1.12));
+      }
+      return a;
+    })();
+    function xpForLevel(L) {
+      return XP_NEED[Math.max(1, Math.min(L | 0, XP_NEED.length - 1))] || 100;
+    }
+    /* Sv.1'den L'ye kadar harcanan toplam XP (istatistik ekranı için) */
+    function xpTotalTo(L) {
+      let s = 0;
+      for (let k = 1; k < L; k++) s += xpForLevel(k);
+      return s;
+    }
     function gainXP(n) {
       const xpBonus = (typeof earringFx === 'function') ? (earringFx('xp') / 100) : 0;
       const totalN = Math.floor(n * (1 + xpBonus));
       G.xp += totalN;
       // Büyük XP kazançları tek seferde birden çok seviye atlatabilir
       let leveled = 0;
-      while (G.xp >= G.level * 100) {
-        G.xp -= G.level * 100;
+      while (G.xp >= xpForLevel(G.level)) {
+        G.xp -= xpForLevel(G.level);
         G.level++; G.skillPoints += 2; leveled++;
       }
       if (leveled > 0) celebrate('🎊', `SEVİYE ${G.level}!`, `+${leveled * 2} yetenek puanı kazandın`, 'levelup');
@@ -11655,7 +11685,7 @@
       document.getElementById('g-lvl').textContent = 'Sv.' + G.level;
 
       // XP bar
-      const need = G.level * 100;
+      const need = xpForLevel(G.level);
       document.getElementById('g-xpbar').style.width = Math.min(100, Math.round(G.xp / need * 100)) + '%';
       document.getElementById('g-xplbl').textContent = G.xp + '/' + need;
 
@@ -20720,7 +20750,7 @@
       } else if (t === 'stats') {
         el.innerHTML = `
       <div class="sec" style="margin-top:0;">GENEL</div>
-      <div class="stat-grid2"><div class="stat2"><div class="stat2-val">${troopCount()}</div><div class="stat2-lbl">Birlik</div></div><div class="stat2"><div class="stat2-val">${G.xp + G.level * 100}</div><div class="stat2-lbl">Toplam XP</div></div><div class="stat2"><div class="stat2-val">${exploredTotal()}</div><div class="stat2-lbl">Keşif</div></div><div class="stat2"><div class="stat2-val">5</div><div class="stat2-lbl">Görev Tamam</div></div></div>
+      <div class="stat-grid2"><div class="stat2"><div class="stat2-val">${troopCount()}</div><div class="stat2-lbl">Birlik</div></div><div class="stat2"><div class="stat2-val">${(xpTotalTo(G.level) + G.xp).toLocaleString('tr-TR')}</div><div class="stat2-lbl">Toplam XP</div></div><div class="stat2"><div class="stat2-val">${exploredTotal()}</div><div class="stat2-lbl">Keşif</div></div><div class="stat2"><div class="stat2-val">5</div><div class="stat2-lbl">Görev Tamam</div></div></div>
       <div class="sec">SAVAŞ</div>
       <div class="stat-grid2"><div class="stat2"><div class="stat2-val">${G.arenaWins}</div><div class="stat2-lbl">Galibiyet</div></div><div class="stat2"><div class="stat2-val">${G.arenaLosses}</div><div class="stat2-lbl">Mağlubiyet</div></div><div class="stat2"><div class="stat2-val">${G.arenaWins + G.arenaLosses > 0 ? Math.round(G.arenaWins / (G.arenaWins + G.arenaLosses) * 100) : 0}%</div><div class="stat2-lbl">Oran</div></div><div class="stat2"><div class="stat2-val">${G.arenaScore}</div><div class="stat2-lbl">Arena Puanı</div></div></div>
       <div class="sec">EKONOMİ</div>
