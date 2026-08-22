@@ -1250,98 +1250,7 @@
       position: relative;
     }
 
-    .zd-corridor {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      inset: 0;
-      transform-style: preserve-3d;
-    }
-
-    /* Perspektifli koridor çizgileri */
-    .zd-corridor::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(to bottom, transparent 0%, #1a0800 100%),
-        repeating-linear-gradient(90deg, #2a1500 0px, #2a1500 1px, transparent 1px, transparent 60px);
-      clip-path: polygon(35% 0%, 65% 0%, 100% 100%, 0% 100%);
-      animation: zd-floor-scroll 2s linear infinite;
-    }
-
-    .zd-corridor::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(to top, transparent 40%, #000 100%),
-        linear-gradient(90deg, #0a0500 0%, transparent 30%, transparent 70%, #0a0500 100%);
-    }
-
-    .zd-door {
-      position: absolute;
-      width: 56px;
-      height: 80px;
-      background: linear-gradient(180deg, #2a1200 0%, #1a0a00 100%);
-      border: 2px solid #6e4b2a;
-      border-radius: 4px 4px 0 0;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) translateZ(0px);
-      box-shadow: 0 0 30px #ff6a0040, inset 0 0 20px #00000080;
-      animation: zd-door-pulse 2s ease-in-out infinite;
-    }
-
-    .zd-door-arch {
-      position: absolute;
-      top: -16px;
-      left: -4px;
-      right: -4px;
-      height: 24px;
-      background: linear-gradient(180deg, #3a1a00, #2a1200);
-      border: 2px solid #6e4b2a;
-      border-bottom: none;
-      border-radius: 50% 50% 0 0;
-    }
-
-    .zd-door-glow {
-      position: absolute;
-      inset: -4px;
-      border-radius: 4px 4px 0 0;
-      background: transparent;
-      box-shadow: 0 0 20px #ff8c0060;
-      animation: zd-door-pulse 2s ease-in-out infinite;
-    }
-
-    .zd-torch {
-      position: absolute;
-      width: 8px;
-      height: 20px;
-      background: linear-gradient(180deg, #c9a646, #8b4513);
-      border-radius: 2px;
-    }
-
-    .zd-torch::after {
-      content: '🔥';
-      position: absolute;
-      top: -16px;
-      left: -2px;
-      font-size: 14px;
-      animation: zd-flicker .3s ease-in-out infinite alternate;
-    }
-
-    .zd-torch.left {
-      left: 22%;
-      top: 35%;
-    }
-
-    .zd-torch.right {
-      right: 22%;
-      top: 35%;
-    }
-
-    .zd-title-overlay {
+.zd-title-overlay {
       position: absolute;
       bottom: 12px;
       left: 0;
@@ -1354,97 +1263,7 @@
       letter-spacing: 3px;
     }
 
-    @keyframes zd-floor-scroll {
-      from {
-        background-position: 0 0;
-      }
-
-      to {
-        background-position: 0 60px;
-      }
-    }
-
-    @keyframes zd-door-pulse {
-
-      0%,
-      100% {
-        box-shadow: 0 0 20px #ff6a0040, inset 0 0 20px #00000080;
-      }
-
-      50% {
-        box-shadow: 0 0 40px #ff6a0080, inset 0 0 20px #00000080;
-      }
-    }
-
-    @keyframes zd-flicker {
-      from {
-        transform: scale(1) rotate(-5deg);
-      }
-
-      to {
-        transform: scale(1.2) rotate(5deg);
-      }
-    }
-
-    /* Kat göstergesi */
-    .zd-floor-bar {
-      display: flex;
-      gap: 6px;
-      justify-content: center;
-      margin-bottom: 14px;
-    }
-
-    .zd-floor-node {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: 2px solid var(--border2);
-      background: var(--panel2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-head);
-      font-size: 11px;
-      color: var(--ink3);
-      transition: all .3s;
-      position: relative;
-    }
-
-    .zd-floor-node.done {
-      border-color: var(--gold);
-      background: #2a1e08;
-      color: var(--gold2);
-    }
-
-    .zd-floor-node.current {
-      border-color: #ef4444;
-      background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%);
-      color: #fee2e2;
-      font-weight: 700;
-      box-shadow: 0 0 10px rgba(239, 68, 68, 0.45);
-      transform: scale(1.08);
-    }
-
-    .zd-floor-node.locked {
-      opacity: .35;
-    }
-
-    .zd-floor-node::after {
-      content: '';
-      position: absolute;
-      right: -6px;
-      top: 50%;
-      width: 6px;
-      height: 2px;
-      background: var(--border2);
-      transform: translateY(-50%);
-    }
-
-    .zd-floor-node:last-child::after {
-      display: none;
-    }
-
-    /* Zindan Kart Kapsayıcısı (Atmospheric Gradient Container) */
+/* Zindan Kart Kapsayıcısı (Atmospheric Gradient Container) */
     .zd-wrap-card {
       background: linear-gradient(180deg, rgba(28, 20, 14, 0.95) 0%, rgba(14, 10, 8, 0.98) 100%);
       border: 1px solid var(--border);
@@ -1456,139 +1275,7 @@
       box-sizing: border-box;
     }
 
-    /* Oda kartları */
-    .zd-rooms {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 10px;
-      margin-bottom: 16px;
-      max-width: 580px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .zd-room {
-      background: linear-gradient(180deg, rgba(38, 28, 20, 0.85) 0%, rgba(22, 14, 10, 0.95) 100%);
-      border: 1px solid var(--border2);
-      border-radius: 10px;
-      padding: 14px 10px;
-      text-align: center;
-      cursor: pointer;
-      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
-    }
-
-    .zd-room:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
-    }
-
-    .zd-room.cleared {
-      opacity: .45;
-      cursor: not-allowed;
-      filter: grayscale(0.6);
-    }
-
-    .zd-room.cleared::after {
-      content: '✓';
-      position: absolute;
-      top: 6px;
-      right: 8px;
-      color: var(--gold);
-      font-size: 12px;
-    }
-
-    .zd-room-type-fight {
-      border-color: #8b1e1e;
-      background: linear-gradient(180deg, rgba(42, 16, 16, 0.85), rgba(24, 10, 10, 0.95));
-    }
-
-    .zd-room-type-fight:hover {
-      border-color: #f87171;
-      box-shadow: 0 6px 20px rgba(139, 30, 30, 0.5);
-    }
-
-    .zd-room-type-chest {
-      border-color: #b08d57;
-      background: linear-gradient(180deg, rgba(45, 34, 16, 0.85), rgba(24, 18, 10, 0.95));
-    }
-
-    .zd-room-type-chest:hover {
-      border-color: var(--gold2);
-      box-shadow: 0 6px 20px rgba(176, 141, 87, 0.5);
-    }
-
-    .zd-room-type-trap {
-      border-color: #7a4a8a;
-      background: linear-gradient(180deg, rgba(38, 18, 45, 0.85), rgba(20, 10, 24, 0.95));
-    }
-
-    .zd-room-type-trap:hover {
-      border-color: #c084fc;
-      box-shadow: 0 6px 20px rgba(122, 74, 138, 0.5);
-    }
-
-    .zd-room-type-rest {
-      border-color: #2a6a2a;
-      background: linear-gradient(180deg, rgba(18, 42, 18, 0.85), rgba(10, 24, 10, 0.95));
-    }
-
-    .zd-room-type-rest:hover {
-      border-color: #7aaa5a;
-      box-shadow: 0 6px 20px rgba(42, 106, 42, 0.5);
-    }
-
-    .zd-room-type-boss {
-      border-color: #ff6a00;
-      border-width: 2px;
-      background: linear-gradient(180deg, rgba(50, 25, 10, 0.9), rgba(30, 12, 5, 0.95));
-    }
-
-    .zd-room-type-boss:hover {
-      box-shadow: 0 6px 20px rgba(255, 106, 0, 0.6);
-    }
-
-    .zd-room-icon {
-      font-size: 28px;
-      margin-bottom: 6px;
-      display: block;
-    }
-
-    .zd-room-name {
-      font-family: var(--font-head);
-      font-size: 11px;
-      color: var(--perg2);
-      margin-bottom: 2px;
-    }
-
-    .zd-room-hint {
-      font-size: 9px;
-      color: var(--ink3);
-    }
-
-    /* Savaş ekranı */
-    .zd-battle {
-      background: var(--panel2);
-      border: 1px solid var(--border2);
-      border-radius: 12px;
-      padding: 14px;
-      animation: fadein .3s ease;
-    }
-
-    .zd-enemy-card {
-      background: linear-gradient(135deg, #1a0808 0%, #2a1010 100%);
-      border: 1px solid #8b1e1e;
-      border-radius: 12px;
-      text-align: center;
-      margin-bottom: 10px;
-      position: relative;
-      overflow: hidden;
-      animation: zd-enemy-enter .4s ease;
-    }
-
-    @keyframes zd-enemy-enter {
+@keyframes zd-enemy-enter {
       from {
         transform: translateX(60px) scale(.9);
         opacity: 0;
@@ -1600,95 +1287,9 @@
       }
     }
 
-    .zd-enemy-icon {
-      font-size: 72px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: clamp(200px, 45vh, 300px);
-      animation: zd-enemy-idle 2s ease-in-out infinite;
-    }
+@media(max-width:480px) {
 
-    .zd-enemy-img {
-      width: 100%;
-      height: clamp(200px, 45vh, 300px);
-      object-fit: cover;
-      object-position: center top;
-      display: block;
-      margin: 0;
-      animation: zd-enemy-idle 2s ease-in-out infinite;
-    }
-
-    .zd-overlay-btn {
-      background: rgba(8, 5, 2, 0.78);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 8px;
-      color: var(--perg);
-      font-family: var(--font-head);
-      font-size: 8px;
-      padding: 8px 7px;
-      cursor: pointer;
-      text-align: center;
-      min-width: 46px;
-      line-height: 1.6;
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      transition: background .15s, border-color .15s;
-    }
-
-    .zd-overlay-btn:active {
-      background: rgba(8, 5, 2, 0.95);
-      border-color: var(--gold);
-    }
-
-    .zd-ob-disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
-    }
-
-    .zd-split-area {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      gap: 10px;
-      align-items: end;
-      margin-bottom: 10px;
-    }
-
-    .zd-split-player,
-    .zd-split-enemy {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      width: 100%;
-    }
-
-    .zd-split-char {
-      height: clamp(130px, 32vh, 220px);
-      width: 100%;
-      object-fit: contain;
-      object-position: bottom center;
-      display: block;
-      animation: zd-enemy-idle 2s ease-in-out infinite;
-      filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.8));
-    }
-
-    .zd-split-btns {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      align-self: center;
-    }
-
-    @media(max-width:480px) {
-      .zd-split-char {
-        height: clamp(100px, 22vh, 150px);
-      }
-
-      .zd-split-area {
-        gap: 6px;
-      }
-    }
+}
 
     @keyframes zd-enemy-idle {
 
@@ -1702,180 +1303,7 @@
       }
     }
 
-    .zd-enemy-name {
-      font-family: var(--font-head);
-      font-size: 14px;
-      color: #f87171;
-    }
-
-    .zd-hp-bar-wrap {
-      margin: 8px 0;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .zd-hp-label {
-      font-size: 9px;
-      color: var(--ink3);
-      min-width: 24px;
-      font-family: var(--font-head);
-    }
-
-    .zd-hp-bg {
-      flex: 1;
-      height: 8px;
-      background: var(--panel3);
-      border-radius: 4px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-    }
-
-    .zd-hp-fill {
-      height: 100%;
-      border-radius: 4px;
-      transition: width .5s ease;
-      box-shadow: inset 0 1px 0 #ffffff20;
-    }
-
-    .zd-hp-fill.enemy {
-      background: linear-gradient(90deg, #8b1e1e, #f87171);
-    }
-
-    .zd-hp-fill.player {
-      background: linear-gradient(90deg, #2a6a2a, #7aaa5a);
-    }
-
-    .zd-hp-val {
-      font-size: 9px;
-      color: var(--perg2);
-      min-width: 40px;
-      text-align: right;
-      font-family: var(--font-head);
-    }
-
-    /* Aksiyon butonları */
-    .zd-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .zd-action {
-      background: var(--panel);
-      border: 1px solid var(--border2);
-      border-radius: 8px;
-      padding: 10px 6px;
-      text-align: center;
-      cursor: pointer;
-      transition: all .15s;
-      font-family: var(--font-head);
-    }
-
-    .zd-action:hover {
-      border-color: var(--gold);
-      background: #2a1e08;
-      transform: translateY(-2px);
-    }
-
-    .zd-action:active {
-      transform: translateY(0);
-    }
-
-    .zd-action.disabled {
-      opacity: .4;
-      cursor: not-allowed;
-      pointer-events: none;
-    }
-
-    .zd-action-icon {
-      font-size: 22px;
-      display: block;
-      margin-bottom: 3px;
-    }
-
-    .zd-action-name {
-      font-size: 10px;
-      color: var(--gold);
-    }
-
-    .zd-action-desc {
-      font-size: 8px;
-      color: var(--ink3);
-      margin-top: 1px;
-    }
-
-    .zd-action.attack {
-      border-color: #8b1e1e;
-    }
-
-    .zd-action.attack:hover {
-      border-color: #f87171;
-      background: #1a0808;
-    }
-
-    .zd-action.defend {
-      border-color: #2a4a6a;
-    }
-
-    .zd-action.defend:hover {
-      border-color: #6a9abf;
-      background: #08121a;
-    }
-
-    .zd-action.magic {
-      border-color: #7a4a8a;
-    }
-
-    .zd-action.magic:hover {
-      border-color: #c084fc;
-      background: #160e1a;
-    }
-
-    .zd-action.flee {
-      border-color: #4a3a18;
-    }
-
-    .zd-action.flee:hover {
-      border-color: var(--copper);
-      background: #1a1408;
-    }
-
-    /* Savaş günlüğü */
-    .zd-log {
-      max-height: 220px;
-      overflow-y: auto;
-      background: var(--panel3);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 8px;
-      margin-top: 10px;
-      font-size: 10px;
-      line-height: 1.7;
-    }
-
-    .zd-log-line {
-      padding: 1px 0;
-    }
-
-    .zd-log-line.good {
-      color: #7aaa5a;
-    }
-
-    .zd-log-line.bad {
-      color: #f87171;
-    }
-
-    .zd-log-line.info {
-      color: var(--perg2);
-    }
-
-    .zd-log-line.gold {
-      color: var(--gold2);
-    }
-
-    /* Hasar animasyonu */
+/* Hasar animasyonu */
     @keyframes zd-shake {
 
       0%,
@@ -1916,60 +1344,7 @@
       animation: zd-shake .4s ease;
     }
 
-    .zd-hit {
-      animation: zd-hit-flash .3s ease;
-    }
-
-    /* Hasar sayısı popup */
-    .zd-dmg-popup {
-      position: absolute;
-      font-family: var(--font-head);
-      font-size: 18px;
-      font-weight: 700;
-      pointer-events: none;
-      animation: zd-dmg-rise .8s ease forwards;
-      text-shadow: 0 2px 4px #000;
-      z-index: 10;
-    }
-
-    @keyframes zd-dmg-rise {
-      0% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-
-      100% {
-        opacity: 0;
-        transform: translateY(-40px) scale(1.3);
-      }
-    }
-
-    /* Stat bilgi şeridi */
-    .zd-stat-strip {
-      display: flex;
-      gap: 8px;
-      justify-content: space-between;
-      background: var(--panel3);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 6px 10px;
-      margin-bottom: 10px;
-      font-size: 9px;
-      color: var(--ink3);
-      font-family: var(--font-head);
-    }
-
-    .zd-stat-item {
-      text-align: center;
-    }
-
-    .zd-stat-val {
-      font-size: 13px;
-      color: var(--perg2);
-      display: block;
-    }
-
-    /* Giriş hakları */
+/* Giriş hakları */
     .zd-tickets {
       display: flex;
       gap: 6px;
@@ -1998,23 +1373,8 @@
     }
 
     /* Oda geçiş animasyonu */
-    @keyframes zd-room-enter {
-      from {
-        opacity: 0;
-        transform: translateX(40px);
-      }
 
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-
-    .zd-room-anim {
-      animation: zd-room-enter .35s ease;
-    }
-
-    /* ════════════════════════════════
+/* ════════════════════════════════
    GELİŞTİRME SİSTEMİ — PC optimized
 ════════════════════════════════ */
     .enh-layout {
@@ -2790,6 +2150,39 @@
       box-shadow: inset 0 1px 0 #ffffff10, 0 0 8px #b08d5730;
     }
 
+    /* ── Pazar kategori sekmeleri ──
+       Üstteki .src-btn ile AYNI buton dili: çerçeve + dolgu + aktif hâli.
+       Emoji taşımazlar; metin ve çerçeve tek başına daha çok "buton" gibi
+       duruyor. Stiller eskiden her div'de satır içiydi ve setCat() rengi
+       elle yazıyordu — o yüzden Kraliyet/Malzeme'nin özel renkleri ilk
+       tıklamada zaten siliniyordu. Artık tek yerden, sınıf tabanlı.
+       Arka plana doku (tuğla vb.) eklenecekse tek dokunulacak yer burası. */
+    .cat-tab {
+      padding: 6px 14px;
+      border: 1px solid var(--border2);
+      border-radius: 7px;
+      background: var(--panel3);
+      font-family: var(--font-head);
+      font-size: clamp(10px, 1.05vw, 12px);
+      color: var(--ink3);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color .15s, color .15s, background .15s;
+      box-shadow: inset 0 1px 0 #ffffff06;
+    }
+
+    .cat-tab:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    .cat-tab.active {
+      border-color: var(--gold);
+      color: var(--gold2);
+      background: #2a1e08;
+      box-shadow: inset 0 1px 0 #ffffff10, 0 0 8px #b08d5730;
+    }
+
     /* ── SLIDE BİLDİRİM (küçük, alttan kayar — dev celebrate yerine) ── */
     .slide-notif {
       position: fixed;
@@ -3383,8 +2776,7 @@
       animation: wmPulse 2.2s ease-in-out infinite;
     }
 
-
-    /* ══════════════════════════════════════
+/* ══════════════════════════════════════
        ZİNDAN — GERÇEK ZAMANLI 7×7 IZGARA
        Birimler .zg-unit ile konumlanır: eleman tam olarak 1/7 kare
        olduğu için transform:translate(x*100%, y*100%) tam kare kaydırır.
@@ -3499,9 +2891,7 @@
     }
     /* Ortalama translate'i keyframe'in İÇİNDE olmak zorunda: animasyon
        transform'u ezdiği için .zg-dmg üzerindeki ayrı translate hiç
-       uygulanmıyordu, yazılar kare merkezinden sağa kaçıyordu.
-       Eski tur-tabanlı zindanın .zd-dmg-popup'ı ortalama kullanmadığı için
-       zd-dmg-rise'a dokunmuyoruz — ona ayrı keyframe. */
+       uygulanmıyordu, yazılar kare merkezinden sağa kaçıyordu. */
     @keyframes zg-dmg-rise {
       0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
       100% { opacity: 0; transform: translate(-50%, calc(-50% - 40px)) scale(1.3); }
@@ -4051,8 +3441,7 @@
       border: 1px solid #4a2a10;
     }
 
-
-    /* ═══════════════════════════════
+/* ═══════════════════════════════
    GÖREV SİSTEMİ v2
 ═══════════════════════════════ */
     #p-quest {
@@ -8065,7 +7454,7 @@
     <div class="page" id="p-market">
       <div class="hdr">
         <div>
-          <div class="hdr-title">🏪 PAZAR</div>
+          <div class="hdr-title">Köy Pazarı</div>
           <div style="font-size: 10px;color:var(--ink3);margin-top:1px;">Al, sat, güçlen</div>
         </div>
         <div style="font-family:var(--font-head);font-size: 13px;color:var(--gold);">🪙 <span id="m-gold">500</span>
@@ -8083,29 +7472,19 @@
         <div class="src-btn" id="src-player" onclick="setSrc('player')">Oyuncu</div>
         <div class="src-btn" id="src-npc" onclick="setSrc('npc')">Tüccar</div>
       </div>
+      <!-- Kategori butonları: üstteki Tümü/Oyuncu/Tüccar satırıyla aynı hizada
+           ve aynı görünümde. Yatay kaydırma yerine satır kaydırma (wrap) —
+           ortalanmış bir flex kapsayıcıda taşma iki yana birden olur ve
+           soldaki butonlara kaydırarak ulaşılamaz. -->
       <div
-        style="display:flex;overflow-x:auto;background:var(--panel2);border-bottom:1px solid var(--border);padding:0 4px;flex-shrink:0;scrollbar-width:none;">
-        <div class="cat-tab active" id="cat-all" onclick="setCat('all')"
-          style="flex-shrink:0;padding:9px 12px;font-family:var(--font-head);font-size: 12px;color:var(--gold2);cursor:pointer;border-bottom:2px solid var(--gold2);white-space:nowrap;">
-          ⚡ Tümü</div>
-        <div class="cat-tab" id="cat-equipment" onclick="setCat('equipment')"
-          style="flex-shrink:0;padding:9px 12px;font-family:var(--font-head);font-size: 12px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">
-          ⚔ Ekipmanlar</div>
-        <div class="cat-tab" id="cat-enhancement" onclick="setCat('enhancement')"
-          style="flex-shrink:0;padding:9px 12px;font-family:var(--font-head);font-size: 12px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">
-          🔨 Geliştirme</div>
-        <div class="cat-tab" id="cat-production" onclick="setCat('production')"
-          style="flex-shrink:0;padding:9px 12px;font-family:var(--font-head);font-size: 12px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">
-          🌾 Üretim</div>
-        <div class="cat-tab" id="cat-livestock" onclick="setCat('livestock')"
-          style="flex-shrink:0;padding:9px 12px;font-family:var(--font-head);font-size: 12px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">
-          🐄 Hayvanlar</div>
-        <div class="cat-tab" id="cat-premium" onclick="setCat('premium')"
-          style="flex-shrink:0;padding:9px 12px;font-family:var(--font-head);font-size: 12px;color:#d4a843;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">
-          👑 Kraliyet</div>
-        <div class="cat-tab" id="cat-materials" onclick="setCat('materials')"
-          style="flex-shrink:0;padding:9px 12px;font-family:var(--font-head);font-size: 12px;color:#9bd17a;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">
-          📦 Malzeme</div>
+        style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;background:var(--panel2);border-bottom:1px solid var(--border);padding:7px 10px;flex-shrink:0;">
+        <div class="cat-tab active" id="cat-all" onclick="setCat('all')">Tümü</div>
+        <div class="cat-tab" id="cat-equipment" onclick="setCat('equipment')">Ekipmanlar</div>
+        <div class="cat-tab" id="cat-enhancement" onclick="setCat('enhancement')">Geliştirme</div>
+        <div class="cat-tab" id="cat-production" onclick="setCat('production')">Üretim</div>
+        <div class="cat-tab" id="cat-livestock" onclick="setCat('livestock')">Hayvanlar</div>
+        <div class="cat-tab" id="cat-premium" onclick="setCat('premium')">Kraliyet</div>
+        <div class="cat-tab" id="cat-materials" onclick="setCat('materials')">Malzeme</div>
       </div>
       <div
         style="display:flex;align-items:center;justify-content:space-between;padding:5px 11px;border-bottom:1px solid var(--border);background:var(--panel2);flex-shrink:0;">
@@ -14261,27 +13640,15 @@
     };
     const ZD_STRONG_BOSS_CHANCE = 0.20; // son katta güçlü boss çıkma şansı
 
-    const ZD_ROOM_TYPES = {
-      fight: { icon: '⚔', name: 'Düşman Odası', hint: 'Bir düşman lurk ediyor...', color: 'zd-room-type-fight' },
-      chest: { icon: '📦', name: 'Hazine Sandığı', hint: 'Altın ve eşya bulabilirsin', color: 'zd-room-type-chest' },
-      trap: { icon: '💀', name: 'Tuzak Odası', hint: 'Tehlikeli görünüyor...', color: 'zd-room-type-trap' },
-      rest: { icon: '🏕', name: 'Dinlenme Noktası', hint: 'Biraz can yenileyebilirsin', color: 'zd-room-type-rest' },
-      boss: { icon: '👿', name: 'BOSS ODASI', hint: 'Büyük tehlike sizi bekliyor!', color: 'zd-room-type-boss' },
-    };
-
     // Zindan durumu
     let ZD = {
       active: false,         // Zindanda mı?
       tier: 1,              // Zindan kademesi (oyuncu seviyesinden)
       floor: 1,             // Mevcut kat
-      rooms: [],            // [{type, cleared, enemy?}]
-      currentRoom: null,    // Aktif oda index
       tickets: ZD_MAX_TICKETS,
       ticketResetDate: '',  // 'YYYY-MM-DD'
       totalGold: 0,
       totalXP: 0,
-      // Savaş state
-      battle: null,         // {enemy, enemyHp, playerHp, defending, log}
       g: null,              // ızgara koşusu (zgNewRun) — 7×7 gerçek zamanlı mod
     };
 
@@ -14338,58 +13705,6 @@
       setTimeout(() => toast(`🧺 ${amt}× ${ITEM_LABELS[key] || key} topladın!`), isBoss ? 900 : 350);
     }
 
-    function zdGenFloor(floorNum) {
-      const T = ZD_TIERS[ZD.tier || 1] || ZD_TIERS[1];
-      const roomCount = 3 + Math.floor(Math.random() * 2); // 3 veya 4
-      const rooms = [];
-      // İlk oda dövüş veya tuzak
-      const firstTypes = ['fight', 'fight', 'trap'];
-      rooms.push({ type: firstTypes[Math.floor(Math.random() * firstTypes.length)], cleared: false });
-      // Ortalar
-      for (let i = 1; i < roomCount - 1; i++) {
-        const pool = ['fight', 'fight', 'chest', 'rest', 'trap'];
-        rooms.push({ type: pool[Math.floor(Math.random() * pool.length)], cleared: false });
-      }
-      // Son oda boss
-      rooms.push({ type: 'boss', cleared: false });
-      // Düşman ata — kadro BÖLGEYE göre daralır (akrep çölde, jaguar ormanda...)
-      const mult = 1 + (floorNum - 1) * 0.25; // kat içi güçlenme (kademe zaten ölçekli)
-      const mobPool = zdRegionMobs(T.mobs);
-      const pick = () => mobPool[Math.floor(Math.random() * mobPool.length)];
-      rooms.forEach(r => {
-        if (r.type === 'fight') {
-          const base = pick();
-          r.enemy = {
-            ...base,
-            hp: Math.floor(base.hp * mult),
-            atk: Math.floor(base.atk * mult),
-            def: Math.floor(base.def * mult),
-            gold: Math.floor(base.gold * mult),
-            xp: Math.floor(base.xp * mult),
-          };
-        } else if (r.type === 'boss') {
-          if (floorNum === ZD_FLOORS) {
-            // Son kat: kademenin gerçek boss'u — %20 şansla GÜÇLÜ boss
-            const strong = Math.random() < ZD_STRONG_BOSS_CHANCE;
-            r.enemy = { ...(strong ? T.strongBoss : T.boss) };
-          } else {
-            // Ara kat boss'u: kadrodan azılı bir canavar (güçlendirilmiş)
-            const base = pick();
-            r.enemy = {
-              ...base,
-              name: 'Azılı ' + base.name,
-              hp: Math.floor(base.hp * mult * 3.5),
-              atk: Math.floor(base.atk * mult * 1.3),
-              def: Math.floor(base.def * mult * 1.2),
-              gold: Math.floor(base.gold * mult * 3),
-              xp: Math.floor(base.xp * mult * 3),
-            };
-          }
-        }
-      });
-      return rooms;
-    }
-
     /* ── ANA RENDER ── */
     function renderZindan() {
       const el = document.getElementById('gs-zindan');
@@ -14444,7 +13759,7 @@
     <!-- Zindan Bilgisi Butonu -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:8px 12px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;">
       <span style="font-family:var(--font-head);font-size: 11px;color:var(--perg2);">${tier}. SEVİYE ZİNDAN</span>
-      <button class="info-btn" style="width:auto;border-radius:12px;padding:2px 8px;font-size: 10px;" onclick="showInfoPop('${tier}. Seviye Zindan Bilgisi', '🏚 <b style=&quot;color:var(--perg2);&quot;>5 kat</b>, her katta odalar<br>🐾 Canavarlar: <b style=&quot;color:var(--perg2);&quot;>${mobNames.replace(/'/g, "\\'")}</b><br>⚔ Tur bazlı savaş (Saldır/Savun/Büyü/Sıyrıl)<br>🗡 Bosslar <b style=&quot;color:var(--perg2);&quot;>Sv.${T.lv[0]}–${T.lv[1]}</b> silah ve küpe düşürür<br>${finalNote.replace(/'/g, "\\'")}<br>💀 Ölürsen zindandan çıkarsın', this, '🗡')" title="Zindan Bilgisi">ⓘ Zindan Bilgisi</button>
+      <button class="info-btn" style="width:auto;border-radius:12px;padding:2px 8px;font-size: 10px;" onclick="showInfoPop('${tier}. Seviye Zindan Bilgisi', '🏚 <b style=&quot;color:var(--perg2);&quot;>5 kat</b>, her kat 7×7 ızgara<br>🐾 Canavarlar: <b style=&quot;color:var(--perg2);&quot;>${mobNames.replace(/'/g, "\\'")}</b><br>⚔ Gerçek zamanlı savaş — kareye dokunarak yürü, menzile girince otomatik vur<br>🗝 Kat kotasını doldurunca kat muhafızı çıkar<br>🗡 Bosslar <b style=&quot;color:var(--perg2);&quot;>Sv.${T.lv[0]}–${T.lv[1]}</b> silah ve küpe düşürür<br>${finalNote.replace(/'/g, "\\'")}<br>💀 Ölürsen zindandan çıkarsın', this, '🗡')" title="Zindan Bilgisi">ⓘ Zindan Bilgisi</button>
     </div>
 
     <!-- Giriş butonu -->
@@ -14458,127 +13773,6 @@
       Son zindan: <span style="color:var(--gold);">+${ZD.totalGold}🪙</span> · <span style="color:#7aaa5a;">+${ZD.totalXP}XP</span>
     </div>`: ''}
   </div>`;
-    }
-
-    /* ── KAT EKRANI ── */
-    function zdFloorHTML() {
-      const floorDots = Array.from({ length: ZD_FLOORS }, (_, i) => {
-        const f = i + 1;
-        const cls = f < ZD.floor ? 'done' : f === ZD.floor ? 'current' : 'locked';
-        const icon = f < ZD.floor ? '✓' : f === ZD.floor ? f : '🔒';
-        return `<div class="zd-floor-node ${cls}">${icon}</div>`;
-      }).join('');
-
-      const roomsHTML = ZD.rooms.map((r, i) => {
-        const rt = ZD_ROOM_TYPES[r.type];
-        const canClick = !r.cleared;
-        return `<div class="zd-room ${rt.color}${r.cleared ? ' cleared' : ''}"
-      onclick="${canClick ? `zdEnterRoom(${i})` : 'void(0)'}">
-      <span class="zd-room-icon">${rt.icon}</span>
-      <div class="zd-room-name">${rt.name}</div>
-      <div class="zd-room-hint">${r.type === 'fight' && r.enemy ? r.enemy.name : rt.hint}</div>
-    </div>`;
-      }).join('');
-
-      const allCleared = ZD.rooms.every(r => r.cleared);
-      const canAdvance = allCleared && ZD.floor < ZD_FLOORS;
-      const isComplete = allCleared && ZD.floor >= ZD_FLOORS;
-
-      return `<div class="zd-wrap-card">
-    <!-- Kat göstergesi -->
-    <div style="text-align:center;font-family:var(--font-head);font-size: 11px;color:var(--ink3);margin-bottom:8px;letter-spacing:2px;">
-      <span style="color:var(--gold);">${ZD.tier}. SEVİYE ZİNDAN</span> · KAT ${ZD.floor} / ${ZD_FLOORS}
-    </div>
-    <div class="zd-floor-bar">${floorDots}</div>
-
-    <!-- Stat şeridi -->
-    <div class="zd-stat-strip">
-      <div class="zd-stat-item"><span class="zd-stat-val" style="color:#f87171;">❤ ${G.stats.hp}/${getEffectiveStats().maxhp}</span>Can</div>
-      <div class="zd-stat-item"><span class="zd-stat-val" style="color:var(--gold2);">+${ZD.totalGold}🪙</span>Kazanılan</div>
-      <div class="zd-stat-item"><span class="zd-stat-val" style="color:#7aaa5a;">+${ZD.totalXP}XP</span>Deneyim</div>
-      <div class="zd-stat-item"><span class="zd-stat-val" style="color:var(--ink2);">Sv.${ZD.floor}</span>Kat</div>
-    </div>
-
-    <!-- Odalar -->
-    <div class="sec" style="margin:0 0 10px;text-align:center;">ODALAR</div>
-    <div class="zd-rooms">${roomsHTML}</div>
-
-    <!-- İlerleme / Çıkış Butonları -->
-    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:16px;">
-      ${canAdvance ? `<button class="btn" style="max-width:320px;width:100%;font-size: 14px;padding:12px 20px;background:linear-gradient(180deg, #b08d57 0%, #7a5c2d 100%);border:1px solid var(--gold);box-shadow:0 4px 14px rgba(176,141,87,0.3);" onclick="zdNextFloor()">
-        ⬇ ${ZD.floor + 1}. Kata İn</button>` : ''}
-      ${isComplete ? `<div style="text-align:center;padding:12px;background:linear-gradient(135deg,#1a0e02,#0e1a08);border:1px solid var(--gold);border-radius:8px;width:100%;max-width:360px;box-sizing:border-box;">
-        <div style="font-family:var(--font-head);font-size: 15px;color:var(--gold2);margin-bottom:6px;">🏆 ZİNDAN TAMAMLANDI!</div>
-        <div style="font-size: 11px;color:var(--perg2);margin-bottom:4px;">+${ZD.totalGold}🪙 · +${ZD.totalXP}XP kazandın</div>
-        <div style="font-size: 10px;color:var(--ink3);">⚔ 4 silah + <span style="color:#c9a646;">☀ 1 Güneş Silahı</span> kazandın!</div>
-      </div>`: ''}
-      <button class="btn btn-ghost" style="max-width:320px;width:100%;font-size: 13px;padding:10px 18px;background:linear-gradient(180deg, #2a1616 0%, #1a0a0a 100%);border:1px solid #7f1d1d;color:#fca5a5;" onclick="zdExit()">
-        🚪 Zindandan Çık
-      </button>
-    </div>
-  </div>`;
-    }
-
-    /* ── SAVAŞ EKRANI ── */
-    function zdBattleHTML() {
-      if (!ZD.battle) return '';
-      const b = ZD.battle;
-      const eHpPct = Math.max(0, Math.round(b.enemyHp / b.enemy.hp * 100));
-      const pHpPct = Math.max(0, Math.round(b.playerHp / (b.playerMaxHp || G.stats.maxhp) * 100));
-      const hpColor = pHpPct > 50 ? '#7aaa5a' : pHpPct > 25 ? '#c9a646' : '#f87171';
-      const cls = CLASSES.find(c => c.id === G.classId) || CLASSES[0];
-      const hasMagic = G.classId === 'mage' || G.classId === 'paladin';
-      const logHTML = b.log.slice(-14).reverse().map(l =>
-        `<div class="zd-log-line ${l.type}">${l.text}</div>`
-      ).join('');
-
-      const defendActive = b.defending;
-      return `
-    <div class="zd-battle">
-      <div class="zd-split-area">
-
-        <!-- Sol: Oyuncu -->
-        <div class="zd-split-player">
-          <img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/${_playerSpr1()}.webp"
-               class="zd-split-char" id="zd-player-spr-zd"
-               onerror="this.style.opacity='0'"/>
-          <div style="font-family:var(--font-head);font-size: 9px;color:var(--perg2);margin-bottom:2px;">${G.heroName || cls.icon}${b.guaranteedCrit ? ` <span style="color:#d4a843;">💥</span>` : ''}</div>
-          <div class="zd-hp-bar-wrap" style="margin:0;width:100%;">
-            <span class="zd-hp-label" style="color:var(--gold);">${cls.icon}</span>
-            <div class="zd-hp-bg"><div class="zd-hp-fill player" id="zd-player-hp-bar" style="width:${pHpPct}%;background:linear-gradient(90deg,#8b1e1e,${hpColor});"></div></div>
-            <span class="zd-hp-val" id="zd-player-hp-val">${b.playerHp}/${b.playerMaxHp || G.stats.maxhp}</span>
-          </div>
-        </div>
-
-        <!-- Orta: Butonlar -->
-        <div class="zd-split-btns">
-          <button class="zd-overlay-btn" onclick="zdAction('attack')" style="border-color:#5a1a1a;">⚔<br>Saldır</button>
-          <button class="zd-overlay-btn" onclick="zdAction('defend')" style="border-color:#1a3a5a;${defendActive ? 'background:rgba(26,58,90,0.55);color:#6a9abf;' : ''}">🛡<br>Savun</button>
-          <button class="zd-overlay-btn${!hasMagic ? ' zd-ob-disabled' : ''}" onclick="${hasMagic ? `zdAction('magic')` : 'void(0)'}" style="border-color:#4a2a5a;">✨<br>Büyü</button>
-          <button class="zd-overlay-btn" onclick="zdAction('dodge')" style="border-color:#5a4418;">💨<br>Sıyrıl</button>
-          <button class="zd-overlay-btn" onclick="zdOpenPotionPicker()" style="border-color:#1a4a2a;">🧪<br>İksir</button>
-        </div>
-
-        <!-- Sağ: Düşman -->
-        <div class="zd-split-enemy" id="zd-enemy-card">
-          ${b.enemy.img
-          ? `<img src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/${b.enemy.img}.webp"
-                    class="zd-split-char" id="zd-enemy-icon" alt="${b.enemy.name}"
-                    onerror="this.style.opacity='0'">`
-          : `<span class="zd-enemy-icon" id="zd-enemy-icon">${b.enemy.icon}</span>`}
-          <div class="zd-enemy-name" style="margin-bottom:2px;">${b.enemy.name}</div>
-          <div class="zd-hp-bar-wrap" style="margin:0;width:100%;">
-            <span class="zd-hp-label">HP</span>
-            <div class="zd-hp-bg"><div class="zd-hp-fill enemy" id="zd-enemy-hp-bar" style="width:${eHpPct}%;"></div></div>
-            <span class="zd-hp-val" id="zd-enemy-hp-val">${b.enemyHp}/${b.enemy.hp}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Savaş günlüğü -->
-      <div class="zd-log" id="zd-log">${logHTML}</div>
-    </div>
-  `;
     }
 
     /* ── AKSİYONLAR ── */
@@ -14601,10 +13795,8 @@
       ZD.active = true;
       ZD.tier = zdPlayerTier(); // kademe girişte kilitlenir (içeride seviye atlansa da değişmez)
       ZD.floor = 1;
-      ZD.currentRoom = null;
       ZD.totalGold = 0;
       ZD.totalXP = 0;
-      ZD.battle = null;
       zgNewRun(false);   // 7×7 ızgara koşusu başlar
       updateHUD();
       if (currentUser) sbSave();
@@ -14613,356 +13805,11 @@
       toast(`Zindana girdin! 🗝${upNote}`);
     }
 
-    function zdExit() {
-      // Kazanılanları uygula
-      if (ZD.totalGold > 0 || ZD.totalXP > 0) {
-        toast(`Zindandan çıktın! +${ZD.totalGold}🪙 +${ZD.totalXP}XP`);
-      } else {
-        toast('Zindandan çıktın.');
-      }
-      ZD.active = false; ZD.battle = null;
-      updateHUD();
-      if (currentUser) sbSave();
-      renderZindan();
-    }
-
-    function zdNextFloor() {
-      ZD.floor++;
-      ZD.rooms = zdGenFloor(ZD.floor);
-      ZD.currentRoom = null;
-      renderZindan();
-    }
-
-    function zdEnterRoom(idx) {
-      const room = ZD.rooms[idx];
-      if (!room || room.cleared) return;
-      ZD.currentRoom = idx;
-
-      if (room.type === 'fight' || room.type === 'boss') {
-        const eff = getEffectiveStats();
-        ZD.battle = {
-          enemy: { ...room.enemy },
-          enemyHp: room.enemy.hp,
-          playerHp: eff.hp,
-          playerMaxHp: eff.maxhp,
-          defending: false,
-          dodging: false,
-          guaranteedCrit: false,
-          roomIdx: idx,
-          log: [{ text: `${room.enemy.name} karşınıza çıktı!`, type: 'info' }],
-        };
-        renderZindan();
-      }
-      else if (room.type === 'chest') {
-        const tierMult = ZD.tier || 1;
-        const goldGain = Math.floor((20 + ZD.floor * 15 + Math.random() * 30) * tierMult);
-        const xpGain = (15 + ZD.floor * 5) * tierMult;
-        G.gold += goldGain; ZD.totalGold += goldGain;
-        gainXP(xpGain); ZD.totalXP += xpGain;
-        room.cleared = true;
-        toast(`Sandık açıldı! +${goldGain}🪙 💰`);
-        updateHUD(); renderZindan();
-      }
-      else if (room.type === 'trap') {
-        const dmg = Math.floor((8 + ZD.floor * 4 + Math.random() * 10) * (1 + ((ZD.tier || 1) - 1) * 0.8));
-        const dodged = Math.random() < (G.stats.agi || 5) / 50;
-        if (dodged) {
-          toast('Tuzağı atladın! 💨');
-        } else {
-          G.stats.hp = Math.max(1, G.stats.hp - dmg);
-          toast(`Tuzağa düştün! -${dmg} can 💀`);
-          if (G.stats.hp <= 1) {
-            room.cleared = true;
-            zdDeath(); return;
-          }
-        }
-        room.cleared = true;
-        updateHUD(); renderZindan();
-      }
-      else if (room.type === 'rest') {
-        const effMaxHp = getEffectiveStats().maxhp;
-        const healAmt = Math.floor(effMaxHp * 0.3);
-        G.stats.hp = Math.min(effMaxHp, G.stats.hp + healAmt);
-        room.cleared = true;
-        toast(`Dinlendin! +${healAmt} can ❤`);
-        updateHUD(); renderZindan();
-      }
-    }
-
-    /* ── TUR BAZLI SAVAŞ ── */
-    /* Savaşta iksir seçme penceresi — kullanmak bir tur harcar */
-    function zdOpenPotionPicker() {
-      if (!ZD.battle) return;
-      const potions = G.inventory.filter(i => (i.cat === 'consumable' || i.type === 'İksir') && (i.stats?.hp_restore || i.stats?.hp_restore_pct));
-      if (!potions.length) { toast('🧪 Envanterinde can iksiri yok!'); return; }
-      const eff = getEffectiveStats();
-      const rows = potions.map(p => {
-        const healTxt = p.stats.hp_restore_pct
-          ? `Max canın %${p.stats.hp_restore_pct}'i (+${Math.floor(eff.maxhp * p.stats.hp_restore_pct / 100 * potionPowerMult())})`
-          : `+${Math.floor(p.stats.hp_restore * potionPowerMult())} can`;
-        return `<div onclick="closeGModal();zdAction('potion',${p.id})" style="display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:6px;border-radius:8px;border:1px solid var(--border2);background:var(--panel2);cursor:pointer;">
-      <span style="font-size: 24px;">${p.icon}</span>
-      <div style="flex:1;text-align:left;">
-        <div style="font-size: 14px;color:var(--perg);">${p.name}${p.qty && p.qty > 1 ? ` <span style="color:var(--gold);">x${p.qty}</span>` : ''}</div>
-        <div style="font-size: 11px;color:var(--g-green);">${healTxt}</div>
-      </div>
-    </div>`;
-      }).join('');
-      showGModal(`
-    <div style="text-align:center;margin-bottom:10px;">
-      <div style="font-family:var(--font-head);font-size: 16px;color:var(--gold2);">🧪 İKSİR KULLAN</div>
-      <div style="font-size: 11px;color:#f0a050;margin-top:4px;">⚠ İksir içmek bir tur harcar — düşman sana vurur!</div>
-    </div>
-    ${rows}
-    <button class="btn btn-ghost" style="width:100%;margin-top:6px;" onclick="closeGModal()">Vazgeç</button>
-  `);
-    }
-
-    function zdAction(action, itemId) {
-      if (!ZD.battle) return;
-      const b = ZD.battle;
-      const eff = getEffectiveStats();
-      const log = (text, type) => { b.log.push({ text, type }); };
-      b.defending = false;
-
-      // Oyuncu turu
-      let playerDmg = 0, fled = false;
-      if (action === 'attack') {
-        // Öfke Kristali temel hasara eklenir — kritik çarpanı bu toplam üzerine uygulanır
-        const rage = ringRageMult(b.playerHp, eff.maxhp);
-        playerDmg = Math.max(1, Math.floor(eff.physDmg * (0.85 + Math.random() * 0.3) * rage) - Math.floor(b.enemy.def * 0.5));
-        const zdCritStat = eff.crit || 0;
-        const zdCritMult = 1 + Math.max(0.5, zdCritStat / 100);
-        if (rage > 1) log(`😡 Öfke Kristali: hasarın %${Math.round((rage - 1) * 100)} arttı.`, 'good');
-        if (b.guaranteedCrit || Math.random() < eff.critChance) {
-          playerDmg = Math.floor(playerDmg * zdCritMult);
-          log(`💥 Kritik! ${b.enemy.name}'a ${playerDmg} hasar verdin.`, 'good');
-        } else if (G.classId === 'ranger' && Math.random() < (eff.trueDmgChance || 0)) {
-          playerDmg = Math.floor(playerDmg * 1.30);
-          log(`🎯 Gerçek Hasar! ${b.enemy.name}'a ${playerDmg} vurdun.`, 'good');
-        } else {
-          log(`⚔ ${b.enemy.name}'a ${playerDmg} hasar verdin.`, 'good');
-        }
-        b.guaranteedCrit = false;
-      }
-      else if (action === 'defend') {
-        b.defending = true;
-        log('🛡 Savunma duruşu aldın. Hasar -%40.', 'info');
-      }
-      else if (action === 'magic') {
-        const rageM = ringRageMult(b.playerHp, eff.maxhp);
-        playerDmg = Math.max(1, Math.floor(eff.magicDmg * (0.9 + Math.random() * 0.4) * rageM));
-        log(`✨ Büyü! ${b.enemy.name}'a ${playerDmg} büyü hasarı verdin.${rageM > 1 ? ` (😡 +%${Math.round((rageM - 1) * 100)})` : ''}`, 'good');
-      }
-      else if (action === 'dodge') {
-        if (Math.random() < 0.5) {
-          b.dodging = true;
-          b.guaranteedCrit = true;
-          log('💨 Sıyrıldın! Düşmanın saldırısı boşa çıkacak. Sonraki saldırın KESİN kritik!', 'good');
-        } else {
-          b.dodging = false;
-          log('💨 Sıyrılma başarısız! Saldırıya açıksın.', 'bad');
-        }
-      }
-      else if (action === 'potion') {
-        const item = G.inventory.find(x => x.id === itemId);
-        if (!item || !(item.stats?.hp_restore || item.stats?.hp_restore_pct)) { toast('İksir bulunamadı!'); return; }
-        const heal = item.stats.hp_restore_pct
-          ? Math.floor(eff.maxhp * (item.stats.hp_restore_pct / 100) * potionPowerMult())
-          : Math.floor(item.stats.hp_restore * potionPowerMult());
-        const before = b.playerHp;
-        b.playerHp = Math.min(eff.maxhp, b.playerHp + heal);
-        // Yığından düş / son taneyse kaldır
-        if (item.qty && item.qty > 1) item.qty--;
-        else G.inventory = G.inventory.filter(x => x.id !== itemId);
-        log(`🧪 ${item.name} içtin: +${b.playerHp - before} can. Sıran geçti!`, 'good');
-        renderKarakter();
-        if (currentUser) sbSave();
-      }
-
-      if (playerDmg > 0) {
-        b.enemyHp = Math.max(0, b.enemyHp - playerDmg);
-        zdAnimateHit('enemy');
-        // Yüzükler: can çalma + yakma
-        const r = ringOnHit(b, playerDmg, b.playerHp, eff.maxhp);
-        b.playerHp = r.hp; r.msgs.forEach(m => log(m, 'good'));
-      }
-
-      // Birlikler de saldırır (yalnızca oyuncu saldırdıysa: attack/magic)
-      if ((action === 'attack' || action === 'magic') && b.enemyHp > 0) {
-        const armed = armedTroops();
-        armed.forEach(c => {
-          if (b.enemyHp <= 0) return;
-          const t = TROOP_TYPES[c.type] || { name: 'Birlik', icon: '⚔' };
-          let td = troopAttackDmg(c);
-          td = Math.max(1, td - Math.floor((b.enemy.def || 0) * 0.4)); // düşman savunması kısmen etkiler
-          b.enemyHp = Math.max(0, b.enemyHp - td);
-          log(`${t.icon} ${t.name} saldırdı: ${td} hasar!`, 'good');
-        });
-        if (armed.length) zdAnimateHit('enemy');
-      }
-
-      // Yüzük tur sonu: yakma hasarı + arınma iyileşmesi
-      {
-        const rt = ringTurnEnd(b, b.enemyHp, b.enemy.maxHp || b.enemy.hp || 100, b.playerHp, eff.maxhp);
-        b.enemyHp = rt.enemyHp; b.playerHp = rt.playerHp;
-        rt.msgs.forEach(m => log(m, m.startsWith('🔥') ? 'good' : 'good'));
-      }
-
-      // Düşman öldü mü?
-      if (b.enemyHp <= 0) {
-        const room = ZD.rooms[b.roomIdx];
-        room.cleared = true;
-        G.gold += b.enemy.gold; ZD.totalGold += b.enemy.gold;
-        gainXP(b.enemy.xp); ZD.totalXP += b.enemy.xp;
-        // Birlikler de savaş XP'si kazanır (düşman XP'sinin yarısı)
-        awardTroopCombatXP(Math.max(5, Math.floor(b.enemy.xp * 0.5)));
-        G.stats.hp = Math.max(1, b.playerHp);
-        log(`🏆 ${b.enemy.name} yenildi! +${b.enemy.gold}🪙 +${b.enemy.xp}XP`, 'gold');
-        // Canavar materyali — postu/dişi her odadan düşebilir
-        mobMaterialDrop(b.enemy, room.type === 'boss');
-        // Boss oda ise silah düşür + başarım sayacı
-        if (room.type === 'boss') {
-          const isFinalFloor = ZD.floor >= ZD_FLOORS;
-          // Silah yağmuru kısıldı: ara kat boss'ları %35, son kat boss'u her zaman.
-          // (Eskiden her kat garanti silah düşürüyordu → koşu başına 5 silah.)
-          if (isFinalFloor || Math.random() < ZD_MIDBOSS_WEAPON_CHANCE) {
-            // %50 şansla silah, %50 şansla zırh düşsün
-            if (Math.random() < 0.5) zdBossWeaponDrop(b.enemy, ZD.floor);
-            else dropRandomArmor(ZD.tier || 1, 'Zindan Zırhı');
-          }
-          trackAch('zdboss');
-          // Yüzük dropu — bölgenin havuzu, %18 şans (son katta %30)
-          if (Math.random() < (isFinalFloor ? 0.30 : 0.18)) {
-            dropRandomRing(zdRingPool(ZD.tier || 1), Math.max(0, (ZD.tier || 1) - 2), 'Zindan yüzüğü');
-          }
-          // Küpe dropu — %30 şans
-          if (Math.random() < 0.30) {
-            dropRandomEarring(G.region, 'Zindan küpesi');
-          }
-        }
-        updateHUD(); ZD.battle = null;
-        const dmgText = playerDmg > 0 ? ` (${playerDmg} hasar)` : '';
-        if (room.type === 'boss') {
-          slideNotif('🏆', `${b.enemy.name} yenildi!`, `+${b.enemy.gold}🪙 · +${b.enemy.xp}XP`);
-        } else {
-          toast(`⚔ ${b.enemy.name} yenildi!${dmgText} 🏆`);
-        }
-        if (currentUser) sbSave();
-        renderZindan();
-        return;
-      }
-
-      // Düşman turu — kaçınma kontrolü
-      if (b.dodging) {
-        b.dodging = false;
-        log(`💨 ${b.enemy.name}'ın saldırısını savuşturdun! 0 hasar aldın.`, 'good');
-      } else if (Math.random() < eff.dodgeChance) {
-        log(`💨 Saldırıdan kaçındın!`, 'good');
-      } else {
-        // Birlik zırhı ek hasar azaltma sağlar (her 1 def → %0.5, en fazla %25 ek)
-        const troopRed = Math.min(0.25, troopArmorDef() * 0.005);
-        const totalRed = Math.min(0.80, eff.damageReduction + troopRed);
-        let eDmg = Math.max(1, Math.floor(b.enemy.atk * (0.85 + Math.random() * 0.3) * (1 - totalRed)));
-        if (b.defending) eDmg = Math.floor(eDmg * 0.6);
-        b.playerHp = Math.max(0, b.playerHp - eDmg);
-        log(`${b.enemy.icon} ${b.enemy.name}: ${eDmg} hasar verdi.`, 'bad');
-        zdAnimateHit('player');
-      }
-
-      // Tabip iyileşmesi — tur başına %10 şans/tabip, canının %5'i
-      const tbZd = troopBuffs();
-      if (tbZd.tabip > 0 && b.playerHp > 0 && b.playerHp < eff.maxhp && Math.random() < tbZd.healChance) {
-        const heal = Math.max(1, Math.floor(eff.maxhp * tbZd.healPct));
-        b.playerHp = Math.min(eff.maxhp, b.playerHp + heal);
-        log(`⚕ Tabip seni iyileştirdi! +${heal} can`, 'good');
-      }
-
-      // Oyuncu öldü mü?
-      if (b.playerHp <= 0) {
-        G.stats.hp = 0;
-        log('💀 Düşün! Zindandan çıkıyorsun...', 'bad');
-        ZD.battle = null;
-        updateHUD();
-        setTimeout(() => zdDeath(), 800);
-        return;
-      }
-
-      G.stats.hp = b.playerHp;
-      updateHUD();
-      zdUpdateBattleUI();
-    }
-
-    function zdUpdateBattleUI() {
-      if (!ZD.battle) return;
-      const b = ZD.battle;
-      const eEl = document.getElementById('zd-enemy-hp-bar');
-      const eVal = document.getElementById('zd-enemy-hp-val');
-      const pEl = document.getElementById('zd-player-hp-bar');
-      const pVal = document.getElementById('zd-player-hp-val');
-      const logEl = document.getElementById('zd-log');
-      if (eEl) eEl.style.width = Math.max(0, Math.round(b.enemyHp / b.enemy.hp * 100)) + '%';
-      if (eVal) eVal.textContent = `${b.enemyHp}/${b.enemy.hp}`;
-      // Efektif (ekipman dahil) maxhp kullan — base G.stats.maxhp değil
-      const pMax = b.playerMaxHp || getEffectiveStats().maxhp;
-      const pPct = Math.min(100, Math.max(0, Math.round(b.playerHp / pMax * 100)));
-      const hpColor = pPct > 50 ? '#7aaa5a' : pPct > 25 ? '#c9a646' : '#f87171';
-      if (pEl) { pEl.style.width = pPct + '%'; pEl.style.background = `linear-gradient(90deg,#8b1e1e,${hpColor})`; }
-      if (pVal) pVal.textContent = `${b.playerHp}/${pMax}`;
-      if (logEl) {
-        logEl.innerHTML = b.log.slice(-14).reverse().map(l => `<div class="zd-log-line ${l.type}">${l.text}</div>`).join('');
-        logEl.scrollTop = 0;
-      }
-      // Savunma göstergesi yeniden yaz
-      if (b.defending) {
-        const wrap = document.querySelector('.zd-battle');
-        const existing = document.querySelector('.zd-def-indicator');
-        if (wrap && !existing) {
-          const d = document.createElement('div');
-          d.className = 'zd-def-indicator';
-          d.style.cssText = 'font-size: 9px;color:#6a9abf;text-align:center;margin-bottom:4px;';
-          d.textContent = '🛡 Savunma duruşu aktif';
-          const hpRow = wrap.querySelector('.zd-hp-bar-wrap');
-          if (hpRow) wrap.insertBefore(d, hpRow.nextSibling);
-        }
-      }
-    }
-
-    function zdAnimateHit(target) {
-      if (target === 'enemy') {
-        const el = document.getElementById('zd-enemy-card');
-        if (el) { el.classList.remove('zd-shake'); void el.offsetWidth; el.classList.add('zd-shake'); }
-        const icon = document.getElementById('zd-enemy-icon');
-        if (icon) { icon.classList.remove('zd-hit'); void icon.offsetWidth; icon.classList.add('zd-hit'); }
-      }
-    }
-
-    function zdDeath() {
-      ZD.active = false;
-      ZD.battle = null;
-      G.stats.hp = Math.max(1, Math.floor(getEffectiveStats().maxhp * 0.3));
-      updateHUD();
-      if (currentUser) sbSave();
-      showGModal(`
-    <div style="text-align:center;margin-bottom:16px;">
-      <div style="font-size: 52px;margin-bottom:8px;">💀</div>
-      <div style="font-family:var(--font-head);font-size: 16px;color:#f87171;margin-bottom:6px;">DÜŞTÜN!</div>
-      <div style="font-size: 12px;color:var(--ink3);line-height:1.7;">
-        Zindandan çıkarıldın.<br>
-        ${ZD.totalGold > 0 ? `Kazandıkların: <span style="color:var(--gold);">+${ZD.totalGold}🪙</span> · <span style="color:#7aaa5a;">+${ZD.totalXP}XP</span><br>` : ''}
-        Can %30'a düştü.
-      </div>
-    </div>
-    <button class="btn" style="width:100%;" onclick="closeGModal();renderZindan();">Tamam</button>
-  `);
-      renderZindan();
-    }
-
     /* ══════════════════════════════════════════════════════════════
        ZİNDAN — GERÇEK ZAMANLI 7×7 IZGARA DÖVÜŞÜ
-       Eski tur-tabanlı oda sistemi (zdGenFloor/zdFloorHTML/zdBattleHTML/
-       zdAction/zdEnterRoom) artık ÇAĞRILMIYOR — ölü kod olarak duruyor,
-       temizliği TODO'da.
+       Tek zindan sistemi budur. Eski tur-tabanlı oda sistemi (Saldır/Savun/
+       Büyü/Sıyrıl butonlu zdGenFloor/zdFloorHTML/zdBattleHTML/zdAction/
+       zdEnterRoom ve arkadaşları) tamamen kaldırıldı.
 
        Tasarım kararları:
        - Yürürken SALDIRAMAZSIN ama vurulabilirsin (dokunulmazlık yok).
@@ -15752,7 +14599,6 @@
       if (g) { g.over = true; G.stats.hp = Math.max(1, Math.round(g.hp)); }
       zgStopLoop();
       ZD.active = false;
-      ZD.battle = null;
       ZD.g = null;
       updateHUD();
       if (currentUser) sbSave();
@@ -15790,7 +14636,7 @@
       const ratio = tier === 1 ? 0.5 : 0;
       const lostGold = g.bag.gold, lostXp = g.bag.xp, lostItems = g.bag.items.length;
       const got = zgBankBag(ratio);
-      ZD.active = false; ZD.battle = null; ZD.g = null;
+      ZD.active = false; ZD.g = null;
       G.stats.hp = Math.max(1, Math.floor(getEffectiveStats().maxhp * 0.3));
       updateHUD();
       if (currentUser) sbSave();
@@ -16920,12 +15766,13 @@
       qgRefresh();
     }
 
-
-    /* ══════════════════════════════════════
+/* ══════════════════════════════════════
        MARKET
     ══════════════════════════════════════ */
     function setSrc(s) { G.marketSrc = s; document.querySelectorAll('.src-btn').forEach(el => { el.classList.toggle('active', el.id === 'src-' + s); }); renderMarket(); }
-    function setCat(c) { G.marketCat = c; document.querySelectorAll('.cat-tab').forEach(el => { const active = el.id === 'cat-' + c; el.style.color = active ? 'var(--gold2)' : 'var(--ink3)'; el.style.borderBottom = active ? '2px solid var(--gold2)' : '2px solid transparent'; }); if (c === 'materials') { loadMaterialListings().then(() => renderMarket()); } else { renderMarket(); } }
+    /* Aktif hâl artık .cat-tab.active sınıfından geliyor (bkz. setSrc) —
+       stili buradan elle yazmak, sınıfın hover/geçiş kurallarını eziyordu. */
+    function setCat(c) { G.marketCat = c; document.querySelectorAll('.cat-tab').forEach(el => { el.classList.toggle('active', el.id === 'cat-' + c); }); if (c === 'materials') { loadMaterialListings().then(() => renderMarket()); } else { renderMarket(); } }
     // Supabase'den gelen gerçek player ilanları (belleğe cache)
     let G_PLAYER_LISTINGS = [];
     let G_STALLS = {}; // sellerId -> {name, heroName} (aktif Tezgahı olan satıcılar)
@@ -18886,9 +17733,7 @@
       glgo('home');
     }
 
-
-
-    /* ══════════════════════════════════════
+/* ══════════════════════════════════════
        ÜRETİM
     ══════════════════════════════════════ */
     function pgo(t) { G.prodTab = t;['farm', 'mill', 'ranch', 'kitchen', 'insaa', 'depot'].forEach(x => { document.getElementById('pt-' + x).classList.toggle('active', x === t); }); updateInvStrip(); renderProd(t); }
