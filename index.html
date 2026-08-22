@@ -17318,7 +17318,7 @@
           : `<span style="font-size: 30px;">${item.icon}</span>`;
         const enhBadge = item.enhPlus > 0 ? `<span style="font-size: 14px;padding:2px 6px;border-radius:3px;background:#1a1200;border:1px solid var(--gold);color:var(--gold);font-family:var(--font-head);">+${item.enhPlus}</span>` : '';
         const clickFn = item.cat === 'premium' ? `openPremiumConfirm(${item.id})` : `buyMarketItem('${item.id}')`;
-        const buyLabel = item.cat === 'premium' && item.premiumKey !== 'stall' ? '✨ Etkinleştir' : 'Satın Al';
+        const buyLabel = item.cat === 'premium' && item.premiumKey !== 'stall' ? 'Etkinleştir' : 'Satın Al';
         const buyBtns = buyBtnsHtml(item, canBuy, buyLabel, clickFn, '4px');
         return `<div class="listing-card ${gradeCls}" onclick="${clickFn}" style="${showRarity && rg ? `border-color:${ROLL_GRADES[rg].color};` : ''}">
       <div class="item-icon ${gradeCls}" style="margin-bottom:2px;${showRarity && rg ? `border-color:${ROLL_GRADES[rg].color};` : ''}">${iconContent}${gradePip}</div>
