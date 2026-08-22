@@ -521,6 +521,48 @@
       object-fit: contain;
     }
 
+    /* ── ÜRETİM SEKMELERİ ──
+       Kutu içinde gerçek buton görünümü. .tab / .tabs GLOBAL sınıflar
+       (ana menü ve başka ekranlar da kullanıyor), o yüzden kuralların
+       hepsi .prod-tabs altına kapsandı — başka hiçbir sekme çubuğu
+       etkilenmez. Arka plana doku eklenecekse .prod-tabs .tab'ın
+       background satırı tek dokunulacak yer. */
+    .prod-tabs {
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 10px;
+    }
+
+    .prod-tabs .tab {
+      flex: 0 1 auto;
+      min-width: 74px;
+      padding: 8px 12px;
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      background: var(--panel3);
+      box-shadow: inset 0 1px 0 #ffffff06;
+      transition: border-color .15s, color .15s, background .15s;
+    }
+
+    .prod-tabs .tab:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    .prod-tabs .tab.active {
+      border-color: var(--gold);
+      color: var(--gold2);
+      background: #2a1e08;
+      box-shadow: inset 0 1px 0 #ffffff10, 0 0 8px #b08d5730;
+    }
+
+    .prod-tabs .tab-img {
+      width: 30px;
+      height: 30px;
+      margin-bottom: 4px;
+    }
+
     .scroll {
       flex: 1;
       overflow-y: auto;
@@ -7532,13 +7574,33 @@
         </div>
       </div>
       <div class="inv-strip" id="inv-strip"></div>
-      <div class="tabs">
-        <div class="tab active" id="pt-farm" onclick="pgo('farm')"> <span class="tab-icon">🌾</span>Tarla</div>
-        <div class="tab" id="pt-mill" onclick="pgo('mill')"> <span class="tab-icon">⚙</span>Değirmen</div>
-        <div class="tab" id="pt-ranch" onclick="pgo('ranch')"> <span class="tab-icon">🐄</span>Çiftlik</div>
-        <div class="tab" id="pt-kitchen" onclick="pgo('kitchen')"><span class="tab-icon">🍳</span>Aşevi</div>
-        <div class="tab" id="pt-insaa" onclick="pgo('insaa')"> <span class="tab-icon">🏗</span>İnşaa</div>
-        <div class="tab" id="pt-depot" onclick="pgo('depot')"> <span class="tab-icon">📦</span>Depo</div>
+      <!-- Görsel yüklenemezse (henüz GitHub'a atılmadıysa) emojiye düşer;
+           ana menüdeki .tab-img ile aynı desen. -->
+      <div class="tabs prod-tabs">
+        <div class="tab active" id="pt-farm" onclick="pgo('farm')"><img class="tab-img"
+            src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/tarlaikonu.webp"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='block'" alt="" /><span
+            class="tab-icon" style="display:none;">🌾</span>Tarla</div>
+        <div class="tab" id="pt-mill" onclick="pgo('mill')"><img class="tab-img"
+            src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/degirmenikonu.webp"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='block'" alt="" /><span
+            class="tab-icon" style="display:none;">⚙</span>Değirmen</div>
+        <div class="tab" id="pt-ranch" onclick="pgo('ranch')"><img class="tab-img"
+            src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/ciftlikikonu.webp"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='block'" alt="" /><span
+            class="tab-icon" style="display:none;">🐄</span>Çiftlik</div>
+        <div class="tab" id="pt-kitchen" onclick="pgo('kitchen')"><img class="tab-img"
+            src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/aseviikonu.webp"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='block'" alt="" /><span
+            class="tab-icon" style="display:none;">🍳</span>Aşevi</div>
+        <div class="tab" id="pt-insaa" onclick="pgo('insaa')"><img class="tab-img"
+            src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/insaaikonu.webp"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='block'" alt="" /><span
+            class="tab-icon" style="display:none;">🏗</span>İnşaa</div>
+        <div class="tab" id="pt-depot" onclick="pgo('depot')"><img class="tab-img"
+            src="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/depoikonu.webp"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='block'" alt="" /><span
+            class="tab-icon" style="display:none;">📦</span>Depo</div>
       </div>
       <div class="scroll pad" id="prod-content"></div>
     </div>
@@ -11398,12 +11460,12 @@
     </div>
     ${targetSlot && canEquip ? `<button class="btn" style="width:100%;margin-bottom:8px;" onclick="equipItem(${item.id},'${targetSlot}')">⚔ Kuşan</button>` : ''}
     ${targetSlot && !canEquip ? `<button class="btn" disabled style="width:100%;margin-bottom:8px;">🔒 Seviye ${item.reqLv} Gerekli</button>` : ''}
-    ${item.cat === 'consumable' || item.type === 'İksir' ? `<button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#0a2a1a,#051408);border-color:var(--g-green);color:#7aaa5a;" onclick="useConsumable(${item.id})">⚗ Kullan${item.qty && item.qty > 1 ? ' (' + item.qty + ' adet)' : ''}</button>` : ''}
-    ${item.qty > 1 ? `<button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="openSplitStackModal(${item.id})">✂ Yığını Ayır</button>` : ''}
+    ${item.cat === 'consumable' || item.type === 'İksir' ? `<button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#0a2a1a,#051408);border-color:var(--g-green);color:#7aaa5a;" onclick="useConsumable(${item.id})">Kullan${item.qty && item.qty > 1 ? ' (' + item.qty + ' adet)' : ''}</button>` : ''}
+    ${item.qty > 1 ? `<button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="openSplitStackModal(${item.id})">Ayır</button>` : ''}
     ${(() => { const k = stackKeyOf(item); return k && G.inventory.some(x => x.id !== item.id && stackKeyOf(x) === k) ? `<button class="btn btn-ghost" style="width:100%;margin-bottom:8px;border-color:var(--gold);color:var(--gold2);" onclick="mergeStacks(${item.id})">🔗 Aynı Türleri Birleştir</button>` : ''; })()}
     <button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:#3a6a18;color:#7aaa5a;" onclick="sellToNPC(${item.id})">Tüccar'a Sat (${getNPCSellPrice(item).toLocaleString('tr-TR')}🪙)</button>
-    <button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="openSellModal(${item.id})">🪙 Pazara Sat</button>
-    <button class="btn btn-danger" style="width:100%;" onclick="dropItem(${item.id})">🗑 At</button>`;
+    <button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="openSellModal(${item.id})">Satışa Koy</button>
+    <button class="btn btn-danger" style="width:100%;" onclick="dropItem(${item.id})">Çöpe At</button>`;
       showGModal(html);
     }
 
@@ -12943,12 +13005,12 @@
 
       let btn;
       if (here) {
-        btn = `<button class="btn" style="width:100%;margin-top:10px;border-color:var(--gold2);" onclick="openRegionMap()">🔍 Keşif Gridini Aç</button>`;
+        btn = `<button class="btn" style="width:100%;margin-top:10px;border-color:var(--gold2);" onclick="openRegionMap()">Civarı Keşfet</button>`;
       } else if (wait > 0) {
-        btn = `<button class="btn" style="width:100%;margin-top:10px;opacity:.5;cursor:not-allowed;" disabled>🐴 Kervan dinleniyor — <span id="travel-cd">${fmtDur(wait)}</span></button>`;
+        btn = `<button class="btn" style="width:100%;margin-top:10px;opacity:.5;cursor:not-allowed;" disabled>Kervan dinleniyor — <span id="travel-cd">${fmtDur(wait)}</span></button>`;
       } else {
         const poor = G.gold < c.gold;
-        btn = `<button class="btn" style="width:100%;margin-top:10px;${poor ? 'opacity:.55;' : ''}" onclick="travelTo('${key}')">🐴 Buraya Git — ${c.gold}🪙${poor ? ' (yetersiz)' : ''}</button>`;
+        btn = `<button class="btn" style="width:100%;margin-top:10px;${poor ? 'opacity:.55;' : ''}" onclick="travelTo('${key}')">Buraya Git — ${c.gold}🪙${poor ? ' (yetersiz)' : ''}</button>`;
       }
       return `<div class="row-between" style="margin-bottom:6px;">
       <span style="font-family:var(--font-head);font-size: 14px;color:var(--gold);">${R.icon} ${esc(R.name)}</span>
