@@ -9,7 +9,15 @@
     href="https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/favicon.ico">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap');
+    /* Marcellus, Cinzel'in yerini aldı. Cinzel'in KÜÇÜK HARFİ YOK — küçük
+       harfleri küçük büyük harf (small-caps) olarak çizdiği için "Tarla"
+       yazınca yarısı büyük görünüyordu. Marcellus aynı Roma yazıtı
+       karakterini taşır ama gerçek küçük harfe sahiptir.
+       Cinzel Decorative import ediliyordu ama hiçbir yerde kullanılmıyordu,
+       kaldırıldı — boşuna indirilen bir yazı tipi eksildi.
+       Not: Marcellus'un tek kalınlığı var (400); koddaki font-weight 600/700/900
+       değerlerini tarayıcı taklit eder (sentetik bold). */
+    @import url('https://fonts.googleapis.com/css2?family=Marcellus&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap');
 
     * {
       box-sizing: border-box;
@@ -19,7 +27,7 @@
     }
 
     :root {
-      --font-head: 'Cinzel', serif;
+      --font-head: 'Marcellus', Georgia, 'Times New Roman', serif;
       --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
       /* ── Yazı renkleri ── */
@@ -905,7 +913,7 @@
       z-index: 2;
     }
 
-    /* Input alanları normal font — Cinzel'den muaf */
+    /* Input alanları normal font — başlık fontundan muaf */
     .input-field {
       font-family: system-ui, -apple-system, 'Segoe UI', sans-serif !important;
       font-size: 14px !important;
