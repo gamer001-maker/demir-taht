@@ -17060,10 +17060,10 @@
         <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">${lvBadge}<span style="font-size: 14px;color:var(--ink3);">${item.type}</span></div>
         <div style="font-size: 16px;color:var(--ink3);">Tüccar</div>
         <div style="font-family:var(--font-head);font-size: 22px;color:var(--gold);">${item.price.toLocaleString('tr')}🪙</div>
-        <button class="buy-btn-sm" style="width:100%;margin-top:auto;" onclick="event.stopPropagation();buyMarketItem('${item.id}')" ${canBuy ? '' : 'disabled'}>Satın Al</button>
+        ${buyBtnsHtml(item, canBuy, 'Satın Al', `buyMarketItem('${item.id}')`, 'auto')}
       </div>`;
         }).join('');
-        html += `<div class="sec" style="margin-top:0;">🧪 NPC İksirleri</div><div class="market-grid" style="margin-bottom:16px;">${npcCards}</div>`;
+        html += `<div class="sec" style="margin-top:0;"> Tüccarın İksirleri</div><div class="market-grid" style="margin-bottom:16px;">${npcCards}</div>`;
       }
 
       // ── OYUNCU YIĞIN İLANLARI (tezgahlar ayrı bölümde) ──
@@ -17318,19 +17318,8 @@
           : `<span style="font-size: 30px;">${item.icon}</span>`;
         const enhBadge = item.enhPlus > 0 ? `<span style="font-size: 14px;padding:2px 6px;border-radius:3px;background:#1a1200;border:1px solid var(--gold);color:var(--gold);font-family:var(--font-head);">+${item.enhPlus}</span>` : '';
         const clickFn = item.cat === 'premium' ? `openPremiumConfirm(${item.id})` : `buyMarketItem('${item.id}')`;
-        /* ×10 yalnızca NPC'nin sayılabilir mallarında: iksir yığılıyor, tohum
-           sayaca gidiyor — ikisi de envanter yuvası şişirmiyor. Silah/zırh
-           dışarıda (her biri ayrı yuva + rastgele stat), materyalin zaten
-           kendi adet penceresi var (openMaterialBuy), tezgah tek kullanımlık. */
-        const bulkOk = item.seller === 'npc' && !item.premiumKey
-          && (item.cat === 'consumable' || item.isSeed) && !item.isMat;
         const buyLabel = item.cat === 'premium' && item.premiumKey !== 'stall' ? '✨ Etkinleştir' : 'Satın Al';
-        const buyBtns = bulkOk
-          ? `<div style="display:flex;gap:4px;width:100%;margin-top:4px;">
-        <button class="buy-btn-sm" style="flex:1;min-width:0;padding-left:2px;padding-right:2px;" onclick="event.stopPropagation();${clickFn}" ${!canBuy ? 'disabled' : ''}>${buyLabel}</button>
-        <button class="buy-btn-sm" style="flex:1;min-width:0;padding-left:2px;padding-right:2px;" onclick="event.stopPropagation();buyItemBulk('${item.id}',10)" ${!canBuy ? 'disabled' : ''}>×10</button>
-      </div>`
-          : `<button class="buy-btn-sm" style="width:100%;margin-top:4px;" onclick="event.stopPropagation();${clickFn}" ${!canBuy ? 'disabled' : ''}>${buyLabel}</button>`;
+        const buyBtns = buyBtnsHtml(item, canBuy, buyLabel, clickFn, '4px');
         return `<div class="listing-card ${gradeCls}" onclick="${clickFn}" style="${showRarity && rg ? `border-color:${ROLL_GRADES[rg].color};` : ''}">
       <div class="item-icon ${gradeCls}" style="margin-bottom:2px;${showRarity && rg ? `border-color:${ROLL_GRADES[rg].color};` : ''}">${iconContent}${gradePip}</div>
       <div class="item-name ${gradeCls}" style="font-family:var(--font-head);font-size: 20px;line-height:1.3;word-break:break-word;">${item.name}${enhBadge ? '&nbsp;' + enhBadge : ''}</div>
@@ -17395,6 +17384,30 @@
       document.getElementById('market-content').innerHTML = bodyHtml
         || `<div style="text-align:center;padding:30px;font-size: 12px;color:var(--ink3);font-style:italic;">İlan bulunamadı.</div>`;
     }
+    /* ×10 hangi malda çıkar: NPC'nin sayılabilir malları. İksir envanterde
+       yığılıyor, tohum sayaca gidiyor — ikisi de envanter yuvası şişirmiyor.
+       Silah/zırh dışarıda (her biri ayrı yuva + rastgele stat), malzemenin
+       zaten kendi adet penceresi var (openMaterialBuy), tezgah tek kullanımlık. */
+    function bulkBuyOk(item) {
+      return item.seller === 'npc' && !item.premiumKey && !item.isMat
+        && (item.cat === 'consumable' || item.isSeed);
+    }
+    /* Satın alma butonu(ları) TEK yerden üretilir. Pazarın iki ayrı kart
+       render'ı var (cardHtml ve renderMaterialMarket içindeki npcCards);
+       ×10 ilk eklendiğinde sadece birine yazıldığı için Malzeme sekmesinde
+       görünmemişti. Burada toplandı ki bir daha ayrışmasınlar. */
+    function buyBtnsHtml(item, canBuy, label, clickFn, marginTop) {
+      const dis = canBuy ? '' : 'disabled';
+      const mt = marginTop || '4px';
+      if (!bulkBuyOk(item)) {
+        return `<button class="buy-btn-sm" style="width:100%;margin-top:${mt};" onclick="event.stopPropagation();${clickFn}" ${dis}>${label}</button>`;
+      }
+      return `<div style="display:flex;gap:4px;width:100%;margin-top:${mt};">
+        <button class="buy-btn-sm" style="flex:1;min-width:0;padding-left:2px;padding-right:2px;" onclick="event.stopPropagation();${clickFn}" ${dis}>${label}</button>
+        <button class="buy-btn-sm" style="flex:1;min-width:0;padding-left:2px;padding-right:2px;" onclick="event.stopPropagation();buyItemBulk('${item.id}',10)" ${dis}>×10</button>
+      </div>`;
+    }
+
     /* ── TOPLU ALIM ──
        İksir/tohum gibi sayılabilir NPC mallarında tek tek tıklamak yorucu.
        buyItem'ı n kez çağırır ama başarı toast'ını ve yeniden çizimleri
