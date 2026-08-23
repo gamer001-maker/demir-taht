@@ -10036,6 +10036,17 @@
       return m?.desc || tpl?.desc || '';
     }
 
+    /* Hedeflenen kaliteye (q) göre stat üret. Her stat aralığın aynı
+       yüzdesine konur, böylece getRollGrade'in hesapladığı toplam q da
+       hedefe eşit çıkar — rozet ile statlar birbirini tutar. */
+    function rollStatsAtQuality(tpl, q) {
+      const st = {};
+      if (!tpl || !tpl.statRanges) return st;
+      Object.entries(tpl.statRanges).forEach(([k, [mn, mx]]) => {
+        st[k] = mn + Math.round(q * (mx - mn));
+      });
+      return st;
+    }
     function rollStatsFromTpl(tpl) {
       const st = {};
       if (!tpl || !tpl.statRanges) return st;
@@ -12632,7 +12643,7 @@
       <div style="font-size: 14px;color:var(--ink3);text-align:center;margin-top:6px;">
         Başarı şansı: <span style="color:var(--gold2);font-family:var(--font-head);font-size: 18px;">%${Math.round(displayChance * 10) / 10}</span>${(luckActive || smithPct > 0 || ringPctEnh > 0 || earPctEnh > 0) ? ` <span style="color:#9bd17a;font-size: 13px;">(%${baseDisplayChance}${luckActive ? ' +%5 🍀' : ''}${smithPct > 0 ? ` +%${smithPct} 🔨` : ''}${ringPctEnh > 0 ? ` +%${ringPctEnh} 💍` : ''}${earPctEnh > 0 ? ` +%${earPctEnh} 💠` : ''})</span>` : ''}
         ${isNekro
-            ? `<span style="color:#f87171;font-size: 12px;display:block;margin-top:3px;">💀 Başarısız olursa eşya <b>yok olur!</b></span>`
+            ? `<span style="color:#f87171;font-size: 12px;display:block;margin-top:3px;">Başarısız olursa eşya <b>yok olur!</b></span>`
             : curPlus > 0 ? `<span style="color:#f87171;font-size: 12px;display:block;margin-top:3px;">⚠ Başarısız olursa +${curPlus} → +${curPlus - 1} düşer</span>` : ''
           }
       </div>`;
@@ -12810,7 +12821,7 @@
             }
             enhSelectedId = null;
             showEnhSmoke('fail');
-            toast(`💀 ${item.name} geliştirme başarısız! Eşya yok edildi!`);
+            toast(` ${item.name} geliştirme başarısız! Eşya yok edildi!`);
           } else {
             // Normal eşya → bir kademe geri düş (0'ın altına inmez)
             const failPlus = Math.max(0, curPlus - 1);
@@ -12830,9 +12841,9 @@
             }
             showEnhSmoke('fail');
             if (failPlus < curPlus) {
-              toast(`💔 Geliştirme başarısız! +${curPlus} → +${failPlus} düştü!`);
+              toast(`Geliştirme başarısız! +${curPlus} → +${failPlus} düştü!`);
             } else {
-              toast(`💔 Geliştirme başarısız! +0 kaldı.`);
+              toast(`Geliştirme başarısız! +0 kaldı.`);
             }
           }
         }
@@ -13644,8 +13655,48 @@
        ZİNDAN SİSTEMİ
     ══════════════════════════════════════ */
     const ZD_FLOORS = 5;
-    const ZD_MIDBOSS_WEAPON_CHANCE = 0.35; // ara kat boss'larının silah düşürme şansı
     const ZD_MAX_TICKETS = 20;
+
+    /* ══════════════════════════════════════
+       ZİNDAN EŞYA DÜŞÜŞÜ
+
+       Tasarım kararı: KAT, ödülün KALİTESİNİ değil SIKLIĞINI artırır.
+       Nadirlik ve + değeri her katta aynı tablodan çekilir. Böylece
+       1. katta uzun süre kalıp set toplamak geçerli bir strateji olarak
+       kalır; üst katlar daha çabuk ödül verir ama efsanevi yağdırmaz.
+
+       chance: kat 1 → 5 arasında doğrusal artar.
+       grades/plus: kata bağlı DEĞİL.
+       types:  yüzük payı düşük tutuldu — bölge yüzük havuzu küçük olduğu
+               için çabuk tekrara düşüyor, silah/zırh çeşidi ise çok.
+    ══════════════════════════════════════ */
+    const ZD_DROP = {
+      chance: { normal: [0.05, 0.07], elite: [0.15, 0.25], boss: [0.35, 0.55] },
+      /* q aralıkları getRollGrade'in bantlarıyla (0.60/0.85/0.95/0.99)
+         HİZALI olmak zorunda: rozet statlardan geri hesaplanıyor, uyuşmazsa
+         rozet yalan söyler. Bant kenarlarından kaçınıldı ki yuvarlama
+         eşyayı komşu banda taşırmasın. */
+      grades: [
+        { w: 65, q: [0.05, 0.55] },    // Sıradan
+        { w: 20, q: [0.62, 0.83] },    // Nadir
+        { w: 10, q: [0.955, 0.985] },  // Epik
+        { w: 5, q: [0.990, 1.000] },   // Efsanevi
+      ],
+      plus: [{ w: 50, p: 0 }, { w: 20, p: 1 }, { w: 15, p: 2 }, { w: 10, p: 3 }, { w: 5, p: 4 }],
+      types: [{ w: 45, t: 'weapon' }, { w: 40, t: 'armor' }, { w: 15, t: 'ring' }],
+    };
+    function zdPickW(list) {
+      let r = Math.random() * list.reduce((a, c) => a + c.w, 0);
+      for (const it of list) { r -= it.w; if (r < 0) return it; }
+      return list[list.length - 1];
+    }
+    function zdDropChance(kind, floor) {
+      const rng = ZD_DROP.chance[kind] || ZD_DROP.chance.normal;
+      const t = (Math.max(1, Math.min(ZD_FLOORS, floor || 1)) - 1) / (ZD_FLOORS - 1);
+      return rng[0] + (rng[1] - rng[0]) * t;
+    }
+    function zdRollQuality() { const g = zdPickW(ZD_DROP.grades); return g.q[0] + Math.random() * (g.q[1] - g.q[0]); }
+    function zdRollPlus() { return zdPickW(ZD_DROP.plus).p; }
 
     /* ══════════════════════════════════════
        EFFECTİVE STAT HESAPLAMA
@@ -14222,18 +14273,30 @@
       const amt = guaranteed ? (1 + Math.floor(Math.random() * 2)) : 1;
       ZD.g.bag.mats[key] = (ZD.g.bag.mats[key] || 0) + amt;
     }
-    function zgBagEquipment(m, isFinal) {
+    /* Her canavar — normal, azılı, boss — kendi şansıyla eşya düşürebilir.
+       Şans kata bağlı, kalite ve + değeri değil (bkz. ZD_DROP).
+       TEK istisna: 5. kademenin son boss'u. Sv.50 Nekro seti oradan başka
+       hiçbir yerden çıkmadığı için o düşüş garanti bırakıldı — tabloya
+       tabi olsaydı %55 × %45 = ~%25'e inip son boss'u anlamsızlaştırırdı. */
+    function zgBagDrop(m) {
       const tier = ZD.tier || 1;
-      if (!zgBagRoom()) { toast('⚠ Envanter dolu — eşya düşmedi!'); return; }
-      if (isFinal || Math.random() < ZD_MIDBOSS_WEAPON_CHANCE) {
-        zgCapture(() => {
-          if (Math.random() < 0.5) zdBossWeaponDrop(m, ZD.floor);
-          else dropRandomArmor(tier, 'Zindan Zırhı');
-        });
+      const isFinal = m.boss && ZD.floor >= ZD_FLOORS;
+      const necroGate = isFinal && tier === 5;
+      const kind = m.boss ? 'boss' : (m.elite ? 'elite' : 'normal');
+      if (!necroGate && Math.random() >= zdDropChance(kind, ZD.floor)) return;
+      if (!zgBagRoom()) {
+        if (m.boss || m.elite) toast('⚠ Envanter dolu — eşya düşmedi!');
+        return;
       }
-      if (Math.random() < (isFinal ? 0.30 : 0.18) && zgBagRoom()) {
-        zgCapture(() => dropRandomRing(zdRingPool(tier), Math.max(0, tier - 2), 'Zindan yüzüğü'));
-      }
+      const q = zdRollQuality();
+      const plus = zdRollPlus();
+      const type = necroGate ? 'weapon' : zdPickW(ZD_DROP.types).t;
+      const note = m.boss ? 'Boss ganimeti' : (m.elite ? 'Azılı ganimeti' : 'Zindan ganimeti');
+      zgCapture(() => {
+        if (type === 'weapon') zdBossWeaponDrop(m, ZD.floor, { q, plus });
+        else if (type === 'armor') dropRandomArmor(tier, note, { q, plus });
+        else dropRandomRing(zdRingPool(tier), plus, note);
+      });
     }
     function zgKill(m) {
       const g = ZD.g;
@@ -14246,10 +14309,10 @@
       // Altın + XP tek satırda, hasar yazısının üstündeki şeritte (lane 1)
       zgFloat(m.x, m.y, '+' + m.gold + '🪙 +' + xpGain + 'XP', '#e8c07a', 1);
       zgBagMaterial(m, m.boss || m.elite);
+      zgBagDrop(m);   // artık normal canavarlar da düşük şansla eşya düşürür
       if (m.boss) {
         g.bossDead = true;
         trackAch('zdboss');
-        zgBagEquipment(m, ZD.floor >= ZD_FLOORS);
         slideNotif('🏆', m.name + ' yenildi!', ZD.floor >= ZD_FLOORS ? 'Zindan tamamlandı' : 'Alt kata inebilirsin');
       }
       g.mobs = g.mobs.filter(x => x.uid !== m.uid);
@@ -14853,7 +14916,10 @@
     }
     /* Havuzdan rastgele yüzük düşür. Döndürdüğü eşya envantere eklenmiştir. */
 
-    function dropRandomArmor(tier, note) {
+    /* opts: { q, plus } — zindan düşüşü kaliteyi ve + değerini kendi
+       tablosundan çekip buraya verir. Verilmezse eski davranış sürer
+       (harabe/keşif gibi diğer kaynaklar için). */
+    function dropRandomArmor(tier, note, opts) {
       if (invCount() >= invCap()) { toast('⚠ Envanter dolu, zırh düşmedi!'); return null; }
 
       const pool = Object.keys(ARMOR_TEMPLATES).filter(k => {
@@ -14872,9 +14938,8 @@
       const tpl = ARMOR_TEMPLATES[tplId];
       if (!tpl) return null;
 
-      const rolledStats = rollStatsFromTpl(tpl);
-      // For armors, let's keep base drop plus at 0 unless high tier
-      const plus = Math.max(0, tier - 2);
+      const rolledStats = (opts && opts.q != null) ? rollStatsAtQuality(tpl, opts.q) : rollStatsFromTpl(tpl);
+      const plus = (opts && opts.plus != null) ? opts.plus : Math.max(0, tier - 2);
       const finalStats = plus > 0 ? getEnhancedStats({ baseStats: rolledStats, stats: rolledStats }, plus) : rolledStats;
 
       const armor = {
@@ -14958,7 +15023,7 @@
       return Math.max(0, Math.min(6, plus));
     }
 
-    function zdBossWeaponDrop(enemy, floor) {
+    function zdBossWeaponDrop(enemy, floor, opts) {
       if (invCount() >= invCap()) { toast('⚠ Envanter dolu, ödül düşmedi!'); return; }
       const tier = ZD.tier || zdPlayerTier();
       const isFinal = floor >= ZD_FLOORS;
@@ -14969,8 +15034,8 @@
       const tplId = pool[Math.floor(Math.random() * pool.length)];
       const tpl = WEAPON_TEMPLATES[tplId];
       if (!tpl) return;
-      const rolledStats = rollStatsFromTpl(tpl);
-      const plus = zdDropPlusFor(tier, isFinal);
+      const rolledStats = (opts && opts.q != null) ? rollStatsAtQuality(tpl, opts.q) : rollStatsFromTpl(tpl);
+      const plus = (opts && opts.plus != null) ? opts.plus : zdDropPlusFor(tier, isFinal);
       const finalStats = plus > 0 ? getEnhancedStats({ baseStats: rolledStats, stats: rolledStats }, plus) : rolledStats;
       const weapon = {
         id: newItemId(),
@@ -15559,7 +15624,7 @@
       questSave(); if (typeof currentUser !== 'undefined' && currentUser) sbSave();
       if (!silent) {
         if (win) celebrate('✅', 'GÖREV TAMAM!', `${q.t}${parts.length ? ' · ' + parts.join('  ') : ''}`, 'gold');
-        else slideNotif('💀', 'Görev başarısız', `${q.t} — ${parts.join(' ')}`);
+        else slideNotif('', 'Görev başarısız', `${q.t} — ${parts.join(' ')}`);
       }
       if (typeof renderKarakter === 'function' && document.getElementById('gs-karakter')) renderKarakter();
     }
