@@ -10036,15 +10036,40 @@
       return m?.desc || tpl?.desc || '';
     }
 
-    /* Hedeflenen kaliteye (q) göre stat üret. Her stat aralığın aynı
-       yüzdesine konur, böylece getRollGrade'in hesapladığı toplam q da
-       hedefe eşit çıkar — rozet ile statlar birbirini tutar. */
-    function rollStatsAtQuality(tpl, q) {
+    /* ── HEDEF NADİRLİKTE STAT ÜRET ──
+       Statlar tam sayı, dolayısıyla ulaşılabilir kalite değerleri d/W
+       kesirleriyle SINIRLI (W = tüm stat aralıklarının toplam genişliği,
+       d = minimumun üstüne dağıtılan puan). Önce q seçip yuvarlamak
+       eşyayı komşu banda kaydırıyordu — Epik hedefi %68 ıskalanıyordu.
+       Çözüm: d tam sayısını doğrudan hedef bandın içinden seç.
+       Bant o şablonda ulaşılamıyorsa bir ALT banda inilir; asla yukarı
+       şişmez, yoksa rozet hak edilmemiş nadirlik gösterirdi. */
+    const ROLL_ORDER = ['efsanevi', 'epik', 'degerli', 'nadir', 'siradan'];
+    function rollStatsAtGrade(tpl, grade) {
+      if (!tpl || !tpl.statRanges) return {};
+      const arr = Object.entries(tpl.statRanges).map(([k, [mn, mx]]) => ({ k, mn, w: Math.max(0, mx - mn) }));
+      const W = arr.reduce((a, c) => a + c.w, 0);
+      if (!arr.length || W <= 0) return rollStatsFromTpl(tpl);
+      let d = null;
+      for (let i = Math.max(0, ROLL_ORDER.indexOf(grade)); i < ROLL_ORDER.length; i++) {
+        const [lo, hi] = ROLL_BAND[ROLL_ORDER[i]];
+        const dLo = Math.ceil(lo * W);
+        const dHi = Math.min(W, Math.ceil(hi * W) - 1);
+        if (dHi >= dLo) { d = dLo + Math.floor(Math.random() * (dHi - dLo + 1)); break; }
+      }
+      if (d == null) d = W;
+      // d'yi statlara genişlikleriyle orantılı dağıt; kalan puan rastgele
+      // bir noktadan başlayarak verilir ki aynı nadirlikteki iki eşya
+      // birebir aynı olmasın.
+      let assigned = 0;
+      arr.forEach(a => { a.give = Math.floor(d * a.w / W); assigned += a.give; });
+      let rem = d - assigned;
+      let i = Math.floor(Math.random() * arr.length);
+      for (let guard = 0; rem > 0 && guard < arr.length * 4; guard++, i = (i + 1) % arr.length) {
+        if (arr[i].give < arr[i].w) { arr[i].give++; rem--; }
+      }
       const st = {};
-      if (!tpl || !tpl.statRanges) return st;
-      Object.entries(tpl.statRanges).forEach(([k, [mn, mx]]) => {
-        st[k] = mn + Math.round(q * (mx - mn));
-      });
+      arr.forEach(a => { st[a.k] = a.mn + a.give; });
       return st;
     }
     function rollStatsFromTpl(tpl) {
@@ -10089,6 +10114,20 @@
        neresine düştüyse: 0-25% Sıradan · 25-50% İyi ·
        50-75% Epik · 75-100% Efsanevi
     ══════════════════════════════════════ */
+    /* Nadirlik eşikleri. getRollGrade ve zindan düşüşü AYNI diziyi kullanır
+       ki rozet ile üretilen stat asla çelişmesin.
+       Eskiden 0.60/0.85/0.95/0.99 idi. Epik bandı yalnızca %4 genişlikteydi
+       ve statlar tam sayı olduğu için şablonların YARISINDA o aralığa düşen
+       hiçbir değer yoktu — eşya Değerli'den doğrudan Efsanevi'ye atlıyordu.
+       Yeni eşiklerle Epik şablonların %87'sinde ulaşılabilir. */
+    const ROLL_T = { nadir: 0.45, degerli: 0.70, epik: 0.85, efsanevi: 0.95 };
+    const ROLL_BAND = {
+      siradan: [0, ROLL_T.nadir],
+      nadir: [ROLL_T.nadir, ROLL_T.degerli],
+      degerli: [ROLL_T.degerli, ROLL_T.epik],
+      epik: [ROLL_T.epik, ROLL_T.efsanevi],
+      efsanevi: [ROLL_T.efsanevi, 1.0000001],
+    };
     const ROLL_GRADES = {
       siradan: { label: 'Sıradan', color: '#8a8276', gradeId: 'gray' },
       nadir: { label: 'Nadir', color: '#7aaa5a', gradeId: 'green' },
@@ -10108,11 +10147,10 @@
       });
       if (maxS <= minS) return 'siradan';
       const q = (val - minS) / (maxS - minS);
-      // Stricter percentiles to make epic and legendary much rarer
-      if (q < 0.60) return 'siradan';
-      if (q < 0.85) return 'nadir';
-      if (q < 0.95) return 'degerli';
-      if (q < 0.99) return 'epik';
+      if (q < ROLL_T.nadir) return 'siradan';
+      if (q < ROLL_T.degerli) return 'nadir';
+      if (q < ROLL_T.epik) return 'degerli';
+      if (q < ROLL_T.efsanevi) return 'epik';
       return 'efsanevi';
     }
     // Nadirlik sadece silah/zırhta (ileride takı ve birliklerde) gösterilir —
@@ -13672,15 +13710,15 @@
     ══════════════════════════════════════ */
     const ZD_DROP = {
       chance: { normal: [0.05, 0.07], elite: [0.15, 0.25], boss: [0.35, 0.55] },
-      /* q aralıkları getRollGrade'in bantlarıyla (0.60/0.85/0.95/0.99)
-         HİZALI olmak zorunda: rozet statlardan geri hesaplanıyor, uyuşmazsa
-         rozet yalan söyler. Bant kenarlarından kaçınıldı ki yuvarlama
-         eşyayı komşu banda taşırmasın. */
+      /* Nadirlik doğrudan isimle seçilir; statı rollStatsAtGrade üretir ve
+         getRollGrade ile aynı bant tanımını (ROLL_BAND) kullanır — rozet
+         ile stat hiçbir koşulda çelişmez. NOT: 'degerli' bilerek listede
+         yok, senin verdiğin dört orana sadık kalındı. */
       grades: [
-        { w: 65, q: [0.05, 0.55] },    // Sıradan
-        { w: 20, q: [0.62, 0.83] },    // Nadir
-        { w: 10, q: [0.955, 0.985] },  // Epik
-        { w: 5, q: [0.990, 1.000] },   // Efsanevi
+        { w: 65, g: 'siradan' },
+        { w: 20, g: 'nadir' },
+        { w: 10, g: 'epik' },
+        { w: 5, g: 'efsanevi' },
       ],
       plus: [{ w: 50, p: 0 }, { w: 20, p: 1 }, { w: 15, p: 2 }, { w: 10, p: 3 }, { w: 5, p: 4 }],
       types: [{ w: 45, t: 'weapon' }, { w: 40, t: 'armor' }, { w: 15, t: 'ring' }],
@@ -13695,7 +13733,7 @@
       const t = (Math.max(1, Math.min(ZD_FLOORS, floor || 1)) - 1) / (ZD_FLOORS - 1);
       return rng[0] + (rng[1] - rng[0]) * t;
     }
-    function zdRollQuality() { const g = zdPickW(ZD_DROP.grades); return g.q[0] + Math.random() * (g.q[1] - g.q[0]); }
+    function zdRollGrade() { return zdPickW(ZD_DROP.grades).g; }
     function zdRollPlus() { return zdPickW(ZD_DROP.plus).p; }
 
     /* ══════════════════════════════════════
@@ -14288,13 +14326,13 @@
         if (m.boss || m.elite) toast('⚠ Envanter dolu — eşya düşmedi!');
         return;
       }
-      const q = zdRollQuality();
+      const grade = zdRollGrade();
       const plus = zdRollPlus();
       const type = necroGate ? 'weapon' : zdPickW(ZD_DROP.types).t;
       const note = m.boss ? 'Boss ganimeti' : (m.elite ? 'Azılı ganimeti' : 'Zindan ganimeti');
       zgCapture(() => {
-        if (type === 'weapon') zdBossWeaponDrop(m, ZD.floor, { q, plus });
-        else if (type === 'armor') dropRandomArmor(tier, note, { q, plus });
+        if (type === 'weapon') zdBossWeaponDrop(m, ZD.floor, { grade, plus });
+        else if (type === 'armor') dropRandomArmor(tier, note, { grade, plus });
         else dropRandomRing(zdRingPool(tier), plus, note);
       });
     }
@@ -14938,7 +14976,7 @@
       const tpl = ARMOR_TEMPLATES[tplId];
       if (!tpl) return null;
 
-      const rolledStats = (opts && opts.q != null) ? rollStatsAtQuality(tpl, opts.q) : rollStatsFromTpl(tpl);
+      const rolledStats = (opts && opts.grade) ? rollStatsAtGrade(tpl, opts.grade) : rollStatsFromTpl(tpl);
       const plus = (opts && opts.plus != null) ? opts.plus : Math.max(0, tier - 2);
       const finalStats = plus > 0 ? getEnhancedStats({ baseStats: rolledStats, stats: rolledStats }, plus) : rolledStats;
 
@@ -15034,7 +15072,7 @@
       const tplId = pool[Math.floor(Math.random() * pool.length)];
       const tpl = WEAPON_TEMPLATES[tplId];
       if (!tpl) return;
-      const rolledStats = (opts && opts.q != null) ? rollStatsAtQuality(tpl, opts.q) : rollStatsFromTpl(tpl);
+      const rolledStats = (opts && opts.grade) ? rollStatsAtGrade(tpl, opts.grade) : rollStatsFromTpl(tpl);
       const plus = (opts && opts.plus != null) ? opts.plus : zdDropPlusFor(tier, isFinal);
       const finalStats = plus > 0 ? getEnhancedStats({ baseStats: rolledStats, stats: rolledStats }, plus) : rolledStats;
       const weapon = {
