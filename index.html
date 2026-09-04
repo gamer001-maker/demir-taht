@@ -2889,6 +2889,21 @@
     .zg-sprite.flip { --zg-flip: -1; }
     .zg-sprite .zg-fr { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: none; filter: drop-shadow(0 3px 5px #000a); }
     .zg-sprite .zg-fr.on { display: block; }
+    /* Ortak kattaki diger oyuncular — mavimsi hale + isim etiketi */
+    #zg-co {
+      position: absolute; top: 6px; right: 8px; z-index: 7;
+      font-family: var(--font-head); font-size: clamp(9px, 1.8vw, 11px);
+      color: #cfe9ff; background: #00000099; border: 1px solid #6ab7ff66;
+      border-radius: 8px; padding: 2px 7px; pointer-events: none;
+    }
+    .zg-peer { opacity: .9; }
+    .zg-peer .zg-sprite .zg-fr { filter: drop-shadow(0 0 4px #6ab7ff) drop-shadow(0 3px 5px #000a); }
+    .zg-peer-name {
+      position: absolute; top: -3px; left: 50%; transform: translateX(-50%);
+      font-family: var(--font-head); font-size: clamp(7px, 1.5vw, 9px);
+      color: #cfe9ff; text-shadow: 0 1px 3px #000, 0 0 5px #000;
+      white-space: nowrap; pointer-events: none; max-width: 180%; overflow: hidden; text-overflow: ellipsis;
+    }
     /* Mobilde 7×7 ızgara ~50px kareye düşüyor, vuruş kareleri okunmuyor.
        Karakter 2 kat büyütülür — büyüklüğü ayarlamak için tek sayı burası. */
     @media(max-width:640px) {
@@ -13969,6 +13984,7 @@
       zgRenderBar();
       zgPaint();
       zgStartLoop();
+      zcoJoin();   // ortak kat: ayni bolge+kademe+kattakileri gor
     }
 
     /* ── GİRİŞ EKRANI — kademeye göre arka plan + kadro bilgisi ── */
@@ -14420,6 +14436,7 @@
         }
       }
 
+      zcoSend(false);   // ortak kat: konumumu arkadaslara bildir (4/sn)
       if (now - g.lastSec >= 1000) { g.lastSec = now; zgRingSecond(eff); }
       zgAutoPotion(eff);
       if (g.hp <= 0) { zgDeath(); return; }
@@ -14456,13 +14473,14 @@
        left == null → yön korunur (aynı sütundaki hedef için dönmesin). */
     function zgFace(left) {
       if (left == null) return;
+      if (ZD.g) ZD.g._faceLeft = !!left;   // ortak kat yayınında da kullanılır
       const sp = document.getElementById('zg-sprite');
       if (sp) sp.classList.toggle('flip', !!left);
     }
-    /* Vuruş animasyonu: 1 → 2 → 3 → 1. dirLeft true ise sprite yatay çevrilir. */
-    function zgPlayAttack(dirLeft) {
-      const sp = document.getElementById('zg-sprite'); if (!sp) return;
-      zgFace(dirLeft);
+    /* Vuruş karesi oynatıcı — hem oyuncunun hem ortak kattaki arkadaşların
+       sprite'ında kullanılır, o yüzden eleman dışarıdan verilir. */
+    function zgAnimAttack(sp) {
+      if (!sp) return;
       const fr = sp.querySelectorAll('.zg-fr');
       if (fr.length < 3) return;
       const show = n => fr.forEach((f, k) => f.classList.toggle('on', k === n));
@@ -14470,6 +14488,12 @@
       show(1);
       sp._t1 = setTimeout(() => show(2), 80);
       sp._t2 = setTimeout(() => show(0), 175);
+    }
+    /* Vuruş animasyonu: 1 → 2 → 3 → 1. dirLeft true ise sprite yatay çevrilir. */
+    function zgPlayAttack(dirLeft) {
+      zgFace(dirLeft);
+      if (ZD.g) ZD.g._atkFlag = true;      // bir sonraki yayında arkadaşlara bildirilir
+      zgAnimAttack(document.getElementById('zg-sprite'));
     }
 
     /* ── OTO POT AYARLARI ──
@@ -14579,6 +14603,115 @@
       if (near) zgMoveTo(near.x, near.y);
     }
 
+    /* ══════════════════════════════════════════════════════════════
+       ZİNDAN — ORTAK KAT (faz 1: birbirini görme)
+       Aynı BÖLGE + KADEME + KAT'taki oyuncular birbirini görür ve yürürken
+       birbirlerini izler. Canavarlar herkeste YEREL kalır — paylaşılan tek
+       şey oyuncu figürleri. Bu yüzden SQL/tablo gerekmiyor:
+         · kimlik  → Realtime presence (kim burada, sınıfı/avatarı/adı)
+         · konum   → Realtime broadcast (saniyede 4, kalıcı değil)
+       Ortak boss ileride bunun üstüne kurulacak (o zaman RPC gerekecek).
+    ══════════════════════════════════════════════════════════════ */
+    const ZCO_SEND_MS = 250;   // konum yayını sıklığı (4/sn)
+    const ZCO_MAX = 8;         // aynı anda çizilecek en fazla oyuncu
+    let ZCO = { channel: null, key: null, peers: {}, lastSent: 0 };
+
+    /* Aynı kat = aynı bölge + aynı kademe + aynı kat */
+    function zcoKey() { return 'zdco_' + (G.region || 'x') + '_' + (ZD.tier || 1) + '_' + (ZD.floor || 1); }
+
+    function zcoJoin() {
+      if (!currentUser || typeof supa === 'undefined' || !supa) return;
+      const key = zcoKey();
+      if (ZCO.channel && ZCO.key === key) return;   // zaten doğru kattayız
+      zcoLeave();
+      ZCO.key = key;
+      ZCO.channel = supa.channel(key, { config: { presence: { key: currentUser.id } } })
+        .on('presence', { event: 'sync' }, zcoSyncRoster)
+        .on('presence', { event: 'leave' }, ({ key: uid }) => zcoDrop(uid))
+        .on('broadcast', { event: 'pos' }, ({ payload }) => zcoOnPos(payload))
+        .subscribe(async (status) => {
+          if (status !== 'SUBSCRIBED' || !ZCO.channel) return;
+          await ZCO.channel.track({
+            userId: currentUser.id,
+            heroName: G.heroName || G.username || 'Kahraman',
+            classId: G.classId, avatarIdx: G.avatarIdx | 0, level: G.level,
+          });
+          zcoSend(true);
+        });
+    }
+    function zcoLeave() {
+      if (ZCO.channel) { try { supa.removeChannel(ZCO.channel); } catch (e) { } }
+      ZCO.channel = null; ZCO.key = null;
+      Object.keys(ZCO.peers).forEach(zcoDrop);
+      ZCO.peers = {};
+    }
+    /* Presence = kimin burada olduğunun TEK doğruluk kaynağı. Konum ayrı
+       geldiği için sekmesi arkaplana düşen oyuncu kaybolmaz, son yerinde durur. */
+    function zcoSyncRoster() {
+      if (!ZCO.channel) return;
+      const seen = new Set();
+      for (const arr of Object.values(ZCO.channel.presenceState())) {
+        for (const p of arr) {
+          if (!p.userId || p.userId === currentUser.id) continue;
+          seen.add(p.userId);
+          ZCO.peers[p.userId] = { ...(ZCO.peers[p.userId] || {}), ...p };
+        }
+      }
+      Object.keys(ZCO.peers).forEach(uid => { if (!seen.has(uid)) zcoDrop(uid); });
+    }
+    function zcoDrop(uid) {
+      delete ZCO.peers[uid];
+      const el = document.getElementById('zg-p-' + uid);
+      if (el) el.remove();
+    }
+    function zcoOnPos(p) {
+      if (!p || !p.u || p.u === currentUser.id) return;
+      const cur = ZCO.peers[p.u];
+      if (!cur) return;                 // presence'ta yoksa çizme
+      cur.x = p.x; cur.y = p.y; cur.f = p.f; cur.atk = p.a;
+    }
+    function zcoSend(force) {
+      const g = ZD.g;
+      if (!ZCO.channel || !g) return;
+      const now = Date.now();
+      if (!force && now - ZCO.lastSent < ZCO_SEND_MS) return;
+      ZCO.lastSent = now;
+      ZCO.channel.send({
+        type: 'broadcast', event: 'pos',
+        payload: { u: currentUser.id, x: g.px, y: g.py, f: g._faceLeft ? 1 : 0, a: g._atkFlag ? 1 : 0 },
+      });
+      g._atkFlag = false;
+    }
+    /* Arkadaş figürlerini çiz — oyuncununkiyle aynı sprite düzeni, ama
+       kendi sınıfı/avatarıyla. Canavarlarla etkileşmezler (sadece görsel). */
+    function zcoPaint(layer) {
+      const list = Object.values(ZCO.peers).filter(p => p.x != null).slice(0, ZCO_MAX);
+      for (const p of list) {
+        let e = document.getElementById('zg-p-' + p.userId);
+        if (!e) {
+          e = document.createElement('div');
+          e.id = 'zg-p-' + p.userId;
+          e.className = 'zg-unit zg-peer';
+          let frames = '';
+          for (let f = 1; f <= 3; f++) {
+            frames += '<img class="zg-fr' + (f === 1 ? ' on' : '') + '" src="'
+              + IMG_BASE + (p.classId || 'warrior') + '_' + (p.avatarIdx | 0) + '_' + f + '.webp">';
+          }
+          e.innerHTML = '<div class="zg-sprite">' + frames + '</div>'
+            + '<span class="zg-peer-name">' + esc(p.heroName || '?') + '</span>';
+          e.style.transition = 'transform ' + ZG.WALK_MS + 'ms linear';
+          e._sp = e.querySelector('.zg-sprite');
+          layer.appendChild(e);
+        }
+        zgUnitAt(e, p.x, p.y);
+        if (e._sp) {
+          e._sp.classList.toggle('flip', !!p.f);
+          if (p.atk) { p.atk = 0; zgAnimAttack(e._sp); }
+        }
+      }
+    }
+    function zcoCount() { return Object.keys(ZCO.peers).length; }
+
     function zgUnitAt(el, x, y) { el.style.transform = 'translate(' + (x * 100) + '%,' + (y * 100) + '%)'; }
     function zgSetWalking(on) {
       const pe = document.getElementById('zg-player');
@@ -14667,8 +14800,15 @@
         }
         if (e._bar) e._bar.style.width = Math.max(0, Math.round(m.hp / m.maxHp * 100)) + '%';
       }
+      zcoPaint(layer);   // ortak kattaki diğer oyuncular
       // Sol paneldeki can sayısı — zgRenderSide sadece olaylarda çalıştığı
       // için sayıyı burada, her tick'te tazeliyoruz.
+      const co = document.getElementById('zg-co');
+      if (co) {
+        const n = zcoCount();
+        co.style.display = n ? 'inline' : 'none';
+        if (n) co.textContent = '👥 ' + n;
+      }
       const txt = document.getElementById('zg-hp-txt');
       if (txt) txt.textContent = Math.max(0, Math.round(g.hp));
       const mk = document.getElementById('zg-mark');
@@ -14690,6 +14830,7 @@
         + '<div id="zg-side"></div>'
         + '<div id="zg-stage" style="background-image:url(\'' + bg + '\')">'
         + '<div id="zg-mark" style="display:none;"></div>'
+        + '<span id="zg-co" style="display:none;"></span>'
         + '<div id="zg-cells">' + cells + '</div>'
         + '<div id="zg-units"></div>'
         + '<div id="zg-fx"></div>'
@@ -14889,6 +15030,7 @@
       return { gold, xp, items, mats };
     }
     function zgFinish() {
+      zcoLeave();   // ortak kat kanalindan cik
       const g = ZD.g;
       if (g) { g.over = true; G.stats.hp = Math.max(1, Math.round(g.hp)); }
       zgStopLoop();
