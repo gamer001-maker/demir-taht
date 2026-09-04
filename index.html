@@ -2907,7 +2907,9 @@
     /* Mobilde 7×7 ızgara ~50px kareye düşüyor, vuruş kareleri okunmuyor.
        Karakter 2 kat büyütülür — büyüklüğü ayarlamak için tek sayı burası. */
     @media(max-width:640px) {
-      #zg-player .zg-sprite { --zg-scale: 2; }
+      /* Ortak kattaki arkadaslar da AYNI olcegi almali — yoksa biri
+         digerinden buyuk gorunur. */
+      #zg-player .zg-sprite, .zg-peer .zg-sprite { --zg-scale: 2; }
     }
     /* Oyuncunun boşta süzülme animasyonu KASITLI olarak yok — karakter
        yerinde sabit durur, dalgalanma sadece canavarlarda kalır ki hareket
@@ -14110,6 +14112,9 @@
       POTION_CD: 1000,
       TROOP_SHARE: 0.6,     // birliklerin vuruşa kattığı hasar oranı
       ELITE: { hp: 3.0, atk: 1.35, xp: 2.2, gold: 2.0 },
+      TOUGH_HP: 20,         // boss + elit CAN çarpanı. Tek vuruşta ölüyorlardı;
+                            // sadece can artar (hasar/XP/altın aynı kalır) ki
+                            // dövüş uzasın, ödül enflasyonu olmasın.
       RANGE: { warrior: 1, knight: 1, rogue: 1, mage: 3, ranger: 3.5 },
                             // Öklid daire yarıçapı. Avcı 4 iken 7×7'nin 45/49'unu
                             // kapsıyordu (köşeler hariç her yer) — 3.5'te 37/49.
@@ -14175,7 +14180,7 @@
       const e = elite ? ZG.ELITE : { hp: 1, atk: 1, xp: 1, gold: 1 };
       const spot = zgFreeSpot(elite ? 2 : 3);
       if (!spot) return null;
-      const hp = Math.max(1, Math.floor(base.hp * mult * e.hp));
+      const hp = Math.max(1, Math.floor(base.hp * mult * e.hp * (elite ? ZG.TOUGH_HP : 1)));
       const now = Date.now();
       const m = {
         uid: g.uid++, id: base.id, name: (elite ? 'Azılı ' : '') + base.name,
@@ -14198,13 +14203,14 @@
       let base;
       if (isFinal) {
         base = { ...(Math.random() < ZD_STRONG_BOSS_CHANCE ? T.strongBoss : T.boss) };
+        base.hp = Math.floor(base.hp * ZG.TOUGH_HP);
       } else {
         const pool = zdRegionMobs(T.mobs);
         const b = pool[Math.floor(Math.random() * pool.length)];
         const mult = 1 + (ZD.floor - 1) * 0.25;
         base = {
           ...b, name: 'Azılı ' + b.name,
-          hp: Math.floor(b.hp * mult * 3.5), atk: Math.floor(b.atk * mult * 1.3),
+          hp: Math.floor(b.hp * mult * 3.5 * ZG.TOUGH_HP), atk: Math.floor(b.atk * mult * 1.3),
           def: Math.floor(b.def * mult * 1.2), gold: Math.floor(b.gold * mult * 3),
           xp: Math.floor(b.xp * mult * 3),
         };
@@ -14223,14 +14229,33 @@
     }
 
     /* ── Hareket ── */
+    /* Ortak katta canavar EN YAKIN oyuncuyu kovalar — yoksa arkadaşın
+       yanındaki canavarlar bile hep sana doğru yürürdü. */
+    function zgNearestPlayer(m) {
+      const g = ZD.g;
+      let best = { x: g.px, y: g.py }, bd = zgDist(m.x, m.y, g.px, g.py);
+      for (const p of Object.values(ZCO.peers)) {
+        if (p.x == null) continue;
+        const d = zgDist(m.x, m.y, p.x, p.y);
+        if (d < bd) { bd = d; best = { x: p.x, y: p.y }; }
+      }
+      return best;
+    }
+    function zgOccupied(x, y) {
+      const g = ZD.g;
+      if (x === g.px && y === g.py) return true;
+      for (const p of Object.values(ZCO.peers)) if (p.x === x && p.y === y) return true;
+      return false;
+    }
     function zgStepToward(m) {
       const g = ZD.g;
-      const dx = Math.sign(g.px - m.x), dy = Math.sign(g.py - m.y);
+      const tgt = zgNearestPlayer(m);
+      const dx = Math.sign(tgt.x - m.x), dy = Math.sign(tgt.y - m.y);
       const tries = [{ x: m.x + dx, y: m.y + dy }, { x: m.x + dx, y: m.y }, { x: m.x, y: m.y + dy }];
       for (const t of tries) {
         if (t.x === m.x && t.y === m.y) continue;
         if (!zgIn(t.x, t.y)) continue;
-        if (t.x === g.px && t.y === g.py) continue;
+        if (zgOccupied(t.x, t.y)) continue;
         if (g.mobs.some(o => o.hp > 0 && o.uid !== m.uid && o.x === t.x && o.y === t.y)) continue;
         m.x = t.x; m.y = t.y; return;
       }
@@ -14282,14 +14307,13 @@
       else if (G.classId === 'ranger' && Math.random() < (eff.trueDmgChance || 0)) { dmg = Math.floor(dmg * 1.30); tag = '🎯'; }
       const troopDmg = armedTroops().reduce((a, c) => a + troopAttackDmg(c), 0);
       if (troopDmg > 0) dmg += Math.max(1, Math.floor(troopDmg * ZG.TROOP_SHARE));
-      m.hp = Math.max(0, m.hp - dmg);
       zgPlayAttack(m.x === g.px ? null : m.x < g.px);   // 1→2→3 vuruş karesi + yön çevirme
       zgFloat(m.x, m.y, tag + dmg, tag ? '#ffd166' : '#ffffff');
       zgFlash(m.uid);
       const r = ringOnHit(m.st, dmg, g.hp, eff.maxhp);
       g.hp = r.hp;
       if (r.heal > 0) zgFloat(g.px, g.py, '+' + r.heal, '#7aff9a');
-      if (m.hp <= 0) zgKill(m);
+      zgDamageMob(m, dmg, zcoMe());
     }
     function zgMobHit(m, eff) {
       const g = ZD.g;
@@ -14307,9 +14331,8 @@
         if (m.hp <= 0) continue;
         const burn = ringBurnTick(m.st, m.maxHp);
         if (burn > 0) {
-          m.hp = Math.max(0, m.hp - burn);
           zgFloat(m.x, m.y, '🔥' + burn, '#ff9d5c');
-          if (m.hp <= 0) zgKill(m);
+          zgDamageMob(m, burn, zcoMe());   // yakma da ev sahibine bildirilir
         }
       }
       // Arınma iyileşmesi saniyede BİR kez — canavar sayısıyla çarpılmamalı
@@ -14366,27 +14389,53 @@
         else dropRandomRing(zdRingPool(tier), plus, note);
       });
     }
-    function zgKill(m) {
-      const g = ZD.g;
+    /* Canavarı sahneden ve listeden kaldır (ödül vermez) */
+    function zgRemoveMob(m) {
+      const g = ZD.g; if (!g) return;
+      g.mobs = g.mobs.filter(x => x.uid !== m.uid);
+      const el = document.getElementById('zg-u-' + m.uid);
+      if (el) el.remove();
+    }
+    /* Ganimet SADECE öldüren oyuncuya — ortak katta ev sahibi kimin
+       vurduğunu bilir ve yalnız ona 'kill' gönderir. */
+    function zgAwardKill(m) {
+      const g = ZD.g; if (!g) return;
       const xpMult = ZG.XP_MULT * (g.auto ? ZG.AUTO_XP : 1);
       const xpGain = Math.max(1, Math.round(m.xp * xpMult));
       g.bag.gold += m.gold;
       g.bag.xp += xpGain;
-      g.kills++;
       awardTroopCombatXP(Math.max(3, Math.floor(m.xp * 0.4)));
       // Altın + XP tek satırda, hasar yazısının üstündeki şeritte (lane 1)
       zgFloat(m.x, m.y, '+' + m.gold + '🪙 +' + xpGain + 'XP', '#e8c07a', 1);
       zgBagMaterial(m, m.boss || m.elite);
       zgBagDrop(m);   // artık normal canavarlar da düşük şansla eşya düşürür
       if (m.boss) {
-        g.bossDead = true;
         trackAch('zdboss');
         slideNotif('🏆', m.name + ' yenildi!', ZD.floor >= ZD_FLOORS ? 'Zindan tamamlandı' : 'Alt kata inebilirsin');
       }
-      g.mobs = g.mobs.filter(x => x.uid !== m.uid);
-      const el = document.getElementById('zg-u-' + m.uid);
-      if (el) el.remove();
+    }
+    /* Ev sahibi tarafında ölüm kararı. by = öldüren oyuncunun id'si. */
+    function zgKill(m, by) {
+      const g = ZD.g; if (!g) return;
+      const killer = by || zcoMe();
+      g.kills++;
+      if (m.boss) g.bossDead = true;
+      zcoSendKill(m, killer);              // ortak katta herkese bildir
+      if (killer === zcoMe()) zgAwardKill(m);
+      zgRemoveMob(m);
       zgRenderBar();
+    }
+    /* Canavara hasar uygula. Ortak katta canı EV SAHİBİ tutar; ev sahibi
+       değilsek yerelde düşürmeyiz (yoksa canavar bizde ölür, onda yaşar),
+       hasarı ona bildiririz. Hasar yazısı yine anında görünür. */
+    function zgDamageMob(m, dmg, by) {
+      if (!m || dmg <= 0 || m.hp <= 0) return;
+      if (zcoIsHost()) {
+        m.hp = Math.max(0, m.hp - dmg);
+        if (m.hp <= 0) zgKill(m, by);
+      } else {
+        zcoSendHit(m.uid, dmg);
+      }
     }
 
     /* ── Ana döngü ── */
@@ -14408,17 +14457,22 @@
       if (g.auto) zgAutoMove();
       const moving = g.path.length > 0;
 
-      const spawnMs = g.auto ? ZG.SPAWN_MS_AUTO : ZG.SPAWN_MS;
-      const cap = g.auto ? ZG.MAX_MOBS_AUTO : ZG.MAX_MOBS;
-      // Doğuş yalnızca kat muhafızı SAHADAYKEN durur (boss dövüşü temiz olsun).
-      // Boss öldükten sonra tekrar başlar — oyuncu isterse katta grind'e devam eder,
-      // inmeye ya da çıkmaya kendi karar verir.
-      const bossAlive = g.bossSpawned && !g.bossDead;
-      if (!bossAlive && now - g.lastSpawn >= spawnMs && g.mobs.length < cap) {
-        g.lastSpawn = now;
-        zgSpawnMob(false);
+      // ORTAK KAT: canavarları TEK istemci (ev sahibi) simüle eder; diğerleri
+      // onun anlık görüntüsünü çizer. Yalnızsan ev sahibi zaten sensin.
+      const host = zcoIsHost();
+      if (host) {
+        const spawnMs = g.auto ? ZG.SPAWN_MS_AUTO : ZG.SPAWN_MS;
+        const cap = g.auto ? ZG.MAX_MOBS_AUTO : ZG.MAX_MOBS;
+        // Doğuş yalnızca kat muhafızı SAHADAYKEN durur (boss dövüşü temiz olsun).
+        // Boss öldükten sonra tekrar başlar — oyuncu isterse katta grind'e devam eder,
+        // inmeye ya da çıkmaya kendi karar verir.
+        const bossAlive = g.bossSpawned && !g.bossDead;
+        if (!bossAlive && now - g.lastSpawn >= spawnMs && g.mobs.length < cap) {
+          g.lastSpawn = now;
+          zgSpawnMob(false);
+        }
+        if (!g.bossSpawned && g.kills >= g.quota) zgSpawnBoss();
       }
-      if (!g.bossSpawned && g.kills >= g.quota) zgSpawnBoss();
 
       // Yürürken saldıramaz — hareketin bedeli bu
       if (!moving && now - g.lastAtk >= zgAtkInterval()) {
@@ -14428,15 +14482,18 @@
 
       for (const m of g.mobs) {
         if (m.hp <= 0) continue;
+        // "Bana vurma" HERKESTE yerel hesaplanır — hasarın ev sahibine gidip
+        // dönmesini beklemek oyunu tepkisiz yapardı. Hareket ise sadece ev sahibinde.
         if (zgDist(m.x, m.y, g.px, g.py) <= 1) {
           if (now - m.lastHit >= ZG.MOB_HIT_MS) { m.lastHit = now; zgMobHit(m, eff); }
-        } else if (now - m.lastStep >= ZG.MOB_STEP_MS) {
+        } else if (host && now - m.lastStep >= ZG.MOB_STEP_MS) {
           m.lastStep = now;
           zgStepToward(m);
         }
       }
 
-      zcoSend(false);   // ortak kat: konumumu arkadaslara bildir (4/sn)
+      zcoSend(false);       // konumumu arkadaşlara bildir (4/sn)
+      if (host) zcoSendMobs(false);   // canavar durumunu yayınla (5/sn)
       if (now - g.lastSec >= 1000) { g.lastSec = now; zgRingSecond(eff); }
       zgAutoPotion(eff);
       if (g.hp <= 0) { zgDeath(); return; }
@@ -14613,8 +14670,9 @@
        Ortak boss ileride bunun üstüne kurulacak (o zaman RPC gerekecek).
     ══════════════════════════════════════════════════════════════ */
     const ZCO_SEND_MS = 250;   // konum yayını sıklığı (4/sn)
+    const ZCO_MOB_MS = 200;    // canavar durumu yayını (5/sn, sadece ev sahibi)
     const ZCO_MAX = 8;         // aynı anda çizilecek en fazla oyuncu
-    let ZCO = { channel: null, key: null, peers: {}, lastSent: 0 };
+    let ZCO = { channel: null, key: null, peers: {}, lastSent: 0, lastMobSend: 0 };
 
     /* Aynı kat = aynı bölge + aynı kademe + aynı kat */
     function zcoKey() { return 'zdco_' + (G.region || 'x') + '_' + (ZD.tier || 1) + '_' + (ZD.floor || 1); }
@@ -14625,19 +14683,26 @@
       if (ZCO.channel && ZCO.key === key) return;   // zaten doğru kattayız
       zcoLeave();
       ZCO.key = key;
-      ZCO.channel = supa.channel(key, { config: { presence: { key: currentUser.id } } })
+      const ch = supa.channel(key, { config: { presence: { key: currentUser.id } } })
         .on('presence', { event: 'sync' }, zcoSyncRoster)
         .on('presence', { event: 'leave' }, ({ key: uid }) => zcoDrop(uid))
         .on('broadcast', { event: 'pos' }, ({ payload }) => zcoOnPos(payload))
-        .subscribe(async (status) => {
-          if (status !== 'SUBSCRIBED' || !ZCO.channel) return;
-          await ZCO.channel.track({
-            userId: currentUser.id,
-            heroName: G.heroName || G.username || 'Kahraman',
-            classId: G.classId, avatarIdx: G.avatarIdx | 0, level: G.level,
-          });
-          zcoSend(true);
+        .on('broadcast', { event: 'mobs' }, ({ payload }) => zcoOnMobs(payload))
+        .on('broadcast', { event: 'hit' }, ({ payload }) => zcoOnHit(payload))
+        .on('broadcast', { event: 'kill' }, ({ payload }) => zcoOnKill(payload));
+      // Kanal, subscribe geri çağrısından ÖNCE atanır: geri çağrı erken
+      // çalışırsa track() atlanır, presence boş kalır ve HERKES kendini
+      // ev sahibi sanar (iki ayrı canavar akışı doğar).
+      ZCO.channel = ch;
+      ch.subscribe(async (status) => {
+        if (status !== 'SUBSCRIBED' || ZCO.channel !== ch) return;   // kat değişmişse boşver
+        await ch.track({
+          userId: currentUser.id,
+          heroName: G.heroName || G.username || 'Kahraman',
+          classId: G.classId, avatarIdx: G.avatarIdx | 0, level: G.level,
         });
+        zcoSend(true);
+      });
     }
     function zcoLeave() {
       if (ZCO.channel) { try { supa.removeChannel(ZCO.channel); } catch (e) { } }
@@ -14711,6 +14776,97 @@
       }
     }
     function zcoCount() { return Object.keys(ZCO.peers).length; }
+    function zcoMe() { return currentUser ? currentUser.id : 'solo'; }
+
+    /* ── EV SAHİBİ ──
+       Canavarları TEK bir istemci simüle eder, diğerleri onun yayınını çizer.
+       Ev sahibi = kanaldaki en küçük userId → herkes aynı sonucu bulur,
+       ayrı bir seçim mesajı gerekmez. Ev sahibi çıkınca sıradaki devralır
+       (elindeki son anlık görüntüden devam eder). Yalnızsan sen ev sahibisin. */
+    function zcoHostId() {
+      const ids = Object.keys(ZCO.peers);
+      ids.push(zcoMe());
+      ids.sort();
+      return ids[0];
+    }
+    function zcoIsHost() { return !ZCO.channel || zcoHostId() === zcoMe(); }
+
+    /* Canavar anlık görüntüsü — dizi biçimi, alan adı taşımaz (yük küçük kalsın):
+       [uid, x, y, hp, maxHp, bayrak(1=elit,2=boss), atk, xp, gold, ad, görsel, emoji] */
+    function zcoSendMobs(force) {
+      const g = ZD.g;
+      if (!ZCO.channel || !g || !zcoIsHost()) return;
+      const now = Date.now();
+      if (!force && now - ZCO.lastMobSend < ZCO_MOB_MS) return;
+      ZCO.lastMobSend = now;
+      ZCO.channel.send({
+        type: 'broadcast', event: 'mobs',
+        payload: {
+          k: g.kills, q: g.quota, bs: g.bossSpawned ? 1 : 0, bd: g.bossDead ? 1 : 0,
+          m: g.mobs.map(m => [m.uid, m.x, m.y, m.hp, m.maxHp,
+            (m.elite ? 1 : 0) | (m.boss ? 2 : 0), m.atk, m.xp, m.gold, m.name, m.img, m.icon, m.id]),
+        },
+      });
+    }
+    function zcoOnMobs(p) {
+      const g = ZD.g;
+      if (!g || g.over || !p || zcoIsHost()) return;   // ev sahibi kendi yayınını yok sayar
+      g.kills = p.k; g.quota = p.q;
+      const wasBoss = g.bossSpawned;
+      g.bossSpawned = !!p.bs; g.bossDead = !!p.bd;
+      const seen = new Set();
+      for (const a of p.m) {
+        const [uid, x, y, hp, maxHp, fl, atk, xp, gold, name, img, icon, id] = a;
+        seen.add(uid);
+        let m = g.mobs.find(o => o.uid === uid);
+        if (!m) {
+          // st (yakma yığını) ve lastHit YEREL kalır: yakmayı kim uyguladıysa
+          // onun istemcisi takip eder, "bana en son ne zaman vurdu" da kişiseldir.
+          m = { uid, id, name, img, icon, elite: !!(fl & 1), boss: !!(fl & 2), st: {}, lastHit: 0, lastStep: 0 };
+          g.mobs.push(m);
+        }
+        m.x = x; m.y = y; m.hp = hp; m.maxHp = maxHp; m.atk = atk; m.xp = xp; m.gold = gold;
+      }
+      for (const m of g.mobs.filter(o => !seen.has(o.uid))) zgRemoveMob(m);
+      if (!wasBoss && g.bossSpawned && !g.bossDead) {
+        const b = g.mobs.find(o => o.boss);
+        if (b) slideNotif('👿', b.name + ' belirdi!', ZD.floor >= ZD_FLOORS ? 'Kat sonu boss savaşı' : 'Kat muhafızı');
+      }
+      zgRenderBar();
+    }
+    /* Ev sahibi değilsek hasarı ona bildiririz; canı o düşürür. */
+    function zcoSendHit(mobUid, dmg) {
+      if (!ZCO.channel) return;
+      ZCO.channel.send({ type: 'broadcast', event: 'hit', payload: { u: zcoMe(), m: mobUid, d: dmg } });
+    }
+    function zcoOnHit(p) {
+      const g = ZD.g;
+      if (!g || g.over || !p || !zcoIsHost() || p.u === zcoMe()) return;
+      const m = g.mobs.find(o => o.uid === p.m);
+      if (!m || m.hp <= 0) return;
+      zgFlash(m.uid);
+      m.hp = Math.max(0, m.hp - (p.d || 0));
+      if (m.hp <= 0) zgKill(m, p.u);
+    }
+    /* Ölümü ev sahibi ilan eder; ganimet yalnız öldürene gider. */
+    function zcoSendKill(m, by) {
+      if (!ZCO.channel || !zcoIsHost()) return;
+      ZCO.channel.send({
+        type: 'broadcast', event: 'kill',
+        payload: { m: m.uid, by, x: m.x, y: m.y, xp: m.xp, gold: m.gold, id: m.id, name: m.name, b: m.boss ? 1 : 0, e: m.elite ? 1 : 0 },
+      });
+    }
+    function zcoOnKill(p) {
+      const g = ZD.g;
+      if (!g || g.over || !p || zcoIsHost()) return;
+      const m = g.mobs.find(o => o.uid === p.m);
+      if (p.by === zcoMe()) {
+        // Ödül için ev sahibinin gönderdiği değerleri kullan (yerel kopya silinmiş olabilir)
+        zgAwardKill(m || { uid: p.m, x: p.x, y: p.y, xp: p.xp, gold: p.gold, id: p.id, name: p.name, boss: !!p.b, elite: !!p.e });
+      }
+      if (m) zgRemoveMob(m);
+      zgRenderBar();
+    }
 
     function zgUnitAt(el, x, y) { el.style.transform = 'translate(' + (x * 100) + '%,' + (y * 100) + '%)'; }
     function zgSetWalking(on) {
