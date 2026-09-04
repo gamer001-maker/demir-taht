@@ -14082,6 +14082,10 @@
       WALK_MS: 190,         // oyuncunun 1 kare yürüme süresi
       PULL_CD: 12000,       // Canavar Çek bekleme süresi
       AUTO_XP: 0.90,        // oto-saldırıda XP çarpanı
+      XP_MULT: 0.35,        // ızgara XP kısıcı — tur-tabanlı sistemde bir canavarı
+                            // kesmek birkaç tur sürüyordu, şimdi ~1,3sn. Aynı mob XP'si
+                            // dakikalık kazancı ~10× şişiriyordu. Seviye eğrisine
+                            // dokunmadan (görev/arena/keşif etkilenmesin) burayı kısıyoruz.
       /* İksirler arası en az süre. Ayarlanabilir DEĞİL: "ne zaman içilsin"
          sorusunu zaten eşik (ZGCFG.at) cevaplıyor, ikinci bir kadran aynı
          şeyi kontrol ederdi. Burası sadece teknik taban — eşiğin altına
@@ -14090,7 +14094,9 @@
       POTION_CD: 1000,
       TROOP_SHARE: 0.6,     // birliklerin vuruşa kattığı hasar oranı
       ELITE: { hp: 3.0, atk: 1.35, xp: 2.2, gold: 2.0 },
-      RANGE: { warrior: 1, knight: 1, rogue: 1, mage: 3, ranger: 4 },
+      RANGE: { warrior: 1, knight: 1, rogue: 1, mage: 3, ranger: 3.5 },
+                            // Öklid daire yarıçapı. Avcı 4 iken 7×7'nin 45/49'unu
+                            // kapsıyordu (köşeler hariç her yer) — 3.5'te 37/49.
     };
     let zgLoopId = null;
 
@@ -14231,13 +14237,21 @@
     }
 
     /* ── Dövüş ── */
+    /* Menzil kontrolü — yakın dövüş 8 komşu kare (Chebyshev), menzilli
+       sınıflar DAİRE (Öklid). 7×7 ızgarada Chebyshev "menzil 3" tahtanın
+       tamamı demekti: menzilli sınıf hiç kıpırdamadan her şeyi vuruyordu. */
+    function zgInRange(ax, ay, bx, by) {
+      const r = zgRange();
+      if (r <= 1) return zgDist(ax, ay, bx, by) <= 1;
+      return Math.hypot(ax - bx, ay - by) <= r + 0.001;
+    }
     function zgPickTarget() {
-      const g = ZD.g, r = zgRange();
-      let best = null, bd = 99;
+      const g = ZD.g;
+      let best = null, bd = Infinity;
       for (const m of g.mobs) {
         if (m.hp <= 0) continue;
-        const d = zgDist(m.x, m.y, g.px, g.py);
-        if (d > r) continue;
+        if (!zgInRange(m.x, m.y, g.px, g.py)) continue;
+        const d = Math.hypot(m.x - g.px, m.y - g.py);
         if (d < bd || (d === bd && best && m.hp < best.hp)) { best = m; bd = d; }
       }
       return best;
@@ -14338,7 +14352,7 @@
     }
     function zgKill(m) {
       const g = ZD.g;
-      const xpMult = g.auto ? ZG.AUTO_XP : 1;
+      const xpMult = ZG.XP_MULT * (g.auto ? ZG.AUTO_XP : 1);
       const xpGain = Math.max(1, Math.round(m.xp * xpMult));
       g.bag.gold += m.gold;
       g.bag.xp += xpGain;
@@ -14422,7 +14436,11 @@
        yükselir (Sv.1-10 → 0, 11-20 → 1, 21-30 → 2, 31+ → 3). Sabit görünüm ya
        da başka bir eşleme istenirse yalnızca zgSpriteVariant() değişir. */
     function zgSpriteVariant() {
-      return Math.max(0, Math.min(3, Math.floor(((G.level || 1) - 1) / 10)));
+      // Oyuncunun karakter yaratırken seçtiği avatar (AVATAR_IMAGES dizini).
+      // Seviyeden TÜRETİLMEZ — yoksa zindandaki görünüm ana sayfadaki
+      // avatarla uyuşmaz (Sv.5 savaşçı ana sayfada warrior_1 iken
+      // zindanda warrior_0 çıkardı).
+      return Math.max(0, Math.min(3, G.avatarIdx | 0));
     }
     function zgFrameSrc(frame) {
       return IMG_BASE + (G.classId || 'warrior') + '_' + zgSpriteVariant() + '_' + frame + '.webp';
