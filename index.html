@@ -6259,10 +6259,6 @@
       cursor: pointer;
     }
 
-    .inv-slot.has-item:hover .inv-tooltip {
-      display: block;
-    }
-
     .inv-slot.rarity-gray {
       border-color: var(--g-gray);
     }
@@ -6347,33 +6343,34 @@
        seviye. Eski tek sütun düzeninde uzun isim/etki metinleri birbirine
        giriyordu; değer-ad ayrımı her satırı tek başına okunur kılıyor.
        Pazar kartları bu tooltip'i KULLANMAZ — orada bilgi kartın kendisinde. */
+    /* KONUM: position:fixed + JS (zzPlaceTip). Eskiden absolute idi ve
+       yukarı açılıyordu; kaydırma kabı (.scroll) ile modal (.modal-box,
+       overflow:auto) tooltip'in üst yarısını kırpıyordu. fixed hiçbir atanın
+       overflow'undan etkilenmez; JS de kutuyu ekran içine sıkıştırır ve
+       yukarı sığmıyorsa aşağı açar. Yön değişken olduğu için dışarıdaki ok
+       kaldırıldı — başlık altındaki çentik zaten ayırıcı görevi görüyor.
+       Not: hiçbir atada transform/filter YOK, yoksa fixed viewport yerine
+       o elemana göre konumlanırdı. */
     .inv-tooltip {
       display: none;
-      position: absolute;
-      bottom: calc(100% + 8px);
-      left: 50%;
-      transform: translateX(-50%);
+      position: fixed;
+      left: 0;
+      top: 0;
       width: 250px;
       max-width: min(250px, 84vw);
       background: #100d09;
       border: 1px solid var(--border2);
       border-radius: 8px;
       overflow: hidden;
-      z-index: 2000;
+      z-index: 9200;
       box-shadow: 0 8px 26px #000000a0;
       pointer-events: none;
       text-align: left;
     }
 
-    .inv-tooltip::after {
-      content: '';
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      border: 6px solid transparent;
-      border-top-color: var(--border2);
-    }
+    /* Görünürlüğü JS açar (:hover değil): konum hesaplanmadan gösterilirse
+       kutu bir kare boyunca yanlış yerde parlar. */
+    .inv-tooltip.tip-on { display: block; }
 
     /* Derece rengi. Yazı beyaz olduğu için ton bilinçli olarak KOYU —
        gradyan üstte neredeyse siyah, aşağı indikçe derecenin rengine açılır. */
@@ -6472,9 +6469,8 @@
     /* overflow:hidden hucrede tooltip'i TAMAMEN kirpiyordu. Gorsel zaten
        %84 oldugu icin tasma riski yok, gorunur birakiliyor. */
     .zg-loot-cell { position: relative; overflow: visible; }
-    .zg-loot-cell .inv-tooltip { left: auto; right: 0; transform: none; }
-    .zg-loot-cell .inv-tooltip::after { left: auto; right: 12px; transform: none; }
-    .zg-loot-cell:hover .inv-tooltip { display: block; }
+    /* Hizalama/kırpma kuralı gerekmiyor: tooltip fixed ve JS ekran içine
+       sıkıştırıyor. overflow:visible yine de bırakıldı (zararsız). */
 
     /* ── Yoldaş (birlik) ekipman slotları ──
        Modal `.modal-box` overflow:auto ile kırptığı için tooltip 3 sütunlu
@@ -6482,11 +6478,6 @@
        yaslanır, orta sütun ortalanır. Yoksa kenardaki slotların tooltip'i
        modalın dışında kalıp kesilirdi. */
     .tr-eq-slot .inv-tooltip { width: 230px; max-width: min(230px, 74vw); }
-    .tr-eq-slot:hover .inv-tooltip { display: block; }
-    .tr-eq-grid > .tr-eq-slot:nth-child(3n+1) .inv-tooltip { left: 0; right: auto; transform: none; }
-    .tr-eq-grid > .tr-eq-slot:nth-child(3n+1) .inv-tooltip::after { left: 26px; right: auto; transform: none; }
-    .tr-eq-grid > .tr-eq-slot:nth-child(3n) .inv-tooltip { left: auto; right: 0; transform: none; }
-    .tr-eq-grid > .tr-eq-slot:nth-child(3n) .inv-tooltip::after { left: auto; right: 26px; transform: none; }
 
     /* ── Özellik açıklama tooltip'i (nitelik + karakter özellikleri) ── */
     .attr-explain {
@@ -6713,23 +6704,6 @@
     .eq-slot:hover {
       border-color: var(--gold);
       z-index: 10;
-    }
-
-    .eq-slot:hover .inv-tooltip {
-      display: block;
-    }
-
-    /* Ekipman slotları menünün altında — tooltip aşağı açılsın */
-    .eq-slot .inv-tooltip {
-      bottom: auto;
-      top: calc(100% + 6px);
-    }
-
-    .eq-slot .inv-tooltip::after {
-      top: auto;
-      bottom: 100%;
-      border-top-color: transparent;
-      border-bottom-color: var(--border2);
     }
 
     .eq-slot-lbl {
@@ -8120,6 +8094,43 @@
               (idempotent: iki kez uygulansa da bozulmaz)
     ══════════════════════════════════════ */
     function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+    /* ── EŞYA TOOLTIP KONUMU ──
+       Tooltip position:fixed. Ata kapların overflow'u (envanter .scroll,
+       yoldaş penceresi .modal-box) eskiden kutunun üst yarısını kesiyordu.
+       Burada kutu ekran içine sıkıştırılır: önce hedefin üstü denenir,
+       sığmazsa altına alınır; yatayda da kenarlara taşmaz.
+       Yeni bir tooltip yeri eklenirse seçicisini ZZ_TIP_HOSTS'a ekle. */
+    const ZZ_TIP_HOSTS = '.inv-slot.has-item, .eq-slot, .zg-loot-cell.filled, .tr-eq-slot';
+    let _zzTip = null;
+    function zzPlaceTip(host, tip) {
+      const r = host.getBoundingClientRect();
+      const pad = 8, gap = 10;
+      const w = tip.offsetWidth, h = tip.offsetHeight;
+      let left = r.left + r.width / 2 - w / 2;
+      left = Math.max(pad, Math.min(left, window.innerWidth - w - pad));
+      let top = r.top - h - gap;                    // önce üstte
+      if (top < pad) top = r.bottom + gap;          // sığmazsa altta
+      if (top + h > window.innerHeight - pad) top = Math.max(pad, window.innerHeight - h - pad);
+      tip.style.left = Math.round(left) + 'px';
+      tip.style.top = Math.round(top) + 'px';
+    }
+    function zzHideTip() {
+      if (_zzTip) { _zzTip.classList.remove('tip-on'); _zzTip = null; }
+    }
+    document.addEventListener('mouseover', e => {
+      const host = e.target.closest ? e.target.closest(ZZ_TIP_HOSTS) : null;
+      const tip = host ? host.querySelector(':scope > .inv-tooltip') : null;
+      if (tip === _zzTip) return;
+      zzHideTip();
+      if (!tip) return;
+      _zzTip = tip;
+      tip.classList.add('tip-on');   // ölçüm için önce göster, sonra yerleştir
+      zzPlaceTip(host, tip);
+    });
+    // Kaydırınca/pencere boyutu değişince kutu havada kalmasın
+    window.addEventListener('scroll', zzHideTip, true);
+    window.addEventListener('resize', zzHideTip);
     function sani(s) { return String(s ?? '').replace(/[<>"]/g, ''); }
 
     /* Benzersiz eşya ID'si — Date.now() tek başına aynı milisaniyede çakışabilir */
