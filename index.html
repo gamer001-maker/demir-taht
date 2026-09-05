@@ -2906,11 +2906,13 @@
       color: #cfe9ff; text-shadow: 0 1px 3px #000, 0 0 5px #000;
       white-space: nowrap; pointer-events: none; max-width: 180%; overflow: hidden; text-overflow: ellipsis;
     }
-    /* Mobilde 7×7 ızgara ~50px kareye düşüyor, vuruş kareleri okunmuyor.
-       Karakter 2 kat büyütülür — büyüklüğü ayarlamak için tek sayı burası. */
+    /* Karakter ölçeği. Canavar görselleri sıkıca kırpılmış (figür kareyi
+       doldurur), oyuncu sprite'larında ise çevrede boş pay var — object-fit
+       contain ile aynı kutuda karakter küçük görünüyordu. Bu yüzden oyuncu
+       ve ortak kattaki arkadaşlar ölçeklenir. BOYU AYARLAMAK İÇİN TEK SAYI
+       burası: masaüstü 1.7, mobil 2 (dar ekranda kare ~50px'e düşüyor). */
+    #zg-player .zg-sprite, .zg-peer .zg-sprite { --zg-scale: 1.7; }
     @media(max-width:640px) {
-      /* Ortak kattaki arkadaslar da AYNI olcegi almali — yoksa biri
-         digerinden buyuk gorunur. */
       #zg-player .zg-sprite, .zg-peer .zg-sprite { --zg-scale: 2; }
     }
     /* Oyuncunun boşta süzülme animasyonu KASITLI olarak yok — karakter
@@ -3029,23 +3031,29 @@
 
     /* Görsel butonlar: otosaldiri / canavarcek / iksir .webp — yazı görselde,
        biz sadece durum rozetini (bekleme, adet, eşik) köşeye basıyoruz. */
+    /* Kare kutu YOK — buton görselin kendi en-boy oranını alır (<img> ile,
+       background değil: yükseklik doğal orandan gelsin, tahmin etmeyelim). */
     .zg-imgbtn {
-      aspect-ratio: 1;
-      width: 100%;
       position: relative;
+      display: block;
+      width: 100%;
       padding: 0;
-      border: 1px solid var(--border2);
+      border: 0;
+      background: none;
+      line-height: 0;
       border-radius: 10px;
-      background-color: var(--panel3);
-      background-size: contain;
-      background-position: center;
-      background-repeat: no-repeat;
       cursor: pointer;
-      transition: border-color .15s, box-shadow .15s, filter .15s;
+      transition: filter .15s, transform .08s;
     }
-    .zg-imgbtn:hover:not(:disabled) { border-color: var(--gold2); filter: brightness(1.12); }
-    .zg-imgbtn:disabled { opacity: .42; cursor: not-allowed; filter: grayscale(.6); }
-    .zg-imgbtn.on { border-color: #7aff9a; box-shadow: 0 0 12px #7aff9a55, inset 0 0 16px #7aff9a22; }
+    .zg-imgbtn img { width: 100%; height: auto; display: block; border-radius: 10px; }
+    .zg-imgbtn:hover:not(:disabled) { filter: brightness(1.15); }
+    .zg-imgbtn:active:not(:disabled) { transform: translateY(1px); }
+    .zg-imgbtn:disabled { opacity: .45; cursor: not-allowed; filter: grayscale(.6); }
+    .zg-imgbtn.on { filter: drop-shadow(0 0 7px #7aff9aaa) brightness(1.1); }
+    .zg-imgbtn.on::after {
+      content: ''; position: absolute; inset: 0;
+      border: 2px solid #7aff9a; border-radius: 10px; pointer-events: none;
+    }
     .zg-imgbtn .zg-badge {
       position: absolute; right: 5px; bottom: 5px;
       font-family: var(--font-head); font-size: clamp(9px, 1vw, 11px);
@@ -14162,7 +14170,6 @@
       MOB_STEP_MS: 850,     // canavarın 1 kare ilerleme süresi
       MOB_HIT_MS: 1500,     // canavarın saldırı aralığı
       WALK_MS: 190,         // oyuncunun 1 kare yürüme süresi
-      PULL_CD: 12000,       // Canavar Çek bekleme süresi
       AUTO_XP: 0.90,        // oto-saldırıda XP çarpanı
       XP_MULT: 0.35,        // ızgara XP kısıcı — tur-tabanlı sistemde bir canavarı
                             // kesmek birkaç tur sürüyordu, şimdi ~1,3sn. Aynı mob XP'si
@@ -14351,12 +14358,14 @@
         mobs: [], uid: 1,
         hp: (keepBag && old) ? old.hp : Math.max(1, G.stats.hp || 1),
         lastSpawn: 0, lastAtk: 0, lastSec: Date.now(),
-        lastPull: Date.now() - ZG.PULL_CD, lastPotion: 0,
+        lastPotion: 0,
         kills: 0, quota: zgKillQuota(ZD.floor),
         bossSpawned: false, bossDead: false,
         doorTarget: null,                 // labirent: tıklanan kapı karesi {x,y,dir}
         bossKilledAt: null, bossFetched: false,   // labirent: bu odanın boss durumu
         auto: (keepBag && old) ? old.auto : false,
+        // Bağır: açıkken bu odaya daha sık ve daha çok canavar gelir (toggle)
+        shout: (keepBag && old) ? old.shout : false,
         // Oto pot hep açık — kapatmanın oyuncuya bir faydası yok.
         // potionKey: oyuncunun seçtiği iksirin stackKeyOf'u (null = otomatik seç)
         potionKey: (keepBag && old) ? old.potionKey : null,
@@ -14704,8 +14713,11 @@
       // onun anlık görüntüsünü çizer. Yalnızsan ev sahibi zaten sensin.
       const host = zcoIsHost();
       if (host) {
-        const spawnMs = g.auto ? ZG.SPAWN_MS_AUTO : ZG.SPAWN_MS;
-        const cap = g.auto ? ZG.MAX_MOBS_AUTO : ZG.MAX_MOBS;
+        // Bağır: hem daha SIK hem daha ÇOK. Yalnız aralığı kısaltmak tavana
+        // dayalı odada hiçbir şey değiştirmezdi.
+        const sh = zgShoutMult();
+        const spawnMs = (g.auto ? ZG.SPAWN_MS_AUTO : ZG.SPAWN_MS) / sh;
+        const cap = Math.round((g.auto ? ZG.MAX_MOBS_AUTO : ZG.MAX_MOBS) * sh);
         // Doğuş yalnızca kat muhafızı SAHADAYKEN durur (boss dövüşü temiz olsun).
         // Boss öldükten sonra tekrar başlar — oyuncu isterse katta grind'e devam eder,
         // inmeye ya da çıkmaya kendi karar verir.
@@ -14936,8 +14948,7 @@
         .on('broadcast', { event: 'pos' }, ({ payload }) => zcoOnPos(payload))
         .on('broadcast', { event: 'mobs' }, ({ payload }) => zcoOnMobs(payload))
         .on('broadcast', { event: 'hit' }, ({ payload }) => zcoOnHit(payload))
-        .on('broadcast', { event: 'kill' }, ({ payload }) => zcoOnKill(payload))
-        .on('broadcast', { event: 'pull' }, ({ payload }) => zcoOnPull(payload));
+        .on('broadcast', { event: 'kill' }, ({ payload }) => zcoOnKill(payload));
       // Kanal, subscribe geri çağrısından ÖNCE atanır: geri çağrı erken
       // çalışırsa track() atlanır, presence boş kalır ve HERKES kendini
       // ev sahibi sanar (iki ayrı canavar akışı doğar).
@@ -14981,7 +14992,7 @@
       if (!p || !p.u || p.u === currentUser.id) return;
       const cur = ZCO.peers[p.u];
       if (!cur) return;                 // presence'ta yoksa çizme
-      cur.x = p.x; cur.y = p.y; cur.f = p.f; cur.atk = p.a;
+      cur.x = p.x; cur.y = p.y; cur.f = p.f; cur.atk = p.a; cur.s = p.s;
     }
     function zcoSend(force) {
       const g = ZD.g;
@@ -14991,7 +15002,7 @@
       ZCO.lastSent = now;
       ZCO.channel.send({
         type: 'broadcast', event: 'pos',
-        payload: { u: currentUser.id, x: g.px, y: g.py, f: g._faceLeft ? 1 : 0, a: g._atkFlag ? 1 : 0 },
+        payload: { u: currentUser.id, x: g.px, y: g.py, f: g._faceLeft ? 1 : 0, a: g._atkFlag ? 1 : 0, s: g.shout ? 1 : 0 },
       });
       g._atkFlag = false;
     }
@@ -15017,6 +15028,7 @@
           layer.appendChild(e);
         }
         zgUnitAt(e, p.x, p.y);
+        e.style.zIndex = p.y;   // arkadaşlar da aynı derinlik sırasına girer
         if (e._sp) {
           e._sp.classList.toggle('flip', !!p.f);
           if (p.atk) { p.atk = 0; zgAnimAttack(e._sp); }
@@ -15095,15 +15107,6 @@
       zgFlash(m.uid);
       m.hp = Math.max(0, m.hp - (p.d || 0));
       if (m.hp <= 0) zgKill(m, p.u);
-    }
-    /* Canavar Çek: istemci ev sahibine iletir, ev sahibi doğurur */
-    function zcoSendPull() {
-      if (!ZCO.channel) return;
-      ZCO.channel.send({ type: 'broadcast', event: 'pull', payload: { u: zcoMe() } });
-    }
-    function zcoOnPull(p) {
-      if (!ZD.g || ZD.g.over || !zcoIsHost() || !p || p.u === zcoMe()) return;
-      zgDoPull();
     }
     /* Ölümü ev sahibi ilan eder; ganimet yalnız öldürene gider. */
     function zcoSendKill(m, by) {
@@ -15187,6 +15190,9 @@
         layer.appendChild(pe);
       }
       zgUnitAt(pe, g.px, g.py);
+      // Derinlik: alt sıradaki birim ÖNDE görünür (z-index = satır no).
+      // Yoksa üstteki canavar alttakini örter, hangisi önde belli olmazdı.
+      pe.style.zIndex = g.py;
       if (pe._bar) pe._bar.style.width = Math.max(0, Math.round(g.hp / getEffectiveStats().maxhp * 100)) + '%';
       for (const m of g.mobs) {
         let e = document.getElementById('zg-u-' + m.uid);
@@ -15206,6 +15212,7 @@
           layer.appendChild(e);
         }
         zgUnitAt(e, m.x, m.y);
+        e.style.zIndex = m.y;   // alttaki canavar öne gelir
         // Oyuncu sağdaysa canavar sağa döner. Aynı sütundaysa yön korunur —
         // yoksa oyuncu üstünde/altındayken sprite gereksiz yere zıplar.
         if (e._sp && g.px !== m.x) {
@@ -15261,7 +15268,7 @@
         + '</div>';
     }
     /* Sol kontrol paneli + sağ ganimet çantası. Adı zgRenderBar kaldı,
-       çünkü zgKill/zgPull/zgUsePotion gibi bir sürü yerden çağrılıyor. */
+       çünkü zgKill/zgToggleShout/zgUsePotion gibi bir sürü yerden çağrılıyor. */
     function zgRenderBar() {
       zgRenderSide();
       zgRenderLoot();
@@ -15271,7 +15278,6 @@
       const el = document.getElementById('zg-side'); if (!el) return;
       const g = ZD.g; if (!g) return;
       const eff = getEffectiveStats();
-      const pullLeft = Math.max(0, Math.ceil((g.lastPull + ZG.PULL_CD - Date.now()) / 1000));
       const canDescend = g.bossDead && ZD.floor < ZD_FLOORS;
       const finished = g.bossDead && ZD.floor >= ZD_FLOORS;
       const prog = g.bossSpawned
@@ -15282,17 +15288,22 @@
       /* Görsel butonlar — yazı görselin üstünde basılı (otosaldiri/canavarcek/
          iksir.webp), biz yalnızca durum rozeti koyuyoruz: bekleme sayacı,
          seçili iksirin adı+adedi ve eşik. */
-      const img = f => 'style="background-image:url(' + IMG_BASE + f + '.webp)"';
+      /* Görsel butonlar — yazı görselin üstünde basılı, kare kutu yok:
+         <img> doğal oranıyla yatay durur. Rozet sadece durum bilgisi. */
+      const imgBtn = (file, title, click, on, badge) =>
+        '<button class="zg-imgbtn' + (on ? ' on' : '') + '" onclick="' + click + '" title="' + title + '">'
+        + '<img src="' + IMG_BASE + file + '.webp" alt="' + title + '" onerror="this.style.visibility=\'hidden\'">'
+        + (badge || '') + '</button>';
       const pot = zgPotionPick();
       const potBadge = pot
         ? '<span class="zg-badge">' + esc(zgPotionShort(pot)) + ' ×' + zgPotionQty(pot) + ' · %' + ZGCFG.at + '</span>'
         : '<span class="zg-badge">iksir yok</span>';
-      const pullOff = pullLeft > 0 || (!maze && g.bossSpawned && !g.bossDead);
+      const shoutMult = Math.round((zgShoutMult() - 1) * 100);
       const btns =
-        '<button class="zg-imgbtn ' + (g.auto ? 'on' : '') + '" ' + img('otosaldiri') + ' onclick="zgToggleAuto()" title="Oto Saldırı"></button>'
-        + '<button class="zg-imgbtn" ' + img('canavarcek') + ' onclick="zgPull()" ' + (pullOff ? 'disabled' : '') + ' title="Canavar Çek">'
-        + (pullLeft > 0 ? '<span class="zg-badge big">' + pullLeft + 'sn</span>' : '') + '</button>'
-        + '<button class="zg-imgbtn" ' + img('iksir') + ' onclick="zgPotionPicker()" title="İksir">' + potBadge + '</button>';
+        imgBtn('otosaldiri', 'Oto Saldırı', 'zgToggleAuto()', g.auto)
+        + imgBtn('canavarcek', 'Bağır', 'zgToggleShout()', g.shout,
+          g.shout ? '<span class="zg-badge">+%' + shoutMult + ' canavar</span>' : '')
+        + imgBtn('iksir', 'İksir', 'zgPotionPicker()', false, potBadge);
 
       let info, lastBtn;
       if (maze) {
@@ -15413,28 +15424,24 @@
       zgRenderBar();
       zgPotionPicker();   // pencere açık kalır; seçim işareti güncellenir, eşik de buradan ayarlanıyor
     }
-    function zgPull() {
+    /* BAĞIR — Oto Saldırı gibi aç/kapa. Açıkken bu odaya %10 daha sık ve
+       %10 daha çok canavar gelir. Tek seferde sürü çağırma YOK; bekleme de
+       yok, çünkü kapatmak zaten anında etkiyi bitiriyor.
+       Ortak katta doğuşu ev sahibi yapar; bayrak konum yayınına biniyor
+       (zcoSend içinde 's'), ev sahibi bağıranları sayıp çarpanı uygular. */
+    function zgToggleShout() {
       const g = ZD.g; if (!g || g.over) return;
-      if (!zgMaze() && g.bossSpawned) { toast('Kat muhafızı sahadayken canavar çekemezsin!'); return; }
-      const now = Date.now();
-      if (now - g.lastPull < ZG.PULL_CD) { toast('Biraz bekle...'); return; }
-      g.lastPull = now;
-      // Ortak katta canavarı yalnız ev sahibi doğurur — istemci ona iletir
-      if (!zcoIsHost()) { zcoSendPull(); toast('👹 Canavar çağrıldı!'); zgRenderBar(); return; }
-      zgDoPull();
-    }
-    /* Labirentte elit YOK — buton sadece daha çok düz canavar getirir.
-       Kat sisteminde eskisi gibi "Azılı" elit. */
-    function zgDoPull() {
-      const g = ZD.g; if (!g || g.over) return;
-      if (zgMaze()) {
-        let n = 0; for (let i = 0; i < 3; i++) if (zgSpawnMob(false)) n++;
-        toast(n ? '👹 ' + n + ' canavar daha geliyor!' : 'Yer yok — önce biraz temizle.');
-      } else {
-        const m = zgSpawnMob(true);
-        toast(m ? '👹 ' + m.name + ' geliyor! Daha çok XP ve ganimet.' : 'Yer yok — önce biraz temizle.');
-      }
+      g.shout = !g.shout;
+      toast(g.shout ? '📣 Bağırıyorsun — daha çok canavar geliyor!' : '📣 Sustun.');
+      zcoSend(true);   // arkadaşlar/ev sahibi hemen görsün
       zgRenderBar();
+    }
+    /* Odadaki bağıran sayısı → doğuş çarpanı (her bağıran +%10, tavan +%50) */
+    function zgShoutMult() {
+      const g = ZD.g; if (!g) return 1;
+      let n = g.shout ? 1 : 0;
+      for (const p of Object.values(ZCO.peers)) if (p.s) n++;
+      return Math.min(1.5, 1 + 0.10 * n);
     }
     function zgUsePotion(itemId) {
       const g = ZD.g; if (!g || g.over) return;
