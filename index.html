@@ -2834,7 +2834,9 @@
     #zg-stage {
       position: relative;
       width: 100%;
-      max-width: 560px;
+      /* Bilgisayarda kare, ekran YÜKSEKLİĞİNE göre büyür (--zg-max);
+         genişliğe yaslansa alt kenar ekran dışına taşardı. */
+      max-width: var(--zg-max, 560px);
       margin: 0 auto;
       aspect-ratio: 1;
       border: 2px solid var(--border2);
@@ -2987,15 +2989,19 @@
        o yüzden alt alta iner: SAHNE önce — oyunun kendisi hep ilk görünür,
        kontroller hemen altında, ganimet en sonda. */
     #zg-wrap {
+      /* --zg-reserve: üst şerit + sekmeler + boşluk payı. Kare = 100vh − bu.
+         Tek sayı: kare ekrana sığmıyorsa burayı büyüt. */
+      --zg-reserve: 140px;
+      --zg-max: calc(100vh - var(--zg-reserve));
       display: grid;
-      grid-template-columns: minmax(132px, 168px) minmax(0, 560px) minmax(146px, 196px);
+      grid-template-columns: minmax(132px, 176px) minmax(0, var(--zg-max)) minmax(146px, 200px);
       gap: 12px;
       justify-content: center;
       align-items: start;
     }
 
     @media(max-width:1040px) {
-      #zg-wrap { grid-template-columns: minmax(0, 560px); justify-content: center; }
+      #zg-wrap { --zg-max: 560px; grid-template-columns: minmax(0, 560px); justify-content: center; }
       #zg-stage { order: 1; }
       #zg-side { order: 2; }
       #zg-loot { order: 3; }
@@ -3020,6 +3026,58 @@
       line-height: 1.7;
     }
     .zg-side-info b { font-family: var(--font-head); color: var(--gold2); }
+
+    /* Görsel butonlar: otosaldiri / canavarcek / iksir .webp — yazı görselde,
+       biz sadece durum rozetini (bekleme, adet, eşik) köşeye basıyoruz. */
+    .zg-imgbtn {
+      aspect-ratio: 1;
+      width: 100%;
+      position: relative;
+      padding: 0;
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      background-color: var(--panel3);
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      cursor: pointer;
+      transition: border-color .15s, box-shadow .15s, filter .15s;
+    }
+    .zg-imgbtn:hover:not(:disabled) { border-color: var(--gold2); filter: brightness(1.12); }
+    .zg-imgbtn:disabled { opacity: .42; cursor: not-allowed; filter: grayscale(.6); }
+    .zg-imgbtn.on { border-color: #7aff9a; box-shadow: 0 0 12px #7aff9a55, inset 0 0 16px #7aff9a22; }
+    .zg-imgbtn .zg-badge {
+      position: absolute; right: 5px; bottom: 5px;
+      font-family: var(--font-head); font-size: clamp(9px, 1vw, 11px);
+      color: var(--gold2); background: #000000b3; border: 1px solid #00000080;
+      border-radius: 6px; padding: 1px 6px; pointer-events: none; white-space: nowrap;
+    }
+    .zg-imgbtn .zg-badge.big { font-size: clamp(12px, 1.4vw, 16px); right: 50%; bottom: 50%; transform: translate(50%, 50%); }
+
+    /* ── LABİRENT KAPILARI — kenar ortasındaki kareye ışıklı geçit ── */
+    .zg-door {
+      position: absolute; z-index: 1; pointer-events: none;
+      width: 14.2857%; height: 14.2857%;
+      display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at center, #ffd88a55, transparent 72%);
+      box-shadow: 0 0 22px #ffb84766, inset 0 0 14px #ffd88a44;
+      border-radius: 8px;
+      color: #ffe3a8; font-size: clamp(14px, 2.6vw, 26px);
+      text-shadow: 0 0 8px #ffb847, 0 1px 3px #000;
+      animation: zgDoorPulse 1.8s ease-in-out infinite;
+    }
+    .zg-door.L { left: 0; top: 42.857%; }
+    .zg-door.R { right: 0; top: 42.857%; }
+    .zg-door.U { top: 0; left: 42.857%; }
+    .zg-door.D { bottom: 0; left: 42.857%; }
+    @keyframes zgDoorPulse { 0%,100% { opacity: .75; } 50% { opacity: 1; } }
+    @media(prefers-reduced-motion:reduce) { .zg-door { animation: none; } }
+    #zg-exitmark {
+      position: absolute; top: 6px; left: 8px; z-index: 7; pointer-events: none;
+      font-family: var(--font-head); font-size: clamp(9px, 1.8vw, 11px); letter-spacing: 1px;
+      color: #9df5b3; background: #000000a0; border: 1px solid #7aff9a66;
+      border-radius: 8px; padding: 2px 8px;
+    }
 
     /* Kare buton — ikon yok, sadece metin */
     .zg-btn {
@@ -13914,6 +13972,8 @@
       totalGold: 0,
       totalXP: 0,
       g: null,              // ızgara koşusu (zgNewRun) — 7×7 gerçek zamanlı mod
+      mode: 'floors',       // 'floors' (kademe 1-4, 5 kat) | 'maze' (kademe 5 labirenti)
+      room: null,           // labirentte bulunulan oda {x,y}
     };
 
     function zdGetTicketKey() { try { return getServerNow().toISOString().slice(0, 10); } catch (e) { return new Date().toISOString().slice(0, 10); } }
@@ -14060,9 +14120,13 @@
       ZD.active = true;
       ZD.tier = zdPlayerTier(); // kademe girişte kilitlenir (içeride seviye atlansa da değişmez)
       ZD.floor = 1;
+      // 5. kademe = labirent (giriş odası), diğerleri 5 katlı sistem
+      ZD.mode = ZD.tier >= 5 ? 'maze' : 'floors';
+      ZD.room = ZD.mode === 'maze' ? { x: MAZE5.entry.x, y: MAZE5.entry.y } : null;
       ZD.totalGold = 0;
       ZD.totalXP = 0;
       zgNewRun(false);   // 7×7 ızgara koşusu başlar
+      if (zgMaze()) zgMazeFetchBoss();
       updateHUD();
       if (currentUser) sbSave();
       renderZindan();
@@ -14130,6 +14194,154 @@
     function zgIn(x, y) { return x >= 0 && y >= 0 && x < ZG.W && y < ZG.H; }
     function zgDist(ax, ay, bx, by) { return Math.max(Math.abs(ax - bx), Math.abs(ay - by)); }
 
+    /* ══════════════════════════════════════════════════════════════
+       LABİRENT — şimdilik YALNIZ 5. kademe (ZD.mode === 'maze')
+       4×4 oda; her oda bildiğimiz 7×7 ızgara. Çift çizgili şema → doors.
+       - Giriş (0,0). Çıkış yalnız (0,0) ve (3,3)'te; başka odada çıkılamaz.
+       - Sarı boss: (3,0) (0,2) (3,2) → Altın Şövalye, öldükten 5 dk sonra geri gelir.
+       - Kırmızı boss: (3,3) → Nekromancer, 10 dk sonra geri gelir. Üst üste binmez.
+       - Mini harita BİLEREK yok — kaybolmak oyunun parçası.
+       - Kat sistemi (kademe 1-4) olduğu gibi duruyor; iki mod yan yana yaşıyor.
+       - Boss'un öldürülme zamanı sunucuda (sql/zd_boss_migration.sql). RPC yoksa
+         boss hep hazır sayılır — oyun çalışır, sadece 5/10 dk kuralı yerel kalır.
+    ══════════════════════════════════════════════════════════════ */
+    const MAZE5 = {
+      W: 4, H: 4,
+      entry: { x: 0, y: 0 },
+      exits: ['0,0', '3,3'],
+      yellow: ['3,0', '0,2', '3,2'],
+      red: '3,3',
+      doors: [
+        ['0,0', '1,0'], ['1,0', '2,0'], ['2,0', '3,0'],
+        ['0,0', '0,1'], ['1,0', '1,1'], ['2,0', '2,1'],
+        ['2,1', '3,1'],
+        ['2,1', '2,2'], ['3,1', '3,2'],
+        ['1,2', '2,2'],
+        ['0,2', '0,3'], ['1,2', '1,3'],
+        ['0,3', '1,3'], ['1,3', '2,3'], ['2,3', '3,3'],
+      ],
+      respawn: { yellow: 5 * 60e3, red: 10 * 60e3 },
+    };
+    /* Kapı kareleri: kenar ortası. Oyuncu TIKLAYARAK bu kareye varınca odaya geçer. */
+    const ZG_DOOR_CELL = { L: { x: 0, y: 3 }, R: { x: 6, y: 3 }, U: { x: 3, y: 0 }, D: { x: 3, y: 6 } };
+    const ZG_DIR = { L: { dx: -1, dy: 0, back: 'R' }, R: { dx: 1, dy: 0, back: 'L' }, U: { dx: 0, dy: -1, back: 'D' }, D: { dx: 0, dy: 1, back: 'U' } };
+    function zgMaze() { return ZD.mode === 'maze'; }
+    function zgRoomKey(x, y) { const r = ZD.room || MAZE5.entry; return (x == null ? r.x : x) + ',' + (y == null ? r.y : y); }
+    function zgHasDoor(a, b) { return MAZE5.doors.some(d => (d[0] === a && d[1] === b) || (d[0] === b && d[1] === a)); }
+    function zgRoomDoors() {
+      const r = ZD.room || MAZE5.entry, me = zgRoomKey();
+      const out = {};
+      for (const d of Object.keys(ZG_DIR)) {
+        const nx = r.x + ZG_DIR[d].dx, ny = r.y + ZG_DIR[d].dy;
+        out[d] = nx >= 0 && ny >= 0 && nx < MAZE5.W && ny < MAZE5.H && zgHasDoor(me, nx + ',' + ny);
+      }
+      return out;
+    }
+    function zgDoorAt(x, y) {
+      if (!zgMaze()) return null;
+      const doors = zgRoomDoors();
+      for (const d of Object.keys(ZG_DOOR_CELL)) {
+        if (doors[d] && ZG_DOOR_CELL[d].x === x && ZG_DOOR_CELL[d].y === y) return d;
+      }
+      return null;
+    }
+    function zgIsExitRoom() { return zgMaze() && MAZE5.exits.includes(zgRoomKey()); }
+    function zgBossKind() {
+      if (!zgMaze()) return null;
+      const k = zgRoomKey();
+      if (k === MAZE5.red) return 'red';
+      if (MAZE5.yellow.includes(k)) return 'yellow';
+      return null;
+    }
+    /* Zorluk: kat sisteminde kat, labirentte SATIR (kırmızı boss'a doğru sertleşir) */
+    function zgFloorNo() { return zgMaze() ? ((ZD.room || MAZE5.entry).y + 1) : (ZD.floor || 1); }
+    function zgFloorMult() { return 1 + (zgFloorNo() - 1) * 0.25; }
+    /* Arkaplan: labirentte satır → kat 1-4 görseli, boss odaları → kat 5 görseli */
+    function zgRoomBg() {
+      const t = ZD.tier || 1;
+      if (!zgMaze()) return IMG_BASE + t + 'zindan' + (ZD.floor || 1) + 'kat.webp';
+      const kat = zgBossKind() ? 5 : Math.min(4, (ZD.room || MAZE5.entry).y + 1);
+      return IMG_BASE + t + 'zindan' + kat + 'kat.webp';
+    }
+    function zgBossSpawnSub() {
+      if (zgMaze()) return zgBossKind() === 'red' ? 'Kırmızı boss — çıkış odası' : 'Sarı boss';
+      return ZD.floor >= ZD_FLOORS ? 'Kat sonu boss savaşı' : 'Kat muhafızı';
+    }
+    function zgBossKillSub() {
+      if (zgMaze()) return zgBossKind() === 'red' ? 'Kırmızı boss düştü — çıkış açık' : 'Sarı boss düştü';
+      return ZD.floor >= ZD_FLOORS ? 'Zindan tamamlandı' : 'Alt kata inebilirsin';
+    }
+    function zgMazeRespawnTxt() {
+      const g = ZD.g, kind = zgBossKind();
+      if (!g || !kind) return '';
+      if (!g.bossFetched) return 'bakılıyor…';
+      if (!g.bossKilledAt) return 'boss geliyor';
+      const left = g.bossKilledAt + MAZE5.respawn[kind] - getServerNow().getTime();
+      return left > 0 ? Math.ceil(left / 60000) + ' dk sonra' : 'boss geliyor';
+    }
+    /* Kapıdan geç: yeni oda, canavarlar sıfır, çanta/can/ayarlar taşınır.
+       Karşı kapının bir kare içinde belirirsin (kapının üstünde değil —
+       yoksa hemen geri tetiklenirdi). Canavarlar peşinden gelmez. */
+    function zgGoRoom(dir) {
+      const g = ZD.g; if (!g || !zgMaze()) return;
+      const D = ZG_DIR[dir]; if (!D) return;
+      const r = ZD.room || MAZE5.entry;
+      const nx = r.x + D.dx, ny = r.y + D.dy;
+      if (!zgHasDoor(zgRoomKey(), nx + ',' + ny)) return;
+      ZD.room = { x: nx, y: ny };
+      zgNewRun(true);
+      const back = ZG_DOOR_CELL[D.back];
+      ZD.g.px = back.x + D.dx; ZD.g.py = back.y + D.dy;
+      renderZindan();       // yeni arkaplan + kapılar + yeni ortak kat kanalı
+      zgMazeFetchBoss();
+    }
+    /* Boss'un son öldürülme zamanı SUNUCUDA durur — oda boşalıp yeni biri
+       girince "3 dk önce öldü" bilgisi kaybolmasın. Sunucu saatine göre
+       kalan süre yerel saate çevrilir (getServerNow ile uyumlu). */
+    async function zgMazeFetchBoss() {
+      const g = ZD.g; if (!g || !zgMaze()) return;
+      const kind = zgBossKind();
+      const room = zgRoomKey(), tier = ZD.tier || 5;
+      if (!kind) { g.bossFetched = true; return; }
+      g.bossFetched = false;
+      let killedAt = null;
+      try {
+        if (currentUser && typeof supa !== 'undefined' && supa) {
+          const { data, error } = await supa.rpc('zd_boss_status', { p_tier: tier, p_room: room });
+          if (!error && Array.isArray(data) && data.length && data[0].killed_at) {
+            const sNow = new Date(data[0].server_now).getTime();
+            const kAt = new Date(data[0].killed_at).getTime();
+            killedAt = getServerNow().getTime() - (sNow - kAt);
+          }
+        }
+      } catch (e) { }
+      if (ZD.g !== g || zgRoomKey() !== room) return;   // bu arada oda değişmiş
+      g.bossKilledAt = killedAt;
+      g.bossFetched = true;
+      zgRenderBar();
+    }
+    function zgMazeMarkKilled() {
+      if (!currentUser || typeof supa === 'undefined' || !supa) return;
+      try { supa.rpc('zd_boss_killed', { p_tier: ZD.tier || 5, p_room: zgRoomKey() }).then(() => { }, () => { }); } catch (e) { }
+    }
+    /* Ev sahibi tick'inden: boss odasında boss yoksa ve bekleme dolduysa doğur */
+    function zgMazeBossTick() {
+      const g = ZD.g; const kind = zgBossKind();
+      if (!g || !kind || !g.bossFetched) return;
+      if (g.mobs.some(m => m.boss)) return;
+      if (g.bossKilledAt && getServerNow().getTime() < g.bossKilledAt + MAZE5.respawn[kind]) return;
+      zgSpawnBoss();
+    }
+    /* Labirentte sekme değiştirmek = koşuyu TERK. Çanta gider; yoksa çıkış
+       odalarının bir anlamı kalmazdı. Kat sisteminde eski güvenli çıkış sürer. */
+    function zgAbandon() {
+      const g = ZD.g; if (!ZD.active || !g) return;
+      const lost = g.bag.items.length + ' eşya, ' + g.bag.gold + '🪙, ' + g.bag.xp + 'XP';
+      g.bag = { gold: 0, xp: 0, items: [], mats: {} };
+      zgFinish();
+      toast('🚪 Labirenti terk ettin — çantandaki ' + lost + ' kayboldu.');
+    }
+
     /* ── Koşu durumu ── */
     function zgNewRun(keepBag) {
       const old = ZD.g;
@@ -14142,6 +14354,8 @@
         lastPull: Date.now() - ZG.PULL_CD, lastPotion: 0,
         kills: 0, quota: zgKillQuota(ZD.floor),
         bossSpawned: false, bossDead: false,
+        doorTarget: null,                 // labirent: tıklanan kapı karesi {x,y,dir}
+        bossKilledAt: null, bossFetched: false,   // labirent: bu odanın boss durumu
         auto: (keepBag && old) ? old.auto : false,
         // Oto pot hep açık — kapatmanın oyuncuya bir faydası yok.
         // potionKey: oyuncunun seçtiği iksirin stackKeyOf'u (null = otomatik seç)
@@ -14166,6 +14380,7 @@
       for (let i = 0; i < 80; i++) {
         const x = Math.floor(Math.random() * ZG.W), y = Math.floor(Math.random() * ZG.H);
         if (zgDist(x, y, g.px, g.py) < minDist) continue;
+        if (zgMaze() && zgDoorAt(x, y)) continue;   // kapı karesi boş kalsın
         if (g.mobs.some(m => m.hp > 0 && m.x === x && m.y === y)) continue;
         return { x, y };
       }
@@ -14176,7 +14391,7 @@
       const T = ZD_TIERS[ZD.tier || 1] || ZD_TIERS[1];
       const pool = zdRegionMobs(T.mobs);
       const base = pool[Math.floor(Math.random() * pool.length)];
-      const mult = 1 + (ZD.floor - 1) * 0.25;
+      const mult = zgFloorMult();
       const e = elite ? ZG.ELITE : { hp: 1, atk: 1, xp: 1, gold: 1 };
       const spot = zgFreeSpot(elite ? 2 : 3);
       if (!spot) return null;
@@ -14199,15 +14414,21 @@
     function zgSpawnBoss() {
       const g = ZD.g;
       const T = ZD_TIERS[ZD.tier || 1] || ZD_TIERS[1];
-      const isFinal = ZD.floor >= ZD_FLOORS;
+      const kind = zgBossKind();   // labirent: 'yellow' | 'red' | null
+      const isFinal = zgMaze() ? kind === 'red' : ZD.floor >= ZD_FLOORS;
       let base;
-      if (isFinal) {
+      if (zgMaze()) {
+        if (!kind) return;
+        // Sarı = kademenin boss'u (Altın Şövalye), kırmızı = güçlü boss (Nekromancer)
+        base = { ...(kind === 'red' ? T.strongBoss : T.boss) };
+        base.hp = Math.floor(base.hp * ZG.TOUGH_HP);
+      } else if (isFinal) {
         base = { ...(Math.random() < ZD_STRONG_BOSS_CHANCE ? T.strongBoss : T.boss) };
         base.hp = Math.floor(base.hp * ZG.TOUGH_HP);
       } else {
         const pool = zdRegionMobs(T.mobs);
         const b = pool[Math.floor(Math.random() * pool.length)];
-        const mult = 1 + (ZD.floor - 1) * 0.25;
+        const mult = zgFloorMult();
         base = {
           ...b, name: 'Azılı ' + b.name,
           hp: Math.floor(b.hp * mult * 3.5 * ZG.TOUGH_HP), atk: Math.floor(b.atk * mult * 1.3),
@@ -14224,7 +14445,8 @@
         elite: false, boss: true, st: {}, lastStep: now, lastHit: now,
       });
       g.bossSpawned = true;
-      slideNotif('👿', base.name + ' belirdi!', isFinal ? 'Kat sonu boss savaşı' : 'Kat muhafızı');
+      g.bossDead = false;   // labirentte yeniden doğuş
+      slideNotif('👿', base.name + ' belirdi!', zgBossSpawnSub());
       zgRenderBar();
     }
 
@@ -14260,11 +14482,19 @@
         m.x = t.x; m.y = t.y; return;
       }
     }
-    function zgMoveTo(x, y) {
+    function zgMoveTo(x, y, click) {
       const g = ZD.g;
       if (!ZD.active || !g || g.over) return;
       if (!zgIn(x, y)) return;
-      if (x === g.px && y === g.py) { g.path = []; zgSetWalking(false); return; }
+      // Kapı yalnızca oyuncunun TIKLADIĞI hedefse tetiklenir; oto yürüyüş
+      // (click=false) kapı karesinden geçse bile odayı değiştirmez.
+      const dir = click ? zgDoorAt(x, y) : null;
+      g.doorTarget = dir ? { x, y, dir } : null;
+      if (x === g.px && y === g.py) {
+        g.path = []; zgSetWalking(false);
+        if (dir) { g.doorTarget = null; zgGoRoom(dir); }
+        return;
+      }
       // Faz 1'de duvar yok — hedefe doğru kare kare ilerlenir
       const path = [];
       let cx = g.px, cy = g.py, guard = 0;
@@ -14371,10 +14601,11 @@
        tabi olsaydı %55 × %45 = ~%25'e inip son boss'u anlamsızlaştırırdı. */
     function zgBagDrop(m) {
       const tier = ZD.tier || 1;
-      const isFinal = m.boss && ZD.floor >= ZD_FLOORS;
+      // Labirentte "son kat" = kırmızı boss odası (oda bazlı karar: istemcide de doğru)
+      const isFinal = m.boss && (zgMaze() ? zgBossKind() === 'red' : ZD.floor >= ZD_FLOORS);
       const necroGate = isFinal && tier === 5;
       const kind = m.boss ? 'boss' : (m.elite ? 'elite' : 'normal');
-      if (!necroGate && Math.random() >= zdDropChance(kind, ZD.floor)) return;
+      if (!necroGate && Math.random() >= zdDropChance(kind, zgFloorNo())) return;
       if (!zgBagRoom()) {
         if (m.boss || m.elite) toast('⚠ Envanter dolu — eşya düşmedi!');
         return;
@@ -14384,7 +14615,7 @@
       const type = necroGate ? 'weapon' : zdPickW(ZD_DROP.types).t;
       const note = m.boss ? 'Boss ganimeti' : (m.elite ? 'Azılı ganimeti' : 'Zindan ganimeti');
       zgCapture(() => {
-        if (type === 'weapon') zdBossWeaponDrop(m, ZD.floor, { grade, plus });
+        if (type === 'weapon') zdBossWeaponDrop(m, zgFloorNo(), { grade, plus });
         else if (type === 'armor') dropRandomArmor(tier, note, { grade, plus });
         else dropRandomRing(zdRingPool(tier), plus, note);
       });
@@ -14411,7 +14642,7 @@
       zgBagDrop(m);   // artık normal canavarlar da düşük şansla eşya düşürür
       if (m.boss) {
         trackAch('zdboss');
-        slideNotif('🏆', m.name + ' yenildi!', ZD.floor >= ZD_FLOORS ? 'Zindan tamamlandı' : 'Alt kata inebilirsin');
+        slideNotif('🏆', m.name + ' yenildi!', zgBossKillSub());
       }
     }
     /* Ev sahibi tarafında ölüm kararı. by = öldüren oyuncunun id'si. */
@@ -14419,7 +14650,14 @@
       const g = ZD.g; if (!g) return;
       const killer = by || zcoMe();
       g.kills++;
-      if (m.boss) g.bossDead = true;
+      if (m.boss) {
+        g.bossDead = true;
+        if (zgMaze()) {   // labirentte boss geri gelir: bayraklar sıfır, ölüm zamanı sunucuya
+          g.bossSpawned = false; g.bossDead = false;
+          g.bossKilledAt = getServerNow().getTime();
+          zgMazeMarkKilled();
+        }
+      }
       zcoSendKill(m, killer);              // ortak katta herkese bildir
       if (killer === zcoMe()) zgAwardKill(m);
       zgRemoveMob(m);
@@ -14452,6 +14690,11 @@
         g.stepT0 = now;
         if (!g.path.length) zgSetWalking(false);
       }
+      // Labirent: TIKLANAN kapı karesine varınca odaya geç (oto yürüyüş kapıyı tetiklemez)
+      if (g.doorTarget && !g.path.length && g.px === g.doorTarget.x && g.py === g.doorTarget.y) {
+        const d = g.doorTarget.dir; g.doorTarget = null;
+        zgGoRoom(d); return;
+      }
       // Oto mod AFK yürüyüşü — 'moving' bundan SONRA hesaplanmalı ki
       // hedef menzile girdiği tick'te saldırı da yapılabilsin.
       if (g.auto) zgAutoMove();
@@ -14466,12 +14709,13 @@
         // Doğuş yalnızca kat muhafızı SAHADAYKEN durur (boss dövüşü temiz olsun).
         // Boss öldükten sonra tekrar başlar — oyuncu isterse katta grind'e devam eder,
         // inmeye ya da çıkmaya kendi karar verir.
-        const bossAlive = g.bossSpawned && !g.bossDead;
+        const bossAlive = !zgMaze() && g.bossSpawned && !g.bossDead;   // labirentte doğuş boss varken de sürer
         if (!bossAlive && now - g.lastSpawn >= spawnMs && g.mobs.length < cap) {
           g.lastSpawn = now;
           zgSpawnMob(false);
         }
-        if (!g.bossSpawned && g.kills >= g.quota) zgSpawnBoss();
+        if (zgMaze()) zgMazeBossTick();                       // zamanla gelen boss
+        else if (!g.bossSpawned && g.kills >= g.quota) zgSpawnBoss();   // kota ile gelen boss
       }
 
       // Yürürken saldıramaz — hareketin bedeli bu
@@ -14575,7 +14819,7 @@
         const at = zgCfgClamp('at', raw.at);
         if (at != null) return { at };
       } catch (e) { }
-      return { at: 40 };
+      return { at: 50 };
     })();
     function zgAutoPotAt() { return ZGCFG.at / 100; }
     /* onchange ile çağrılıyor (oninput değil): yazarken kırpılsaydı "50"
@@ -14675,7 +14919,10 @@
     let ZCO = { channel: null, key: null, peers: {}, lastSent: 0, lastMobSend: 0 };
 
     /* Aynı kat = aynı bölge + aynı kademe + aynı kat */
-    function zcoKey() { return 'zdco_' + (G.region || 'x') + '_' + (ZD.tier || 1) + '_' + (ZD.floor || 1); }
+    function zcoKey() {
+      const where = zgMaze() ? 'r' + zgRoomKey().replace(',', '') : (ZD.floor || 1);
+      return 'zdco_' + (G.region || 'x') + '_' + (ZD.tier || 1) + '_' + where;
+    }
 
     function zcoJoin() {
       if (!currentUser || typeof supa === 'undefined' || !supa) return;
@@ -14689,7 +14936,8 @@
         .on('broadcast', { event: 'pos' }, ({ payload }) => zcoOnPos(payload))
         .on('broadcast', { event: 'mobs' }, ({ payload }) => zcoOnMobs(payload))
         .on('broadcast', { event: 'hit' }, ({ payload }) => zcoOnHit(payload))
-        .on('broadcast', { event: 'kill' }, ({ payload }) => zcoOnKill(payload));
+        .on('broadcast', { event: 'kill' }, ({ payload }) => zcoOnKill(payload))
+        .on('broadcast', { event: 'pull' }, ({ payload }) => zcoOnPull(payload));
       // Kanal, subscribe geri çağrısından ÖNCE atanır: geri çağrı erken
       // çalışırsa track() atlanır, presence boş kalır ve HERKES kendini
       // ev sahibi sanar (iki ayrı canavar akışı doğar).
@@ -14830,7 +15078,7 @@
       for (const m of g.mobs.filter(o => !seen.has(o.uid))) zgRemoveMob(m);
       if (!wasBoss && g.bossSpawned && !g.bossDead) {
         const b = g.mobs.find(o => o.boss);
-        if (b) slideNotif('👿', b.name + ' belirdi!', ZD.floor >= ZD_FLOORS ? 'Kat sonu boss savaşı' : 'Kat muhafızı');
+        if (b) slideNotif('👿', b.name + ' belirdi!', zgBossSpawnSub());
       }
       zgRenderBar();
     }
@@ -14848,6 +15096,15 @@
       m.hp = Math.max(0, m.hp - (p.d || 0));
       if (m.hp <= 0) zgKill(m, p.u);
     }
+    /* Canavar Çek: istemci ev sahibine iletir, ev sahibi doğurur */
+    function zcoSendPull() {
+      if (!ZCO.channel) return;
+      ZCO.channel.send({ type: 'broadcast', event: 'pull', payload: { u: zcoMe() } });
+    }
+    function zcoOnPull(p) {
+      if (!ZD.g || ZD.g.over || !zcoIsHost() || !p || p.u === zcoMe()) return;
+      zgDoPull();
+    }
     /* Ölümü ev sahibi ilan eder; ganimet yalnız öldürene gider. */
     function zcoSendKill(m, by) {
       if (!ZCO.channel || !zcoIsHost()) return;
@@ -14860,6 +15117,7 @@
       const g = ZD.g;
       if (!g || g.over || !p || zcoIsHost()) return;
       const m = g.mobs.find(o => o.uid === p.m);
+      if (p.b && zgMaze()) g.bossKilledAt = getServerNow().getTime();
       if (p.by === zcoMe()) {
         // Ödül için ev sahibinin gönderdiği değerleri kullan (yerel kopya silinmiş olabilir)
         zgAwardKill(m || { uid: p.m, x: p.x, y: p.y, xp: p.xp, gold: p.gold, id: p.id, name: p.name, boss: !!p.b, elite: !!p.e });
@@ -14974,10 +15232,17 @@
       }
     }
     function zgStageHTML() {
-      const bg = IMG_BASE + (ZD.tier || 1) + 'zindan' + (ZD.floor || 1) + 'kat.webp';
+      const bg = zgRoomBg();
+      let doorsHtml = '';
+      if (zgMaze()) {
+        const dd = zgRoomDoors();
+        const arrow = { L: '◀', R: '▶', U: '▲', D: '▼' };
+        for (const d of Object.keys(dd)) if (dd[d]) doorsHtml += '<div class="zg-door ' + d + '">' + arrow[d] + '</div>';
+        if (zgIsExitRoom()) doorsHtml += '<span id="zg-exitmark">ÇIKIŞ</span>';
+      }
       let cells = '';
       for (let i = 0; i < ZG.W * ZG.H; i++) {
-        cells += '<div class="zg-cell" onclick="zgMoveTo(' + (i % ZG.W) + ',' + Math.floor(i / ZG.W) + ')"></div>';
+        cells += '<div class="zg-cell" onclick="zgMoveTo(' + (i % ZG.W) + ',' + Math.floor(i / ZG.W) + ',true)"></div>';
       }
       // Üstteki can şeridi kaldırıldı — can artık karakterin ALTINDA,
       // canavarlarla aynı yerde (zgPaint içinde çizilir). Sayısal değer
@@ -14986,6 +15251,7 @@
         + '<div id="zg-side"></div>'
         + '<div id="zg-stage" style="background-image:url(\'' + bg + '\')">'
         + '<div id="zg-mark" style="display:none;"></div>'
+        + doorsHtml
         + '<span id="zg-co" style="display:none;"></span>'
         + '<div id="zg-cells">' + cells + '</div>'
         + '<div id="zg-units"></div>'
@@ -15012,32 +15278,50 @@
         ? (g.bossDead ? '<b style="color:#7aff9a;">Kat temizlendi</b>' : '<b style="color:#f87171;">Kat muhafızı!</b>')
         : 'Canavar <b>' + g.kills + '/' + g.quota + '</b>';
       const sub = s => '<span class="zg-btn-sub">' + s + '</span>';
-      /* İksir butonu hangi iksirin kullanıldığını ve kaç adet kaldığını
-         gösterir. Üç iksir de aynı emojiyi (🧪) paylaştığı için ayırt
-         etmek isme bağlı — "Küçük/Orta/Büyük" yeter, ikon koymuyoruz. */
+      const maze = zgMaze();
+      /* Görsel butonlar — yazı görselin üstünde basılı (otosaldiri/canavarcek/
+         iksir.webp), biz yalnızca durum rozeti koyuyoruz: bekleme sayacı,
+         seçili iksirin adı+adedi ve eşik. */
+      const img = f => 'style="background-image:url(' + IMG_BASE + f + '.webp)"';
       const pot = zgPotionPick();
-      const potBtn = pot
-        ? '<button class="zg-btn" onclick="zgPotionPicker()">' + zgPotionShort(pot) + sub('×' + zgPotionQty(pot)) + '</button>'
-        : '<button class="zg-btn" onclick="zgPotionPicker()">İksir' + sub('yok') + '</button>';
-      // Eşiği doğrudan panelde göster; değiştirmek için aynı pencere açılır
-      const atBtn = '<button class="zg-btn" onclick="zgPotionPicker()">%' + ZGCFG.at + sub('bu canın altında') + '</button>';
-      const lastBtn = finished
-        ? '<button class="zg-btn wide on" onclick="zgExit()">Zindanı Bitir' + sub('ganimeti al') + '</button>'
-        : canDescend
-          ? '<button class="zg-btn wide on" onclick="zgDescend()">Alt Kata İn' + sub('kat ' + (ZD.floor + 1)) + '</button>'
-          : '<button class="zg-btn wide danger" onclick="zgExit()">Zindandan Çık' + sub('ganimeti al') + '</button>';
-      el.innerHTML =
-        '<div class="zg-side-info">'
-        + '<b>' + (ZD.tier || 1) + '. SEVİYE</b> · KAT ' + (ZD.floor || 1) + '/' + ZD_FLOORS + '<br>'
-        + 'Can <b id="zg-hp-txt" style="color:#7aff9a;">' + Math.max(0, Math.round(g.hp)) + '</b>/' + eff.maxhp + '<br>'
-        + prog
-        + '</div>'
-        + '<button class="zg-btn ' + (g.auto ? 'on' : '') + '" onclick="zgToggleAuto()">' + (g.auto ? 'Oto Açık' : 'Oto Saldırı') + '</button>'
-        + '<button class="zg-btn" onclick="zgPull()" ' + (pullLeft > 0 || g.bossSpawned ? 'disabled' : '') + '>Canavar Çek' + (pullLeft > 0 ? sub(pullLeft + 'sn') : '') + '</button>'
-        + potBtn
-        + atBtn
-        + lastBtn
-        + ((canDescend || finished) ? '<button class="zg-btn wide danger" onclick="zgExit()">Zindandan Çık' + sub('ganimeti garantiye al') + '</button>' : '');
+      const potBadge = pot
+        ? '<span class="zg-badge">' + esc(zgPotionShort(pot)) + ' ×' + zgPotionQty(pot) + ' · %' + ZGCFG.at + '</span>'
+        : '<span class="zg-badge">iksir yok</span>';
+      const pullOff = pullLeft > 0 || (!maze && g.bossSpawned && !g.bossDead);
+      const btns =
+        '<button class="zg-imgbtn ' + (g.auto ? 'on' : '') + '" ' + img('otosaldiri') + ' onclick="zgToggleAuto()" title="Oto Saldırı"></button>'
+        + '<button class="zg-imgbtn" ' + img('canavarcek') + ' onclick="zgPull()" ' + (pullOff ? 'disabled' : '') + ' title="Canavar Çek">'
+        + (pullLeft > 0 ? '<span class="zg-badge big">' + pullLeft + 'sn</span>' : '') + '</button>'
+        + '<button class="zg-imgbtn" ' + img('iksir') + ' onclick="zgPotionPicker()" title="İksir">' + potBadge + '</button>';
+
+      let info, lastBtn;
+      if (maze) {
+        /* Labirentte konum GÖSTERİLMEZ — kaybolmak oyunun parçası.
+           Çıkış yalnız çıkış odalarında mümkün. */
+        const kind = zgBossKind();
+        const bossAlive = g.mobs.some(m => m.boss);
+        const bossTxt = kind
+          ? (bossAlive ? '<b style="color:#f87171;">' + (kind === 'red' ? 'Kırmızı' : 'Sarı') + ' boss burada!</b>'
+                       : '<span style="opacity:.75;">Boss odası — ' + zgMazeRespawnTxt() + '</span>')
+          : 'Kesim <b>' + g.kills + '</b>';
+        info = '<b>' + (ZD.tier || 1) + '. SEVİYE</b> · LABİRENT<br>'
+          + 'Can <b id="zg-hp-txt" style="color:#7aff9a;">' + Math.max(0, Math.round(g.hp)) + '</b>/' + eff.maxhp + '<br>'
+          + bossTxt;
+        lastBtn = zgIsExitRoom()
+          ? '<button class="zg-btn wide on" onclick="zgExit()">Zindandan Çık' + sub('ganimeti al') + '</button>'
+          : '<button class="zg-btn wide" disabled>Çıkış yok' + sub('çıkış odası bul') + '</button>';
+      } else {
+        info = '<b>' + (ZD.tier || 1) + '. SEVİYE</b> · KAT ' + (ZD.floor || 1) + '/' + ZD_FLOORS + '<br>'
+          + 'Can <b id="zg-hp-txt" style="color:#7aff9a;">' + Math.max(0, Math.round(g.hp)) + '</b>/' + eff.maxhp + '<br>'
+          + prog;
+        lastBtn = (finished
+          ? '<button class="zg-btn wide on" onclick="zgExit()">Zindanı Bitir' + sub('ganimeti al') + '</button>'
+          : canDescend
+            ? '<button class="zg-btn wide on" onclick="zgDescend()">Alt Kata İn' + sub('kat ' + (ZD.floor + 1)) + '</button>'
+            : '<button class="zg-btn wide danger" onclick="zgExit()">Zindandan Çık' + sub('ganimeti al') + '</button>')
+          + ((canDescend || finished) ? '<button class="zg-btn wide danger" onclick="zgExit()">Zindandan Çık' + sub('ganimeti garantiye al') + '</button>' : '');
+      }
+      el.innerHTML = '<div class="zg-side-info">' + info + '</div>' + btns + lastBtn;
     }
 
     /* ── GANİMET ÇANTASI ──
@@ -15088,9 +15372,8 @@
     function zgPotionPicker() {
       const g = ZD.g; if (!g || g.over) return;
       const list = zgPotionList();
-      if (!list.length) { toast('🧪 Envanterinde can iksiri yok!'); return; }
       const eff = getEffectiveStats();
-      const cur = zgPotionPick();
+      const cur = list.length ? zgPotionPick() : null;
       const curKey = cur ? stackKeyOf(cur) : null;
       const rows = list.slice()
         .sort((a, b) => zgPotionHeal(a, eff.maxhp) - zgPotionHeal(b, eff.maxhp))
@@ -15105,39 +15388,53 @@
             + (on ? '<span style="color:var(--gold2);font-size:11px;white-space:nowrap;">● seçili</span>' : '')
             + '</div>';
         }).join('');
-      const inpCss = 'width:100%;margin-top:5px;padding:8px;border-radius:7px;border:1px solid var(--border2);background:var(--panel3);color:var(--perg);font-family:var(--font-head);font-size:17px;text-align:center;';
+      const inpCss = 'width:90px;padding:8px;border-radius:7px;border:1px solid var(--border2);background:var(--panel3);color:var(--perg);font-family:var(--font-head);font-size:18px;text-align:center;';
+      /* Seçmek iksiri İÇMEZ — yalnızca oto potun hangisini kullanacağını
+         belirler. Elle içme butonu bilerek yok. */
       showGModal('<div style="text-align:center;margin-bottom:10px;">'
-        + '<div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);">❤️ OTO POT</div>'
-        + '<div style="font-size:11px;color:var(--ink3);margin-top:4px;line-height:1.6;">Oto pot hep açıktır. Can bu eşiğin altına düştükçe saniyede bir yudum içilir; seçtiğin iksir bitince eldeki en küçüğe geçilir.</div>'
+        + '<div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);">🧪 İKSİR</div>'
         + '</div>'
-        + '<div style="max-width:180px;margin:0 auto 12px;">'
-        + '<label style="text-align:left;font-size:10.5px;color:var(--ink3);">İçme eşiği (%)'
+        + (list.length
+          ? rows
+          : '<div style="text-align:center;font-size:12px;color:var(--ink3);padding:14px 0;">Envanterinde can iksiri yok.</div>')
+        + '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;">'
+        + '<span style="font-family:var(--font-head);font-size:18px;color:var(--gold2);">%</span>'
         + '<input id="zg-cfg-at" type="number" inputmode="numeric"'
         + ' min="' + ZGCFG_LIMITS.at[0] + '" max="' + ZGCFG_LIMITS.at[1] + '"'
         + ' value="' + ZGCFG.at + '" onchange="zgCfgInput(\'at\',this.value)" style="' + inpCss + '">'
-        + '<span style="display:block;margin-top:3px;opacity:.7;text-align:center;">' + ZGCFG_LIMITS.at[0] + '–' + ZGCFG_LIMITS.at[1] + ' arası</span></label>'
         + '</div>'
-        + '<div style="font-family:var(--font-head);font-size:12px;color:var(--gold2);text-align:left;margin-bottom:6px;">KULLANILACAK İKSİR</div>'
-        + rows
-        + '<button class="btn btn-ghost" style="width:100%;margin-top:6px;" onclick="closeGModal()">Kapat</button>');
+        + '<div style="text-align:center;font-size:11.5px;color:var(--ink3);margin-top:6px;line-height:1.6;">can değerinin altına düştüğünde otomatik kullan.</div>'
+        + '<button class="btn btn-ghost" style="width:100%;margin-top:12px;" onclick="closeGModal()">Kapat</button>');
     }
     function zgSetPotion(itemId) {
       const g = ZD.g; if (!g) return;
       const p = G.inventory.find(i => i.id === itemId); if (!p) return;
       g.potionKey = stackKeyOf(p);
-      closeGModal();
-      toast('❤️ Oto pot: ' + p.name);
       zgRenderBar();
+      zgPotionPicker();   // pencere açık kalır; seçim işareti güncellenir, eşik de buradan ayarlanıyor
     }
     function zgPull() {
       const g = ZD.g; if (!g || g.over) return;
-      if (g.bossSpawned) { toast('Kat muhafızı sahadayken canavar çekemezsin!'); return; }
+      if (!zgMaze() && g.bossSpawned) { toast('Kat muhafızı sahadayken canavar çekemezsin!'); return; }
       const now = Date.now();
       if (now - g.lastPull < ZG.PULL_CD) { toast('Biraz bekle...'); return; }
       g.lastPull = now;
-      const m = zgSpawnMob(true);
-      if (m) { toast('👹 ' + m.name + ' geliyor! Daha çok XP ve ganimet.'); zgRenderBar(); }
-      else toast('Yer yok — önce biraz temizle.');
+      // Ortak katta canavarı yalnız ev sahibi doğurur — istemci ona iletir
+      if (!zcoIsHost()) { zcoSendPull(); toast('👹 Canavar çağrıldı!'); zgRenderBar(); return; }
+      zgDoPull();
+    }
+    /* Labirentte elit YOK — buton sadece daha çok düz canavar getirir.
+       Kat sisteminde eskisi gibi "Azılı" elit. */
+    function zgDoPull() {
+      const g = ZD.g; if (!g || g.over) return;
+      if (zgMaze()) {
+        let n = 0; for (let i = 0; i < 3; i++) if (zgSpawnMob(false)) n++;
+        toast(n ? '👹 ' + n + ' canavar daha geliyor!' : 'Yer yok — önce biraz temizle.');
+      } else {
+        const m = zgSpawnMob(true);
+        toast(m ? '👹 ' + m.name + ' geliyor! Daha çok XP ve ganimet.' : 'Yer yok — önce biraz temizle.');
+      }
+      zgRenderBar();
     }
     function zgUsePotion(itemId) {
       const g = ZD.g; if (!g || g.over) return;
@@ -15157,6 +15454,7 @@
     }
     function zgDescend() {
       const g = ZD.g;
+      if (zgMaze()) return;   // labirentte kat yok, kapı var
       if (!g || !g.bossDead || ZD.floor >= ZD_FLOORS) return;
       ZD.floor++;
       zgNewRun(true); // çanta ve can alt kata iner — derinleştikçe risk büyür
@@ -15192,6 +15490,7 @@
       zgStopLoop();
       ZD.active = false;
       ZD.g = null;
+      ZD.mode = 'floors'; ZD.room = null;
       updateHUD();
       if (currentUser) sbSave();
     }
@@ -15199,6 +15498,10 @@
     function zgExit(silent) {
       const g = ZD.g;
       if (!ZD.active || !g) return;
+      if (zgMaze()) {
+        if (silent) { zgAbandon(); return; }   // sekme değiştirmek = terk
+        if (!zgIsExitRoom()) { toast('🚪 Buradan çıkış yok — bir çıkış odası bul.'); return; }
+      }
       const got = zgBankBag(1);
       zgFinish();
       if (silent) {
@@ -15228,7 +15531,9 @@
       const ratio = tier === 1 ? 0.5 : 0;
       const lostGold = g.bag.gold, lostXp = g.bag.xp, lostItems = g.bag.items.length;
       const got = zgBankBag(ratio);
+      zcoLeave();   // ölünce ortak kat kanalından da çık — yoksa arkadaşlar hayalet görür
       ZD.active = false; ZD.g = null;
+      ZD.mode = 'floors'; ZD.room = null;
       G.stats.hp = Math.max(1, Math.floor(getEffectiveStats().maxhp * 0.3));
       updateHUD();
       if (currentUser) sbSave();
