@@ -6469,10 +6469,24 @@
 
     /* Ganimet çantası sağ sütunda — tooltip ekranın dışına taşmasın diye
        ortalanmak yerine hücrenin SAĞ kenarına yaslanır. */
-    .zg-loot-cell { position: relative; }
+    /* overflow:hidden hucrede tooltip'i TAMAMEN kirpiyordu. Gorsel zaten
+       %84 oldugu icin tasma riski yok, gorunur birakiliyor. */
+    .zg-loot-cell { position: relative; overflow: visible; }
     .zg-loot-cell .inv-tooltip { left: auto; right: 0; transform: none; }
     .zg-loot-cell .inv-tooltip::after { left: auto; right: 12px; transform: none; }
     .zg-loot-cell:hover .inv-tooltip { display: block; }
+
+    /* ── Yoldaş (birlik) ekipman slotları ──
+       Modal `.modal-box` overflow:auto ile kırptığı için tooltip 3 sütunlu
+       ızgarada kenarlara göre hizalanır: sol sütun sola, sağ sütun sağa
+       yaslanır, orta sütun ortalanır. Yoksa kenardaki slotların tooltip'i
+       modalın dışında kalıp kesilirdi. */
+    .tr-eq-slot .inv-tooltip { width: 230px; max-width: min(230px, 74vw); }
+    .tr-eq-slot:hover .inv-tooltip { display: block; }
+    .tr-eq-grid > .tr-eq-slot:nth-child(3n+1) .inv-tooltip { left: 0; right: auto; transform: none; }
+    .tr-eq-grid > .tr-eq-slot:nth-child(3n+1) .inv-tooltip::after { left: 26px; right: auto; transform: none; }
+    .tr-eq-grid > .tr-eq-slot:nth-child(3n) .inv-tooltip { left: auto; right: 0; transform: none; }
+    .tr-eq-grid > .tr-eq-slot:nth-child(3n) .inv-tooltip::after { left: auto; right: 26px; transform: none; }
 
     /* ── Özellik açıklama tooltip'i (nitelik + karakter özellikleri) ── */
     .attr-explain {
@@ -8664,10 +8678,12 @@
             ? `<img src="${IMG_BASE}${it.img}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/><span style="display:none;font-size: 27px;">${it.icon}</span>`
             : `<span style="font-size: 27px;">${it.icon}</span>`)
           : `<span class="tr-eq-ph">${meta.ph}</span>`;
-        return `<div class="tr-eq-slot${it ? ' ' + rqClass(it) : ' empty'}" onclick="openTroopSlotPicker('${tid}','${key}')" title="${it ? it.name : meta.lbl}">
+        // Dolu slotta tarayıcının ham title balonu yerine zengin tooltip
+        return `<div class="tr-eq-slot${it ? ' ' + rqClass(it) : ' empty'}" onclick="openTroopSlotPicker('${tid}','${key}')"${it ? '' : ` title="${meta.lbl}"`}>
       ${it && it.enhPlus > 0 ? `<span class="tr-eq-plus">+${it.enhPlus}</span>` : ''}
       ${iconHtml}
       <span class="tr-eq-lbl">${meta.lbl}</span>
+      ${it ? itemTooltipHTML(it) : ''}
     </div>`;
       };
       const lockedCell = (lbl, ph) => `<div class="tr-eq-slot locked empty" title="Yakında eklenecek" onclick="toast('🔒 ${lbl} yakında eklenecek!')">
