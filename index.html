@@ -6369,8 +6369,14 @@
     }
 
     /* Görünürlüğü JS açar (:hover değil): konum hesaplanmadan gösterilirse
-       kutu bir kare boyunca yanlış yerde parlar. */
-    .inv-tooltip.tip-on { display: block; }
+       kutu bir kare boyunca yanlış yerde parlar.
+       SADECE gerçek fare olan cihazlarda: dokunmatikte "üzerine gelme" diye
+       bir şey yok, tek dokunuş hem tooltip'i hem eşya penceresini açıyordu
+       ve ikisi üst üste biniyordu. Mobilde bilgi kaybı da olmuyor — pencere
+       aynı bilgileri (stat, set bonusu, tüccar fiyatı) zaten gösteriyor. */
+    @media (hover: hover) and (pointer: fine) {
+      .inv-tooltip.tip-on { display: block; }
+    }
 
     /* Derece rengi. Yazı beyaz olduğu için ton bilinçli olarak KOYU —
        gradyan üstte neredeyse siyah, aşağı indikçe derecenin rengine açılır. */
@@ -8118,7 +8124,14 @@
     function zzHideTip() {
       if (_zzTip) { _zzTip.classList.remove('tip-on'); _zzTip = null; }
     }
+    /* Dokunmatik cihazda tooltip hiç çalışmaz — CSS zaten gizliyor, burada
+       da boşuna konum hesaplanmasın (dokunuşta mouseover da tetikleniyor). */
+    function zzTipEnabled() {
+      try { return window.matchMedia('(hover: hover) and (pointer: fine)').matches; }
+      catch (e) { return true; }
+    }
     document.addEventListener('mouseover', e => {
+      if (!zzTipEnabled()) return;
       const host = e.target.closest ? e.target.closest(ZZ_TIP_HOSTS) : null;
       const tip = host ? host.querySelector(':scope > .inv-tooltip') : null;
       if (tip === _zzTip) return;
@@ -10402,6 +10415,74 @@
         desc: item.desc || tplDesc(tplId, tpl),
         classes: tpl.classes, grade: tpl.grade, reqLv: tpl.reqLv
       };
+    }
+
+    /* ══════════════════════════════════════
+       ESKİ KAYIT GÖÇÜ — İSİMDEN ŞABLON
+       Eski sürümlerde kaydedilen eşyalarda `tplId` ve `img` yok; bu yüzden
+       getItemTemplate null dönüyor ve eşya şablonuna hiç bağlanamıyordu:
+       görsel çıkmıyor, nadirlik `getRollGrade` yerine eski `grade` alanından
+       okunuyor, `getNPCSellPrice` şablon fiyatını bulamıyor. Sonuçta AYNI
+       isimli iki eşya farklı görünüyordu (biri Sv.15 "Değerli" 360🪙,
+       diğeri Sv.5 "Sıradan" 90🪙).
+       Çözüm: adı katalogla eşleştirip şablona bağla.
+    ══════════════════════════════════════ */
+    /* "Demir Göğüslük +2" → "demir göğüslük" (geliştirme eki ve boşluklar atılır) */
+    function normItemName(n) {
+      return String(n || '').replace(/\s*\+\d+\s*$/, '').trim().toLocaleLowerCase('tr');
+    }
+    const TPL_BY_NAME = (() => {
+      const map = {};
+      // Sıra önemli: aynı ada sahip iki şablonda İLK eklenen kazanır
+      [WEAPON_TEMPLATES, ARMOR_TEMPLATES, RING_TEMPLATES, EARRING_TEMPLATES].forEach(src => {
+        Object.entries(src || {}).forEach(([id, t]) => {
+          const n = normItemName(t && t.name);
+          if (n && !map[n]) map[n] = id;
+        });
+      });
+      return map;
+    })();
+    /* Eşyanın şablon anahtarı: önce tplId/img, olmazsa isim */
+    function resolveTplId(item) {
+      if (!item) return null;
+      const direct = item.tplId || item.img;
+      if (direct) {
+        const k = normTplKey(direct);
+        if (WEAPON_TEMPLATES[k] || ARMOR_TEMPLATES[k] || RING_TEMPLATES[k] || EARRING_TEMPLATES[k]) return k;
+      }
+      return TPL_BY_NAME[normItemName(item.name)] || null;
+    }
+    /* Zırhı güncel şablona göre yeniden üret. migrateWeapon ile aynı desen:
+       baseStats yeniden zar atılır, enhPlus korunur, katalog alanları (görsel,
+       derece, seviye, açıklama) şablondan tazelenir. */
+    function migrateArmor(item) {
+      if (!item || item.cat !== 'armor' || item._migrated) return item;
+      const tplId = resolveTplId(item);
+      const tpl = tplId && ARMOR_TEMPLATES[tplId];
+      if (!tpl) return item;   // katalogda yok — dokunma
+      const baseStats = rollStatsFromTpl(tpl);
+      const plus = item.enhPlus || 0;
+      const stats = plus > 0 ? getEnhancedStats({ baseStats, stats: baseStats }, plus) : { ...baseStats };
+      return {
+        ...item, tplId, _migrated: true, baseStats, stats,
+        img: tpl.img || item.img || null,
+        icon: tpl.icon || item.icon,
+        type: tpl.type || item.type,
+        grade: tpl.grade, reqLv: tpl.reqLv,
+        classes: tpl.classes, material: tpl.material ?? item.material ?? null,
+        desc: tpl.desc || item.desc || '',
+      };
+    }
+    /* Silahta tplId/img yoksa isimden bul — eski kayıtlar da göç edebilsin */
+    function migrateAnyItem(item) {
+      if (!item || item._migrated) return item;
+      if (item.cat === 'armor') return migrateArmor(item);
+      if (item.cat === 'weapon') {
+        const tplId = resolveTplId(item);
+        if (!tplId || !WEAPON_TEMPLATES[tplId]) return item;
+        return migrateWeapon({ ...item, tplId });
+      }
+      return item;
     }
 
     const MARKET_ITEMS = [
@@ -21020,17 +21101,25 @@
       (G.companions || []).forEach(tr => { ['weapon', 'helmet', 'chest', 'gloves', 'boots', 'ring', 'ring2', 'armor'].forEach(slot => { const it = tr.equip?.[slot]; if (it) { const c = inferCat(it); if (c && c !== it.cat) { it.cat = c; catFixed = true; } } }); });
       // Mevcut silahları yeni random-stat sistemine migrate et (tek seferlik)
       let needsSave = catFixed;
+      // Silah VE zırh göçü. Eskiden yalnız silah göç ediyordu; zırhlar şablona
+      // hiç bağlanmadığı için görselsiz kalıp yanlış nadirlik/fiyat gösteriyordu.
       G.inventory = G.inventory.map(item => {
-        if (item.cat === 'weapon' && !item._migrated && WEAPON_TEMPLATES[item.tplId || item.img]) {
-          needsSave = true; return migrateWeapon(item);
-        }
-        return item;
+        const out = migrateAnyItem(item);
+        if (out !== item) needsSave = true;
+        return out;
       });
       Object.keys(G.equipped).forEach(slot => {
         const item = G.equipped[slot];
-        if (item && item.cat === 'weapon' && !item._migrated && WEAPON_TEMPLATES[item.tplId || item.img]) {
-          G.equipped[slot] = migrateWeapon(item); needsSave = true;
-        }
+        const out = migrateAnyItem(item);
+        if (out !== item) { G.equipped[slot] = out; needsSave = true; }
+      });
+      // Yoldaşların (birlik) kuşandıkları da aynı göçten geçsin
+      (G.companions || []).forEach(tr => {
+        if (!tr.equip) return;
+        Object.keys(tr.equip).forEach(slot => {
+          const out = migrateAnyItem(tr.equip[slot]);
+          if (out !== tr.equip[slot]) { tr.equip[slot] = out; needsSave = true; }
+        });
       });
       // Eksik açıklamaları katalogdan tamamla ("undefined" görünmesin)
       const fixDesc = it => {
