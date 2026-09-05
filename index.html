@@ -6341,23 +6341,28 @@
       border-radius: 6px;
     }
 
-    /* Tooltip */
+    /* ── EŞYA TOOLTIP'İ ──
+       Üstte derece renginde gradyan başlık (görsel + isim + derece + tür),
+       ortada stat satırları (DEĞER solda, ad sağda), altta tüccar fiyatı ve
+       seviye. Eski tek sütun düzeninde uzun isim/etki metinleri birbirine
+       giriyordu; değer-ad ayrımı her satırı tek başına okunur kılıyor.
+       Pazar kartları bu tooltip'i KULLANMAZ — orada bilgi kartın kendisinde. */
     .inv-tooltip {
       display: none;
       position: absolute;
-      bottom: calc(100% + 6px);
+      bottom: calc(100% + 8px);
       left: 50%;
       transform: translateX(-50%);
-      background: #1e1608;
+      width: 250px;
+      max-width: min(250px, 84vw);
+      background: #100d09;
       border: 1px solid var(--border2);
-      border-top: 2px solid var(--gold);
-      border-radius: 5px;
-      padding: 7px 9px;
-      min-width: 120px;
-      max-width: 160px;
+      border-radius: 8px;
+      overflow: hidden;
       z-index: 2000;
-      box-shadow: 0 4px 16px #00000080;
+      box-shadow: 0 8px 26px #000000a0;
       pointer-events: none;
+      text-align: left;
     }
 
     .inv-tooltip::after {
@@ -6366,56 +6371,112 @@
       top: 100%;
       left: 50%;
       transform: translateX(-50%);
-      border: 5px solid transparent;
+      border: 6px solid transparent;
       border-top-color: var(--border2);
     }
+
+    /* Derece rengi. Yazı beyaz olduğu için ton bilinçli olarak KOYU —
+       gradyan üstte neredeyse siyah, aşağı indikçe derecenin rengine açılır. */
+    .inv-tooltip { --tt-c: #4a463f; --tt-e: #8a8276; }
+    .inv-tooltip.tt-gray { --tt-c: #4a463f; --tt-e: #8a8276; }
+    .inv-tooltip.tt-green { --tt-c: #2c5220; --tt-e: #7aaa5a; }
+    .inv-tooltip.tt-blue { --tt-c: #234456; --tt-e: #5a8aaa; }
+    .inv-tooltip.tt-purple { --tt-c: #452a5e; --tt-e: #b06ae0; }
+    .inv-tooltip.tt-orange { --tt-c: #6d470f; --tt-e: #f0a030; }
+
+    .tt-head {
+      position: relative;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 11px 14px;
+      background: linear-gradient(180deg, #0d0b08 0%, var(--tt-c) 100%);
+      border-bottom: 1px solid #00000060;
+    }
+
+    /* Başlığın altındaki küçük çentik — gövdeyle arasını ayırır */
+    .tt-head::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 7px solid transparent;
+      border-top-color: var(--tt-c);
+    }
+
+    .tt-art {
+      width: 52px;
+      height: 52px;
+      flex: none;
+      border-radius: 6px;
+      background: #0e0c08a0;
+      border: 1px solid #00000070;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .tt-art img { width: 88%; height: 88%; object-fit: contain; }
+    .tt-art span { font-size: 26px; }
+    .tt-id { min-width: 0; flex: 1; }
+
+    .tt-name {
+      font-family: var(--font-head);
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.3;
+      word-break: break-word;
+      margin-bottom: 5px;
+    }
+
+    .tt-grade { font-size: 11.5px; color: #ffffffdd; line-height: 1.5; }
+    .tt-type { font-size: 11.5px; color: #ffffffb0; line-height: 1.5; }
+
+    /* Stat satırları: değer solda sabit sütunda, ad sağda */
+    .tt-rows { padding: 9px 11px; }
+    .tt-rows + .tt-rows { border-top: 1px solid #ffffff12; }
+
+    .tt-row {
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+      font-size: 12px;
+      line-height: 1.75;
+    }
+
+    .tt-row b {
+      font-family: var(--font-head);
+      font-weight: 700;
+      color: #fff;
+      min-width: 42px;
+      text-align: right;
+      flex: none;
+    }
+
+    .tt-row span { color: #ffffffa8; }
+    .tt-fx { font-size: 12px; color: var(--tt-e); line-height: 1.6; }
+
+    .tt-flavor {
+      font-size: 11.5px;
+      color: #ffffff80;
+      font-style: italic;
+      line-height: 1.55;
+      margin-top: 6px;
+    }
+
+    /* Ganimet çantası sağ sütunda — tooltip ekranın dışına taşmasın diye
+       ortalanmak yerine hücrenin SAĞ kenarına yaslanır. */
+    .zg-loot-cell { position: relative; }
+    .zg-loot-cell .inv-tooltip { left: auto; right: 0; transform: none; }
+    .zg-loot-cell .inv-tooltip::after { left: auto; right: 12px; transform: none; }
+    .zg-loot-cell:hover .inv-tooltip { display: block; }
 
     .tt-name {
       font-family: var(--font-head);
       font-size: 10px;
-      font-weight: 700;
-      color: var(--gold2);
-      margin-bottom: 3px;
-    }
-
-    .tt-type {
-      font-size: 8px;
-      color: var(--ink3);
-      margin-bottom: 4px;
-    }
-
-    .tt-stat {
-      font-size: 9px;
-      color: var(--perg2);
-    }
-
-    .tt-flavor {
-      font-size: 8px;
-      color: var(--ink3);
-      font-style: italic;
-      margin-top: 4px;
-      border-top: 1px solid var(--border);
-      padding-top: 4px;
-    }
-
-    @media(min-width:600px) {
-      .tt-name {
-        font-size: 15px;
-      }
-
-      .tt-type {
-        font-size: 13px;
-      }
-
-      .tt-stat {
-        font-size: 13px;
-      }
-
-      .tt-flavor {
-        font-size: 13px;
-      }
-    }
-
     /* ── Özellik açıklama tooltip'i (nitelik + karakter özellikleri) ── */
     .attr-explain {
       cursor: help;
@@ -11485,12 +11546,7 @@
       ${animDiv}
       <div class="eq-slot-lbl">${s.lbl}</div>
       ${iconHtml}
-      ${item ? `<div class="inv-tooltip">
-        <div class="tt-name">${item.name}${item.enhPlus > 0 ? ` <span style="color:var(--gold);">+${item.enhPlus}</span>` : ''}</div>
-        <div class="tt-type">${rollGradeLabel(item) ? rollGradeLabel(item) + ' · ' : ''}${item.type}${item.reqLv > 1 ? ' · Sv.' + item.reqLv : ''}</div>
-        <div class="tt-stat">${statsOrEffect(item)}</div>
-        ${item.desc ? `<div class="tt-flavor">${item.desc}</div>` : ''}
-      </div>`: ''}
+      ${item ? itemTooltipHTML(item) : ''}
     </div>`;
       }).join('');
       document.getElementById('eq-slots').innerHTML = equippedHTML;
@@ -11635,12 +11691,7 @@
       ondrop="dropOnInvSlot(event,${item.id})"`;
         return `<div class="inv-slot has-item ${rqClass(item)}${bulkMode ? ' bulk-pick' : ''}${selected ? ' bulk-selected' : ''}" ${clickAttr} ${dragAttrs} style="position:relative;">
       ${bulkCheck}${iconHtml}${qtyBadge}
-      <div class="inv-tooltip">
-        <div class="tt-name">${item.name}${item.enhPlus ? ' <span style="color:var(--gold)">+' + item.enhPlus + '</span>' : ''}${item.qty && item.qty > 1 ? ' x' + item.qty : ''}</div>
-        <div class="tt-type">${rollGradeLabel(item) ? rollGradeLabel(item) + ' · ' : ''}${item.type}${item.reqLv > 1 ? ' · Sv.' + item.reqLv : ''}</div>
-        <div class="tt-stat">${statsOrEffect(item)}</div>
-        ${item.desc ? `<div class="tt-flavor">${item.desc}</div>` : ''}
-      </div>
+      ${itemTooltipHTML(item)}
     </div>`;
       }).join('');
     }
@@ -11666,6 +11717,45 @@
       return '';
     }
     /* Stat satırı — yüzükte etki metnine düşer */
+    /* ── EŞYA TOOLTIP'İ (ortak) ──
+       Envanter, kuşanılan slotlar ve zindan ganimet çantası aynı işaretlemeyi
+       kullanır ki üç yerde farklı görünmesin. Pazar kartları hariç — orada
+       bilgi zaten kartın üstünde.
+       Yüzük gibi düz stat taşımayan eşyalarda stat satırları yerine etki
+       metni basılır (statsOrEffect ile aynı ayrım). */
+    function itemTooltipHTML(item) {
+      if (!item) return '';
+      const g = getRollGrade(item);
+      const gradeId = g ? ROLL_GRADES[g].gradeId : (rarityEligible(item) ? (item.grade || 'gray') : '');
+      const gradeTxt = rollGradeLabel(item);
+      const art = item.img
+        ? `<img src="${IMG_BASE}${item.img}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;">${item.icon || '❓'}</span>`
+        : `<span>${item.icon || '❓'}</span>`;
+      const fx = itemEffectText(item);
+      const statRows = fx
+        ? `<div class="tt-fx">${esc(fx)}</div>`
+        : Object.entries(item.stats || {})
+          .map(([k, v]) => `<div class="tt-row"><b>${v}</b><span>${STAT_LABELS[k] || k}</span></div>`).join('');
+      const sell = (typeof getNPCSellPrice === 'function') ? getNPCSellPrice(item) : 0;
+      const footRows = (sell > 0 ? `<div class="tt-row"><b>${sell.toLocaleString('tr-TR')}</b><span>Tüccar alış fiyatı</span></div>` : '')
+        + (item.reqLv > 1 ? `<div class="tt-row"><b>${item.reqLv}</b><span>Seviye</span></div>` : '');
+      const qty = item.qty && item.qty > 1 ? ` ×${item.qty}` : '';
+      const plus = item.enhPlus > 0 ? ` +${item.enhPlus}` : '';
+      return `<div class="inv-tooltip${gradeId ? ' tt-' + gradeId : ''}">
+      <div class="tt-head">
+        <div class="tt-art">${art}</div>
+        <div class="tt-id">
+          <div class="tt-name">${esc(item.name)}${plus}${qty}</div>
+          ${gradeTxt ? `<div class="tt-grade">${esc(gradeTxt)}</div>` : ''}
+          ${item.type ? `<div class="tt-type">${esc(item.type)}</div>` : ''}
+        </div>
+      </div>
+      ${statRows ? `<div class="tt-rows">${statRows}${item.desc && fx ? `<div class="tt-flavor">${esc(item.desc)}</div>` : ''}</div>` : ''}
+      ${footRows ? `<div class="tt-rows">${footRows}</div>` : ''}
+      ${item.desc && !fx ? `<div class="tt-rows"><div class="tt-flavor" style="margin-top:0;">${esc(item.desc)}</div></div>` : ''}
+    </div>`;
+    }
+
     function statsOrEffect(item) {
       const fx = itemEffectText(item);
       if (fx) return fx;
@@ -15395,8 +15485,7 @@
           const inner = it.img
             ? '<img src="' + IMG_BASE + it.img + '.webp" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'"><span style="display:none;">' + (it.icon || '❓') + '</span>'
             : (it.icon || '❓');
-          const nm = esc(it.name || '') + (it.enhPlus > 0 ? ' +' + it.enhPlus : '');
-          cells += '<div class="zg-loot-cell filled" title="' + nm + '">' + inner + '</div>';
+          cells += '<div class="zg-loot-cell filled">' + inner + itemTooltipHTML(it) + '</div>';
         } else if (overflow && i === ZG_LOOT_SLOTS - 1) {
           cells += '<div class="zg-loot-cell more">+' + (items.length - shown) + '</div>';
         } else {
@@ -16807,21 +16896,25 @@
     }
 
     /* Yığın ilanı kartı — hem Malzeme sekmesinde hem "Tümü"de kullanılır */
+    /* Malzeme yığını kartı — ekipman kartıyla AYNI düzen (isim üstte, büyük
+       görsel, altında rozet). Yan yana geldiklerinde (tezgah bölümleri) biri
+       diğerinin yanında sönük kalmasın diye aynı .lc-* sınıflarını kullanır.
+       Farkı: nadirlik yok, rozet yerine stok adedi; fiyat "/adet" taşır. */
     function matStackCardHtml(l) {
       const mine = l.sellerId === currentUser?.id;
       const canAfford = G.gold >= l.unitPrice;
       return `<div class="listing-card" style="cursor:${mine ? 'default' : 'pointer'};" ${mine ? '' : `onclick="openMaterialBuy('${l.id}')"`}>
-    <div class="item-icon" style="margin-bottom:2px;">
-      <img src="${IMG_BASE}${l.img}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" style="width:50px;height:50px;object-fit:contain;"/>
-      <span style="display:none;font-size: 30px;">${l.icon}</span>
+    <div class="item-name lc-title">${l.label}</div>
+    <div class="lc-art">
+      <img src="${IMG_BASE}${l.img}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+      <span style="display:none;font-size: 46px;">${l.icon}</span>
     </div>
-    <div class="item-name" style="font-family:var(--font-head);font-size: 20px;line-height:1.3;">${l.label}</div>
-    <div style="font-family:var(--font-head);font-size: 16px;color:var(--gold2);">${l.stock.toLocaleString('tr')} adet</div>
-    <div style="font-size: 16px;color:var(--ink3);">👤 ${mine ? '<span style="color:var(--gold);">Sen</span>' : l.sellerName}</div>
-    <div style="font-family:var(--font-head);font-size: 18px;color:var(--gold);">${l.unitPrice.toLocaleString('tr')}🪙<span style="font-size: 14px;color:var(--ink3);">/adet</span></div>
+    <div class="lc-meta"><span class="lc-pip" style="background:var(--panel);border:1px solid var(--gold);color:var(--gold2);">${l.stock.toLocaleString('tr')} adet</span></div>
+    <div style="font-size: 16px;color:var(--ink3);">${mine ? '<span style="color:var(--gold);">Sen</span>' : esc(l.sellerName)}</div>
+    <div style="font-family:var(--font-head);font-size: 22px;margin-top:auto;color:var(--gold);">${l.unitPrice.toLocaleString('tr')}🪙<span style="font-size: 14px;color:var(--ink3);">/adet</span></div>
     ${mine
-          ? `<button class="buy-btn-sm" style="width:100%;margin-top:auto;background:var(--panel3);" onclick="event.stopPropagation();withdrawMaterial('${l.id}')">Geri Çek</button>`
-          : `<button class="buy-btn-sm" style="width:100%;margin-top:auto;" onclick="event.stopPropagation();openMaterialBuy('${l.id}')" ${canAfford ? '' : 'disabled'}>Satın Al</button>`}
+          ? `<button class="buy-btn-sm" style="width:100%;margin-top:4px;background:var(--panel3);" onclick="event.stopPropagation();withdrawMaterial('${l.id}')">Geri Çek</button>`
+          : `<button class="buy-btn-sm" style="width:100%;margin-top:4px;" onclick="event.stopPropagation();openMaterialBuy('${l.id}')" ${canAfford ? '' : 'disabled'}>Satın Al</button>`}
   </div>`;
     }
 
@@ -17117,11 +17210,11 @@
         // Sıra: İSİM → görsel → nadirlik+seviye → statlar → satıcı → fiyat → buton.
         // Tip satırı ("Yüzük") kaldırıldı: isim ve statlar zaten anlatıyor.
         return `<div class="listing-card ${gradeCls}" onclick="${clickFn}" style="${showRarity && rg ? `border-color:${ROLL_GRADES[rg].color};` : ''}">
-      <div class="item-name lc-title ${gradeCls}">${item.name}${enhBadge ? '&nbsp;' + enhBadge : ''}</div>
+      <div class="item-name lc-title ${gradeCls}">${esc(item.name)}${enhBadge ? '&nbsp;' + enhBadge : ''}</div>
       <div class="lc-art">${artContent}</div>
       ${gradePip || lvBadge ? `<div class="lc-meta">${gradePip}${lvBadge}</div>` : ''}
       ${statsP ? `<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">${statsP}</div>` : ''}
-      <div style="font-size: 16px;color:var(--ink3);">${isBoss ? 'Boss' : item.seller === 'npc' ? 'Tüccar' : item.sellerName}${isOwnListing ? ' <span style="color:var(--gold);">(Sen)</span>' : ''}</div>
+      <div style="font-size: 16px;color:var(--ink3);">${isBoss ? 'Boss' : item.seller === 'npc' ? 'Tüccar' : esc(item.sellerName)}${isOwnListing ? ' <span style="color:var(--gold);">(Sen)</span>' : ''}</div>
       <div style="font-family:var(--font-head);font-size: 22px;margin-top:auto;color:${isBoss ? 'var(--g-orange)' : 'var(--gold)'};">${isBoss ? 'Boss Drop' : item.price.toLocaleString('tr') + '🪙'}</div>
       ${!isBoss && !isOwnListing ? buyBtns : ''}
       ${isOwnListing ? `<button class="buy-btn-sm" style="width:100%;margin-top:4px;background:linear-gradient(180deg,#3a1414,#220a0a);border-color:#c04a4a;color:#f08080;" onclick="event.stopPropagation();withdrawListing('${item.id}')">🗑 Satıştan Kaldır</button>` : ''}
