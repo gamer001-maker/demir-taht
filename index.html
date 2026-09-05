@@ -3089,6 +3089,48 @@
     }
     .zg-imgbtn .zg-badge.big { font-size: clamp(12px, 1.4vw, 16px); right: 50%; bottom: 50%; transform: translate(50%, 50%); }
 
+    /* ── BECERİ: YAKMA ALANI ──
+       Yer efekti canavarların ALTINDA kalır (z-index 1 < #zg-units 3), yoksa
+       alev canavarı örter ve kimin nerede olduğu okunmaz. Görsel HER kareye
+       ayrı basılır (kullanıcı isteği) — tek büyük görsel değil. Görsel
+       yüklenemezse arkadaki turuncu parıltı kalır, alan yine görünür. */
+    #zg-zones { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+    .zg-zone {
+      position: absolute;
+      width: 14.2857%; height: 14.2857%;
+      background: radial-gradient(circle at 50% 60%, #ff8a3c66, #ff3c0026 68%, transparent 100%);
+      animation: zgZoneIn .18s ease-out;
+    }
+    .zg-zone img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    @keyframes zgZoneIn { from { opacity: 0; transform: scale(.55); } to { opacity: 1; transform: none; } }
+
+    /* Nişan modu: hedef karesi seçilene kadar ızgara ateş rengine döner */
+    #zg-stage.aiming .zg-cell { cursor: crosshair; background: #ff8a3c1f; }
+    @media (hover:hover) { #zg-stage.aiming .zg-cell:hover { background: #ff8a3c52; } }
+
+    /* Beceri butonu + altına YAPIŞIK "otomatik" şeridi — ayrı bir kutu gibi
+       durmasın diye üst kenarı yok, butonla aynı genişlikte. */
+    .zg-skillbox { position: relative; }
+    .zg-sk-fallback {
+      display: none; align-items: center; justify-content: center; gap: 6px;
+      width: 100%; aspect-ratio: 16 / 7;
+      border-radius: 10px; border: 1px solid var(--border2);
+      background: linear-gradient(160deg, #3a1a0e, #1a0d07);
+      font-family: var(--font-head); font-size: clamp(11px, 1.3vw, 15px);
+      color: #ffb27a; letter-spacing: .06em; line-height: 1;
+    }
+    .zg-skillauto {
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+      width: 100%; padding: 3px 0 4px;
+      border: 1px solid var(--border2); border-top: 0;
+      border-radius: 0 0 10px 10px;
+      background: var(--panel3);
+      font-family: var(--font-head); font-size: 10.5px; color: var(--ink3);
+      cursor: pointer; user-select: none;
+    }
+    .zg-skillauto.on { color: #7aff9a; border-color: #7aff9a80; background: #7aff9a1a; }
+    .zg-skillauto i { font-style: normal; }
+
     /* ── LABİRENT KAPILARI — kenar ortasındaki kareye ışıklı geçit ── */
     .zg-door {
       position: absolute; z-index: 1; pointer-events: none;
@@ -14493,6 +14535,13 @@
       TOUGH_HP: 20,         // boss + elit CAN çarpanı. Tek vuruşta ölüyorlardı;
                             // sadece can artar (hasar/XP/altın aynı kalır) ki
                             // dövüş uzasın, ödül enflasyonu olmasın.
+      /* ── BECERİLER (denemelik) ── Şimdilik tek beceri: Büyücü'nün YAKMA
+         alanı. Tüm ayarlar burada; dengeyi tek yerden çevirebilmek için. */
+      SKILL_CD: 10000,      // bekleme süresi (ms)
+      SKILL_SIZE: 5,        // etki alanı kenarı → 5×5 = 25 kare
+      SKILL_MS: 5000,       // zeminin yanma süresi (görsel de bu kadar durur)
+      SKILL_TICK: 1000,     // hasar periyodu → 5 tik
+      SKILL_DMG: 0.30,      // her tikte saldırı gücünün oranı
       RANGE: { warrior: 1, rogue: 1, mage: 3, ranger: 3.5 },
                             // Öklid daire yarıçapı. Avcı 4 iken 7×7'nin 45/49'unu
                             // kapsıyordu (köşeler hariç her yer) — 3.5'te 37/49.
@@ -14665,6 +14714,11 @@
         mobs: [], uid: 1,
         hp: (keepBag && old) ? old.hp : Math.max(1, G.stats.hp || 1),
         lastSpawn: 0, lastBat: 0, lastAtk: 0, lastSec: Date.now(),
+        // Beceri: bekleme oda değişince SIFIRLANMAZ (labirentte oda atlayıp
+        // bekleme sıfırlamak istismar olurdu), nişan ve alanlar odaya özel.
+        lastSkill: (keepBag && old) ? (old.lastSkill || 0) : 0,
+        skillAuto: (keepBag && old) ? old.skillAuto : false,
+        aim: null, zones: [],
         lastPotion: 0,
         kills: 0, quota: zgKillQuota(ZD.floor),
         bossSpawned: false, bossDead: false,
@@ -14772,6 +14826,106 @@
       return Math.min(ZG.BAT_HIT_CAP, ZG.BAT_HIT + (eff.acc || 0) * ZG.BAT_ACC);
     }
 
+    /* ══ BECERİ: YAKMA (Büyücü) ══
+       Seçilen karenin çevresindeki 5×5 alan 5 saniye yanar. Hasar SANİYEDE
+       BİR, o an alanın İÇİNDE duran canavarlara işler — yani bu "yanan
+       zemin", canavara yapışan bir etki DEĞİL. Böylece kaçan canavar
+       alevden çıkabilir ve mevzilenmek gerçekten işe yarar.
+       ⚠ Ortak katta hasarı YALNIZ büyüyü atan uygular (zgDamageMob zaten ev
+       sahibine yönlendiriyor); diğer oyuncular alanı sadece ÇİZER. Herkes
+       kendi tarafında vursaydı aynı alev kişi sayısı kadar hasar verirdi. */
+    const SKILL_YAKMA = { id: 'yakma', name: 'Yakma', cls: 'mage', img: 'yakma', icon: '🔥' };
+
+    function zgSkillOwned() { return G.classId === SKILL_YAKMA.cls; }
+    function zgSkillLeft() {
+      const g = ZD.g; if (!g) return 0;
+      return Math.max(0, ZG.SKILL_CD - (Date.now() - (g.lastSkill || 0)));
+    }
+    function zgSkillReady() { return zgSkillOwned() && !!ZD.g && !ZD.g.over && zgSkillLeft() <= 0; }
+
+    /* Nişan modu: butona bas → aç, kareye bas → ateşle, butona tekrar bas → iptal.
+       Nişandayken kareye tıklamak YÜRÜTMEZ (zgMoveTo başında ayrılıyor). */
+    function zgSkillAim() {
+      const g = ZD.g; if (!g || g.over || !zgSkillReady()) return;
+      g.aim = g.aim ? null : SKILL_YAKMA.id;
+      zgSyncAim(); zgRenderSide();
+    }
+    function zgSyncAim() {
+      const st = document.getElementById('zg-stage');
+      if (st) st.classList.toggle('aiming', !!(ZD.g && ZD.g.aim));
+    }
+    function zgToggleSkillAuto() {
+      const g = ZD.g; if (!g) return;
+      g.skillAuto = !g.skillAuto;
+      if (g.skillAuto) g.aim = null;   // otomatikken elle nişan almanın anlamı kalmaz
+      zgSyncAim(); zgRenderSide();
+    }
+
+    /* Alanı 5×5'in TAMAMI tahtada kalacak şekilde kaydırır. Kenara basınca
+       alanın yarısı dışarı taşsaydı beceri kenarda yarı yarıya değersizleşirdi. */
+    function zgSkillClamp(v, size, max) {
+      const r = (size - 1) / 2;
+      return Math.max(r, Math.min(max - 1 - r, v));
+    }
+    function zgSkillCast(x, y, auto) {
+      const g = ZD.g;
+      if (!ZD.active || !g || g.over || !zgSkillReady()) return false;
+      const cx = zgSkillClamp(x, ZG.SKILL_SIZE, ZG.W);
+      const cy = zgSkillClamp(y, ZG.SKILL_SIZE, ZG.H);
+      const now = Date.now();
+      g.lastSkill = now;
+      g.aim = null;
+      g.zones.push({ x: cx, y: cy, until: now + ZG.SKILL_MS, next: now + ZG.SKILL_TICK, mine: true });
+      zcoSendZone(cx, cy);
+      zgSyncAim(); zgPaintZones(); zgRenderSide();
+      if (!auto) zgPlayAttack(cx === g.px ? null : cx < g.px);
+      return true;
+    }
+
+    /* Yanan alanların saniyelik hasarı + süresi dolanların temizliği.
+       `mine` olmayan alanlar arkadaşlarındır: çizilir ama hasar verilmez. */
+    function zgZoneTick(now, eff) {
+      const g = ZD.g;
+      if (!g.zones.length) return;
+      const r = (ZG.SKILL_SIZE - 1) / 2;
+      let expired = false;
+      for (const z of g.zones) {
+        if (z.mine && now >= z.next && now <= z.until) {
+          z.next = now + ZG.SKILL_TICK;
+          const dmg = Math.max(1, Math.floor((eff.physDmg || 1) * ZG.SKILL_DMG));
+          for (const m of [...g.mobs]) {
+            if (m.hp <= 0) continue;
+            if (Math.abs(m.x - z.x) > r || Math.abs(m.y - z.y) > r) continue;
+            zgFloat(m.x, m.y, '🔥' + dmg, '#ff9d5c', 1);
+            zgDamageMob(m, dmg, zcoMe());
+          }
+        }
+        if (now > z.until) expired = true;
+      }
+      if (expired) {
+        g.zones = g.zones.filter(z => now <= z.until);
+        zgPaintZones();
+      }
+    }
+
+    /* Alan 25 ayrı karo olarak basılır — görsel HER karede görünsün diye. */
+    function zgPaintZones() {
+      const layer = document.getElementById('zg-zones'); if (!layer) return;
+      const g = ZD.g;
+      const r = (ZG.SKILL_SIZE - 1) / 2;
+      let h = '';
+      for (const z of (g ? g.zones : [])) {
+        for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+          const x = z.x + dx, y = z.y + dy;
+          if (!zgIn(x, y)) continue;
+          h += '<div class="zg-zone" style="left:' + (x * 100 / ZG.W) + '%;top:' + (y * 100 / ZG.H) + '%;">'
+            + '<img src="' + IMG_BASE + SKILL_YAKMA.img + '.gif" alt="" onerror="this.style.display=\'none\'">'
+            + '</div>';
+        }
+      }
+      layer.innerHTML = h;
+    }
+
     function zgSpawnBoss() {
       const g = ZD.g;
       const T = ZD_TIERS[ZD.tier || 1] || ZD_TIERS[1];
@@ -14847,6 +15001,8 @@
       const g = ZD.g;
       if (!ZD.active || !g || g.over) return;
       if (!zgIn(x, y)) return;
+      // Nişan modunda kareye tıklamak YÜRÜTMEZ, büyüyü oraya atar
+      if (click && g.aim) { zgSkillCast(x, y); return; }
       // Kapı yalnızca oyuncunun TIKLADIĞI hedefse tetiklenir; oto yürüyüş
       // (click=false) kapı karesinden geçse bile odayı değiştirmez.
       const dir = click ? zgDoorAt(x, y) : null;
@@ -15104,6 +15260,14 @@
         const t = zgPickTarget();
         if (t) { g.lastAtk = now; zgHit(t, eff); }
       }
+      /* Oto beceri: AFK'de de büyü atılsın diye SALDIRILAN hedefin üstünü
+         yakar. Yürürken de atılır — beceride "yürürken kullanamaz" kuralı
+         yok, o kural yalnız normal vuruşa ait. */
+      if (g.skillAuto && zgSkillReady()) {
+        const sk = zgPickTarget();
+        if (sk) zgSkillCast(sk.x, sk.y, true);
+      }
+      zgZoneTick(now, eff);
 
       for (const m of g.mobs) {
         if (m.hp <= 0) continue;
@@ -15317,7 +15481,8 @@
         .on('broadcast', { event: 'pos' }, ({ payload }) => zcoOnPos(payload))
         .on('broadcast', { event: 'mobs' }, ({ payload }) => zcoOnMobs(payload))
         .on('broadcast', { event: 'hit' }, ({ payload }) => zcoOnHit(payload))
-        .on('broadcast', { event: 'kill' }, ({ payload }) => zcoOnKill(payload));
+        .on('broadcast', { event: 'kill' }, ({ payload }) => zcoOnKill(payload))
+        .on('broadcast', { event: 'zone' }, ({ payload }) => zcoOnZone(payload));
       // Kanal, subscribe geri çağrısından ÖNCE atanır: geri çağrı erken
       // çalışırsa track() atlanır, presence boş kalır ve HERKES kendini
       // ev sahibi sanar (iki ayrı canavar akışı doğar).
@@ -15464,6 +15629,21 @@
       zgRenderBar();
     }
     /* Ev sahibi değilsek hasarı ona bildiririz; canı o düşürür. */
+    /* Yakma alanı yayını — SALT GÖRSEL. Hasarı yalnız atan uygular; alan
+       yayını olmasaydı arkadaşın ekranında canavarlar sebepsiz yanardı.
+       10sn beklemeli olduğu için mesaj yükü konum yayınının %3'ü kadar. */
+    function zcoSendZone(x, y) {
+      if (!ZCO.channel) return;
+      ZCO.channel.send({ type: 'broadcast', event: 'zone', payload: { u: zcoMe(), x, y } });
+    }
+    function zcoOnZone(p) {
+      const g = ZD.g;
+      if (!g || g.over || !p || p.u === zcoMe()) return;
+      if (!ZCO.peers[p.u]) return;            // presence'ta yoksa çizme
+      const now = Date.now();
+      g.zones.push({ x: p.x, y: p.y, until: now + ZG.SKILL_MS, next: Infinity, mine: false });
+      zgPaintZones();
+    }
     function zcoSendHit(mobUid, dmg) {
       if (!ZCO.channel) return;
       ZCO.channel.send({ type: 'broadcast', event: 'hit', payload: { u: zcoMe(), m: mobUid, d: dmg } });
@@ -15603,6 +15783,18 @@
         co.style.display = n ? 'inline' : 'none';
         if (n) co.textContent = '👥 ' + n;
       }
+      /* Beceri bekleme sayacı — paneli yeniden basmak görselleri titretir,
+         bu yüzden yalnız rozetin metni ve butonun kilidi tazeleniyor. */
+      const skb = document.getElementById('zg-sk-badge');
+      if (skb) {
+        const left = zgSkillLeft();
+        const show = left > 0 ? String(Math.ceil(left / 1000)) : (g.aim ? 'kare seç' : '');
+        if (skb.textContent !== show) skb.textContent = show;
+        skb.style.display = show ? '' : 'none';
+        skb.classList.toggle('big', left > 0);
+        const skbtn = document.getElementById('zg-sk-btn');
+        if (skbtn) { skbtn.disabled = left > 0; skbtn.classList.toggle('on', !!g.aim); }
+      }
       const txt = document.getElementById('zg-hp-txt');
       if (txt) txt.textContent = Math.max(0, Math.round(g.hp));
       const mk = document.getElementById('zg-mark');
@@ -15633,6 +15825,7 @@
         + '<div id="zg-mark" style="display:none;"></div>'
         + doorsHtml
         + '<span id="zg-co" style="display:none;"></span>'
+        + '<div id="zg-zones"></div>'
         + '<div id="zg-cells">' + cells + '</div>'
         + '<div id="zg-units"></div>'
         + '<div id="zg-fx"></div>'
@@ -15672,8 +15865,32 @@
         ? '<span class="zg-badge">' + esc(zgPotionShort(pot)) + ' ×' + zgPotionQty(pot) + ' · %' + ZGCFG.at + '</span>'
         : '<span class="zg-badge">iksir yok</span>';
       const shoutMult = Math.round((zgShoutMult() - 1) * 100);
+      /* Beceri kutusu — şimdilik yalnız Büyücü'de. Görsel buton + altına
+         yapışık "otomatik" şeridi. Buton kendi id'sini taşır çünkü bekleme
+         sayacı her tick'te GÜNCELLENİR: paneli yeniden basmak görselleri
+         titretirdi (👥 sayacında da aynı yol izlendi). */
+      let skillHtml = '';
+      if (zgSkillOwned()) {
+        const left = zgSkillLeft();
+        skillHtml = '<div class="zg-skillbox">'
+          + '<button id="zg-sk-btn" class="zg-imgbtn' + (g.aim ? ' on' : '') + '"'
+          + (left > 0 ? ' disabled' : '')
+          + ' onclick="zgSkillAim()" title="' + SKILL_YAKMA.name + ' — '
+          + ZG.SKILL_SIZE + '×' + ZG.SKILL_SIZE + ' alanı ' + (ZG.SKILL_MS / 1000)
+          + 'sn yakar (' + (ZG.SKILL_CD / 1000) + 'sn bekleme)">'
+          + '<img src="' + IMG_BASE + SKILL_YAKMA.img + '.webp" alt="' + SKILL_YAKMA.name + '"'
+          + ' onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+          + '<span class="zg-sk-fallback">' + SKILL_YAKMA.icon + ' YAKMA</span>'
+          + '<span id="zg-sk-badge" class="zg-badge"></span>'
+          + '</button>'
+          + '<div class="zg-skillauto' + (g.skillAuto ? ' on' : '') + '" onclick="zgToggleSkillAuto()"'
+          + ' title="Açıkken beceri hazır olur olmaz saldırdığın hedefin üstüne atılır (AFK\'de de çalışır)">'
+          + '<i>' + (g.skillAuto ? '☑' : '☐') + '</i> otomatik</div>'
+          + '</div>';
+      }
       const btns =
-        imgBtn('otosaldiri', 'Oto Saldırı', 'zgToggleAuto()', g.auto)
+        skillHtml
+        + imgBtn('otosaldiri', 'Oto Saldırı', 'zgToggleAuto()', g.auto)
         + imgBtn('canavarcek', 'Bağır', 'zgToggleShout()', g.shout,
           g.shout ? '<span class="zg-badge">+%' + shoutMult + ' canavar</span>' : '')
         + imgBtn('iksir', 'İksir', 'zgPotionPicker()', false, potBadge);
