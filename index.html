@@ -2935,6 +2935,33 @@
       transform: scaleX(var(--zg-flip));
     }
     .zg-mob-sprite.flip { --zg-flip: -1; }
+
+    /* ── YARASA: 4 kareli kanat çırpma ──
+       Kareler üst üste durur, her biri döngünün %25'inde görünür. Saf CSS:
+       JS sayacı yok, tick yükü getirmez. `steps(1)` ara geçişi keser, kare
+       kare değişir (yumuşak geçiş kanat çırpma hissini bozardı). */
+    .zg-bat-art { position: relative; width: 100%; height: 100%; }
+    .zg-bat-art .zg-bf {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: contain;
+      opacity: 0;
+      animation: zgBatFly .48s steps(1) infinite;
+      filter: drop-shadow(0 3px 5px #000a);
+    }
+    .zg-bat-art .zg-bf:nth-child(1) { animation-delay: 0s; }
+    .zg-bat-art .zg-bf:nth-child(2) { animation-delay: .12s; }
+    .zg-bat-art .zg-bf:nth-child(3) { animation-delay: .24s; }
+    .zg-bat-art .zg-bf:nth-child(4) { animation-delay: .36s; }
+    @keyframes zgBatFly { 0%, 24.99% { opacity: 1; } 25%, 100% { opacity: 0; } }
+    /* Hareket kısıtlıysa tek kare kalsın, titremesin */
+    @media (prefers-reduced-motion: reduce) {
+      .zg-bat-art .zg-bf { animation: none; }
+      .zg-bat-art .zg-bf:nth-child(1) { opacity: 1; }
+    }
+    /* Yarasa küçük ve havada — biraz yukarıda dursun */
+    .zg-mob.bat .zg-mob-sprite { align-items: center; }
+    .zg-mob.bat .zg-hpbar { display: none; }   /* tek vuruşluk, bar gereksiz */
     .zg-mob img, .zg-mob .zg-emo { animation: zd-enemy-idle 2s ease-in-out infinite; }
     .zg-mob.elite img, .zg-mob.elite .zg-emo { filter: drop-shadow(0 0 5px #ffb347) drop-shadow(0 0 11px #ff7b00); }
     .zg-mob.boss img, .zg-mob.boss .zg-emo { filter: drop-shadow(0 0 6px #f87171) drop-shadow(0 0 14px #b91c1c); }
@@ -14455,6 +14482,14 @@
       POTION_CD: 1000,
       TROOP_SHARE: 0.6,     // birliklerin vuruşa kattığı hasar oranı
       ELITE: { hp: 3.0, atk: 1.35, xp: 2.2, gold: 2.0 },
+      /* ── YARASA ── Kalabalık yapan doldurucu canavar. Bağırınca gelir,
+         eşya DÜŞÜRMEZ, ödülü düşüktür ve vuruşların yarısı ıskalar.
+         Kendi sayacı ve tavanı var: normal canavarların doğuşunu ETKİLEMEZ. */
+      BAT_MS: 1400,         // bağırırken yarasa doğma aralığı
+      BAT_MAX: 5,           // sahadaki en fazla yarasa
+      BAT_HIT: 0.50,        // taban vuruş şansı (Avcı dışında sabit)
+      BAT_ACC: 0.01,        // Avcı'da her İsabet puanı +%1
+      BAT_HIT_CAP: 0.95,    // Avcı'da bile garanti isabet olmasın
       TOUGH_HP: 20,         // boss + elit CAN çarpanı. Tek vuruşta ölüyorlardı;
                             // sadece can artar (hasar/XP/altın aynı kalır) ki
                             // dövüş uzasın, ödül enflasyonu olmasın.
@@ -14629,7 +14664,7 @@
         path: [], stepT0: 0,
         mobs: [], uid: 1,
         hp: (keepBag && old) ? old.hp : Math.max(1, G.stats.hp || 1),
-        lastSpawn: 0, lastAtk: 0, lastSec: Date.now(),
+        lastSpawn: 0, lastBat: 0, lastAtk: 0, lastSec: Date.now(),
         lastPotion: 0,
         kills: 0, quota: zgKillQuota(ZD.floor),
         bossSpawned: false, bossDead: false,
@@ -14692,6 +14727,51 @@
       g.mobs.push(m);
       return m;
     }
+    /* Kademeye göre ölçeklenir ki 5. kademede anlamsız kalmasın; yine de
+       tek vuruşluk. `img` varyant öneki taşır: yarasa_0_1..4.webp */
+    const BAT_DEF = { id: 'yarasa', name: 'Yarasa', icon: '🦇', img: 'yarasa_0', frames: 4 };
+    function zgSpawnBat() {
+      const g = ZD.g; if (!g) return null;
+      if (g.mobs.filter(m => m.bat).length >= ZG.BAT_MAX) return null;
+      const spot = zgFreeSpot(2);
+      if (!spot) return null;
+      const tier = ZD.tier || 1, mult = zgFloorMult();
+      const hp = Math.max(1, Math.round((8 + tier * 6) * mult));
+      const now = Date.now();
+      const m = {
+        uid: g.uid++, id: BAT_DEF.id, name: BAT_DEF.name, icon: BAT_DEF.icon, img: BAT_DEF.img,
+        x: spot.x, y: spot.y, hp, maxHp: hp,
+        atk: Math.max(1, Math.round((3 + tier * 2) * mult)),
+        def: 0,
+        xp: Math.max(1, Math.round((4 + tier) * mult)),
+        gold: Math.max(1, Math.round((4 + tier) * mult)),
+        elite: false, boss: false, bat: true, st: {},
+        lastStep: now, lastHit: now,
+      };
+      g.mobs.push(m);
+      return m;
+    }
+    /* Yarasa karesi yüklenemezse: önce .png dene (görseller PNG olarak da
+       yüklenebiliyor), o da yoksa 4 karenin tamamını gizleyip emojiye düş. */
+    function zgBatImgErr(img) {
+      if (img.dataset.alt !== '1') { img.dataset.alt = '1'; img.src = img.src.replace(/\.webp$/, '.png'); return; }
+      const sp = img.closest('.zg-mob-sprite'); if (!sp) return;
+      const art = sp.querySelector('.zg-bat-art'); if (art) art.style.display = 'none';
+      const emo = sp.querySelector('.zg-emo'); if (emo) emo.style.display = 'inline-block';
+    }
+    function zgBatArtHTML(prefix) {
+      let h = '<div class="zg-bat-art">';
+      for (let f = 1; f <= BAT_DEF.frames; f++) {
+        h += '<img class="zg-bf" src="' + IMG_BASE + prefix + '_' + f + '.webp" onerror="zgBatImgErr(this)">';
+      }
+      return h + '</div>';
+    }
+    /* Yarasaya vuruş şansı. Taban %50; YALNIZCA Avcı'da İsabet puanı artırır. */
+    function zgBatHitChance(eff) {
+      if (G.classId !== 'ranger') return ZG.BAT_HIT;
+      return Math.min(ZG.BAT_HIT_CAP, ZG.BAT_HIT + (eff.acc || 0) * ZG.BAT_ACC);
+    }
+
     function zgSpawnBoss() {
       const g = ZD.g;
       const T = ZD_TIERS[ZD.tier || 1] || ZD_TIERS[1];
@@ -14810,6 +14890,12 @@
     }
     function zgHit(m, eff) {
       const g = ZD.g;
+      // Yarasa küçük ve havada: vuruşların yarısı ıskalar (Avcı'da İsabet artırır)
+      if (m.bat && Math.random() >= zgBatHitChance(eff)) {
+        zgPlayAttack(m.x === g.px ? null : m.x < g.px);
+        zgFloat(m.x, m.y, 'ıska', '#9fd0ff');
+        return;
+      }
       const rage = ringRageMult(g.hp, eff.maxhp);
       let dmg = Math.max(1, Math.floor(eff.physDmg * (0.85 + Math.random() * 0.3) * rage) - Math.floor((m.def || 0) * 0.5));
       let tag = '';
@@ -14919,8 +15005,11 @@
       awardTroopCombatXP(Math.max(3, Math.floor(m.xp * 0.4)));
       // Altın + XP tek satırda, hasar yazısının üstündeki şeritte (lane 1)
       zgFloat(m.x, m.y, '+' + m.gold + '🪙 +' + xpGain + 'XP', '#e8c07a', 1);
-      zgBagMaterial(m, m.boss || m.elite);
-      zgBagDrop(m);   // artık normal canavarlar da düşük şansla eşya düşürür
+      // Yarasa doldurucu: eşya ve materyal DÜŞÜRMEZ
+      if (!m.bat) {
+        zgBagMaterial(m, m.boss || m.elite);
+        zgBagDrop(m);   // artık normal canavarlar da düşük şansla eşya düşürür
+      }
       if (m.boss) {
         trackAch('zdboss');
         slideNotif('🏆', m.name + ' yenildi!', zgBossKillSub());
@@ -14930,7 +15019,8 @@
     function zgKill(m, by) {
       const g = ZD.g; if (!g) return;
       const killer = by || zcoMe();
-      g.kills++;
+      // Yarasa kat kotasına SAYILMAZ — yoksa bağırmak boss'u erken çağırırdı
+      if (!m.bat) g.kills++;
       if (m.boss) {
         g.bossDead = true;
         if (zgMaze()) {   // labirentte boss geri gelir: bayraklar sıfır, ölüm zamanı sunucuya
@@ -14994,9 +15084,16 @@
         // Boss öldükten sonra tekrar başlar — oyuncu isterse katta grind'e devam eder,
         // inmeye ya da çıkmaya kendi karar verir.
         const bossAlive = !zgMaze() && g.bossSpawned && !g.bossDead;   // labirentte doğuş boss varken de sürer
-        if (!bossAlive && now - g.lastSpawn >= spawnMs && g.mobs.length < cap) {
+        // Yarasalar tavana sayılmaz: normal canavarların yerini almasınlar
+        const normalCount = g.mobs.reduce((a, m) => a + (m.bat ? 0 : 1), 0);
+        if (!bossAlive && now - g.lastSpawn >= spawnMs && normalCount < cap) {
           g.lastSpawn = now;
           zgSpawnMob(false);
+        }
+        // Yarasa: yalnız bağırırken, KENDİ sayacı ve tavanıyla (boss farketmez)
+        if (sh > 1 && now - g.lastBat >= ZG.BAT_MS) {
+          g.lastBat = now;
+          zgSpawnBat();
         }
         if (zgMaze()) zgMazeBossTick();                       // zamanla gelen boss
         else if (!g.bossSpawned && g.kills >= g.quota) zgSpawnBoss();   // kota ile gelen boss
@@ -15336,7 +15433,7 @@
         payload: {
           k: g.kills, q: g.quota, bs: g.bossSpawned ? 1 : 0, bd: g.bossDead ? 1 : 0,
           m: g.mobs.map(m => [m.uid, m.x, m.y, m.hp, m.maxHp,
-            (m.elite ? 1 : 0) | (m.boss ? 2 : 0), m.atk, m.xp, m.gold, m.name, m.img, m.icon, m.id]),
+            (m.elite ? 1 : 0) | (m.boss ? 2 : 0) | (m.bat ? 4 : 0), m.atk, m.xp, m.gold, m.name, m.img, m.icon, m.id]),
         },
       });
     }
@@ -15354,7 +15451,7 @@
         if (!m) {
           // st (yakma yığını) ve lastHit YEREL kalır: yakmayı kim uyguladıysa
           // onun istemcisi takip eder, "bana en son ne zaman vurdu" da kişiseldir.
-          m = { uid, id, name, img, icon, elite: !!(fl & 1), boss: !!(fl & 2), st: {}, lastHit: 0, lastStep: 0 };
+          m = { uid, id, name, img, icon, elite: !!(fl & 1), boss: !!(fl & 2), bat: !!(fl & 4), st: {}, lastHit: 0, lastStep: 0 };
           g.mobs.push(m);
         }
         m.x = x; m.y = y; m.hp = hp; m.maxHp = maxHp; m.atk = atk; m.xp = xp; m.gold = gold;
@@ -15471,9 +15568,13 @@
         if (!e) {
           e = document.createElement('div');
           e.id = 'zg-u-' + m.uid;
-          e.className = 'zg-unit zg-mob' + (m.elite ? ' elite' : '') + (m.boss ? ' boss' : '');
+          e.className = 'zg-unit zg-mob' + (m.elite ? ' elite' : '') + (m.boss ? ' boss' : '') + (m.bat ? ' bat' : '');
+          // Yarasa: 4 kare üst üste, CSS sırayla gösterir (kanat çırpma)
+          const art = m.bat
+            ? zgBatArtHTML(m.img)
+            : '<img src="' + IMG_BASE + m.img + '.webp" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-block\'">';
           e.innerHTML = '<div class="zg-mob-sprite">'
-            + '<img src="' + IMG_BASE + m.img + '.webp" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-block\'">'
+            + art
             + '<span class="zg-emo" style="display:none;">' + m.icon + '</span>'
             + '</div>'
             + '<span class="zg-hpbar"><i style="width:100%"></i></span>';
