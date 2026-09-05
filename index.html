@@ -8170,9 +8170,6 @@
         id: 'ranger', name: 'Avcı', icon: '🏹', flavor: 'Uzak mesafeden yok eder.', tags: ['Menzil', 'Hız'], badge: '🏹', img: IMG_BASE + 'avci.webp',
         base: { str: 6, def: 4, agi: 8, wis: 5, cha: 4, hp: 95, maxhp: 95 }
       },
-      // Şövalye ilerleyen dönemde aktif edilecek
-      // {id:'paladin',name:'Şövalye',icon:'🛡',flavor:'Onurlu koruyucu.',tags:['Savunma','İman'],badge:'🛡',img:'images/sovalye.webp',
-      //  base:{str:6,def:9,agi:3,wis:5,cha:7,hp:110,maxhp:110}},
     ];
     const STAT_META = {
       str: { lbl: 'Güç', color: '#c0392b' }, def: { lbl: 'Savunma', color: '#2980b9' },
@@ -8185,7 +8182,7 @@
       // Kahraman Nitelikleri
       str: {
         icon: '⚔', title: 'Güç',
-        desc: 'Fiziksel saldırıların gücünü belirler. Savaşçı ve Şövalye için en önemli özelliktir.',
+        desc: 'Fiziksel saldırıların gücünü belirler. Savaşçı için en önemli özelliktir.',
         bonus: eff => { const v = G.stats.str || 0; return `Her puan fiziksel hasarını artırır. Şu anki <b>${v} Güç</b> önemli bir hasar katkısı sağlıyor.`; }
       },
       def: {
@@ -9162,30 +9159,62 @@
       if (currentUser) sbSave();
     }
 
-    function openClassChangeModal() {
+    /* ── RUH AYNASI — iki adım: önce sınıf, sonra AVATAR ──
+       Eskiden yalnız sınıf seçiliyor, `G.avatarIdx` hiç değişmiyordu; bu yüzden
+       yeni sınıfın her zaman ilk varyantı geliyor, diğer 3'ü hiç görünmüyordu.
+       Avatar sadece portre değil: zindandaki karakter sprite'ı da bundan
+       geliyor (zgSpriteVariant). */
+    let _ccClass = null, _ccAvatar = 0;
+    function openClassChangeModal() { _ccClass = null; _ccAvatar = 0; renderClassChangeModal(); }
+    function ccPickClass(id) { _ccClass = id; _ccAvatar = 0; renderClassChangeModal(); }
+    function ccPickAvatar(i) { _ccAvatar = i; renderClassChangeModal(); }
+    function ccBack() { _ccClass = null; renderClassChangeModal(); }
+    function renderClassChangeModal() {
+      const head = `
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="font-size: 40px;margin-bottom:6px;">🪞</div>
+      <div style="font-family:var(--font-head);font-size: 16px;color:var(--gold2);">Ruh Aynası</div>`;
+
+      // ── Adım 2: avatar seçimi
+      if (_ccClass) {
+        const cls = CLASSES.find(c => c.id === _ccClass) || CLASSES[0];
+        const slots = Array.from({ length: 4 }, (_, i) =>
+          getAvatarSlotHTML(_ccClass, i, _ccAvatar === i, false, G.armorColor, G.cloakColor, `ccPickAvatar(${i})`)
+        ).join('');
+        showGModal(head + `
+      <div style="font-size: 12px;color:var(--perg2);margin-top:6px;">${esc(cls.name)} — görünüşünü seç</div>
+      <div style="font-size: 11px;color:var(--ink3);margin-top:4px;line-height:1.5;">Nitelik puanların iade edilecek; kuşandığın silah sınıfına uymazsa çıkarılır.</div>
+    </div>
+    <div class="avatar-grid">${slots}</div>
+    <button class="btn" style="width:100%;margin-bottom:8px;" onclick="confirmClassChange('${_ccClass}',${_ccAvatar})">${esc(cls.name)} Ol</button>
+    <button class="btn btn-ghost" style="width:100%;margin-bottom:6px;" onclick="ccBack()">← Sınıf seçimine dön</button>
+    <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal()">Vazgeç</button>`);
+        return;
+      }
+
+      // ── Adım 1: sınıf seçimi
       const cards = CLASSES.map(c => {
         const isCur = c.id === G.classId;
-        return `<div onclick="${isCur ? '' : `confirmClassChange('${c.id}')`}" style="display:flex;align-items:center;gap:10px;padding:11px;margin-bottom:7px;border-radius:9px;border:1px solid ${isCur ? 'var(--gold)' : 'var(--border2)'};background:${isCur ? '#2a1e08' : 'var(--panel2)'};cursor:${isCur ? 'default' : 'pointer'};opacity:${isCur ? '.6' : '1'};">
+        return `<div onclick="${isCur ? '' : `ccPickClass('${c.id}')`}" style="display:flex;align-items:center;gap:10px;padding:11px;margin-bottom:7px;border-radius:9px;border:1px solid ${isCur ? 'var(--gold)' : 'var(--border2)'};background:${isCur ? '#2a1e08' : 'var(--panel2)'};cursor:${isCur ? 'default' : 'pointer'};opacity:${isCur ? '.6' : '1'};">
       <span style="font-size: 26px;">${c.icon}</span>
       <div style="flex:1;text-align:left;">
-        <div style="font-family:var(--font-head);font-size: 13px;color:var(--perg);">${c.name}${isCur ? ' <span style="font-size: 9px;color:var(--gold);">(mevcut)</span>' : ''}</div>
-        <div style="font-size: 9px;color:var(--ink3);">${c.desc || ''}</div>
+        <div style="font-family:var(--font-head);font-size: 13px;color:var(--perg);">${esc(c.name)}${isCur ? ' <span style="font-size: 9px;color:var(--gold);">(mevcut)</span>' : ''}</div>
+        <div style="font-size: 9px;color:var(--ink3);">${esc(c.flavor || '')}</div>
       </div>
     </div>`;
       }).join('');
-      showGModal(`
-    <div style="text-align:center;margin-bottom:12px;">
-      <div style="font-size: 40px;margin-bottom:6px;">🪞</div>
-      <div style="font-family:var(--font-head);font-size: 16px;color:var(--gold2);">Ruh Aynası</div>
-      <div style="font-size: 11px;color:var(--ink3);margin-top:6px;line-height:1.5;">Yeni bir sınıf seç. Nitelik puanların iade edilecek; kuşandığın silahlar sınıfına uymazsa çıkarılır.</div>
+      showGModal(head + `
+      <div style="font-size: 11px;color:var(--ink3);margin-top:6px;line-height:1.5;">Yeni bir sınıf seç. Sonraki adımda görünüşünü de seçeceksin.</div>
     </div>
     ${cards}
-    <button class="btn btn-ghost" style="width:100%;margin-top:4px;" onclick="closeGModal()">Vazgeç</button>
-  `);
+    <button class="btn btn-ghost" style="width:100%;margin-top:4px;" onclick="closeGModal()">Vazgeç</button>`);
     }
-    async function confirmClassChange(newClassId) {
+    async function confirmClassChange(newClassId, avatarIdx) {
       const cls = CLASSES.find(c => c.id === newClassId);
       if (!cls) return;
+      // Avatar da güncellenir — yoksa yeni sınıfın hep ilk varyantı gelirdi
+      const av = Number(avatarIdx);
+      if (Number.isFinite(av)) G.avatarIdx = Math.max(0, Math.min(3, Math.round(av)));
       // Puanları iade et (eski sınıfa göre), sonra yeni sınıfın base'ine geç
       refundStatPoints();
       const oldBase = (CLASSES.find(c => c.id === G.classId) || CLASSES[0]).base;
@@ -9200,6 +9229,7 @@
         G.inventory.push({ ...wpn }); G.equipped.weapon = null;
       }
       closeGModal();
+      _ccClass = null;
       celebrate('🪞', 'YENİDEN DOĞDUN!', `Artık bir ${cls.name}'sın`, 'levelup');
       updateHUD(); renderKarakter();
       if (currentUser) await sbSave();
@@ -9341,7 +9371,7 @@
       },
     };
     /* Sınıfına göre doğduğun bölge */
-    const CLASS_HOME_REGION = { warrior: 'vaelys', mage: 'blacktide', rogue: 'stormreach', ranger: 'aethelgard', knight: 'vaelys' };
+    const CLASS_HOME_REGION = { warrior: 'vaelys', mage: 'blacktide', rogue: 'stormreach', ranger: 'aethelgard' };
     function homeRegionFor(cls) { return CLASS_HOME_REGION[cls] || 'vaelys'; }
     /* Her yerden çıkabilen yüzükler + yüzüğün açıldığı en düşük zindan kademesi */
     const RING_COMMON = ['bakiryuzuk', 'ustayuzugu'];
@@ -10111,10 +10141,10 @@
       ejderhahancer: { name: 'Ejderha Hançeri', icon: '🗡', type: 'Hançer', grade: 'purple', reqLv: 23, img: 'ejderhahancer', classes: ['rogue'], statRanges: { atk: [50, 65], crit: [30, 42], agi: [10, 16] } },
       yadigarhancer: { name: 'Yadigar Hançer', icon: '🗡', type: 'Hançer', grade: 'orange', reqLv: 25, img: 'yadigarhancer', classes: ['rogue'], statRanges: { atk: [55, 70], crit: [32, 45], agi: [12, 18] } },
       /* ── KILIÇ ── */
-      demirkilic: { name: 'Demir Kılıç', icon: '⚔', type: 'Kılıç', grade: 'gray', reqLv: 1, img: 'demirkilic', classes: ['warrior', 'paladin'], statRanges: { atk: [7, 11], str: [3, 6] } },
-      bakirkilic: { name: 'Bakır Kılıç', icon: '⚔', type: 'Kılıç', grade: 'green', reqLv: 8, img: 'bakirkilic', classes: ['warrior', 'paladin'], statRanges: { atk: [13, 18], str: [5, 9] } },
-      elementkilic: { name: 'Element Kılıcı', icon: '⚔', type: 'Kılıç', grade: 'blue', reqLv: 20, img: 'elementkilic', classes: ['warrior', 'paladin'], statRanges: { atk: [35, 48], str: [9, 14] } },
-      sefinkilici: { name: "Sef'in Kılıcı", icon: '⚔', type: 'Kılıç', grade: 'orange', reqLv: 25, img: 'sefinkilici', classes: ['warrior', 'paladin'], statRanges: { atk: [70, 90], str: [18, 26], crit: [13, 20] } },
+      demirkilic: { name: 'Demir Kılıç', icon: '⚔', type: 'Kılıç', grade: 'gray', reqLv: 1, img: 'demirkilic', classes: ['warrior'], statRanges: { atk: [7, 11], str: [3, 6] } },
+      bakirkilic: { name: 'Bakır Kılıç', icon: '⚔', type: 'Kılıç', grade: 'green', reqLv: 8, img: 'bakirkilic', classes: ['warrior'], statRanges: { atk: [13, 18], str: [5, 9] } },
+      elementkilic: { name: 'Element Kılıcı', icon: '⚔', type: 'Kılıç', grade: 'blue', reqLv: 20, img: 'elementkilic', classes: ['warrior'], statRanges: { atk: [35, 48], str: [9, 14] } },
+      sefinkilici: { name: "Sef'in Kılıcı", icon: '⚔', type: 'Kılıç', grade: 'orange', reqLv: 25, img: 'sefinkilici', classes: ['warrior'], statRanges: { atk: [70, 90], str: [18, 26], crit: [13, 20] } },
       /* ── ASA ── */
       duzsopa: { name: 'Düz Sopa', icon: '🪄', type: 'Asa', grade: 'gray', reqLv: 1, img: 'duzsopa', classes: ['mage'], statRanges: { mgc: [5, 8], wis: [2, 4] } },
       basitasa: { name: 'Basit Asa', icon: '🪄', type: 'Asa', grade: 'gray', reqLv: 3, img: 'basitasa', classes: ['mage'], statRanges: { mgc: [8, 12], wis: [3, 6] } },
@@ -10122,11 +10152,11 @@
       elementasa: { name: 'Element Asası', icon: '🪄', type: 'Asa', grade: 'blue', reqLv: 20, img: 'elementasa', classes: ['mage'], statRanges: { mgc: [33, 45], wis: [11, 17] } },
       ejderaasa: { name: 'Ejderha Asası', icon: '🪄', type: 'Asa', grade: 'purple', reqLv: 23, img: 'ejderaasa', classes: ['mage'], statRanges: { mgc: [52, 68], wis: [16, 24], crit: [8, 15] } },
       /* ── SOPA ── */
-      ilkelsopa: { name: 'İlkel Sopa', icon: '🏏', type: 'Sopa', grade: 'gray', reqLv: 1, img: 'ilkelsopa', classes: ['warrior', 'paladin', 'rogue', 'ranger', 'mage'], statRanges: { atk: [4, 7], def: [2, 4] } },
-      kemiksopa: { name: 'Kemik Sopa', icon: '🏏', type: 'Sopa', grade: 'green', reqLv: 8, img: 'kemiksopa', classes: ['warrior', 'paladin'], statRanges: { atk: [10, 15], def: [4, 7] } },
-      agirsopa: { name: 'Ağır Sopa', icon: '🏏', type: 'Sopa', grade: 'blue', reqLv: 15, img: 'agirsopa', classes: ['warrior', 'paladin'], statRanges: { atk: [22, 30], def: [6, 11] } },
-      elementsopasi: { name: 'Element Sopası', icon: '🏏', type: 'Sopa', grade: 'blue', reqLv: 20, img: 'elementsopasi', classes: ['warrior', 'paladin', 'mage'], statRanges: { atk: [35, 47], def: [8, 13], mgc: [6, 10] } },
-      ruhlusopa: { name: 'Ruhlu Sopa', icon: '🏏', type: 'Sopa', grade: 'purple', reqLv: 23, img: 'ruhlusopa', classes: ['warrior', 'paladin', 'mage'], statRanges: { atk: [50, 65], def: [10, 16], mgc: [10, 18] } },
+      ilkelsopa: { name: 'İlkel Sopa', icon: '🏏', type: 'Sopa', grade: 'gray', reqLv: 1, img: 'ilkelsopa', classes: ['warrior', 'rogue', 'ranger', 'mage'], statRanges: { atk: [4, 7], def: [2, 4] } },
+      kemiksopa: { name: 'Kemik Sopa', icon: '🏏', type: 'Sopa', grade: 'green', reqLv: 8, img: 'kemiksopa', classes: ['warrior'], statRanges: { atk: [10, 15], def: [4, 7] } },
+      agirsopa: { name: 'Ağır Sopa', icon: '🏏', type: 'Sopa', grade: 'blue', reqLv: 15, img: 'agirsopa', classes: ['warrior'], statRanges: { atk: [22, 30], def: [6, 11] } },
+      elementsopasi: { name: 'Element Sopası', icon: '🏏', type: 'Sopa', grade: 'blue', reqLv: 20, img: 'elementsopasi', classes: ['warrior', 'mage'], statRanges: { atk: [35, 47], def: [8, 13], mgc: [6, 10] } },
+      ruhlusopa: { name: 'Ruhlu Sopa', icon: '🏏', type: 'Sopa', grade: 'purple', reqLv: 23, img: 'ruhlusopa', classes: ['warrior', 'mage'], statRanges: { atk: [50, 65], def: [10, 16], mgc: [10, 18] } },
       /* ── YAY ── */
       basityay: { name: 'Basit Yay', icon: '🏹', type: 'Yay', grade: 'gray', reqLv: 1, img: 'basityay', classes: ['ranger'], statRanges: { atk: [5, 8], acc: [6, 10] } },
       kemikyay: { name: 'Kemik Yay', icon: '🏹', type: 'Yay', grade: 'green', reqLv: 10, img: 'kemikyay', classes: ['ranger'], statRanges: { atk: [10, 14], acc: [14, 20] } },
@@ -10134,12 +10164,12 @@
       karanlikyay: { name: 'Karanlık Yay', icon: '🏹', type: 'Yay', grade: 'purple', reqLv: 23, img: 'karanlikyay', classes: ['ranger'], statRanges: { atk: [40, 55], acc: [45, 60], agi: [10, 16] } },
       throsyay: { name: "Thros'un Yayı", icon: '🏹', type: 'Yay', grade: 'orange', reqLv: 25, img: 'throsyay', classes: ['ranger'], statRanges: { atk: [55, 70], acc: [55, 72], agi: [14, 20] } },
       /* ── GÜNEŞ SİLAHLARI — Altın Şövalye boss dropu ── */
-      gunesasa: { name: 'Güneş Asası', icon: '🌟', type: 'Asa', grade: 'orange', reqLv: 25, img: 'gunesasa', classes: ['mage', 'paladin'], statRanges: { mgc: [65, 85], wis: [22, 32], crit: [12, 20] } },
+      gunesasa: { name: 'Güneş Asası', icon: '🌟', type: 'Asa', grade: 'orange', reqLv: 25, img: 'gunesasa', classes: ['mage'], statRanges: { mgc: [65, 85], wis: [22, 32], crit: [12, 20] } },
       gunesbicak: { name: 'Güneş Bıçağı', icon: '✨', type: 'Bıçak', grade: 'orange', reqLv: 25, img: 'gunesbicak', classes: ['rogue'], statRanges: { atk: [60, 78], crit: [36, 50], agi: [14, 22] } },
-      guneskilic: { name: 'Güneş Kılıcı', icon: '☀', type: 'Kılıç', grade: 'orange', reqLv: 25, img: 'guneskilic', classes: ['warrior', 'paladin'], statRanges: { atk: [72, 92], str: [20, 28], def: [12, 18] } },
+      guneskilic: { name: 'Güneş Kılıcı', icon: '☀', type: 'Kılıç', grade: 'orange', reqLv: 25, img: 'guneskilic', classes: ['warrior'], statRanges: { atk: [72, 92], str: [20, 28], def: [12, 18] } },
       gunesyay: { name: 'Güneş Yayı', icon: '🏹', type: 'Yay', grade: 'orange', reqLv: 25, img: 'gunesyay', classes: ['ranger'], statRanges: { atk: [58, 74], acc: [60, 78], agi: [15, 22] } },
       /* ── NEKRO KILIÇ — Mağara boss dropu ── */
-      necrokilic: { name: 'Nekro Kılıç', icon: '⚔', type: 'Kılıç', grade: 'orange', reqLv: 50, img: 'necrokilic', classes: ['warrior', 'paladin'], statRanges: { atk: [120, 180], str: [32, 48], crit: [18, 26] } },
+      necrokilic: { name: 'Nekro Kılıç', icon: '⚔', type: 'Kılıç', grade: 'orange', reqLv: 50, img: 'necrokilic', classes: ['warrior'], statRanges: { atk: [120, 180], str: [32, 48], crit: [18, 26] } },
     };
 
     const ARMOR_TEMPLATES = {
@@ -10431,7 +10461,14 @@
     function normItemName(n) {
       return String(n || '').replace(/\s*\+\d+\s*$/, '').trim().toLocaleLowerCase('tr');
     }
-    const TPL_BY_NAME = (() => {
+    /* TEMBEL kurulur, yükleme anında DEĞİL: RING_TEMPLATES ve EARRING_TEMPLATES
+       dosyada bu satırdan SONRA tanımlı. Hemen kurulsaydı `const` ölü bölgesine
+       düşer, betik burada ölür ve sonrasındaki her şey (G, ZD, render'lar)
+       hiç tanımlanmazdı — oyun giriş ekranında takılırdı. İlk çağrıda
+       hazırlanıp önbelleğe alınır; o an tüm kataloglar yüklenmiş olur. */
+    let _tplByName = null;
+    function tplByName() {
+      if (_tplByName) return _tplByName;
       const map = {};
       // Sıra önemli: aynı ada sahip iki şablonda İLK eklenen kazanır
       [WEAPON_TEMPLATES, ARMOR_TEMPLATES, RING_TEMPLATES, EARRING_TEMPLATES].forEach(src => {
@@ -10440,8 +10477,9 @@
           if (n && !map[n]) map[n] = id;
         });
       });
+      _tplByName = map;
       return map;
-    })();
+    }
     /* Eşyanın şablon anahtarı: önce tplId/img, olmazsa isim */
     function resolveTplId(item) {
       if (!item) return null;
@@ -10450,7 +10488,7 @@
         const k = normTplKey(direct);
         if (WEAPON_TEMPLATES[k] || ARMOR_TEMPLATES[k] || RING_TEMPLATES[k] || EARRING_TEMPLATES[k]) return k;
       }
-      return TPL_BY_NAME[normItemName(item.name)] || null;
+      return tplByName()[normItemName(item.name)] || null;
     }
     /* Zırhı güncel şablona göre yeniden üret. migrateWeapon ile aynı desen:
        baseStats yeniden zar atılır, enhPlus korunur, katalog alanları (görsel,
@@ -10496,18 +10534,18 @@
       { id: 112, name: 'Element Hançer', icon: '🗡', cat: 'weapon', grade: 'blue', price: 1600, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Hançer', reqLv: 20, tplId: 'elementhancer', material: null, desc: '4 elementi barındıran hançer.', stats: { atk: 181, crit: 21, wis: 6 }, img: 'elementhancer', classBonus: { rogue: 'agi', mage: 'wis' } },
       { id: 115, name: 'Ejderha Hançeri', icon: '🗡', cat: 'weapon', grade: 'purple', price: 5000, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Hançer', reqLv: 23, tplId: 'ejderhahancer', material: null, desc: 'Ejderha pençesinden yapılmış zehirli hançer.', stats: { atk: 254, crit: 36, agi: 13 }, img: 'ejderhahancer', classBonus: { rogue: 'agi' } },
       { id: 113, name: 'Yadigar Hançer', icon: '🗡', cat: 'weapon', grade: 'orange', price: 9000, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Hançer', reqLv: 25, tplId: 'yadigarhancer', material: null, desc: 'Atadan kalma efsane hançer.', stats: { atk: 352, crit: 38, agi: 15 }, img: 'yadigarhancer', classBonus: { rogue: 'agi' } },
-      { id: 123, name: 'Demir Kılıç', icon: '⚔', cat: 'weapon', grade: 'gray', price: 120, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Kılıç', reqLv: 1, tplId: 'demirkilic', material: null, desc: 'Sıradan demir kılıç.', stats: { atk: 15, str: 4 }, img: 'demirkilic', classBonus: { warrior: 'str', paladin: 'str' } },
-      { id: 124, name: 'Bakır Kılıç', icon: '⚔', cat: 'weapon', grade: 'green', price: 350, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Kılıç', reqLv: 8, tplId: 'bakirkilic', material: null, desc: 'Bakır işlemeli güçlü kılıç.', stats: { atk: 70, str: 7 }, img: 'bakirkilic', classBonus: { warrior: 'str', paladin: 'str' } },
-      { id: 121, name: 'Element Kılıcı', icon: '⚔', cat: 'weapon', grade: 'blue', price: 1800, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Kılıç', reqLv: 20, tplId: 'elementkilic', material: null, desc: 'Element gücü yüklü kılıç.', stats: { atk: 234, str: 11 }, img: 'elementkilic', classBonus: { warrior: 'str', paladin: 'str' } },
-      { id: 105, name: "Şef'in Kılıcı", icon: '⚔', cat: 'weapon', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: 'Lonca Ödülü', type: 'Kılıç', reqLv: 25, tplId: 'sefinkilici', material: null, desc: "Şef'i yenen efsanevi savaşçılara düşer.", stats: { atk: 456, str: 22, crit: 16 }, img: 'sefinkilici', classBonus: { warrior: 'str', paladin: 'str' } },
+      { id: 123, name: 'Demir Kılıç', icon: '⚔', cat: 'weapon', grade: 'gray', price: 120, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Kılıç', reqLv: 1, tplId: 'demirkilic', material: null, desc: 'Sıradan demir kılıç.', stats: { atk: 15, str: 4 }, img: 'demirkilic', classBonus: { warrior: 'str' } },
+      { id: 124, name: 'Bakır Kılıç', icon: '⚔', cat: 'weapon', grade: 'green', price: 350, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Kılıç', reqLv: 8, tplId: 'bakirkilic', material: null, desc: 'Bakır işlemeli güçlü kılıç.', stats: { atk: 70, str: 7 }, img: 'bakirkilic', classBonus: { warrior: 'str' } },
+      { id: 121, name: 'Element Kılıcı', icon: '⚔', cat: 'weapon', grade: 'blue', price: 1800, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Kılıç', reqLv: 20, tplId: 'elementkilic', material: null, desc: 'Element gücü yüklü kılıç.', stats: { atk: 234, str: 11 }, img: 'elementkilic', classBonus: { warrior: 'str' } },
+      { id: 105, name: "Şef'in Kılıcı", icon: '⚔', cat: 'weapon', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: 'Lonca Ödülü', type: 'Kılıç', reqLv: 25, tplId: 'sefinkilici', material: null, desc: "Şef'i yenen efsanevi savaşçılara düşer.", stats: { atk: 456, str: 22, crit: 16 }, img: 'sefinkilici', classBonus: { warrior: 'str' } },
       { id: 131, name: 'Düz Sopa', icon: '🪄', cat: 'weapon', grade: 'gray', price: 90, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Asa', reqLv: 1, tplId: 'duzsopa', material: null, desc: 'Sıradan meşe dalı.', stats: { mgc: 13, wis: 3 }, img: 'duzsopa', classBonus: { mage: 'wis' } },
       { id: 132, name: 'Basit Asa', icon: '🪄', cat: 'weapon', grade: 'gray', price: 130, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Asa', reqLv: 3, tplId: 'basitasa', material: null, desc: 'Büyücü çırağının asası.', stats: { mgc: 23, wis: 4 }, img: 'basitasa', classBonus: { mage: 'wis' } },
       { id: 133, name: 'Alev Asası', icon: '🪄', cat: 'weapon', grade: 'green', price: 380, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Asa', reqLv: 8, tplId: 'alevasa', material: null, desc: 'Ucunda daima alev dans eder.', stats: { mgc: 64, wis: 6 }, img: 'alevsopasi', classBonus: { mage: 'wis' } },
       { id: 135, name: 'Element Asası', icon: '🪄', cat: 'weapon', grade: 'blue', price: 1700, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Asa', reqLv: 20, tplId: 'elementasa', material: null, desc: 'Elementlerin gücünü bünyesinde barındırır.', stats: { mgc: 213, wis: 14 }, img: 'elementasa', classBonus: { mage: 'wis' } },
       { id: 136, name: 'Ejderha Asası', icon: '🪄', cat: 'weapon', grade: 'purple', price: 5200, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Asa', reqLv: 23, tplId: 'ejderaasa', material: null, desc: 'Ejderha ruhunun gücüyle titreşen asa.', stats: { mgc: 299, wis: 20, crit: 11 }, img: 'ejderaasa', classBonus: { mage: 'wis' } },
       { id: 151, name: 'İlkel Sopa', icon: '🏏', cat: 'weapon', grade: 'gray', price: 70, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Sopa', reqLv: 1, tplId: 'ilkelsopa', material: null, desc: 'Kaba yontulmuş meşe sopası.', stats: { atk: 12, def: 3 }, img: 'ilkelsopa', classBonus: null },
-      { id: 152, name: 'Kemik Sopa', icon: '🏏', cat: 'weapon', grade: 'green', price: 300, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Sopa', reqLv: 8, tplId: 'kemiksopa', material: null, desc: 'Canavar kemiğiyle sertleştirilmiş sopa.', stats: { atk: 57, def: 5 }, img: 'kemiksopa', classBonus: { warrior: 'str', paladin: 'str' } },
-      { id: 153, name: 'Ağır Sopa', icon: '🏏', cat: 'weapon', grade: 'blue', price: 900, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Sopa', reqLv: 15, tplId: 'agirsopa', material: null, desc: 'Demir çivili yıkıcı sopa.', stats: { atk: 136, def: 8 }, img: 'agirsopa', classBonus: { warrior: 'str', paladin: 'str' } },
+      { id: 152, name: 'Kemik Sopa', icon: '🏏', cat: 'weapon', grade: 'green', price: 300, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Sopa', reqLv: 8, tplId: 'kemiksopa', material: null, desc: 'Canavar kemiğiyle sertleştirilmiş sopa.', stats: { atk: 57, def: 5 }, img: 'kemiksopa', classBonus: { warrior: 'str' } },
+      { id: 153, name: 'Ağır Sopa', icon: '🏏', cat: 'weapon', grade: 'blue', price: 900, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Sopa', reqLv: 15, tplId: 'agirsopa', material: null, desc: 'Demir çivili yıkıcı sopa.', stats: { atk: 136, def: 8 }, img: 'agirsopa', classBonus: { warrior: 'str' } },
       { id: 154, name: 'Element Sopası', icon: '🏏', cat: 'weapon', grade: 'blue', price: 1600, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Sopa', reqLv: 20, tplId: 'elementsopasi', material: null, desc: 'Hem fiziksel hem büyüsel güç verir.', stats: { atk: 192, def: 10, mgc: 77 }, img: 'elementsopasi', classBonus: null },
       { id: 155, name: 'Ruhlu Sopa', icon: '🏏', cat: 'weapon', grade: 'purple', price: 4800, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Sopa', reqLv: 23, tplId: 'ruhlusopa', material: null, desc: 'Antik ruhların gücüyle dolu sopa.', stats: { atk: 269, def: 13, mgc: 108 }, img: 'ruhlusopa', classBonus: null },
       { id: 141, name: 'Basit Yay', icon: '🏹', cat: 'weapon', grade: 'gray', price: 100, qty: 1, seller: 'player', sellerName: 'Pazar', type: 'Yay', reqLv: 1, tplId: 'basityay', material: null, desc: 'Sıradan meşe yay.', stats: { atk: 13, acc: 8 }, img: 'basityay', classBonus: { ranger: 'agi' } },
@@ -10594,7 +10632,7 @@
       { id: 290, name: 'Olta', icon: '🎣', cat: 'weapon', grade: 'green', price: 1000, qty: 999, seller: 'npc', sellerName: 'Balıkçı', type: 'Olta', reqLv: 1, tplId: null, material: null, desc: 'Su karelerinde balık tutmak için gerekli. Her atışta %1 kırılma riski.', stats: {}, img: 'olta', classBonus: null },
       { id: 301, name: 'Bakır Yüzük', icon: '💍', cat: 'accessory', grade: 'gray', price: 50, qty: 99, seller: 'npc', sellerName: 'Mücevherci', type: 'Yüzük', reqLv: 1, material: null, desc: 'Sıradan bakır yüzük.', stats: { mgc: 3, wis: 2 }, img: 'bakiryuzuk', classBonus: null, tplId: 'bakiryuzuk' },
       {
-        id: 800, name: 'Nekro Kılıç', icon: '⚔', cat: 'weapon', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: 'Mağara', type: 'Kılıç', reqLv: 50, tplId: 'necrokilic', material: null, desc: "3 Başlı Yılan'ı yenenlere düşen efsanevi kılıç.", stats: { atk: 1090, str: 40, crit: 22 }, img: 'necrokilic', classBonus: { warrior: 'str', paladin: 'str' }
+        id: 800, name: 'Nekro Kılıç', icon: '⚔', cat: 'weapon', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: 'Mağara', type: 'Kılıç', reqLv: 50, tplId: 'necrokilic', material: null, desc: "3 Başlı Yılan'ı yenenlere düşen efsanevi kılıç.", stats: { atk: 1090, str: 40, crit: 22 }, img: 'necrokilic', classBonus: { warrior: 'str' }
       },
       { id: 801, name: 'Nekro Göğüslük', icon: '🛡', cat: 'armor', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: 'Mağara', type: 'Göğüslük', reqLv: 50, tplId: 'necrozirh', material: 'demir', desc: 'Karanlık enerjilerle dolu, bedeni saran zirve zırh.', stats: { def: 85, hp: 280, str: 20, agi: 20, wis: 20, crit: 4, mgc: 10 }, img: 'necrozirh', classBonus: null },
       { id: 802, name: 'Nekro Kask', icon: '🪖', cat: 'armor', grade: 'orange', price: 0, qty: 1, seller: 'boss', sellerName: 'Mağara', type: 'Kask', reqLv: 50, tplId: 'necrokask', material: 'demir', desc: 'Zihni karanlıkla örten zirve kask.', stats: { def: 51, hp: 168, str: 12, agi: 12, wis: 12, crit: 2, mgc: 6 }, img: 'necrokask', classBonus: null },
@@ -11211,7 +11249,6 @@
       warrior: ['warrior_0.jpg', 'warrior_1.jpg', 'warrior_2.jpg', 'warrior_3.jpg'].map(f => IMG_BASE + f),
       mage: ['mage_0.jpg', 'mage_1.jpg', 'mage_2.jpg', 'mage_3.jpg'].map(f => IMG_BASE + f),
       rogue: ['rogue_0.jpg', 'rogue_1.jpg', 'rogue_2.jpg', 'rogue_3.jpg'].map(f => IMG_BASE + f),
-      paladin: ['paladin_0.jpg', 'paladin_1.jpg', 'paladin_2.jpg', 'paladin_3.jpg'].map(f => IMG_BASE + f),
       ranger: ['ranger_0.jpg', 'ranger_1.jpg', 'ranger_2.jpg', 'ranger_3.jpg'].map(f => IMG_BASE + f),
     };
 
@@ -11220,7 +11257,6 @@
       warrior: { bg: '#2a1008', accent: '#c0392b', label: 'SAVAŞÇI' },
       mage: { bg: '#10082a', accent: '#7b2fbe', label: 'BÜYÜCÜ' },
       rogue: { bg: '#0a0a12', accent: '#374151', label: 'HAYDUT' },
-      paladin: { bg: '#0a1a28', accent: '#1d4ed8', label: 'ŞÖVALYE' },
       ranger: { bg: '#0a1a08', accent: '#166534', label: 'AVCI' },
     };
 
@@ -11233,7 +11269,6 @@
         warrior: `<rect x="32" y="48" width="36" height="30" rx="4" fill="${a}" opacity=".9"/><ellipse cx="30" cy="50" rx="10" ry="7" fill="${a}"/><ellipse cx="70" cy="50" rx="10" ry="7" fill="${a}"/><rect x="76" y="38" width="4" height="36" rx="1" fill="#c0c0c0"/><rect x="72" y="52" width="12" height="3" rx="1" fill="${a}"/><path d="M28,50 Q20,70 25,90 L35,88 Q30,72 32,50Z" fill="${c}" opacity=".85"/><ellipse cx="50" cy="34" rx="14" ry="16" fill="${skin}"/><ellipse cx="50" cy="22" rx="14" ry="8" fill="${hair}"/><rect x="37" y="20" width="26" height="8" rx="4" fill="${a}" opacity=".7"/><circle cx="44" cy="33" r="2.5" fill="#2c1a08"/><circle cx="56" cy="33" r="2.5" fill="#2c1a08"/>`,
         mage: `<path d="M28,50 Q22,65 26,92 L74,92 Q78,65 72,50Z" fill="${c}" opacity=".9"/><rect x="35" y="50" width="30" height="40" rx="2" fill="${a}" opacity=".5"/><rect x="74" y="20" width="4" height="60" rx="2" fill="#8b5e3c"/><circle cx="76" cy="18" r="7" fill="#7b2fbe" opacity=".9"/><circle cx="76" cy="18" r="4" fill="#c084fc"/><ellipse cx="50" cy="34" rx="13" ry="15" fill="${skin}"/><ellipse cx="50" cy="22" rx="16" ry="5" fill="${c}"/><polygon points="50,4 38,22 62,22" fill="${c}"/><circle cx="44" cy="34" r="2.5" fill="#7b2fbe"/><circle cx="56" cy="34" r="2.5" fill="#7b2fbe"/>`,
         rogue: `<rect x="33" y="48" width="34" height="30" rx="3" fill="${a}" opacity=".8"/><path d="M30,46 Q18,58 20,88 L30,86 Q28,68 33,48Z" fill="${c}" opacity=".9"/><rect x="18" y="55" width="3" height="22" rx="1" fill="#c0c0c0"/><rect x="79" y="55" width="3" height="22" rx="1" fill="#c0c0c0"/><ellipse cx="50" cy="34" rx="13" ry="15" fill="${skin}"/><path d="M36,26 Q50,14 64,26 Q64,44 50,46 Q36,44 36,26Z" fill="${c}" opacity=".85"/><rect x="38" y="38" width="24" height="8" rx="4" fill="${c}" opacity=".7"/><circle cx="44" cy="34" r="2.5" fill="#c0392b"/><circle cx="56" cy="34" r="2.5" fill="#c0392b"/>`,
-        paladin: `<rect x="30" y="46" width="40" height="34" rx="5" fill="${a}" opacity=".95"/><rect x="47" y="50" width="6" height="18" rx="1" fill="white" opacity=".4"/><rect x="41" y="57" width="18" height="5" rx="1" fill="white" opacity=".4"/><ellipse cx="27" cy="48" rx="12" ry="8" fill="${a}"/><ellipse cx="73" cy="48" rx="12" ry="8" fill="${a}"/><rect x="77" y="30" width="5" height="45" rx="1" fill="#d4d4d4"/><path d="M30,46 Q22,62 26,90 L34,88 Q30,70 30,46Z" fill="${c}" opacity=".8"/><ellipse cx="50" cy="33" rx="14" ry="16" fill="${skin}"/><path d="M36,24 Q50,14 64,24 L64,38 Q50,42 36,38Z" fill="${a}" opacity=".9"/>`,
         ranger: `<rect x="34" y="48" width="32" height="28" rx="4" fill="${a}" opacity=".75"/><rect x="32" y="66" width="36" height="5" rx="2" fill="${c}"/><path d="M78,25 Q90,50 78,75" fill="none" stroke="#8b5e3c" stroke-width="3.5" stroke-linecap="round"/><line x1="78" y1="25" x2="78" y2="75" stroke="#c9943a" stroke-width="1"/><path d="M34,48 Q26,60 28,88 L36,86 Q34,66 34,48Z" fill="${c}" opacity=".85"/><ellipse cx="50" cy="34" rx="13" ry="15" fill="${skin}"/><path d="M37,28 Q50,18 63,28 L63,42 Q50,48 37,42Z" fill="${hair}"/><ellipse cx="50" cy="23" rx="16" ry="5" fill="${c}" opacity=".7"/><circle cx="44" cy="34" r="2.5" fill="#1a6a1a"/><circle cx="56" cy="34" r="2.5" fill="#1a6a1a"/>`,
       };
       return shapes[cid] || shapes.warrior;
@@ -11269,18 +11304,20 @@
     }
 
     /*
-      getAvatarSlotHTML(cid, idx, isSelected, isLocked, armorColor, cloakColor)
+      getAvatarSlotHTML(cid, idx, isSelected, isLocked, armorColor, cloakColor, pickFn?)
       ──────────────────────────────────────────────────────────────────────────
       Avatar seçim grid'indeki her kare için tam HTML döner.
       Görsel varsa resim, yoksa SVG placeholder + "Görsel Eklenecek" etiketi gösterir.
     */
-    function getAvatarSlotHTML(cid, idx, isSelected, isLocked, armorColor, cloakColor) {
+    /* pickFn: tıklanınca çalışacak ifade. Varsayılan karakter yaratma akışı
+       (obSelAv); Ruh Aynası kendi seçicisini geçer. */
+    function getAvatarSlotHTML(cid, idx, isSelected, isLocked, armorColor, cloakColor, pickFn) {
       const imgSrc = AVATAR_IMAGES[cid]?.[idx];
       const cc = CLASS_COLORS[cid] || CLASS_COLORS.warrior;
       const variantNames = ['Standart', 'Savaşçı', 'Kahraman', 'Efsane'];
       const name = variantNames[idx] || ('Varyant ' + (idx + 1));
 
-      const clickFn = isLocked ? `toast('Seviye 10 gerekli!')` : `obSelAv(${idx})`;
+      const clickFn = isLocked ? `toast('Seviye 10 gerekli!')` : (pickFn || `obSelAv(${idx})`);
 
       if (imgSrc) {
         /* Gerçek görsel var */
@@ -11898,7 +11935,7 @@
       // Sınıf bonusu etiketi
       const classBonusKey = item.classBonus?.[G.classId];
       const classBonusLabels = { str: 'Güç', agi: 'Çeviklik', wis: 'Bilgelik', def: 'Savunma' };
-      const classNames = { warrior: 'Savaşçı', mage: 'Büyücü', rogue: 'Haydut', paladin: 'Şövalye', ranger: 'Avcı' };
+      const classNames = { warrior: 'Savaşçı', mage: 'Büyücü', rogue: 'Haydut', ranger: 'Avcı' };
       const classBonusHtml = classBonusKey
         ? `<div style="margin:4px auto;font-size: 10px;background:#2a1e08;border:1px solid var(--gold);border-radius:3px;padding:2px 8px;display:inline-block;color:var(--gold2);">⭐ ${classNames[G.classId]} Bonusu: +%10 ${classBonusLabels[classBonusKey]}</div>`
         : '';
@@ -14115,7 +14152,7 @@
 
       // Sınıf bazlı fiziksel hasar
       const cid = G.classId;
-      if (cid === 'warrior' || cid === 'paladin')
+      if (cid === 'warrior')
         s.physDmg = Math.floor(s.str * 2.5 + s.atk + s.agi * 0.5);
       else if (cid === 'rogue')
         s.physDmg = Math.floor(s.agi * 2.0 + s.atk + s.str * 0.8);
@@ -14421,7 +14458,7 @@
       TOUGH_HP: 20,         // boss + elit CAN çarpanı. Tek vuruşta ölüyorlardı;
                             // sadece can artar (hasar/XP/altın aynı kalır) ki
                             // dövüş uzasın, ödül enflasyonu olmasın.
-      RANGE: { warrior: 1, knight: 1, rogue: 1, mage: 3, ranger: 3.5 },
+      RANGE: { warrior: 1, rogue: 1, mage: 3, ranger: 3.5 },
                             // Öklid daire yarıçapı. Avcı 4 iken 7×7'nin 45/49'unu
                             // kapsıyordu (köşeler hariç her yer) — 3.5'te 37/49.
     };
@@ -18056,7 +18093,7 @@
           item: {
             type: 'Kılıç', grade: 'orange', tplId: 'sefinkilici',
             desc: "Dev Sef'i yenen efsanevi savaşçılara düşer.",
-            reqLv: 25, material: null, classBonus: { warrior: 'str', paladin: 'str' }
+            reqLv: 25, material: null, classBonus: { warrior: 'str' }
           }
         },
       },
