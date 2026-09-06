@@ -13106,7 +13106,7 @@
         Başarı şansı: <span style="color:var(--gold2);font-family:var(--font-head);font-size: 18px;">%${Math.round(displayChance * 10) / 10}</span>${(luckActive || smithPct > 0 || ringPctEnh > 0 || earPctEnh > 0) ? ` <span style="color:#9bd17a;font-size: 13px;">(%${baseDisplayChance}${luckActive ? ' +%5 🍀' : ''}${smithPct > 0 ? ` +%${smithPct} 🔨` : ''}${ringPctEnh > 0 ? ` +%${ringPctEnh} 💍` : ''}${earPctEnh > 0 ? ` +%${earPctEnh} 💠` : ''})</span>` : ''}
         ${isNekro
             ? `<span style="color:#f87171;font-size: 12px;display:block;margin-top:3px;">Başarısız olursa eşya <b>yok olur!</b></span>`
-            : curPlus > 0 ? `<span style="color:#f87171;font-size: 12px;display:block;margin-top:3px;">⚠ Başarısız olursa +${curPlus} → +${curPlus - 1} düşer</span>` : ''
+            : curPlus > 0 ? `<span style="color:#f87171;font-size: 12px;display:block;margin-top:3px;">Başarısız olursa +${curPlus} → +${curPlus - 1} düşer</span>` : ''
           }
       </div>`;
       }
@@ -14836,6 +14836,31 @@
        kendi tarafında vursaydı aynı alev kişi sayısı kadar hasar verirdi. */
     const SKILL_YAKMA = { id: 'yakma', name: 'Yakma', cls: 'mage', img: 'yakma', icon: '🔥' };
 
+    /* ⚠ GÖRSEL YOKLAMA ÖNBELLEĞİ — buton yanıp sönmesin diye.
+       Yan panel her canavar ölümünde yeniden basılıyor (zgKill → zgRenderBar).
+       Görsel YOKSA her basımda yeni bir <img> kuruluyor, `onerror` ise bir kare
+       SONRA çalışıyor; o kare boyunca yedek yazı `display:none` olduğu için
+       buton tamamen kayboluyordu ("her vuruşta YAKMA yazısı gidip geliyor").
+       Sonucu bir kez öğrenip saklıyoruz: dosya yoksa bir daha <img> basmıyoruz,
+       doğrudan yedek yazıyı açık basıyoruz → gidiş dönüş, dolayısıyla kırpışma
+       da yok. Kullanıcı görseli sonradan yüklerse `onload` işaretler. */
+    const _zgImgSeen = {};             // dosya adı → true (var) / false (yok)
+    function zgImgMark(file, ok) { _zgImgSeen[file] = !!ok; }
+
+    /* Beceri butonunun görsel kısmı. Üç hâl: bilinmiyor (ikisini de bas,
+       sonucu öğren) · var (yalnız görsel) · yok (yalnız yazı). */
+    function zgSkillArtHTML() {
+      const f = SKILL_YAKMA.img;
+      const seen = _zgImgSeen[f];
+      const label = SKILL_YAKMA.icon + ' ' + SKILL_YAKMA.name.toLocaleUpperCase('tr');
+      if (seen === false) return '<span class="zg-sk-fallback" style="display:flex;">' + label + '</span>';
+      return '<img src="' + IMG_BASE + f + '.webp" alt="' + SKILL_YAKMA.name + '"'
+        + ' onload="zgImgMark(\'' + f + '\',true)"'
+        + ' onerror="zgImgMark(\'' + f + '\',false);this.style.display=\'none\';'
+        + 'this.nextElementSibling.style.display=\'flex\'">'
+        + '<span class="zg-sk-fallback">' + label + '</span>';
+    }
+
     function zgSkillOwned() { return G.classId === SKILL_YAKMA.cls; }
     function zgSkillLeft() {
       const g = ZD.g; if (!g) return 0;
@@ -15840,6 +15865,9 @@
       zgRenderLoot();
     }
 
+    // Son basılan buton bloğunun HTML'i — panelin gereksiz yere baştan
+    // basılmasını engelleyen imza (aşağıda zgRenderSide sonunda kullanılır).
+    let _zgSideSig = '';
     function zgRenderSide() {
       const el = document.getElementById('zg-side'); if (!el) return;
       const g = ZD.g; if (!g) return;
@@ -15878,9 +15906,7 @@
           + ' onclick="zgSkillAim()" title="' + SKILL_YAKMA.name + ' — '
           + ZG.SKILL_SIZE + '×' + ZG.SKILL_SIZE + ' alanı ' + (ZG.SKILL_MS / 1000)
           + 'sn yakar (' + (ZG.SKILL_CD / 1000) + 'sn bekleme)">'
-          + '<img src="' + IMG_BASE + SKILL_YAKMA.img + '.webp" alt="' + SKILL_YAKMA.name + '"'
-          + ' onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
-          + '<span class="zg-sk-fallback">' + SKILL_YAKMA.icon + ' YAKMA</span>'
+          + zgSkillArtHTML()
           + '<span id="zg-sk-badge" class="zg-badge"></span>'
           + '</button>'
           + '<div class="zg-skillauto' + (g.skillAuto ? ' on' : '') + '" onclick="zgToggleSkillAuto()"'
@@ -15922,7 +15948,17 @@
             : '<button class="zg-btn wide danger" onclick="zgExit()">Zindandan Çık' + sub('ganimeti al') + '</button>')
           + ((canDescend || finished) ? '<button class="zg-btn wide danger" onclick="zgExit()">Zindandan Çık' + sub('ganimeti garantiye al') + '</button>' : '');
       }
-      el.innerHTML = '<div class="zg-side-info">' + info + '</div>' + btns + lastBtn;
+      /* ⚠ Yalnız sayaç değiştiyse paneli BAŞTAN BASMA.
+         Bu fonksiyon her canavar ölümünde çağrılıyor; `innerHTML` ile baştan
+         basmak dört butonun <img>'ini de yeniden kuruyor ve gereksiz DOM
+         çöpü üretiyordu. Butonların HTML'i imza olarak tutulur: değişmediyse
+         yalnızca bilgi kutusunun içi tazelenir. Sahne yeniden kurulunca
+         #zg-side-info kaybolacağı için tam basım kendiliğinden geri gelir. */
+      const sig = btns + lastBtn;
+      const box = document.getElementById('zg-side-info');
+      if (box && _zgSideSig === sig) { box.innerHTML = info; return; }
+      _zgSideSig = sig;
+      el.innerHTML = '<div class="zg-side-info" id="zg-side-info">' + info + '</div>' + btns + lastBtn;
     }
 
     /* ── GANİMET ÇANTASI ──
