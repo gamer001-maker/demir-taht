@@ -8572,7 +8572,7 @@
       rehber: { name: 'Rehber', icon: '🧭', desc: 'Keşif süresini %5 azaltır, %10 ekstra kaynak getirir.', kind: 'special' },
       rahip: { name: 'Rahip', icon: '⛪', desc: 'Karizmana %5 katkı sağlar (kritik şansı).', kind: 'special' },
       sovalye: { name: 'Şövalye', icon: '🛡', desc: 'Saldırına %5, savunmana %5 katkı sağlar.', kind: 'special' },
-      tabip: { name: 'Tabip', icon: '⚕', desc: 'Savaşta tur başına %10 şansla canının %5\'ini yeniler.', kind: 'special' },
+      tabip: { name: 'Tabip', icon: '⚕', desc: 'Savaşta saniyede %10 şansla canının %5\'ini yeniler.', kind: 'special' },
     };
     const SUVARI_MIN_LEVEL = 5;   // piyade bu seviyede süvariye terfi edebilir
     const SUVARI_DMG_MULT = 1.5; // süvari hasar çarpanı
@@ -8591,7 +8591,7 @@
         case 'rehber': return ['🧭 Keşif süresi −%5', '🌿 Keşif kaynağı +%10'];
         case 'rahip': return ['⛪ Karizma +%5 (kritik şansı)'];
         case 'sovalye': return ['🛡 Saldırı +%5', '🛡 Savunma +%5'];
-        case 'tabip': return ['⚕ Savaşta tur başına %10 şansla canının %5\'i yenilenir'];
+        case 'tabip': return ['⚕ Savaşta saniyede %10 şansla canının %5\'i yenilenir'];
         case 'suvari': return ['🐴 Silah hasarı ×1.5'];
         default: return [];
       }
@@ -9642,7 +9642,7 @@
       const cell = cells[idx]; if (!cell) return;
       G_EXPLORED[key].add(idx);
       // Keşif bonusları
-      if (cell.t === 'ruins') { const rb = troopBuffs(); let b = Math.floor(Math.random() * 40) + 20; b = Math.floor(b * rb.resourceMult * scoutLootMult()); G.gold += b; const scoutPct = Math.round((scoutLootMult() - 1) * 100); const bonusNote = (rb.rehber > 0 ? ` (Rehber +%${Math.round((rb.resourceMult - 1) * 100)}` : (scoutPct > 0 ? ' (' : '')) + (scoutPct > 0 ? `${rb.rehber > 0 ? ', ' : ''}İzcilik +%${scoutPct}` : '') + ((rb.rehber > 0 || scoutPct > 0) ? ')' : ''); toast(`Harabeler keşfedildi! ${b}🪙 hazine bulundu!${bonusNote} 💰`); trackQuest('exploreRuin'); trackQuest('exploreRuin2', Math.min(2, [...G_EXPLORED[key]].filter(i => cells[i]?.t === 'ruins').length)); }
+      if (cell.t === 'ruins') { const rb = troopBuffs(); let b = Math.floor(Math.random() * 40) + 20; b = Math.floor(b * rb.resourceMult * scoutLootMult() * lootMult()); G.gold += b; const scoutPct = Math.round((scoutLootMult() - 1) * 100); const bonusNote = (rb.rehber > 0 ? ` (Rehber +%${Math.round((rb.resourceMult - 1) * 100)}` : (scoutPct > 0 ? ' (' : '')) + (scoutPct > 0 ? `${rb.rehber > 0 ? ', ' : ''}İzcilik +%${scoutPct}` : '') + ((rb.rehber > 0 || scoutPct > 0) ? ')' : ''); toast(`Harabeler keşfedildi! ${b}🪙 hazine bulundu!${bonusNote} 💰`); trackQuest('exploreRuin'); trackQuest('exploreRuin2', Math.min(2, [...G_EXPLORED[key]].filter(i => cells[i]?.t === 'ruins').length)); }
       else if (cell.t === 'village') { const fb = 15; G.food += fb; toast(`${cell.n} keşfedildi! Köylüler ${fb}🌾 erzak verdi 🏘`); trackQuest('exploreVillage3', Math.min(3, [...G_EXPLORED[key]].filter(i => cells[i]?.t === 'village').length)); }
       else toast(`${cell.n} keşfedildi! 🗺`);
       // Özel birim keşfi — araziye göre tematik, TEST: %50 şans
@@ -9843,7 +9843,7 @@
         toast(`💰 Kasabadan ${amt}🪙 topladın!`);
       } else if (type === 'loot') {
         // %12 ihtimalle yüzük çıkar (İzcilik ganimeti artırdıkça yüzük şansı da yükselir)
-        if (Math.random() < Math.min(0.30, 0.12 * scoutLootMult()) && !invFull()) {
+        if (Math.random() < Math.min(0.30, 0.12 * scoutLootMult() * lootMult()) && !invFull()) {
           dropRandomRing(regionRingPool(2), Math.floor(Math.random() * 2), 'Harabe ganimeti');
           G_MAP[idx].harvested = true;
           if (currentUser) saveMaps();
@@ -12425,7 +12425,7 @@
     const EARRING_TEMPLATES = {
       tahtakupe: { name: 'Tahta Küpe', fx: 'maxhp', baseVal: 25, per: 0.5, grade: 'gray', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Sağlığı artırır.', fxTxt: p => `Maksimum Can +${p}` },
       yesimtasikupe: { name: 'Yeşim Taşı Küpe', fx: 'enhance', baseVal: 1.0, per: 0.5, grade: 'green', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Demirci ocağında şansını artırır.', fxTxt: p => `Geliştirme Başarı Şansı +%${p}` },
-      incikupe: { name: 'İnci Küpe', fx: 'regen', baseVal: 1.0, per: 0.5, grade: 'blue', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Denizden gelen tazelikle can yeniler.', fxTxt: p => `Savaşta tur başı azami canının %${p} kadarı yenilenir` },
+      incikupe: { name: 'İnci Küpe', fx: 'regen', baseVal: 1.0, per: 0.5, grade: 'blue', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Denizden gelen tazelikle can yeniler.', fxTxt: p => `Savaşta saniyede azami canının %${p} kadarı yenilenir` },
       kantasikupe: { name: 'Kan Taşı Küpe', fx: 'lifesteal', baseVal: 1.5, per: 0.5, grade: 'purple', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Verdiğin darbeden can çeker.', fxTxt: p => `Verdiğin hasarın %${p} kadarı can olarak döner` },
       obsidyenkupe: { name: 'Obsidyen Küpe', fx: 'crit', baseVal: 2.0, per: 0.5, grade: 'purple', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Keskin siyah cam gibi kritik şansı verir.', fxTxt: p => `Kritik Vuruş Şansı +%${p}` },
       okyanusungozu: { name: 'Okyanusun Gözü', fx: 'scoutLoot', baseVal: 2.5, per: 0.5, grade: 'orange', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Zindan ve harabelerde kısmetini açar.', fxTxt: p => `Zindan & Harabe ganimeti +%${p}` },
@@ -12813,7 +12813,7 @@
     }
     /* Kan Yüzüğü — verilen hasarın bir kısmı cana döner */
     function ringLifesteal(dmg) {
-      const pct = ringFx('lifesteal');
+      const pct = accFx('lifesteal');       // Kan Yüzüğü + Kan Taşı Küpe
       return pct > 0 ? Math.floor(dmg * pct) : 0;
     }
     /* Ateş Yüzüğü — vuruşta yakma denemesi (5 tur, üst üste binebilir) */
@@ -12825,17 +12825,41 @@
       return true;
     }
     /* Yakma tiki — düşmana verilecek hasarı döndürür, süreleri azaltır */
-    function ringBurnTick(st, enemyMaxHp) {
+    /* ⚠ Yakma hasarı ESKİDEN yalnız düşmanın azami canına bağlıydı
+       (%1/yığın). Tur tabanlı sistemde dövüş uzun sürdüğü için yeterliydi;
+       ızgarada normal canavar ~1.3 saniyede öldüğünden katkısı %0,1'e
+       düşmüştü — yüzük pratikte işe yaramaz olmuştu (ölçüldü).
+       Artık iki ölçüden BÜYÜĞÜ alınır: düşman canının %1'i ya da
+       oyuncunun vuruş gücünün %15'i. Böylece düşük canlı canavarda da
+       hissedilir, yüksek canlı boss'ta da eski davranışını korur.
+       `atkDmg` isteğe bağlı — vermeyen eski çağrılar (arena/mağara/PvP)
+       aynen eskisi gibi çalışır. */
+    function ringBurnTick(st, enemyMaxHp, atkDmg) {
       if (!st || !Array.isArray(st._burn) || !st._burn.length) return 0;
       const stacks = st._burn.length;
       st._burn = st._burn.map(t => t - 1).filter(t => t > 0);
-      return Math.max(1, Math.floor((enemyMaxHp || 100) * 0.01 * stacks));
+      const byHp = (enemyMaxHp || 100) * 0.01;
+      const byDmg = (atkDmg || 0) * 0.15;
+      return Math.max(1, Math.floor(Math.max(byHp, byDmg) * stacks));
     }
     /* Arınma Yüzüğü — tur başı can yenilemesi */
     function ringRegenHeal(maxHp) {
-      const pct = ringFx('regen');
+      const pct = accFx('regen');           // Arınma Yüzüğü + İnci Küpe
       return pct > 0 ? Math.max(1, Math.floor(maxHp * pct)) : 0;
     }
+    /* ⚠ AKSESUAR ETKİSİ — YÜZÜK + KÜPE BİRLİKTE.
+       Aynı `fx` anahtarı hem yüzükte hem küpede kullanılıyor (regen,
+       lifesteal, enhance). Yardımcılar yalnız `ringFx()` okuduğu için
+       küpe sürümleri SESSİZCE ÖLÜYDU — İnci Küpe hiç iyileştirmiyor,
+       Kan Taşı Küpe hiç can çalmıyordu (2026-09-06'da ölçülerek bulundu).
+       ⚠ BİRİM FARKI: ringFx ORAN döndürür (0.05), earringFx YÜZDE (5).
+       Yeni bir ortak etki eklerken bu yardımcıyı kullan, tek tek çağırma. */
+    function accFx(fxKey) { return ringFx(fxKey) + earringFx(fxKey) / 100; }
+
+    /* Ganimet çarpanı — Okyanusun Gözü küpesi ("Zindan & Harabe ganimeti").
+       Küpe hiçbir yerde okunmuyordu; zindan düşüşü ve harabe hazinesi buradan geçer. */
+    function lootMult() { return 1 + earringFx('scoutLoot') / 100; }
+
     /* Necro Yüzüğü — düşmanın aldığı iyileşmeyi kırar (0.95 = %5 azalma) */
     function ringCurseMult() { return Math.max(0, 1 - ringFx('curse')); }
 
@@ -15107,7 +15131,7 @@
       const g = ZD.g;
       for (const m of [...g.mobs]) {
         if (m.hp <= 0) continue;
-        const burn = ringBurnTick(m.st, m.maxHp);
+        const burn = ringBurnTick(m.st, m.maxHp, eff.physDmg);
         if (burn > 0) {
           zgFloat(m.x, m.y, '🔥' + burn, '#ff9d5c');
           zgDamageMob(m, burn, zcoMe());   // yakma da ev sahibine bildirilir
@@ -15119,6 +15143,17 @@
         const healed = Math.min(rg, eff.maxhp - g.hp);
         g.hp += healed;
         zgFloat(g.px, g.py, '+' + healed, '#9ad8ff');
+      }
+      /* ⚕ TABİP — eskiden "tur başına %10 şans" diye tanımlıydı ve yalnız
+         mağara savaşında işliyordu; ızgarada tur olmadığı için zindanda
+         HİÇ çalışmıyordu (ölçüldü: 2 tabiple 400 saniyede 0 iyileşme).
+         Artık saniyeye bağlı. ⚠ Tabip'in SİLAH şartı yoktur — savaşmaz,
+         can basar; hasar tarafındaki silah şartı bilinçli olarak duruyor. */
+      const tbz = troopBuffs();
+      if (tbz.tabip > 0 && g.hp > 0 && g.hp < eff.maxhp && Math.random() < tbz.healChance) {
+        const heal = Math.min(Math.max(1, Math.floor(eff.maxhp * tbz.healPct)), eff.maxhp - g.hp);
+        g.hp += heal;
+        zgFloat(g.px, g.py, '⚕+' + heal, '#7aff9a');
       }
     }
 
@@ -15153,7 +15188,11 @@
       const isFinal = m.boss && (zgMaze() ? zgBossKind() === 'red' : ZD.floor >= ZD_FLOORS);
       const necroGate = isFinal && tier === 5;
       const kind = m.boss ? 'boss' : (m.elite ? 'elite' : 'normal');
-      if (!necroGate && Math.random() >= zdDropChance(kind, zgFloorNo())) return;
+      /* Okyanusun Gözü küpesi ganimet şansını artırır. ⚠ TAVAN KOYMA:
+         şans 1'i aşarsa `Math.random() >= p` zaten hep yanlış olur, yani
+         garanti düşüş garanti kalır. Buraya %95 gibi bir tavan konursa
+         ileride garantili düşüş isteyen her tasarım sessizce bozulur. */
+      if (!necroGate && Math.random() >= zdDropChance(kind, zgFloorNo()) * lootMult()) return;
       if (!zgBagRoom()) {
         if (m.boss || m.elite) toast('⚠ Envanter dolu — eşya düşmedi!');
         return;
@@ -15532,6 +15571,7 @@
        geldiği için sekmesi arkaplana düşen oyuncu kaybolmaz, son yerinde durur. */
     function zcoSyncRoster() {
       if (!ZCO.channel) return;
+      const wasAlone = zcoAlone();
       const seen = new Set();
       for (const arr of Object.values(ZCO.channel.presenceState())) {
         for (const p of arr) {
@@ -15541,6 +15581,10 @@
         }
       }
       Object.keys(ZCO.peers).forEach(uid => { if (!seen.has(uid)) zcoDrop(uid); });
+      /* Yalnızlıktan çıktık: hemen bir konum (ve ev sahibiysem canavar)
+         yayını at. Beklenseydi yeni gelen beni bir periyot boyunca
+         göremezdi — odaya boş girmiş gibi hissederdi. */
+      if (wasAlone && !zcoAlone()) { zcoSend(true); zcoSendMobs(true); }
     }
     function zcoDrop(uid) {
       delete ZCO.peers[uid];
@@ -15556,6 +15600,8 @@
     function zcoSend(force) {
       const g = ZD.g;
       if (!ZCO.channel || !g) return;
+      if (zcoAlone()) { g._atkFlag = false; return; }   // kimse dinlemiyor
+
       const now = Date.now();
       if (!force && now - ZCO.lastSent < ZCO_SEND_MS) return;
       ZCO.lastSent = now;
@@ -15602,6 +15648,15 @@
        Ev sahibi = kanaldaki en küçük userId → herkes aynı sonucu bulur,
        ayrı bir seçim mesajı gerekmez. Ev sahibi çıkınca sıradaki devralır
        (elindeki son anlık görüntüden devam eder). Yalnızsan sen ev sahibisin. */
+    /* ── YALNIZKEN YAYIN YAPMA ──
+       Zindanların çoğu tek kişilik geçiyor. Kimse dinlemiyorken saniyede 9
+       mesaj (4 konum + 5 canavar) göndermek boşuna trafik: hem Supabase
+       kotasını hem telefonun pilini yiyor. Presence AÇIK KALIR — birinin
+       geldiğini oradan öğreniyoruz — susan yalnızca broadcast.
+       Arkadaş gelir gelmez `zcoSyncRoster` zorla bir yayın tetikler, yoksa
+       o kişi bir sonraki periyoda kadar (200-250ms) beni göremezdi. */
+    function zcoAlone() { return Object.keys(ZCO.peers).length === 0; }
+
     function zcoHostId() {
       const ids = Object.keys(ZCO.peers);
       ids.push(zcoMe());
@@ -15615,6 +15670,8 @@
     function zcoSendMobs(force) {
       const g = ZD.g;
       if (!ZCO.channel || !g || !zcoIsHost()) return;
+      if (zcoAlone()) return;                            // kimse dinlemiyor
+
       const now = Date.now();
       if (!force && now - ZCO.lastMobSend < ZCO_MOB_MS) return;
       ZCO.lastMobSend = now;
@@ -15658,7 +15715,7 @@
        yayını olmasaydı arkadaşın ekranında canavarlar sebepsiz yanardı.
        10sn beklemeli olduğu için mesaj yükü konum yayınının %3'ü kadar. */
     function zcoSendZone(x, y) {
-      if (!ZCO.channel) return;
+      if (!ZCO.channel || zcoAlone()) return;
       ZCO.channel.send({ type: 'broadcast', event: 'zone', payload: { u: zcoMe(), x, y } });
     }
     function zcoOnZone(p) {
@@ -15684,7 +15741,7 @@
     }
     /* Ölümü ev sahibi ilan eder; ganimet yalnız öldürene gider. */
     function zcoSendKill(m, by) {
-      if (!ZCO.channel || !zcoIsHost()) return;
+      if (!ZCO.channel || !zcoIsHost() || zcoAlone()) return;
       ZCO.channel.send({
         type: 'broadcast', event: 'kill',
         payload: { m: m.uid, by, x: m.x, y: m.y, xp: m.xp, gold: m.gold, id: m.id, name: m.name, b: m.boss ? 1 : 0, e: m.elite ? 1 : 0 },
