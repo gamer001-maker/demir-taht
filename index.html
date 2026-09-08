@@ -5522,14 +5522,23 @@
       padding: 12px 12px 16px;
       border-radius: 16px;
       border: 1px solid var(--border2);
-      background: linear-gradient(165deg, #7a5230 0%, #5c3c22 45%, #3a2616 100%);
-      box-shadow: inset 0 1px 0 #ffffff1f, 0 6px 14px #0006;
+      /* ⚠ YARI SAYDAM — sayfanın kendi arkaplan görseli (setProdBg) kartın
+         ardından görünsün diye. Arkası hafif bulanıklaştırılır, yoksa desenli
+         zeminde yazılar okunmuyordu.
+         `backdrop-filter` bu elemanı `position:fixed` çocukları için kapsayıcı
+         yapar — kart içinde tooltip YOK (ZZ_TIP_HOSTS envanter/ekipman/zindan
+         hücreleri), o yüzden burada güvenli. Karta tooltip eklenirse bu satır
+         gözden geçirilmeli. */
+      background: linear-gradient(165deg, #7a5230cc 0%, #5c3c22bf 45%, #3a2616b3 100%);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      box-shadow: inset 0 1px 0 #ffffff26, 0 6px 16px #00000073;
     }
     .pcard.locked { opacity: .5; filter: grayscale(.35); }
     /* Balık parçalama — tarif değil, ayrı bir eylem: soğuk tonla ayrışır */
     .pcard-fish {
       border-color: #4d7fa3;
-      background: linear-gradient(165deg, #3f5f78 0%, #2e4759 45%, #1d2c37 100%);
+      background: linear-gradient(165deg, #3f5f78cc 0%, #2e4759bf 45%, #1d2c37b3 100%);
     }
 
     /* Süre — kartın tepesinde, ortada */
@@ -5555,8 +5564,8 @@
       gap: 4px;
       padding: 8px 6px 10px;
       border-radius: 12px;
-      background: #00000026;
-      box-shadow: inset 0 1px 0 #ffffff12;
+      background: #0000001f;
+      box-shadow: inset 0 1px 0 #ffffff1a;
       min-width: 0;
     }
     .pcard-arrow {
@@ -5589,11 +5598,12 @@
       color: var(--perg);
       line-height: 1.25;
       overflow-wrap: anywhere;
+      text-shadow: 0 1px 3px #000000b3;
     }
     .pitem-lbl b { color: #fff; margin-right: 3px; }
     /* Stokta ne var — mockup'ta yoktu ama "yetiyor mu" sorusunu
        kart üstünde cevaplıyor; yetmiyorsa kırmızı. */
-    .pitem-have { font-size: 9.5px; color: var(--ink3); margin-top: 1px; }
+    .pitem-have { font-size: 9.5px; color: #bfa88c; margin-top: 1px; text-shadow: 0 1px 2px #000000b3; }
     .pitem.short .pitem-lbl { color: #e79a9a; }
     .pitem.short .pitem-have { color: #e06a6a; }
     .pitem.short .pitem-art { filter: grayscale(.5) brightness(.8); }
