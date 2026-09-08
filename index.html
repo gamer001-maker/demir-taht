@@ -5529,16 +5529,72 @@
          yapar — kart içinde tooltip YOK (ZZ_TIP_HOSTS envanter/ekipman/zindan
          hücreleri), o yüzden burada güvenli. Karta tooltip eklenirse bu satır
          gözden geçirilmeli. */
-      background: linear-gradient(165deg, #7a5230cc 0%, #5c3c22bf 45%, #3a2616b3 100%);
-      backdrop-filter: blur(3px);
-      -webkit-backdrop-filter: blur(3px);
+      background: linear-gradient(165deg, #7a52309e 0%, #5c3c228c 45%, #3a261680 100%);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
       box-shadow: inset 0 1px 0 #ffffff26, 0 6px 16px #00000073;
     }
     .pcard.locked { opacity: .5; filter: grayscale(.35); }
+    /* ══ ÇİFTLİK PADOK KARTLARI ══ arkaplan görseli tam kaplar, bilgi altta */
+    .pen-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 12px;
+    }
+    .pen-card {
+      position: relative;
+      display: block;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      padding: 0;
+      border: 1px solid var(--border2);
+      border-radius: 14px;
+      overflow: hidden;
+      cursor: pointer;
+      background: linear-gradient(165deg, #5c4126, #2b1d10);
+      box-shadow: 0 5px 14px #00000059;
+      transition: transform .1s, filter .15s, border-color .15s;
+    }
+    .pen-card:hover { filter: brightness(1.08); border-color: var(--gold2); }
+    .pen-card:active { transform: translateY(2px); }
+    /* Görsel yoksa `onerror` ile silinir, altındaki emoji + gradyan kalır */
+    .pen-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+    .pen-fallback {
+      position: absolute; inset: 0; z-index: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 54px; opacity: .55;
+    }
+    .pen-info {
+      position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+      padding: 22px 10px 9px;
+      background: linear-gradient(180deg, #0000, #000000d9 55%);
+      text-align: left;
+    }
+    .pen-name {
+      display: block;
+      font-family: var(--font-head);
+      font-size: clamp(12px, 1.5vw, 15px);
+      color: var(--perg);
+      text-shadow: 0 2px 4px #000;
+    }
+    .pen-sub { display: block; font-size: 10.5px; color: #cbb794; margin-top: 2px; text-shadow: 0 1px 3px #000; }
+    /* Toplanacak ürün / beslenecek yavru varsa köşede uyarı */
+    .pen-flag {
+      position: absolute; top: 7px; right: 7px; z-index: 3;
+      background: #1a2e08e6; border: 1px solid var(--g-green);
+      color: #9bd17a; border-radius: 999px;
+      font-family: var(--font-head); font-size: 10px; padding: 2px 8px;
+      text-shadow: none;
+    }
+    .pen-head {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 10px;
+    }
+
     /* Balık parçalama — tarif değil, ayrı bir eylem: soğuk tonla ayrışır */
     .pcard-fish {
       border-color: #4d7fa3;
-      background: linear-gradient(165deg, #3f5f78cc 0%, #2e4759bf 45%, #1d2c37b3 100%);
+      background: linear-gradient(165deg, #3f5f789e 0%, #2e47598c 45%, #1d2c3780 100%);
     }
 
     /* Süre — kartın tepesinde, ortada */
@@ -17296,7 +17352,7 @@
         const oBars = objectives.map(o => { const p = Math.round(o.cur / o.max * 100); return `<div style="margin-bottom:5px;"><div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span style="font-size: 10px;color:var(--perg2);">${o.cur >= o.max ? '✓ ' : ''}${o.text}</span><span style="font-family:var(--font-head);font-size: 9px;color:${o.cur >= o.max ? 'var(--g-green)' : accent};">${o.cur}/${o.max}</span></div><div class="prog-bar-bg"><div class="prog-bar ${barCls}" style="width:${p}%;"></div></div></div>`; }).join('');
         const rws = q.rewards.map(x => `<span class="reward-chip rc-${x.t === 'gold' ? 'gold' : x.t === 'xp' ? 'xp' : 'item'}">${x.t === 'gold' ? x.v + '🪙' : x.t === 'xp' ? x.v + ' XP' : x.v}</span>`).join('');
         const actionBtn = t === 'daily' && allDone && !isDailyCollected
-          ? `<button class="btn btn-sm" style="width:100%;margin-top:6px;background:var(--g-green);border-color:var(--g-green);color:var(--panel3);" onclick="event.stopPropagation();collectDailyReward('${q.id}')">🎁 Ödül Al!</button>`
+          ? `<button class="btn btn-sm" style="width:100%;margin-top:6px;background:var(--g-green);border-color:var(--g-green);color:var(--panel3);" onclick="event.stopPropagation();collectDailyReward('${q.id}')">Ödül Al!</button>`
           : isDailyCollected ? `<div style="font-size: 10px;color:var(--g-green);margin-top:5px;">✓ Ödül alındı</div>` : '';
         return `<div class="qcard ${cardCls}">
       <div style="display:flex;align-items:flex-start;gap:9px;margin-bottom:7px;">
@@ -20034,6 +20090,23 @@
       ari: { name: 'Arı Kovanı', icon: '🐝', img: 'ari', baby: 'ogul', npcPrice: 60, suggested: 220 },
       at: { name: 'At', icon: '🐴', img: 'at', baby: 'tay', npcPrice: 150, suggested: 300 },
     };
+    /* ══ ÇİFTLİK PADOKLARI ══
+       Her hayvanın kendi mekânı. Çiftliğe girince önce padok seçilir,
+       içeri girilince yalnız o hayvanın sayısı / yavrusu / tarifi görünür —
+       eskiden hepsi tek karışık listedeydi.
+       ⚠ Anahtar ANIMAL_DEFS ile BİREBİR aynı olmalı; yeni hayvan eklenirse
+       (ör. keçi) hem ANIMAL_DEFS/BABY_DEFS/ANIMAL_PASSIVE hem burası,
+       ayrıca Pazar girdisi ve görseli gerekir. */
+    const RANCH_PENS = {
+      tavuk: { name: 'Tavuk Kümesi', img: 'tavukkumesi' },
+      koyun: { name: 'Koyun Ağılı', img: 'koyunagili' },
+      inek: { name: 'İnek Ahırı', img: 'inekahiri' },
+      ari: { name: 'Arılık', img: 'arilik' },
+      at: { name: 'At Damı', img: 'atdami' },
+    };
+    function ranchOpenPen(key) { G.ranchPen = key; renderRanch(); }
+    function ranchClosePen() { G.ranchPen = null; renderRanch(); }
+
     const BABY_DEFS = {
       civciv: { name: 'Civciv', icon: '🐣', img: 'civciv', adult: 'tavuk', feed: { key: 'arpa', qty: 1 } },
       kuzu: { name: 'Kuzu', icon: '🐑', img: 'kuzu', adult: 'koyun', feed: { key: 'arpa', qty: 1 } },
@@ -20202,11 +20275,47 @@
         return;
       }
 
+      /* ── PADOK SEÇİMİ ──
+         Hiçbir padok seçili değilse hayvan kartları yerine MEKÂN kartları
+         gösterilir. Kart üstünde toplanacak ürün / beslenecek yavru varsa
+         rozet çıkar; oyuncu hangi padoğa girmesi gerektiğini kart listesinden
+         anlar, içeri girmeden. */
+      if (!G.ranchPen || !RANCH_PENS[G.ranchPen]) {
+        const anim0 = G.animals || {};
+        el.innerHTML = `<div class="sec" style="margin-top:0;">PADOKLAR</div>
+    <div class="pen-grid">${Object.entries(RANCH_PENS).map(([key, pen]) => {
+          const a = ANIMAL_DEFS[key] || {};
+          const cnt = anim0[key] || 0;
+          const stored = (G.animalStore || {})[key] || 0;
+          const babies = (G.animalBabies || {})[a.baby] || [];
+          const flag = [stored > 0 ? `${stored} hazır` : '', babies.length ? `${babies.length} yavru` : '']
+            .filter(Boolean).join(' · ');
+          return `<button class="pen-card" onclick="ranchOpenPen('${key}')" title="${esc(pen.name)}">
+        <span class="pen-fallback">${a.icon || '🐾'}</span>
+        <img class="pen-bg" src="${IMG_BASE}${pen.img}.webp" alt="" onerror="this.remove()">
+        ${flag ? `<span class="pen-flag">${flag}</span>` : ''}
+        <span class="pen-info">
+          <span class="pen-name">${esc(pen.name)}</span>
+          <span class="pen-sub">${cnt > 0 ? `${cnt} ${esc(a.name || key)}` : 'boş — Pazar\'dan hayvan al'}</span>
+        </span>
+      </button>`;
+        }).join('')}</div>
+    <div style="font-size: 10px;color:var(--ink3);text-align:center;margin-top:12px;">
+      Bir padoğa gir, hayvanlarını orada besle ve ürününü topla.
+    </div>`;
+        return;
+      }
+      const penKey = G.ranchPen;
+      const pen = RANCH_PENS[penKey];
+
       const { chance, mult } = ranchGetBonus(lv);
       const maxProd = ranchMaxProd(lv);
-      const activeTimers = G.prodTimers.filter(x => x.building === 'ranch');
-      const usedSlots = activeTimers.length;
-      const recipes = PROD_RECIPES.ranch;
+      const allRanchTimers = G.prodTimers.filter(x => x.building === 'ranch');
+      const activeTimers = allRanchTimers.filter(x => x.recipe === penKey);
+      // Kapasite çiftliğin TAMAMI için — padok başına değil
+      const usedSlots = allRanchTimers.length;
+      // Yalnız bu padoğun hayvanına ait tarif (tarif id'si hayvan anahtarıyla aynı)
+      const recipes = PROD_RECIPES.ranch.filter(r => r.id === penKey);
 
       const lvInfoHtml = `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">
@@ -20298,9 +20407,9 @@
 
       // Hayvan kartları: yetişkin sayısı + birikmiş pasif ürün + yavrular
       const animals = G.animals || {};
-      const animalPanel = autoFeedPanel + `<div class="sec" style="margin-top:0;">HAYVANLAR</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-  ${Object.entries(ANIMAL_DEFS).map(([key, a]) => {
+      const animalPanel = autoFeedPanel + `<div class="sec" style="margin-top:0;">${esc(pen.name).toLocaleUpperCase('tr')}</div>
+  <div style="margin-bottom:12px;">
+  ${Object.entries(ANIMAL_DEFS).filter(([key]) => key === penKey).map(([key, a]) => {
         const cnt = animals[key] || 0;
         const passive = ANIMAL_PASSIVE[key];
         const stored = G.animalStore[key] || 0;
@@ -20320,7 +20429,7 @@
         </div>
         <button class="btn btn-xs" style="width:100%;margin-bottom:3px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;" onclick="feedBaby('${a.baby}')">🍼 Besle (${bDef.feed.qty} ${ITEM_LABELS[bDef.feed.key]})</button>`
           : '';
-        return `<div c  lass="card" style="text-align:center;padding:10px 6px;">
+        return `<div class="card" style="text-align:center;padding:10px 6px;">
     <img src="${IMG_BASE}${a.img}.webp" style="width:100%;height:90px;object-fit:contain;border-radius:6px;margin-bottom:6px;" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
     <div style="font-size: 36px;display:none;">${a.icon}</div>
     <div style="font-family:var(--font-head);font-size: 10px;color:var(--perg);">${a.name}</div>
@@ -20348,7 +20457,11 @@
     </div>`;
       }
 
-      el.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+      el.innerHTML = `<div class="pen-head">
+    <button class="btn btn-sm btn-ghost" onclick="ranchClosePen()">‹ Padoklar</button>
+    <div style="font-family:var(--font-head);font-size: 14px;color:var(--perg);">${ANIMAL_DEFS[penKey]?.icon || ''} ${esc(pen.name)}</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
     <div>${lvInfoHtml}${upgHtml}${recipesHtml}</div>
     <div>${rightHtml}</div>
   </div>
