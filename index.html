@@ -20346,10 +20346,13 @@
           const flag = [stored > 0 ? `${stored} hazır` : '', babies.length ? `${babies.length} yavru` : '']
             .filter(Boolean).join(' · ');
           /* Kartta HAYVANIN görseli (emoji çok sönük kalıyordu). Görsel yoksa
-             <img> silinir, alttaki emoji görünür. */
+             emoji açılır. ⚠ Emoji GİZLİ başlar: görseller saydam olduğu için
+             hep çizilen emoji hayvanın arkasından görünüyordu ("ikon üstüne
+             görsel gibi olmuş"). Liste tick'le değil yalnız eylemle yeniden
+             basıldığı için onerror burada kırpışma yaratmaz. */
           return `<button class="pen-card" onclick="ranchOpenPen('${key}')" title="${esc(pen.name)}">
-        <span class="pen-fallback">${a.icon || '🐾'}</span>
-        <img class="pen-animal-img" src="${IMG_BASE}${a.img || key}.webp" alt="" onerror="this.remove()">
+        <span class="pen-fallback" style="display:none;">${a.icon || '🐾'}</span>
+        <img class="pen-animal-img" src="${IMG_BASE}${a.img || key}.webp" alt="" onerror="this.previousElementSibling.style.display='flex';this.remove()">
         ${flag ? `<span class="pen-flag">${flag}</span>` : ''}
         <span class="pen-info">
           <span class="pen-name">${esc(pen.name)}</span>
