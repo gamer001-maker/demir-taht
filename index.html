@@ -8478,8 +8478,26 @@
       try { return window.matchMedia('(hover: hover) and (pointer: fine)').matches; }
       catch (e) { return true; }
     }
+    /* ⚠ SÜRÜKLEME SIRASINDA TOOLTIP YOK (2026-09-14 hatası: "eşyayı sürüklerken
+       donuyor, böyle kalıyor"). İki ayrı sebep vardı:
+       1) Tooltip sürüklenen hücrenin İÇİNDE. Tarayıcı sürükleme başlarken hücrenin
+          fotoğrafını çekip hayalet görüntü yapıyor; tooltip o an açık olduğu için
+          250px'lik yarı saydam kutu da hayalete giriyordu.
+       2) Sürükleme boyunca tarayıcı mouseover/mousemove GÖNDERMEZ, tooltip'i
+          kapatacak olay hiç gelmiyordu.
+       Çözüm: dragstart'ta (yakalama evresinde, fotoğraftan ÖNCE) tooltip kapanır
+       ve sürükleme bitene kadar yeniden açılmaz.
+       ⚠ Bayrağı yalnız dragend'e bağlama: bırakınca hücre yeniden basılıyor,
+       dragend DOM'dan kopmuş düğüme gidiyor ve belgeye kabarmıyor — bayrak
+       sonsuza dek açık kalır, tooltip bir daha hiç çıkmazdı. Sürükleme bitince
+       gelen İLK mousemove bayrağı güvenle sıfırlar (sürüklerken mousemove yok). */
+    let _zzDragging = false;
+    document.addEventListener('dragstart', () => { _zzDragging = true; zzHideTip(); }, true);
+    document.addEventListener('drop', () => { _zzDragging = false; zzHideTip(); }, true);
+    document.addEventListener('dragend', () => { _zzDragging = false; zzHideTip(); }, true);
+    document.addEventListener('mousemove', () => { if (_zzDragging) _zzDragging = false; }, { passive: true });
     document.addEventListener('mouseover', e => {
-      if (!zzTipEnabled()) return;
+      if (_zzDragging || !zzTipEnabled()) return;
       const host = e.target.closest ? e.target.closest(ZZ_TIP_HOSTS) : null;
       const tip = host ? host.querySelector(':scope > .inv-tooltip') : null;
       if (tip === _zzTip) return;
@@ -12011,7 +12029,11 @@
       draggedItemId = null;
       if (!sourceId) return;
       if (invSort !== 'default') { toast('Sıralama aktifken taşınamaz. Önce "Sırala: Varsayılan" seç.'); return; }
-      reorderInventory(sourceId, targetId);
+      /* Yeniden basım bir sonraki tura ertelenir: sürükleme henüz kapanmadan
+         kaynak hücreyi DOM'dan silmek tarayıcıda hayalet görüntünün asılı
+         kalmasına yol açabiliyor. Veri yukarıda zaten okundu (dataTransfer
+         yalnız bu olay içinde okunabilir). */
+      setTimeout(() => reorderInventory(sourceId, targetId), 0);
     }
     function reorderInventory(sourceId, targetId) {
       const arr = G.inventory;
@@ -12036,7 +12058,7 @@
       const item = G.inventory.find(x => x.id === itemId);
       if (!item) return;
       if (!slotAccepts(item, slotKey)) { toast('Bu eşya bu slota kuşanılamaz.'); return; }
-      equipItem(itemId, slotKey);
+      setTimeout(() => equipItem(itemId, slotKey), 0);   // bkz. dropOnInvSlot: sürükleme kapanmadan hücreyi silme
     }
 
     /* ── KARAKTER ── */
