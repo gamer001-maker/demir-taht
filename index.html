@@ -5556,6 +5556,52 @@
       transition: transform .1s, filter .15s, border-color .15s;
     }
     .pen-card:hover { filter: brightness(1.08); border-color: var(--gold2); }
+    /* Kartta hayvanın görseli: ortada, bilgi şeridinin üstünde */
+    .pen-animal-img {
+      position: absolute; left: 50%; top: 44%; z-index: 1;
+      width: 62%; height: 62%;
+      object-fit: contain;
+      transform: translate(-50%, -50%);
+      filter: drop-shadow(0 6px 10px #000000a6);
+      transition: transform .18s;
+    }
+    .pen-card:hover .pen-animal-img { transform: translate(-50%, -52%) scale(1.05); }
+
+    /* ── Padok içi vitrin kartı ── */
+    .pen-animal {
+      text-align: center;
+      padding: 16px 12px 14px;
+      border-radius: 16px;
+      border: 1px solid var(--border2);
+      background: linear-gradient(165deg, #7a52309e 0%, #5c3c228c 45%, #3a261680 100%);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      box-shadow: inset 0 1px 0 #ffffff26, 0 6px 16px #00000073;
+    }
+    .pen-animal-art { height: clamp(150px, 20vw, 220px); display: flex; align-items: center; justify-content: center; }
+    .pen-animal-art img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 6px 12px #000000a6); }
+    .pen-animal-emo { font-size: 90px; line-height: 1; }
+    .pen-animal-name {
+      margin-top: 8px;
+      font-family: var(--font-head);
+      font-size: clamp(15px, 1.8vw, 19px);
+      color: var(--perg);
+      text-shadow: 0 2px 4px #000;
+    }
+    .pen-animal-count {
+      font-family: var(--font-head);
+      font-size: clamp(30px, 3.6vw, 42px);
+      line-height: 1.1;
+      color: var(--gold);
+      text-shadow: 0 2px 6px #000;
+      margin: 2px 0 8px;
+    }
+    .pen-animal-count small { font-size: 12px; color: var(--perg2); margin-left: 5px; letter-spacing: .04em; }
+    .pen-animal .btn { font-size: 11px !important; padding: 5px 10px !important; }
+
+    /* Padok içinde tarif görselleri kısılır — geniş sütunda tek girdi/çıktı
+       karosu sütunun yarısını kaplıyor, yandaki hayvan kartını eziyordu. */
+    .pen-view .pitem-art { max-width: 150px; margin: 0 auto; }
     .pen-card:active { transform: translateY(2px); }
     /* Görsel yoksa `onerror` ile silinir, altındaki emoji + gradyan kalır */
     .pen-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
@@ -19628,15 +19674,20 @@
       depot: 'udepo',
       // farm: kendi .farm-scene görselini kullanıyor, sayfa arkaplanı yok
     };
-    function setProdBg(tab) {
+    /* `over` verilirse o görsel sekmenin kendi arkaplanının ÜSTÜNE ikinci katman
+       olarak basılır (ör. Çiftlik → padok görseli). ⚠ İki katman bilinçli:
+       üstteki dosya henüz yüklenmemiş/yoksa tarayıcı onu atlar ve alttaki
+       sekme arkaplanı görünür — sayfa bir anda kararmaz. */
+    function setProdBg(tab, over) {
       const page = document.getElementById('p-prod');
       if (!page) return;
       const file = PROD_BGS[tab];
       if (file) {
-        const url = `${IMG_BASE}${file}.webp`;
-        if (page.dataset.bg !== file) {
-          page.style.backgroundImage = `url('${url}')`;
-          page.dataset.bg = file;
+        const key = over ? over + '|' + file : file;
+        if (page.dataset.bg !== key) {
+          page.style.backgroundImage = (over ? `url('${IMG_BASE}${over}.webp'), ` : '')
+            + `url('${IMG_BASE}${file}.webp')`;
+          page.dataset.bg = key;
         }
         page.classList.add('has-bg');
       } else {
@@ -20097,12 +20148,15 @@
        ⚠ Anahtar ANIMAL_DEFS ile BİREBİR aynı olmalı; yeni hayvan eklenirse
        (ör. keçi) hem ANIMAL_DEFS/BABY_DEFS/ANIMAL_PASSIVE hem burası,
        ayrıca Pazar girdisi ve görseli gerekir. */
+    /* `img` = padoğa girilince SAYFANIN arkaplanı olan görsel (kart görseli
+       değil — kartta hayvanın kendi görseli, ANIMAL_DEFS[].img, gösterilir).
+       Adlar kullanıcının images/ klasörüne yüklediği dosya adlarıyla birebir. */
     const RANCH_PENS = {
       tavuk: { name: 'Tavuk Kümesi', img: 'tavukkumesi' },
-      koyun: { name: 'Koyun Ağılı', img: 'koyunagili' },
+      koyun: { name: 'Koyun Ahırı', img: 'koyunahiri' },
       inek: { name: 'İnek Ahırı', img: 'inekahiri' },
-      ari: { name: 'Arılık', img: 'arilik' },
-      at: { name: 'At Damı', img: 'atdami' },
+      ari: { name: 'Kovanlık', img: 'kovanlik' },
+      at: { name: 'At Ağılı', img: 'atagili' },
     };
     function ranchOpenPen(key) { G.ranchPen = key; renderRanch(); }
     function ranchClosePen() { G.ranchPen = null; renderRanch(); }
@@ -20281,6 +20335,7 @@
          rozet çıkar; oyuncu hangi padoğa girmesi gerektiğini kart listesinden
          anlar, içeri girmeden. */
       if (!G.ranchPen || !RANCH_PENS[G.ranchPen]) {
+        setProdBg('ranch');                  // padoktan çıkınca çiftlik arkaplanına dön
         const anim0 = G.animals || {};
         el.innerHTML = `<div class="sec" style="margin-top:0;">PADOKLAR</div>
     <div class="pen-grid">${Object.entries(RANCH_PENS).map(([key, pen]) => {
@@ -20290,9 +20345,11 @@
           const babies = (G.animalBabies || {})[a.baby] || [];
           const flag = [stored > 0 ? `${stored} hazır` : '', babies.length ? `${babies.length} yavru` : '']
             .filter(Boolean).join(' · ');
+          /* Kartta HAYVANIN görseli (emoji çok sönük kalıyordu). Görsel yoksa
+             <img> silinir, alttaki emoji görünür. */
           return `<button class="pen-card" onclick="ranchOpenPen('${key}')" title="${esc(pen.name)}">
         <span class="pen-fallback">${a.icon || '🐾'}</span>
-        <img class="pen-bg" src="${IMG_BASE}${pen.img}.webp" alt="" onerror="this.remove()">
+        <img class="pen-animal-img" src="${IMG_BASE}${a.img || key}.webp" alt="" onerror="this.remove()">
         ${flag ? `<span class="pen-flag">${flag}</span>` : ''}
         <span class="pen-info">
           <span class="pen-name">${esc(pen.name)}</span>
@@ -20301,12 +20358,13 @@
       </button>`;
         }).join('')}</div>
     <div style="font-size: 10px;color:var(--ink3);text-align:center;margin-top:12px;">
-      Bir padoğa gir, hayvanlarını orada besle ve ürününü topla.
+      Beslemek istediğin hayvanın padoğuna gir.
     </div>`;
         return;
       }
       const penKey = G.ranchPen;
       const pen = RANCH_PENS[penKey];
+      setProdBg('ranch', pen.img);           // arkaplan padoğa göre değişir
 
       const { chance, mult } = ranchGetBonus(lv);
       const maxProd = ranchMaxProd(lv);
@@ -20429,11 +20487,16 @@
         </div>
         <button class="btn btn-xs" style="width:100%;margin-bottom:3px;background:linear-gradient(180deg,#1a2e08,#0a1804);border-color:var(--g-green);color:#7aaa5a;" onclick="feedBaby('${a.baby}')">🍼 Besle (${bDef.feed.qty} ${ITEM_LABELS[bDef.feed.key]})</button>`
           : '';
-        return `<div class="card" style="text-align:center;padding:10px 6px;">
-    <img src="${IMG_BASE}${a.img}.webp" style="width:100%;height:90px;object-fit:contain;border-radius:6px;margin-bottom:6px;" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-    <div style="font-size: 36px;display:none;">${a.icon}</div>
-    <div style="font-family:var(--font-head);font-size: 10px;color:var(--perg);">${a.name}</div>
-    <div style="font-size: 14px;font-family:var(--font-head);color:var(--gold);margin:3px 0;">${cnt}</div>
+        /* Padok içinde tek hayvan var → büyük vitrin kartı. Eskiden 5 hayvan
+           yan yana sığsın diye 90px görsel + 14px sayıydı; soldaki tarif
+           kartının yanında cılız kalıyordu. */
+        return `<div class="pen-animal">
+    <div class="pen-animal-art">
+      <img src="${IMG_BASE}${a.img}.webp" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <div class="pen-animal-emo" style="display:none;">${a.icon}</div>
+    </div>
+    <div class="pen-animal-name">${esc(a.name)}</div>
+    <div class="pen-animal-count">${cnt}<small>adet</small></div>
     ${prodLine}
     ${passive && stored > 0 ? `<button class="btn btn-xs" style="width:100%;margin-bottom:3px;" onclick="collectAnimalProd('${key}')">Topla (${stored})</button>` : ''}
     ${babyLine}
@@ -20461,7 +20524,7 @@
     <button class="btn btn-sm btn-ghost" onclick="ranchClosePen()">‹ Padoklar</button>
     <div style="font-family:var(--font-head);font-size: 14px;color:var(--perg);">${ANIMAL_DEFS[penKey]?.icon || ''} ${esc(pen.name)}</div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+  <div class="pen-view" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
     <div>${lvInfoHtml}${upgHtml}${recipesHtml}</div>
     <div>${rightHtml}</div>
   </div>
