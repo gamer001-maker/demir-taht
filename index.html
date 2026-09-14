@@ -5637,6 +5637,40 @@
       margin-bottom: 10px;
     }
 
+    /* ── "Üretilebilir" filtresi ── */
+    .prod-rhead { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .prod-filter {
+      display: inline-flex; align-items: center; gap: 6px;
+      flex-shrink: 0;
+      padding: 5px 11px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--panel3);
+      color: var(--ink3);
+      font-family: var(--font-head);
+      font-size: 11px;
+      cursor: pointer;
+      transition: filter .15s, border-color .15s;
+    }
+    .prod-filter:hover { filter: brightness(1.15); }
+    .prod-filter b { font-weight: 400; opacity: .8; }
+    .prod-filter-dot { width: 8px; height: 8px; border-radius: 50%; background: #5a4a3a; }
+    .prod-filter.on {
+      background: linear-gradient(180deg, #1a2e08, #0a1804);
+      border-color: var(--g-green);
+      color: #9bd17a;
+    }
+    .prod-filter.on .prod-filter-dot { background: #7fd35a; box-shadow: 0 0 6px #7fd35a; }
+    .prod-filter-empty {
+      text-align: center;
+      padding: 22px 14px;
+      margin-bottom: 10px;
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      color: var(--ink3);
+      font-size: 12px;
+    }
+
     /* Balık parçalama — tarif değil, ayrı bir eylem: soğuk tonla ayrışır */
     .pcard-fish {
       border-color: #4d7fa3;
@@ -11343,6 +11377,43 @@
         + `<span class="pitem-emo" style="display:none;">${emo}</span>`
         + `</div>`;
     }
+    /* ══ "ÜRETİLEBİLİR" FİLTRESİ ══
+       Değirmen ve Aşevi'nde tarif listesi uzun, aşağı çok iniliyordu.
+       Açıkken yalnız ŞU AN başlatılabilecek tarifler görünür.
+       ⚠ "Üretilebilir" = kilidi açık + malzemesi yetiyor. Üretim KAPASİTESİ
+       bilinçli olarak sayılmaz: sayılsaydı slotlar doluyken liste bomboş
+       kalır, oyuncu hangi tarifi sıraya koyabileceğini göremezdi.
+       Tercih cihaza özel ve önemsiz → localStorage (tüm binalar için tek ayar). */
+    const PROD_FILTER_KEY = 'dt_prod_only_craftable';
+    let prodOnlyCraftable = (() => { try { return localStorage.getItem(PROD_FILTER_KEY) === '1'; } catch (e) { return false; } })();
+    function prodCraftable(r, lv) {
+      return r.minLv <= lv && Object.entries(r.inputs || {}).every(([k, v]) => (G.prodInv[k] || 0) >= v);
+    }
+    function prodToggleCraftable() {
+      prodOnlyCraftable = !prodOnlyCraftable;
+      try { localStorage.setItem(PROD_FILTER_KEY, prodOnlyCraftable ? '1' : '0'); } catch (e) { }
+      renderProd(G.prodTab);
+    }
+    /* Başlık satırı: bölüm adı + aç/kapa düğmesi (Pasif Besleme deseni) */
+    function prodRecipeHeader(title, total, craftable) {
+      const on = prodOnlyCraftable;
+      return `<div class="prod-rhead">
+    <div class="sec" style="margin:0;flex:1;">${title}</div>
+    <button class="prod-filter${on ? ' on' : ''}" onclick="prodToggleCraftable()"
+      title="${on ? 'Tüm tarifleri göster' : 'Yalnız malzemesi yeten tarifleri göster'}">
+      <span class="prod-filter-dot"></span>Üretilebilir <b>${craftable}/${total}</b>
+    </button>
+  </div>`;
+    }
+    /* Filtre açık ve hiçbir tarif üretilemiyorsa boş liste yerine açıklama */
+    function prodFilterEmptyHTML() {
+      return `<div class="prod-filter-empty">
+    <div style="font-size: 26px;margin-bottom:4px;">🧺</div>
+    Şu an malzemesi yeten tarif yok.
+    <button class="btn btn-xs btn-ghost" style="margin-top:8px;" onclick="prodToggleCraftable()">Tüm tarifleri göster</button>
+  </div>`;
+    }
+
     /* ══ ORTAK ÜRETİM TARİF KARTI ══
        ⚠ Değirmen / Çiftlik / Aşevi / İnşaa dördü de BUNU kullanır. Eskiden
        her renderer kendi kart HTML'ini kopyalamıştı; biri değişince diğer
@@ -19904,8 +19975,11 @@
       }
 
       // Tarif listesi
-      let recipesHtml = `<div class="sec" style="margin-top:0;">TARİFLER</div>`;
+      const craftN = recipes.filter(r => prodCraftable(r, lv)).length;
+      let recipesHtml = prodRecipeHeader('TARİFLER', recipes.length, craftN);
+      if (prodOnlyCraftable && craftN === 0) recipesHtml += prodFilterEmptyHTML();
       recipes.forEach(r => {
+        if (prodOnlyCraftable && !prodCraftable(r, lv)) return;   // filtre: yalnız üretilebilir
         const locked = r.minLv > lv;
         const full = !locked && usedSlots >= maxProd;
         const canAfford = !locked && !full && Object.entries(r.inputs).every(([k, v]) => (G.prodInv[k] || 0) >= v);
@@ -19931,10 +20005,11 @@
       const fishOwned = FISH_KEYS.filter(k => (G.prodInv[k] || 0) > 0);
       const fishTotal = fishOwned.reduce((a, k) => a + (G.prodInv[k] || 0), 0);
       const millFull = usedSlots >= maxProd;
+      const showFish = !prodOnlyCraftable || fishTotal > 0;   // filtre açıkken balık yoksa gizle
       /* Girdisi sabit değil (oyuncu hangi balığı vereceğini seçiyor), o yüzden
          prodCardHTML yerine aynı sınıflarla elle kuruluyor — görünüm birebir
          diğer tarif kartlarıyla aynı kalsın diye. */
-      recipesHtml += `<div class="pcard pcard-fish">
+      if (showFish) recipesHtml += `<div class="pcard pcard-fish">
     <div class="pcard-time">${fmtT(120)}</div>
     <div class="pcard-flow">
       <div class="pcard-side">
@@ -20666,8 +20741,11 @@
       </div>`;
       }
 
-      let recipesHtml = `<div class="sec" style="margin-top:0;">TARİFLER</div>`;
+      const craftN = recipes.filter(r => prodCraftable(r, lv)).length;
+      let recipesHtml = prodRecipeHeader('TARİFLER', recipes.length, craftN);
+      if (prodOnlyCraftable && craftN === 0) recipesHtml += prodFilterEmptyHTML();
       recipes.forEach(r => {
+        if (prodOnlyCraftable && !prodCraftable(r, lv)) return;   // filtre: yalnız üretilebilir
         const locked = r.minLv > lv;
         const full = !locked && usedSlots >= maxProd;
         const canAfford = !locked && !full && Object.entries(r.inputs).every(([k, v]) => (G.prodInv[k] || 0) >= v);
