@@ -3029,20 +3029,42 @@
       align-items: start;
     }
 
+    /* Geniş ekran: kontroller sahnenin solunda dikey sütun.
+       DİKKAT: bu blok medya sorgusundan ÖNCE gelmeli. Aynı özgüllükte
+       (0,1,0) olduğu için sonra gelen kazanır — eskiden bu kural medya
+       sorgusunun ALTINDAYDI ve mobil düzeni sessizce eziyordu. */
+    #zg-side {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
     @media(max-width:1040px) {
       #zg-wrap { --zg-max: 560px; grid-template-columns: minmax(0, 560px); justify-content: center; }
       #zg-stage { order: 1; }
       #zg-side { order: 2; }
       #zg-loot { order: 3; }
-      /* Kontroller yatay şeride döner — kareler yan yana */
-      #zg-side { grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); }
+      /* Kontroller sahnenin hemen ALTINDA yatay şeride döner. Görsel
+         butonlar doğal oranlarıyla basıldığı için tek sütunda devasa
+         kalıyorlardı; burada yan yana diziliyorlar. */
+      #zg-side {
+        grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+        align-items: start;
+      }
       .zg-side-info { grid-column: 1 / -1; }
+      /* Çıkış/iniş butonu tam genişlik — yanlışlıkla basılmasın diye ayrı durur */
+      #zg-side .zg-btn.wide { grid-column: 1 / -1; }
+      /* Ganimet mobilde 8 sütun × 4 satır: 4×8 dikeyde gereksiz yer yiyor,
+         oyuncu bir sonraki butonu görmek için kaydırmak zorunda kalıyordu.
+         Seçici #zg-loot ile başlıyor çünkü .zg-loot-grid'in temel kuralı
+         bu medya sorgusundan SONRA geliyor — id özgüllüğü sıraya bağımlı
+         olmaktan kurtarıyor. */
+      #zg-loot .zg-loot-grid { grid-template-columns: repeat(8, 1fr); }
     }
 
-    #zg-side {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 6px;
+    /* Dar telefonlarda buton görselleri hâlâ büyük kalmasın */
+    @media(max-width:560px) {
+      #zg-side { grid-template-columns: repeat(auto-fit, minmax(62px, 1fr)); gap: 5px; }
     }
 
     .zg-side-info {
