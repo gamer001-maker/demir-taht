@@ -14913,9 +14913,9 @@
       ZD.active = true;
       ZD.tier = zdPlayerTier(); // kademe girişte kilitlenir (içeride seviye atlansa da değişmez)
       ZD.floor = 1;
-      // 5. kademe = labirent (giriş odası), diğerleri 5 katlı sistem
-      ZD.mode = ZD.tier >= 5 ? 'maze' : 'floors';
-      ZD.room = ZD.mode === 'maze' ? { x: MAZE5.entry.x, y: MAZE5.entry.y } : null;
+      // Her kademe artık labirent; rota kademeye göre değişiyor (MAZES)
+      ZD.mode = 'maze';
+      ZD.room = { x: zdMaze().entry.x, y: zdMaze().entry.y };
       ZD.totalGold = 0;
       ZD.totalXP = 0;
       zgNewRun(false);   // 7×7 ızgara koşusu başlar
@@ -15012,35 +15012,109 @@
        - Boss'un öldürülme zamanı sunucuda (sql/zd_boss_migration.sql). RPC yoksa
          boss hep hazır sayılır — oyun çalışır, sadece 5/10 dk kuralı yerel kalır.
     ══════════════════════════════════════════════════════════════ */
-    const MAZE5 = {
-      W: 4, H: 4,
-      entry: { x: 0, y: 0 },
-      exits: ['0,0', '3,3'],
-      yellow: ['3,0', '0,2', '3,2'],
-      red: '3,3',
-      doors: [
-        ['0,0', '1,0'], ['1,0', '2,0'], ['2,0', '3,0'],
-        ['0,0', '0,1'], ['1,0', '1,1'], ['2,0', '2,1'],
-        ['2,1', '3,1'],
-        ['2,1', '2,2'], ['3,1', '3,2'],
-        ['1,2', '2,2'],
-        ['0,2', '0,3'], ['1,2', '1,3'],
-        ['0,3', '1,3'], ['1,3', '2,3'], ['2,3', '3,3'],
-      ],
-      respawn: { yellow: 5 * 60e3, red: 10 * 60e3 },
+    /* Her kademenin KENDİ rotası var. Kademe yükseldikçe labirent büyür ve
+       dolambaçlaşır: 1. kademe 3×3 ve neredeyse doğrusal (mekanik öğrenilsin),
+       4-5. kademe 4×4 ve çıkmaz sokaklı.
+       Kurallar: entry her zaman (0,0); çıkış yalnız `exits` odalarında;
+       `yellow` = kademenin normal boss'u, `red` = güçlü boss'u (zgSpawnBoss
+       ZD_TIERS'ten çekiyor, yani kadro otomatik kademeye uyuyor).
+       TÜM odalar entry'den erişilebilir olmalı — kapatılan bir oda oyuncuyu
+       ulaşamayacağı bir boss'la baş başa bırakır. */
+    const MAZES = {
+      1: {
+        W: 3, H: 3,
+        entry: { x: 0, y: 0 },
+        exits: ['0,0', '2,2'],
+        yellow: ['2,0'],
+        red: '2,2',
+        doors: [
+          ['0,0', '1,0'], ['1,0', '2,0'],
+          ['0,0', '0,1'], ['0,1', '0,2'],
+          ['0,1', '1,1'], ['1,1', '2,1'],
+          ['2,0', '2,1'], ['2,1', '2,2'],
+          ['0,2', '1,2'], ['1,2', '2,2'],
+        ],
+        respawn: { yellow: 5 * 60e3, red: 10 * 60e3 },
+      },
+      2: {
+        W: 4, H: 3,
+        entry: { x: 0, y: 0 },
+        exits: ['0,0', '3,2'],
+        yellow: ['3,0', '0,2'],
+        red: '3,2',
+        doors: [
+          ['0,0', '1,0'], ['1,0', '1,1'], ['1,1', '2,1'],
+          ['2,1', '2,0'], ['2,0', '3,0'], ['3,0', '3,1'],
+          ['0,0', '0,1'], ['0,1', '0,2'], ['0,2', '1,2'],
+          ['1,2', '2,2'], ['2,2', '3,2'],
+        ],
+        respawn: { yellow: 5 * 60e3, red: 10 * 60e3 },
+      },
+      3: {
+        /* Yılankavi rota + tek kestirme: uzun ama kaybolmak zor */
+        W: 4, H: 4,
+        entry: { x: 0, y: 0 },
+        exits: ['0,0', '0,3'],
+        yellow: ['3,0', '3,3'],
+        red: '0,3',
+        doors: [
+          ['0,0', '1,0'], ['1,0', '2,0'], ['2,0', '3,0'],
+          ['3,0', '3,1'], ['3,1', '2,1'], ['2,1', '1,1'], ['1,1', '0,1'],
+          ['0,1', '0,2'], ['0,2', '1,2'], ['1,2', '2,2'], ['2,2', '3,2'],
+          ['3,2', '3,3'], ['3,3', '2,3'], ['2,3', '1,3'], ['1,3', '0,3'],
+          ['1,1', '1,2'],
+        ],
+        respawn: { yellow: 5 * 60e3, red: 10 * 60e3 },
+      },
+      4: {
+        /* Çıkmaz sokaklı; kırmızı boss en uzak köşede */
+        W: 4, H: 4,
+        entry: { x: 0, y: 0 },
+        exits: ['0,0', '3,3'],
+        yellow: ['3,0', '0,3', '1,2'],
+        red: '3,3',
+        doors: [
+          ['0,0', '0,1'], ['0,1', '1,1'], ['1,1', '1,0'], ['1,0', '2,0'],
+          ['2,0', '2,1'], ['2,1', '3,1'], ['3,1', '3,0'],
+          ['0,1', '0,2'], ['0,2', '0,3'], ['0,3', '1,3'],
+          ['1,1', '1,2'], ['1,2', '2,2'], ['2,2', '2,3'], ['2,3', '3,3'],
+          ['3,1', '3,2'],
+        ],
+        respawn: { yellow: 5 * 60e3, red: 10 * 60e3 },
+      },
+      5: {
+        W: 4, H: 4,
+        entry: { x: 0, y: 0 },
+        exits: ['0,0', '3,3'],
+        yellow: ['3,0', '0,2', '3,2'],
+        red: '3,3',
+        doors: [
+          ['0,0', '1,0'], ['1,0', '2,0'], ['2,0', '3,0'],
+          ['0,0', '0,1'], ['1,0', '1,1'], ['2,0', '2,1'],
+          ['2,1', '3,1'],
+          ['2,1', '2,2'], ['3,1', '3,2'],
+          ['1,2', '2,2'],
+          ['0,2', '0,3'], ['1,2', '1,3'],
+          ['0,3', '1,3'], ['1,3', '2,3'], ['2,3', '3,3'],
+        ],
+        respawn: { yellow: 5 * 60e3, red: 10 * 60e3 },
+      },
     };
+    /* Aktif kademenin labirenti. ZD.tier girişte kilitleniyor; savunma
+       amaçlı 1'e düşülür ki hiçbir çağrı undefined ile patlamasın. */
+    function zdMaze() { return MAZES[ZD.tier] || MAZES[1]; }
     /* Kapı kareleri: kenar ortası. Oyuncu TIKLAYARAK bu kareye varınca odaya geçer. */
     const ZG_DOOR_CELL = { L: { x: 0, y: 3 }, R: { x: 6, y: 3 }, U: { x: 3, y: 0 }, D: { x: 3, y: 6 } };
     const ZG_DIR = { L: { dx: -1, dy: 0, back: 'R' }, R: { dx: 1, dy: 0, back: 'L' }, U: { dx: 0, dy: -1, back: 'D' }, D: { dx: 0, dy: 1, back: 'U' } };
     function zgMaze() { return ZD.mode === 'maze'; }
-    function zgRoomKey(x, y) { const r = ZD.room || MAZE5.entry; return (x == null ? r.x : x) + ',' + (y == null ? r.y : y); }
-    function zgHasDoor(a, b) { return MAZE5.doors.some(d => (d[0] === a && d[1] === b) || (d[0] === b && d[1] === a)); }
+    function zgRoomKey(x, y) { const r = ZD.room || zdMaze().entry; return (x == null ? r.x : x) + ',' + (y == null ? r.y : y); }
+    function zgHasDoor(a, b) { return zdMaze().doors.some(d => (d[0] === a && d[1] === b) || (d[0] === b && d[1] === a)); }
     function zgRoomDoors() {
-      const r = ZD.room || MAZE5.entry, me = zgRoomKey();
+      const r = ZD.room || zdMaze().entry, me = zgRoomKey();
       const out = {};
       for (const d of Object.keys(ZG_DIR)) {
         const nx = r.x + ZG_DIR[d].dx, ny = r.y + ZG_DIR[d].dy;
-        out[d] = nx >= 0 && ny >= 0 && nx < MAZE5.W && ny < MAZE5.H && zgHasDoor(me, nx + ',' + ny);
+        out[d] = nx >= 0 && ny >= 0 && nx < zdMaze().W && ny < zdMaze().H && zgHasDoor(me, nx + ',' + ny);
       }
       return out;
     }
@@ -15052,22 +15126,22 @@
       }
       return null;
     }
-    function zgIsExitRoom() { return zgMaze() && MAZE5.exits.includes(zgRoomKey()); }
+    function zgIsExitRoom() { return zgMaze() && zdMaze().exits.includes(zgRoomKey()); }
     function zgBossKind() {
       if (!zgMaze()) return null;
       const k = zgRoomKey();
-      if (k === MAZE5.red) return 'red';
-      if (MAZE5.yellow.includes(k)) return 'yellow';
+      if (k === zdMaze().red) return 'red';
+      if (zdMaze().yellow.includes(k)) return 'yellow';
       return null;
     }
     /* Zorluk: kat sisteminde kat, labirentte SATIR (kırmızı boss'a doğru sertleşir) */
-    function zgFloorNo() { return zgMaze() ? ((ZD.room || MAZE5.entry).y + 1) : (ZD.floor || 1); }
+    function zgFloorNo() { return zgMaze() ? ((ZD.room || zdMaze().entry).y + 1) : (ZD.floor || 1); }
     function zgFloorMult() { return 1 + (zgFloorNo() - 1) * 0.25; }
     /* Arkaplan: labirentte satır → kat 1-4 görseli, boss odaları → kat 5 görseli */
     function zgRoomBg() {
       const t = ZD.tier || 1;
       if (!zgMaze()) return IMG_BASE + t + 'zindan' + (ZD.floor || 1) + 'kat.webp';
-      const kat = zgBossKind() ? 5 : Math.min(4, (ZD.room || MAZE5.entry).y + 1);
+      const kat = zgBossKind() ? 5 : Math.min(4, (ZD.room || zdMaze().entry).y + 1);
       return IMG_BASE + t + 'zindan' + kat + 'kat.webp';
     }
     function zgBossSpawnSub() {
@@ -15083,7 +15157,7 @@
       if (!g || !kind) return '';
       if (!g.bossFetched) return 'bakılıyor…';
       if (!g.bossKilledAt) return 'boss geliyor';
-      const left = g.bossKilledAt + MAZE5.respawn[kind] - getServerNow().getTime();
+      const left = g.bossKilledAt + zdMaze().respawn[kind] - getServerNow().getTime();
       return left > 0 ? Math.ceil(left / 60000) + ' dk sonra' : 'boss geliyor';
     }
     /* Kapıdan geç: yeni oda, canavarlar sıfır, çanta/can/ayarlar taşınır.
@@ -15092,7 +15166,7 @@
     function zgGoRoom(dir) {
       const g = ZD.g; if (!g || !zgMaze()) return;
       const D = ZG_DIR[dir]; if (!D) return;
-      const r = ZD.room || MAZE5.entry;
+      const r = ZD.room || zdMaze().entry;
       const nx = r.x + D.dx, ny = r.y + D.dy;
       if (!zgHasDoor(zgRoomKey(), nx + ',' + ny)) return;
       ZD.room = { x: nx, y: ny };
@@ -15136,7 +15210,7 @@
       const g = ZD.g; const kind = zgBossKind();
       if (!g || !kind || !g.bossFetched) return;
       if (g.mobs.some(m => m.boss)) return;
-      if (g.bossKilledAt && getServerNow().getTime() < g.bossKilledAt + MAZE5.respawn[kind]) return;
+      if (g.bossKilledAt && getServerNow().getTime() < g.bossKilledAt + zdMaze().respawn[kind]) return;
       zgSpawnBoss();
     }
     /* Labirentte sekme değiştirmek = koşuyu TERK. Çanta gider; yoksa çıkış
