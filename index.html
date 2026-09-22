@@ -15472,19 +15472,19 @@
        Zindanda kesilen her canavar postunu/dişini bırakır. Çıktı G.prodInv'e
        düşer (envanter slotu yemez) ve pazarda malzeme olarak satılabilir. */
     const MOB_DROPS = {
-      jaguar: ['leoparderisi', 'sivridis'],
-      kirpi: ['kirpioklari'],
-      engerek: ['yilanderisi', 'cataldil'],
-      iguana: ['iguanaderisi'],
-      akrep: ['akrepinzehirkesesi'],
-      devakrep: ['akrepinzehirkesesi'],
-      kobrayilani: ['yilanderisi', 'cataldil'],
-      kuduzkirpi: ['kirpioklari', 'sivridis'],
-      bozayi: ['ayipencesi'],
-      bozkurt: ['kurtpostu', 'keskindis'],
-      vahsibozayi: ['ayipencesi', 'keskindis'],
-      ciftbasliayi: ['ayipencesi', 'kurtpostu'],
-      '3yilan': ['cataldil', 'yilanderisi'],
+      jaguar: ['leoparderisi', 'sivridis', 'ham_demir'],
+      kirpi: ['kirpioklari', 'ham_demir'],
+      engerek: ['yilanderisi', 'cataldil', 'guc_runesi'],
+      iguana: ['iguanaderisi', 'guc_runesi'],
+      akrep: ['akrepinzehirkesesi', 'ejderha_pulu'],
+      devakrep: ['akrepinzehirkesesi', 'ejderha_pulu'],
+      kobrayilani: ['yilanderisi', 'cataldil', 'anka_kulu'],
+      kuduzkirpi: ['kirpioklari', 'sivridis', 'anka_kulu'],
+      bozayi: ['ayipencesi', 'ruh_kristali'],
+      bozkurt: ['kurtpostu', 'keskindis', 'ruh_kristali'],
+      vahsibozayi: ['ayipencesi', 'keskindis', 'iblis_kani'],
+      ciftbasliayi: ['ayipencesi', 'kurtpostu', 'iblis_kani'],
+      '3yilan': ['cataldil', 'yilanderisi', 'semavi_oz'],
     };
     function mobMaterialDrop(enemy, isBoss) {
       const pool = MOB_DROPS[enemy?.id];
@@ -15669,7 +15669,10 @@
     function zgRange() { return ZG.RANGE[G.classId] || 1; }
     function zgAtkInterval() {
       const agi = getEffectiveStats().agi || 0;
-      return Math.max(420, Math.round(1400 - agi * 26));
+      let interval = Math.max(420, Math.round(1400 - agi * 26));
+      if (ZD.g && ZD.g.enrageUntil && Date.now() < ZD.g.enrageUntil) interval = Math.floor(interval / 2);
+      if (ZD.g && ZD.g.dodgeUntil && Date.now() < ZD.g.dodgeUntil) interval = Math.floor(interval * 0.7);
+      return Math.max(200, interval);
     }
     function zgKillQuota(floor) { return 8 + floor * 2; }
     function zgIn(x, y) { return x >= 0 && y >= 0 && x < ZG.W && y < ZG.H; }
@@ -15925,6 +15928,7 @@
       g.mobs.push(m);
       return m;
     }
+
     /* Yarasa karesi yüklenemezse: önce .png dene (görseller PNG olarak da
        yüklenebiliyor), o da yoksa 4 karenin tamamını gizleyip emojiye düş. */
     function zgBatImgErr(img) {
@@ -15955,11 +15959,30 @@
        sahibine yönlendiriyor); diğer oyuncular alanı sadece ÇİZER. Herkes
        kendi tarafında vursaydı aynı alev kişi sayısı kadar hasar verirdi. */
     const ZD_SKILLS = [
+      // Mage
       { id: 'yakma', name: 'Yakma', cls: 'mage', img: 'yakma', icon: '🔥', cd: 10000, target: 'area', area: 5 },
       { id: 'dondur', name: 'Dondur', cls: 'mage', img: 'dondur', icon: '❄️', cd: 15000, target: 'area', area: 3 },
       { id: 'zehirle', name: 'Zehirle', cls: 'mage', img: 'zehirle', icon: '☠️', cd: 12000, target: 'area', area: 3 },
       { id: 'destek', name: 'Destek', cls: 'mage', img: 'destek', icon: '👥', cd: 30000, target: 'self' },
-      { id: 'kusan', name: 'Kuşan', cls: 'mage', img: 'kusan', icon: '🛡️', cd: 20000, target: 'self' }
+      { id: 'kusan', name: 'Kuşan', cls: 'mage', img: 'kusan', icon: '🛡️', cd: 20000, target: 'self' },
+      // Warrior
+      { id: 'deprem', name: 'Deprem', cls: 'warrior', img: 'deprem', icon: '💥', cd: 12000, target: 'self' },
+      { id: 'kalkan_duvari', name: 'Kalkan Duvarı', cls: 'warrior', img: 'kalkan_duvari', icon: '🛡️', cd: 18000, target: 'self' },
+      { id: 'hiddet', name: 'Hiddet', cls: 'warrior', img: 'hiddet', icon: '💢', cd: 25000, target: 'self' },
+      { id: 'atilan_balta', name: 'Atılan Balta', cls: 'warrior', img: 'atilan_balta', icon: '🪓', cd: 10000, target: 'area', area: 1 },
+      { id: 'kan_hucumu', name: 'Kan Hücumu', cls: 'warrior', img: 'kan_hucumu', icon: '🩸', cd: 20000, target: 'self' },
+      // Rogue
+      { id: 'golge', name: 'Gölge', cls: 'rogue', img: 'golge', icon: '👤', cd: 20000, target: 'self' },
+      { id: 'zehirli_bicak', name: 'Zehirli Bıçak', cls: 'rogue', img: 'zehirli_bicak', icon: '🗡️', cd: 10000, target: 'area', area: 1 },
+      { id: 'suikast', name: 'Suikast', cls: 'rogue', img: 'suikast', icon: '🔪', cd: 15000, target: 'area', area: 1 },
+      { id: 'sis_bombasi', name: 'Sis Bombası', cls: 'rogue', img: 'sis_bombasi', icon: '💨', cd: 18000, target: 'area', area: 5 },
+      { id: 'altin_cal', name: 'Arakla', cls: 'rogue', img: 'altin_cal', icon: '💰', cd: 25000, target: 'area', area: 1 },
+      // Ranger
+      { id: 'yaylim_atesi', name: 'Yaylım Ateşi', cls: 'ranger', img: 'yaylim_atesi', icon: '🏹', cd: 12000, target: 'area', area: 5 },
+      { id: 'kapan', name: 'Kapan', cls: 'ranger', img: 'kapan', icon: '🪤', cd: 15000, target: 'area', area: 1 },
+      { id: 'ceviklik', name: 'Çeviklik', cls: 'ranger', img: 'ceviklik', icon: '🍃', cd: 20000, target: 'self' },
+      { id: 'kartal_gozu', name: 'Kartal Gözü', cls: 'ranger', img: 'kartal_gozu', icon: '👁️', cd: 18000, target: 'self' },
+      { id: 'sifali_ot', name: 'Şifalı Ot', cls: 'ranger', img: 'sifali_ot', icon: '🌿', cd: 25000, target: 'self' }
     ];
 
     /* ⚠ GÖRSEL YOKLAMA ÖNBELLEĞİ — buton yanıp sönmesin diye. */
@@ -16083,6 +16106,143 @@
           atk: Math.max(1, Math.floor((eff.physDmg || 1) * 0.5)), lastAtk: now
         });
         zgFloat(cx, cy, '👥', '#9b59b6', 1);
+      } else if (skillId === 'deprem') {
+        for (const m of g.mobs) {
+          if (m.hp > 0 && Math.abs(m.x - g.px) <= 1 && Math.abs(m.y - g.py) <= 1) {
+            if (!m.st) m.st = {};
+            m.st.stunUntil = now + 1500;
+            const dmg = Math.max(1, Math.floor((eff.physDmg || 1) * 0.8));
+            zgDamageMob(m, dmg, zcoMe());
+            zgFloat(m.x, m.y, '💥', '#f39c12', 1);
+          }
+        }
+      } else if (skillId === 'kalkan_duvari') {
+        g.shieldWallUntil = now + 6000;
+        zgFloat(g.px, g.py, '🛡️', '#bdc3c7', 1);
+      } else if (skillId === 'hiddet') {
+        g.enrageUntil = now + 5000;
+        zgFloat(g.px, g.py, '💢', '#c0392b', 1);
+      } else if (skillId === 'atilan_balta') {
+        const cx = zgSkillClamp(x, 1, ZG.W);
+        const cy = zgSkillClamp(y, 1, ZG.H);
+        let bestMob = null, bestD = 999;
+        for (const m of g.mobs) {
+          if (m.hp > 0) {
+            const d = zgDist(m.x, m.y, cx, cy);
+            if (d < bestD) { bestD = d; bestMob = m; }
+          }
+        }
+        if (bestMob && bestD <= 2) {
+          const dmg = Math.max(1, Math.floor((eff.physDmg || 1) * 2.5));
+          zgDamageMob(bestMob, dmg, zcoMe());
+          zgFloat(bestMob.x, bestMob.y, '🪓', '#e74c3c', 1);
+        }
+      } else if (skillId === 'kan_hucumu') {
+        const heal = Math.floor(eff.maxhp * 0.2);
+        g.hp = Math.min(eff.maxhp, g.hp + heal);
+        zgFloat(g.px, g.py, '+' + heal, '#2ecc71');
+      } else if (skillId === 'golge') {
+        g.stealthUntil = now + 5000;
+        zgFloat(g.px, g.py, '👤', '#34495e', 1);
+      } else if (skillId === 'zehirli_bicak') {
+        const cx = zgSkillClamp(x, 1, ZG.W);
+        const cy = zgSkillClamp(y, 1, ZG.H);
+        let bestMob = null, bestD = 999;
+        for (const m of g.mobs) {
+          if (m.hp > 0) {
+            const d = zgDist(m.x, m.y, cx, cy);
+            if (d < bestD) { bestD = d; bestMob = m; }
+          }
+        }
+        if (bestMob && bestD <= 1) {
+          if (!bestMob.st) bestMob.st = {};
+          bestMob.st.slowUntil = now + 5000;
+          bestMob.st._psnTick = now + 1000;
+          bestMob.st._psnUntil = now + 5000;
+          const dmg = Math.max(1, Math.floor((eff.physDmg || 1) * 1.5));
+          zgDamageMob(bestMob, dmg, zcoMe());
+          zgFloat(bestMob.x, bestMob.y, '🗡️', '#2ecc71', 1);
+        }
+      } else if (skillId === 'suikast') {
+        const cx = zgSkillClamp(x, 1, ZG.W);
+        const cy = zgSkillClamp(y, 1, ZG.H);
+        let bestMob = null, bestD = 999;
+        for (const m of g.mobs) {
+          if (m.hp > 0) {
+            const d = zgDist(m.x, m.y, cx, cy);
+            if (d < bestD) { bestD = d; bestMob = m; }
+          }
+        }
+        if (bestMob && bestD <= 2) {
+          const dx = Math.sign(bestMob.x - g.px), dy = Math.sign(bestMob.y - g.py);
+          const tx = bestMob.x + dx, ty = bestMob.y + dy;
+          if (zgIn(tx, ty) && !zgOccupied(tx, ty)) {
+            g.px = tx; g.py = ty;
+          } else if (zgIn(bestMob.x - dx, bestMob.y - dy) && !zgOccupied(bestMob.x - dx, bestMob.y - dy)) {
+            g.px = bestMob.x - dx; g.py = bestMob.y - dy;
+          }
+          const dmg = Math.max(1, Math.floor((eff.physDmg || 1) * 3.5));
+          zgDamageMob(bestMob, dmg, zcoMe());
+          zgFloat(bestMob.x, bestMob.y, '🔪', '#e74c3c', 1);
+        }
+      } else if (skillId === 'sis_bombasi') {
+        const cx = zgSkillClamp(x, sk.area, ZG.W);
+        const cy = zgSkillClamp(y, sk.area, ZG.H);
+        g.zones.push({ x: cx, y: cy, type: 'sis_bombasi', until: now + 6000, next: now + 6000, mine: true });
+        const r = (sk.area - 1) / 2;
+        for (const m of g.mobs) {
+          if (m.hp > 0 && Math.abs(m.x - cx) <= r && Math.abs(m.y - cy) <= r) {
+            if (!m.st) m.st = {};
+            m.st.blindUntil = now + 6000;
+            zgFloat(m.x, m.y, '💨', '#7f8c8d', 1);
+          }
+        }
+      } else if (skillId === 'altin_cal') {
+        const cx = zgSkillClamp(x, 1, ZG.W);
+        const cy = zgSkillClamp(y, 1, ZG.H);
+        let bestMob = null, bestD = 999;
+        for (const m of g.mobs) {
+          if (m.hp > 0) {
+            const d = zgDist(m.x, m.y, cx, cy);
+            if (d < bestD) { bestD = d; bestMob = m; }
+          }
+        }
+        if (bestMob && bestD <= 1) {
+          const dmg = Math.max(1, Math.floor((eff.physDmg || 1) * 1.0));
+          zgDamageMob(bestMob, dmg, zcoMe());
+          if (!bestMob._robbed) {
+            bestMob._robbed = true;
+            const stole = Math.floor(Math.random() * 41) + 10;
+            _gold_apply(stole);
+            zgFloat(bestMob.x, bestMob.y, '+' + stole + '🪙', '#f1c40f', 1);
+          }
+        }
+      } else if (skillId === 'yaylim_atesi') {
+        const cx = zgSkillClamp(x, sk.area, ZG.W);
+        const cy = zgSkillClamp(y, sk.area, ZG.H);
+        const r = (sk.area - 1) / 2;
+        for (const m of g.mobs) {
+          if (m.hp > 0 && Math.abs(m.x - cx) <= r && Math.abs(m.y - cy) <= r) {
+            const dmg = Math.max(1, Math.floor((eff.physDmg || 1) * 1.2));
+            zgDamageMob(m, dmg, zcoMe());
+            zgFloat(m.x, m.y, '🏹', '#e67e22', 1);
+          }
+        }
+      } else if (skillId === 'kapan') {
+        const cx = zgSkillClamp(x, 1, ZG.W);
+        const cy = zgSkillClamp(y, 1, ZG.H);
+        g.zones.push({ x: cx, y: cy, type: 'kapan', until: now + 60000, next: now + 60000, mine: true });
+        zgFloat(cx, cy, '🪤', '#c0392b', 1);
+      } else if (skillId === 'ceviklik') {
+        g.dodgeUntil = now + 6000;
+        zgFloat(g.px, g.py, '🍃', '#2ecc71', 1);
+      } else if (skillId === 'kartal_gozu') {
+        g.eagleEyeUntil = now + 8000;
+        zgFloat(g.px, g.py, '👁️', '#f39c12', 1);
+      } else if (skillId === 'sifali_ot') {
+        const heal = Math.floor(eff.maxhp * 0.15);
+        g.hp = Math.min(eff.maxhp, g.hp + heal);
+        zgFloat(g.px, g.py, '+' + heal, '#2ecc71');
       }
 
       zgSyncAim(); zgPaintZones(); zgRenderSide();
@@ -16106,6 +16266,20 @@
             zgFloat(m.x, m.y, '🔥' + dmg, '#ff9d5c', 1);
             zgDamageMob(m, dmg, zcoMe());
           }
+        } else if (z.type === 'kapan' && z.mine && now <= z.until) {
+          let triggered = false;
+          for (const m of [...g.mobs]) {
+            if (m.hp > 0 && m.x === z.x && m.y === z.y) {
+              if (!m.st) m.st = {};
+              m.st.stunUntil = now + 3000;
+              const dmg = Math.max(1, Math.floor((eff.physDmg || 1) * 2.0));
+              zgFloat(m.x, m.y, '🪤' + dmg, '#c0392b');
+              zgDamageMob(m, dmg, zcoMe());
+              triggered = true;
+              break;
+            }
+          }
+          if (triggered) { z.until = 0; expired = true; }
         }
         if (now > z.until) expired = true;
       }
@@ -16123,11 +16297,12 @@
       for (const z of (g ? g.zones : [])) {
         const sk = ZD_SKILLS.find(s => s.id === z.type) || { img: 'yakma', area: 5 };
         const r = (sk.area - 1) / 2;
+        const ext = z.type === 'kapan' ? '.webp' : '.gif';
         for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
           const x = z.x + dx, y = z.y + dy;
           if (!zgIn(x, y)) continue;
           h += '<div class="zg-zone" style="left:' + (x * 100 / ZG.W) + '%;top:' + (y * 100 / ZG.H) + '%;">'
-            + '<img src="' + IMG_BASE + sk.img + '.gif" alt="" onerror="this.style.display=\'none\'">'
+            + '<img src="' + IMG_BASE + sk.img + ext + '" alt="" onerror="this.style.display=\'none\'">'
             + '</div>';
         }
       }
@@ -16178,7 +16353,12 @@
        yanındaki canavarlar bile hep sana doğru yürürdü. */
     function zgNearestPlayer(m) {
       const g = ZD.g;
-      let best = { x: g.px, y: g.py }, bd = zgDist(m.x, m.y, g.px, g.py);
+      let best = null, bd = 999;
+      const now = Date.now();
+      if (!g.stealthUntil || now >= g.stealthUntil) {
+        best = { x: g.px, y: g.py };
+        bd = zgDist(m.x, m.y, g.px, g.py);
+      }
       for (const p of Object.values(ZCO.peers)) {
         if (p.x == null) continue;
         const d = zgDist(m.x, m.y, p.x, p.y);
@@ -16191,7 +16371,7 @@
           if (d < bd) { bd = d; best = { x: c.x, y: c.y }; }
         }
       }
-      return best;
+      return best || { x: m.x, y: m.y };
     }
     function zgOccupied(x, y) {
       const g = ZD.g;
@@ -16285,10 +16465,15 @@
     }
     function zgMobHit(m, eff) {
       const g = ZD.g;
-      if (Math.random() < (eff.dodgeChance || 0)) { zgFloat(g.px, g.py, 'kaçtın', '#9fd0ff'); return; }
+      const now = Date.now();
+      if (m.st && m.st.blindUntil && now < m.st.blindUntil && Math.random() < 0.5) {
+        zgFloat(g.px, g.py, 'ıska (sis)', '#7f8c8d'); return;
+      }
+      if (Math.random() < (eff.dodgeChance || 0) || (g.dodgeUntil && now < g.dodgeUntil && Math.random() < 0.3)) { zgFloat(g.px, g.py, 'kaçtın', '#9fd0ff'); return; }
       const troopRed = Math.min(0.25, troopArmorDef() * 0.005);
       let red = Math.min(0.80, (eff.damageReduction || 0) + troopRed);
-      if (g.shieldUntil && Date.now() < g.shieldUntil) red = Math.min(0.95, red + 0.20);
+      if (g.shieldUntil && now < g.shieldUntil) red = Math.min(0.95, red + 0.20);
+      if (g.shieldWallUntil && now < g.shieldWallUntil) red = Math.min(0.95, red + 0.50);
       const dmg = Math.max(1, Math.floor(m.atk * (0.85 + Math.random() * 0.3) * (1 - red)));
       g.hp = Math.max(0, g.hp - dmg);
       zgFloat(g.px, g.py, '-' + dmg, '#ff8a8a');
@@ -17024,10 +17209,19 @@
         // Can barı .zg-sprite'ın DIŞINDA: içeride olsaydı mobildeki 2×
         // ölçeklemeyle birlikte büyür ve aynalanırdı (ters yönde dolardı).
         pe.innerHTML = '<div class="zg-sprite" id="zg-sprite">' + frames
-          + '<span class="zg-emo" style="display:none;">' + cls.icon + '</span></div>'
+          + '<span class="zg-emo" style="display:none;">' + cls.icon + '</span>'
+          + '<div class="pl-fx-shield" style="display:none;position:absolute;inset:0;border:3px solid #bdc3c7;border-radius:50%;box-shadow:0 0 10px #bdc3c7, inset 0 0 10px #bdc3c7;pointer-events:none;z-index:10;animation: zg-pulse 1s infinite alternate;"></div>'
+          + '<div class="pl-fx-enrage" style="display:none;position:absolute;inset:0;background:radial-gradient(circle, transparent 50%, rgba(192,57,43,0.5) 100%);pointer-events:none;z-index:2;mix-blend-mode:color-burn;"></div>'
+          + '<div class="pl-fx-dodge" style="display:none;position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);width:120%;height:10px;border-radius:50%;box-shadow:0 0 15px #2ecc71;background:rgba(46,204,113,0.3);pointer-events:none;"></div>'
+          + '<img class="pl-fx-eagle" src="' + IMG_BASE + 'kartal_gozu.webp" style="display:none;position:absolute;top:-15px;left:50%;transform:translateX(-50%);width:24px;height:24px;z-index:15;pointer-events:none;animation:zg-pulse 1s infinite alternate;">'
+          + '</div>'
           + '<span class="zg-hpbar"><i style="width:100%"></i></span>';
         pe.style.transition = 'transform ' + ZG.WALK_MS + 'ms linear';
         pe._bar = pe.querySelector('.zg-hpbar i');
+        pe._fxShield = pe.querySelector('.pl-fx-shield');
+        pe._fxEnrage = pe.querySelector('.pl-fx-enrage');
+        pe._fxDodge = pe.querySelector('.pl-fx-dodge');
+        pe._fxEagle = pe.querySelector('.pl-fx-eagle');
         layer.appendChild(pe);
       }
       zgUnitAt(pe, g.px, g.py);
@@ -17035,6 +17229,13 @@
       // Yoksa üstteki canavar alttakini örter, hangisi önde belli olmazdı.
       pe.style.zIndex = g.py;
       if (pe._bar) pe._bar.style.width = Math.max(0, Math.round(g.hp / getEffectiveStats().maxhp * 100)) + '%';
+
+      const now = Date.now();
+      if (pe._fxShield) pe._fxShield.style.display = (g.shieldWallUntil > now) ? 'block' : 'none';
+      if (pe._fxEnrage) pe._fxEnrage.style.display = (g.enrageUntil > now) ? 'block' : 'none';
+      if (pe._fxDodge) pe._fxDodge.style.display = (g.dodgeUntil > now) ? 'block' : 'none';
+      if (pe._fxEagle) pe._fxEagle.style.display = (g.eagleEyeUntil > now) ? 'block' : 'none';
+      pe.style.opacity = (g.stealthUntil > now) ? '0.4' : '1';
       for (const m of g.mobs) {
         let e = document.getElementById('zg-u-' + m.uid);
         if (!e) {
@@ -17050,6 +17251,7 @@
             + '<span class="zg-emo" style="display:none;">' + m.icon + '</span>'
             + '<img class="mob-fx-zehir" src="' + IMG_BASE + 'zehirle.gif" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;opacity:0.8;pointer-events:none;z-index:2;">'
             + '<img class="mob-fx-dondur" src="' + IMG_BASE + 'dondur.gif" style="display:none;position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:140%;height:140%;object-fit:cover;z-index:10;pointer-events:none;">'
+            + '<img class="mob-fx-sis" src="' + IMG_BASE + 'sis_bombasi.webp" style="display:none;position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:160%;height:160%;object-fit:cover;z-index:11;pointer-events:none;opacity:0.85;">'
             + '</div>'
             + '<span class="zg-hpbar"><i style="width:100%"></i></span>';
           e.style.transition = 'transform ' + ZG.MOB_STEP_MS + 'ms linear';
@@ -17058,6 +17260,7 @@
           e._bar = e.querySelector('.zg-hpbar i');
           e._fxZehir = e.querySelector('.mob-fx-zehir');
           e._fxDondur = e.querySelector('.mob-fx-dondur');
+          e._fxSis = e.querySelector('.mob-fx-sis');
           layer.appendChild(e);
         }
         zgUnitAt(e, m.x, m.y);
@@ -17071,8 +17274,9 @@
         if (e._bar) e._bar.style.width = Math.max(0, Math.round(m.hp / m.maxHp * 100)) + '%';
 
         const now = Date.now();
-        if (e._fxZehir) e._fxZehir.style.display = (m.st && m.st.slowUntil > now) ? 'block' : 'none';
-        if (e._fxDondur) e._fxDondur.style.display = (m.st && m.st.stunUntil > now) ? 'block' : 'none';
+        if (e._fxZehir) e._fxZehir.style.display = (m.st && m.st.psnUntil > now) ? 'block' : 'none';
+        if (e._fxDondur) e._fxDondur.style.display = (m.st && (m.st.stunUntil > now || m.st.slowUntil > now)) ? 'block' : 'none';
+        if (e._fxSis) e._fxSis.style.display = (m.st && m.st.blindUntil > now) ? 'block' : 'none';
       }
 
       if (g.clones) {
@@ -17411,7 +17615,14 @@
       }
       for (const k of Object.keys(g.bag.mats)) {
         const n = Math.floor(g.bag.mats[k] * r);
-        if (n > 0) { G.prodInv[k] = (G.prodInv[k] || 0) + n; mats += n; }
+        if (n > 0) {
+          if (typeof MAT_LABELS !== 'undefined' && MAT_LABELS[k]) {
+            G.matInv[k] = (G.matInv[k] || 0) + n;
+          } else {
+            G.prodInv[k] = (G.prodInv[k] || 0) + n;
+          }
+          mats += n;
+        }
       }
       g.bag = { gold: 0, xp: 0, items: [], mats: {} };
       return { gold, xp, items, mats };
