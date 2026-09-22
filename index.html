@@ -17048,12 +17048,16 @@
           e.innerHTML = '<div class="zg-mob-sprite">'
             + art
             + '<span class="zg-emo" style="display:none;">' + m.icon + '</span>'
+            + '<img class="mob-fx-zehir" src="' + IMG_BASE + 'zehirle.gif" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;opacity:0.8;pointer-events:none;z-index:2;">'
+            + '<img class="mob-fx-dondur" src="' + IMG_BASE + 'dondur.gif" style="display:none;position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:140%;height:140%;object-fit:cover;z-index:10;pointer-events:none;">'
             + '</div>'
             + '<span class="zg-hpbar"><i style="width:100%"></i></span>';
           e.style.transition = 'transform ' + ZG.MOB_STEP_MS + 'ms linear';
           // Tick başına querySelector yapmamak için düğümleri sakla
           e._sp = e.querySelector('.zg-mob-sprite');
           e._bar = e.querySelector('.zg-hpbar i');
+          e._fxZehir = e.querySelector('.mob-fx-zehir');
+          e._fxDondur = e.querySelector('.mob-fx-dondur');
           layer.appendChild(e);
         }
         zgUnitAt(e, m.x, m.y);
@@ -17065,6 +17069,10 @@
           if (e._flip !== fl) { e._flip = fl; e._sp.classList.toggle('flip', fl); }
         }
         if (e._bar) e._bar.style.width = Math.max(0, Math.round(m.hp / m.maxHp * 100)) + '%';
+
+        const now = Date.now();
+        if (e._fxZehir) e._fxZehir.style.display = (m.st && m.st.slowUntil > now) ? 'block' : 'none';
+        if (e._fxDondur) e._fxDondur.style.display = (m.st && m.st.stunUntil > now) ? 'block' : 'none';
       }
 
       if (g.clones) {
