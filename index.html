@@ -1300,7 +1300,7 @@
       position: relative;
     }
 
-.zd-title-overlay {
+    .zd-title-overlay {
       position: absolute;
       bottom: 12px;
       left: 0;
@@ -1313,7 +1313,7 @@
       letter-spacing: 3px;
     }
 
-/* Zindan Kart Kapsayıcısı (Atmospheric Gradient Container) */
+    /* Zindan Kart Kapsayıcısı (Atmospheric Gradient Container) */
     .zd-wrap-card {
       background: linear-gradient(180deg, rgba(28, 20, 14, 0.95) 0%, rgba(14, 10, 8, 0.98) 100%);
       border: 1px solid var(--border);
@@ -1325,7 +1325,7 @@
       box-sizing: border-box;
     }
 
-@keyframes zd-enemy-enter {
+    @keyframes zd-enemy-enter {
       from {
         transform: translateX(60px) scale(.9);
         opacity: 0;
@@ -1337,9 +1337,7 @@
       }
     }
 
-@media(max-width:480px) {
-
-}
+    @media(max-width:480px) {}
 
     @keyframes zd-enemy-idle {
 
@@ -1353,7 +1351,7 @@
       }
     }
 
-/* Hasar animasyonu */
+    /* Hasar animasyonu */
     @keyframes zd-shake {
 
       0%,
@@ -1394,7 +1392,7 @@
       animation: zd-shake .4s ease;
     }
 
-/* Giriş hakları */
+    /* Giriş hakları */
     .zd-tickets {
       display: flex;
       gap: 6px;
@@ -1424,7 +1422,7 @@
 
     /* Oda geçiş animasyonu */
 
-/* ════════════════════════════════
+    /* ════════════════════════════════
    GELİŞTİRME SİSTEMİ — PC optimized
 ════════════════════════════════ */
     .enh-layout {
@@ -2826,7 +2824,7 @@
       animation: wmPulse 2.2s ease-in-out infinite;
     }
 
-/* ══════════════════════════════════════
+    /* ══════════════════════════════════════
        ZİNDAN — GERÇEK ZAMANLI 7×7 IZGARA
        Birimler .zg-unit ile konumlanır: eleman tam olarak 1/7 kare
        olduğu için transform:translate(x*100%, y*100%) tam kare kaydırır.
@@ -2846,6 +2844,7 @@
       touch-action: manipulation;
       user-select: none;
     }
+
     #zg-cells {
       position: absolute;
       inset: 0;
@@ -2854,13 +2853,33 @@
       grid-template-rows: repeat(7, 1fr);
       z-index: 2;
     }
-    .zg-cell { border: 1px solid #ffffff0d; cursor: pointer; }
-    .zg-cell:active { background: #ffd88a26; }
-    @media (hover:hover) { .zg-cell:hover { background: #ffd88a1a; } }
-    #zg-units { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+
+    .zg-cell {
+      border: 1px solid #ffffff0d;
+      cursor: pointer;
+    }
+
+    .zg-cell:active {
+      background: #ffd88a26;
+    }
+
+    @media (hover:hover) {
+      .zg-cell:hover {
+        background: #ffd88a1a;
+      }
+    }
+
+    #zg-units {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+    }
+
     .zg-unit {
       position: absolute;
-      left: 0; top: 0;
+      left: 0;
+      top: 0;
       width: 14.2857%;
       height: 14.2857%;
       display: flex;
@@ -2868,12 +2887,19 @@
       justify-content: center;
       will-change: transform;
     }
+
     .zg-unit img {
-      width: 92%; height: 92%;
+      width: 92%;
+      height: 92%;
       object-fit: contain;
       filter: drop-shadow(0 3px 5px #000a);
     }
-    .zg-unit .zg-emo { font-size: clamp(18px, 4.6vw, 30px); filter: drop-shadow(0 3px 5px #000a); }
+
+    .zg-unit .zg-emo {
+      font-size: clamp(18px, 4.6vw, 30px);
+      filter: drop-shadow(0 3px 5px #000a);
+    }
+
     /* Karakter vurus kareleri: 3 gorsel ust uste durur, sadece biri gorunur.
        Boylece kare degistirirken ag istegi olmaz, titreme yasanmaz. */
     /* --zg-scale: karakterin kareden taşma oranı. Ölçek AYAKLARDAN büyür
@@ -2882,45 +2908,112 @@
        --zg-flip yön çevirmeyi aynı transform içinde taşır; ayrı bir
        transform kuralı olsaydı ölçeği ezerdi. */
     .zg-sprite {
-      position: relative; width: 100%; height: 100%;
+      position: relative;
+      width: 100%;
+      height: 100%;
       --zg-scale: 1;
       --zg-flip: 1;
       transform: scale(calc(var(--zg-scale) * var(--zg-flip)), var(--zg-scale));
       transform-origin: 50% 100%;
     }
-    .zg-sprite.flip { --zg-flip: -1; }
-    .zg-sprite .zg-fr { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: none; filter: drop-shadow(0 3px 5px #000a); }
-    .zg-sprite .zg-fr.on { display: block; }
+
+    .zg-sprite.flip {
+      --zg-flip: -1;
+    }
+
+    .zg-sprite .zg-fr {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: none;
+      filter: drop-shadow(0 3px 5px #000a);
+    }
+
+    .zg-sprite .zg-fr.on {
+      display: block;
+    }
+
     /* Ortak kattaki diger oyuncular — mavimsi hale + isim etiketi */
     #zg-co {
-      position: absolute; top: 6px; right: 8px; z-index: 7;
-      font-family: var(--font-head); font-size: clamp(9px, 1.8vw, 11px);
-      color: #cfe9ff; background: #00000099; border: 1px solid #6ab7ff66;
-      border-radius: 8px; padding: 2px 7px; pointer-events: none;
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      z-index: 7;
+      font-family: var(--font-head);
+      font-size: clamp(9px, 1.8vw, 11px);
+      color: #cfe9ff;
+      background: #00000099;
+      border: 1px solid #6ab7ff66;
+      border-radius: 8px;
+      padding: 2px 7px;
+      pointer-events: none;
     }
-    .zg-peer { opacity: .9; }
-    .zg-peer .zg-sprite .zg-fr { filter: drop-shadow(0 0 4px #6ab7ff) drop-shadow(0 3px 5px #000a); }
+
+    .zg-peer {
+      opacity: .9;
+    }
+
+    .zg-peer .zg-sprite .zg-fr {
+      filter: drop-shadow(0 0 4px #6ab7ff) drop-shadow(0 3px 5px #000a);
+    }
+
     .zg-peer-name {
-      position: absolute; top: -3px; left: 50%; transform: translateX(-50%);
-      font-family: var(--font-head); font-size: clamp(7px, 1.5vw, 9px);
-      color: #cfe9ff; text-shadow: 0 1px 3px #000, 0 0 5px #000;
-      white-space: nowrap; pointer-events: none; max-width: 180%; overflow: hidden; text-overflow: ellipsis;
+      position: absolute;
+      top: -3px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-head);
+      font-size: clamp(7px, 1.5vw, 9px);
+      color: #cfe9ff;
+      text-shadow: 0 1px 3px #000, 0 0 5px #000;
+      white-space: nowrap;
+      pointer-events: none;
+      max-width: 180%;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
+
     /* Karakter ölçeği. Canavar görselleri sıkıca kırpılmış (figür kareyi
        doldurur), oyuncu sprite'larında ise çevrede boş pay var — object-fit
        contain ile aynı kutuda karakter küçük görünüyordu. Bu yüzden oyuncu
        ve ortak kattaki arkadaşlar ölçeklenir. BOYU AYARLAMAK İÇİN TEK SAYI
        burası: masaüstü 1.7, mobil 2 (dar ekranda kare ~50px'e düşüyor). */
-    #zg-player .zg-sprite, .zg-peer .zg-sprite { --zg-scale: 1.7; }
-    @media(max-width:640px) {
-      #zg-player .zg-sprite, .zg-peer .zg-sprite { --zg-scale: 2; }
+    #zg-player .zg-sprite,
+    .zg-peer .zg-sprite {
+      --zg-scale: 1.7;
     }
+
+    @media(max-width:640px) {
+
+      #zg-player .zg-sprite,
+      .zg-peer .zg-sprite {
+        --zg-scale: 2;
+      }
+    }
+
     /* Oyuncunun boşta süzülme animasyonu KASITLI olarak yok — karakter
        yerinde sabit durur, dalgalanma sadece canavarlarda kalır ki hareket
        eden şey göze düşman gibi görünsün. Yürüme sekmesi (zg-step) duruyor,
        o boşta değil sadece .walking sınıfı varken çalışıyor. */
-    #zg-player.walking img, #zg-player.walking .zg-emo { animation: zg-step .19s linear infinite; }
-    @keyframes zg-step { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9%); } }
+    #zg-player.walking img,
+    #zg-player.walking .zg-emo {
+      animation: zg-step .19s linear infinite;
+    }
+
+    @keyframes zg-step {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-9%);
+      }
+    }
+
     /* Canavar görselleri SOLA bakar (eski zindanda oyuncu solda, canavar
        sağdaydı). Oyuncu canavarın sağına geçince sprite aynalanır.
        Flip doğrudan .zg-unit'e konamaz — orası konum transform'unu taşıyor;
@@ -2928,61 +3021,157 @@
        Bu yüzden arada ayrı bir katman var. Can barı bu katmanın DIŞINDA
        kalır, yoksa o da aynalanıp ters yönde dolardı. */
     .zg-mob-sprite {
-      width: 100%; height: 100%;
-      min-width: 0;   /* boss img %132 — flex min-width:auto katmanı şişirmesin */
-      display: flex; align-items: flex-end; justify-content: center;
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      /* boss img %132 — flex min-width:auto katmanı şişirmesin */
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
       --zg-flip: 1;
       transform: scaleX(var(--zg-flip));
     }
-    .zg-mob-sprite.flip { --zg-flip: -1; }
+
+    .zg-mob-sprite.flip {
+      --zg-flip: -1;
+    }
 
     /* ── YARASA: 4 kareli kanat çırpma ──
        Kareler üst üste durur, her biri döngünün %25'inde görünür. Saf CSS:
        JS sayacı yok, tick yükü getirmez. `steps(1)` ara geçişi keser, kare
        kare değişir (yumuşak geçiş kanat çırpma hissini bozardı). */
-    .zg-bat-art { position: relative; width: 100%; height: 100%; }
+    .zg-bat-art {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
     .zg-bat-art .zg-bf {
-      position: absolute; inset: 0;
-      width: 100%; height: 100%;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
       object-fit: contain;
       opacity: 0;
       animation: zgBatFly .48s steps(1) infinite;
       filter: drop-shadow(0 3px 5px #000a);
     }
-    .zg-bat-art .zg-bf:nth-child(1) { animation-delay: 0s; }
-    .zg-bat-art .zg-bf:nth-child(2) { animation-delay: .12s; }
-    .zg-bat-art .zg-bf:nth-child(3) { animation-delay: .24s; }
-    .zg-bat-art .zg-bf:nth-child(4) { animation-delay: .36s; }
-    @keyframes zgBatFly { 0%, 24.99% { opacity: 1; } 25%, 100% { opacity: 0; } }
+
+    .zg-bat-art .zg-bf:nth-child(1) {
+      animation-delay: 0s;
+    }
+
+    .zg-bat-art .zg-bf:nth-child(2) {
+      animation-delay: .12s;
+    }
+
+    .zg-bat-art .zg-bf:nth-child(3) {
+      animation-delay: .24s;
+    }
+
+    .zg-bat-art .zg-bf:nth-child(4) {
+      animation-delay: .36s;
+    }
+
+    @keyframes zgBatFly {
+
+      0%,
+      24.99% {
+        opacity: 1;
+      }
+
+      25%,
+      100% {
+        opacity: 0;
+      }
+    }
+
     /* Hareket kısıtlıysa tek kare kalsın, titremesin */
     @media (prefers-reduced-motion: reduce) {
-      .zg-bat-art .zg-bf { animation: none; }
-      .zg-bat-art .zg-bf:nth-child(1) { opacity: 1; }
+      .zg-bat-art .zg-bf {
+        animation: none;
+      }
+
+      .zg-bat-art .zg-bf:nth-child(1) {
+        opacity: 1;
+      }
     }
+
     /* Yarasa küçük ve havada — biraz yukarıda dursun */
-    .zg-mob.bat .zg-mob-sprite { align-items: center; }
-    .zg-mob.bat .zg-hpbar { display: none; }   /* tek vuruşluk, bar gereksiz */
-    .zg-mob img, .zg-mob .zg-emo { animation: zd-enemy-idle 2s ease-in-out infinite; }
-    .zg-mob.elite img, .zg-mob.elite .zg-emo { filter: drop-shadow(0 0 5px #ffb347) drop-shadow(0 0 11px #ff7b00); }
-    .zg-mob.boss img, .zg-mob.boss .zg-emo { filter: drop-shadow(0 0 6px #f87171) drop-shadow(0 0 14px #b91c1c); }
-    .zg-mob.boss img { width: 132%; height: 132%; }
-    .zg-hurt { animation: zd-hit-flash .3s ease; }
+    .zg-mob.bat .zg-mob-sprite {
+      align-items: center;
+    }
+
+    .zg-mob.bat .zg-hpbar {
+      display: none;
+    }
+
+    /* tek vuruşluk, bar gereksiz */
+    .zg-mob img,
+    .zg-mob .zg-emo {
+      animation: zd-enemy-idle 2s ease-in-out infinite;
+    }
+
+    .zg-mob.elite img,
+    .zg-mob.elite .zg-emo {
+      filter: drop-shadow(0 0 5px #ffb347) drop-shadow(0 0 11px #ff7b00);
+    }
+
+    .zg-mob.boss img,
+    .zg-mob.boss .zg-emo {
+      filter: drop-shadow(0 0 6px #f87171) drop-shadow(0 0 14px #b91c1c);
+    }
+
+    .zg-mob.boss img {
+      width: 132%;
+      height: 132%;
+    }
+
+    .zg-hurt {
+      animation: zd-hit-flash .3s ease;
+    }
+
     .zg-hpbar {
       position: absolute;
-      left: 10%; right: 10%; bottom: -1px;
+      left: 10%;
+      right: 10%;
+      bottom: -1px;
       height: 4px;
       background: #000000b0;
       border-radius: 2px;
       overflow: hidden;
       border: 1px solid #00000060;
     }
-    .zg-hpbar i { display: block; height: 100%; background: linear-gradient(90deg, #d94a4a, #ff8a6a); transition: width .15s linear; }
+
+    .zg-hpbar i {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, #d94a4a, #ff8a6a);
+      transition: width .15s linear;
+    }
+
     /* Oyuncunun can barı canavarlarınkiyle aynı yerde ama YEŞİL — savaşın
        ortasında hangisinin kimin olduğu bir bakışta ayrılsın diye. Biraz
        daha kalın ve geniş; takip edilmesi gereken bar bu. */
-    #zg-player .zg-hpbar { left: 4%; right: 4%; height: 5px; border-color: #00000080; }
-    #zg-player .zg-hpbar i { background: linear-gradient(90deg, #3f9d4f, #7aff9a); }
-    #zg-fx { position: absolute; inset: 0; z-index: 6; pointer-events: none; overflow: hidden; }
+    #zg-player .zg-hpbar {
+      left: 4%;
+      right: 4%;
+      height: 5px;
+      border-color: #00000080;
+    }
+
+    #zg-player .zg-hpbar i {
+      background: linear-gradient(90deg, #3f9d4f, #7aff9a);
+    }
+
+    #zg-fx {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
     .zg-dmg {
       position: absolute;
       font-family: var(--font-head);
@@ -2992,17 +3181,28 @@
       animation: zg-dmg-rise .85s ease forwards;
       white-space: nowrap;
     }
+
     /* Ortalama translate'i keyframe'in İÇİNDE olmak zorunda: animasyon
        transform'u ezdiği için .zg-dmg üzerindeki ayrı translate hiç
        uygulanmıyordu, yazılar kare merkezinden sağa kaçıyordu. */
     @keyframes zg-dmg-rise {
-      0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-      100% { opacity: 0; transform: translate(-50%, calc(-50% - 40px)) scale(1.3); }
+      0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      100% {
+        opacity: 0;
+        transform: translate(-50%, calc(-50% - 40px)) scale(1.3);
+      }
     }
+
     #zg-mark {
       position: absolute;
-      width: 14.2857%; height: 14.2857%;
-      left: 0; top: 0;
+      width: 14.2857%;
+      height: 14.2857%;
+      left: 0;
+      top: 0;
       z-index: 1;
       pointer-events: none;
       border: 2px dashed var(--gold2);
@@ -3010,6 +3210,7 @@
       opacity: .75;
       box-sizing: border-box;
     }
+
     /* Alt kontrol barı */
     /* ── ZİNDAN YERLEŞİMİ ──
        Geniş ekranda üç sütun: kontroller | sahne | ganimet. Sahnenin iki
@@ -3029,42 +3230,39 @@
       align-items: start;
     }
 
-    /* Geniş ekran: kontroller sahnenin solunda dikey sütun.
-       DİKKAT: bu blok medya sorgusundan ÖNCE gelmeli. Aynı özgüllükte
-       (0,1,0) olduğu için sonra gelen kazanır — eskiden bu kural medya
-       sorgusunun ALTINDAYDI ve mobil düzeni sessizce eziyordu. */
+    @media(max-width:1040px) {
+      #zg-wrap {
+        --zg-max: 560px;
+        grid-template-columns: minmax(0, 560px);
+        justify-content: center;
+      }
+
+      #zg-stage {
+        order: 1;
+      }
+
+      #zg-side {
+        order: 2;
+      }
+
+      #zg-loot {
+        order: 3;
+      }
+
+      /* Kontroller yatay şeride döner — kareler yan yana */
+      #zg-side {
+        grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
+      }
+
+      .zg-side-info {
+        grid-column: 1 / -1;
+      }
+    }
+
     #zg-side {
       display: grid;
       grid-template-columns: 1fr;
       gap: 6px;
-    }
-
-    @media(max-width:1040px) {
-      #zg-wrap { --zg-max: 560px; grid-template-columns: minmax(0, 560px); justify-content: center; }
-      #zg-stage { order: 1; }
-      #zg-side { order: 2; }
-      #zg-loot { order: 3; }
-      /* Kontroller sahnenin hemen ALTINDA yatay şeride döner. Görsel
-         butonlar doğal oranlarıyla basıldığı için tek sütunda devasa
-         kalıyorlardı; burada yan yana diziliyorlar. */
-      #zg-side {
-        grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
-        align-items: start;
-      }
-      .zg-side-info { grid-column: 1 / -1; }
-      /* Çıkış/iniş butonu tam genişlik — yanlışlıkla basılmasın diye ayrı durur */
-      #zg-side .zg-btn.wide { grid-column: 1 / -1; }
-      /* Ganimet mobilde 8 sütun × 4 satır: 4×8 dikeyde gereksiz yer yiyor,
-         oyuncu bir sonraki butonu görmek için kaydırmak zorunda kalıyordu.
-         Seçici #zg-loot ile başlıyor çünkü .zg-loot-grid'in temel kuralı
-         bu medya sorgusundan SONRA geliyor — id özgüllüğü sıraya bağımlı
-         olmaktan kurtarıyor. */
-      #zg-loot .zg-loot-grid { grid-template-columns: repeat(8, 1fr); }
-    }
-
-    /* Dar telefonlarda buton görselleri hâlâ büyük kalmasın */
-    @media(max-width:560px) {
-      #zg-side { grid-template-columns: repeat(auto-fit, minmax(62px, 1fr)); gap: 5px; }
     }
 
     .zg-side-info {
@@ -3076,7 +3274,11 @@
       color: var(--ink3);
       line-height: 1.7;
     }
-    .zg-side-info b { font-family: var(--font-head); color: var(--gold2); }
+
+    .zg-side-info b {
+      font-family: var(--font-head);
+      color: var(--gold2);
+    }
 
     /* Görsel butonlar: otosaldiri / canavarcek / iksir .webp — yazı görselde,
        biz sadece durum rozetini (bekleme, adet, eşik) köşeye basıyoruz. */
@@ -3094,88 +3296,236 @@
       cursor: pointer;
       transition: filter .15s, transform .08s;
     }
-    .zg-imgbtn img { width: 100%; height: auto; display: block; border-radius: 10px; }
-    .zg-imgbtn:hover:not(:disabled) { filter: brightness(1.15); }
-    .zg-imgbtn:active:not(:disabled) { transform: translateY(1px); }
-    .zg-imgbtn:disabled { opacity: .45; cursor: not-allowed; filter: grayscale(.6); }
-    .zg-imgbtn.on { filter: drop-shadow(0 0 7px #7aff9aaa) brightness(1.1); }
+
+    .zg-imgbtn img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 10px;
+    }
+
+    .zg-imgbtn:hover:not(:disabled) {
+      filter: brightness(1.15);
+    }
+
+    .zg-imgbtn:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    .zg-imgbtn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      filter: grayscale(.6);
+    }
+
+    .zg-imgbtn.on {
+      filter: drop-shadow(0 0 7px #7aff9aaa) brightness(1.1);
+    }
+
     .zg-imgbtn.on::after {
-      content: ''; position: absolute; inset: 0;
-      border: 2px solid #7aff9a; border-radius: 10px; pointer-events: none;
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 2px solid #7aff9a;
+      border-radius: 10px;
+      pointer-events: none;
     }
+
     .zg-imgbtn .zg-badge {
-      position: absolute; right: 5px; bottom: 5px;
-      font-family: var(--font-head); font-size: clamp(9px, 1vw, 11px);
-      color: var(--gold2); background: #000000b3; border: 1px solid #00000080;
-      border-radius: 6px; padding: 1px 6px; pointer-events: none; white-space: nowrap;
+      position: absolute;
+      right: 5px;
+      bottom: 5px;
+      font-family: var(--font-head);
+      font-size: clamp(9px, 1vw, 11px);
+      color: var(--gold2);
+      background: #000000b3;
+      border: 1px solid #00000080;
+      border-radius: 6px;
+      padding: 1px 6px;
+      pointer-events: none;
+      white-space: nowrap;
     }
-    .zg-imgbtn .zg-badge.big { font-size: clamp(12px, 1.4vw, 16px); right: 50%; bottom: 50%; transform: translate(50%, 50%); }
+
+    .zg-imgbtn .zg-badge.big {
+      font-size: clamp(12px, 1.4vw, 16px);
+      right: 50%;
+      bottom: 50%;
+      transform: translate(50%, 50%);
+    }
 
     /* ── BECERİ: YAKMA ALANI ──
        Yer efekti canavarların ALTINDA kalır (z-index 1 < #zg-units 3), yoksa
        alev canavarı örter ve kimin nerede olduğu okunmaz. Görsel HER kareye
        ayrı basılır (kullanıcı isteği) — tek büyük görsel değil. Görsel
        yüklenemezse arkadaki turuncu parıltı kalır, alan yine görünür. */
-    #zg-zones { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+    #zg-zones {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
     .zg-zone {
       position: absolute;
-      width: 14.2857%; height: 14.2857%;
+      width: 14.2857%;
+      height: 14.2857%;
       background: radial-gradient(circle at 50% 60%, #ff8a3c66, #ff3c0026 68%, transparent 100%);
       animation: zgZoneIn .18s ease-out;
     }
-    .zg-zone img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    @keyframes zgZoneIn { from { opacity: 0; transform: scale(.55); } to { opacity: 1; transform: none; } }
+
+    .zg-zone img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    @keyframes zgZoneIn {
+      from {
+        opacity: 0;
+        transform: scale(.55);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
 
     /* Nişan modu: hedef karesi seçilene kadar ızgara ateş rengine döner */
-    #zg-stage.aiming .zg-cell { cursor: crosshair; background: #ff8a3c1f; }
-    @media (hover:hover) { #zg-stage.aiming .zg-cell:hover { background: #ff8a3c52; } }
+    #zg-stage.aiming .zg-cell {
+      cursor: crosshair;
+      background: #ff8a3c1f;
+    }
+
+    @media (hover:hover) {
+      #zg-stage.aiming .zg-cell:hover {
+        background: #ff8a3c52;
+      }
+    }
 
     /* Beceri butonu + altına YAPIŞIK "otomatik" şeridi — ayrı bir kutu gibi
        durmasın diye üst kenarı yok, butonla aynı genişlikte. */
-    .zg-skillbox { position: relative; }
-    .zg-sk-fallback {
-      display: none; align-items: center; justify-content: center; gap: 6px;
-      width: 100%; aspect-ratio: 16 / 7;
-      border-radius: 10px; border: 1px solid var(--border2);
-      background: linear-gradient(160deg, #3a1a0e, #1a0d07);
-      font-family: var(--font-head); font-size: clamp(11px, 1.3vw, 15px);
-      color: #ffb27a; letter-spacing: .06em; line-height: 1;
+    .zg-skillbox {
+      position: relative;
     }
+
+    .zg-sk-fallback {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      aspect-ratio: 16 / 7;
+      border-radius: 10px;
+      border: 1px solid var(--border2);
+      background: linear-gradient(160deg, #3a1a0e, #1a0d07);
+      font-family: var(--font-head);
+      font-size: clamp(11px, 1.3vw, 15px);
+      color: #ffb27a;
+      letter-spacing: .06em;
+      line-height: 1;
+    }
+
     .zg-skillauto {
-      display: flex; align-items: center; justify-content: center; gap: 5px;
-      width: 100%; padding: 3px 0 4px;
-      border: 1px solid var(--border2); border-top: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      width: 100%;
+      padding: 3px 0 4px;
+      border: 1px solid var(--border2);
+      border-top: 0;
       border-radius: 0 0 10px 10px;
       background: var(--panel3);
-      font-family: var(--font-head); font-size: 10.5px; color: var(--ink3);
-      cursor: pointer; user-select: none;
+      font-family: var(--font-head);
+      font-size: 10.5px;
+      color: var(--ink3);
+      cursor: pointer;
+      user-select: none;
     }
-    .zg-skillauto.on { color: #7aff9a; border-color: #7aff9a80; background: #7aff9a1a; }
-    .zg-skillauto i { font-style: normal; }
+
+    .zg-skillauto.on {
+      color: #7aff9a;
+      border-color: #7aff9a80;
+      background: #7aff9a1a;
+    }
+
+    .zg-skillauto i {
+      font-style: normal;
+    }
 
     /* ── LABİRENT KAPILARI — kenar ortasındaki kareye ışıklı geçit ── */
     .zg-door {
-      position: absolute; z-index: 1; pointer-events: none;
-      width: 14.2857%; height: 14.2857%;
-      display: flex; align-items: center; justify-content: center;
+      position: absolute;
+      z-index: 1;
+      pointer-events: none;
+      width: 14.2857%;
+      height: 14.2857%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       background: radial-gradient(ellipse at center, #ffd88a55, transparent 72%);
       box-shadow: 0 0 22px #ffb84766, inset 0 0 14px #ffd88a44;
       border-radius: 8px;
-      color: #ffe3a8; font-size: clamp(14px, 2.6vw, 26px);
+      color: #ffe3a8;
+      font-size: clamp(14px, 2.6vw, 26px);
       text-shadow: 0 0 8px #ffb847, 0 1px 3px #000;
       animation: zgDoorPulse 1.8s ease-in-out infinite;
     }
-    .zg-door.L { left: 0; top: 42.857%; }
-    .zg-door.R { right: 0; top: 42.857%; }
-    .zg-door.U { top: 0; left: 42.857%; }
-    .zg-door.D { bottom: 0; left: 42.857%; }
-    @keyframes zgDoorPulse { 0%,100% { opacity: .75; } 50% { opacity: 1; } }
-    @media(prefers-reduced-motion:reduce) { .zg-door { animation: none; } }
+
+    .zg-door.L {
+      left: 0;
+      top: 42.857%;
+    }
+
+    .zg-door.R {
+      right: 0;
+      top: 42.857%;
+    }
+
+    .zg-door.U {
+      top: 0;
+      left: 42.857%;
+    }
+
+    .zg-door.D {
+      bottom: 0;
+      left: 42.857%;
+    }
+
+    @keyframes zgDoorPulse {
+
+      0%,
+      100% {
+        opacity: .75;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+      .zg-door {
+        animation: none;
+      }
+    }
+
     #zg-exitmark {
-      position: absolute; top: 6px; left: 8px; z-index: 7; pointer-events: none;
-      font-family: var(--font-head); font-size: clamp(9px, 1.8vw, 11px); letter-spacing: 1px;
-      color: #9df5b3; background: #000000a0; border: 1px solid #7aff9a66;
-      border-radius: 8px; padding: 2px 8px;
+      position: absolute;
+      top: 6px;
+      left: 8px;
+      z-index: 7;
+      pointer-events: none;
+      font-family: var(--font-head);
+      font-size: clamp(9px, 1.8vw, 11px);
+      letter-spacing: 1px;
+      color: #9df5b3;
+      background: #000000a0;
+      border: 1px solid #7aff9a66;
+      border-radius: 8px;
+      padding: 2px 8px;
     }
 
     /* Kare buton — ikon yok, sadece metin */
@@ -3198,13 +3548,39 @@
       line-height: 1.25;
       transition: border-color .15s, background .15s, color .15s;
     }
-    .zg-btn:hover:not(:disabled) { border-color: var(--gold2); color: var(--gold2); }
-    .zg-btn:disabled { opacity: .42; cursor: not-allowed; }
-    .zg-btn.on { border-color: #7aff9a; background: #132014; color: #9df5b3; }
-    .zg-btn.danger { border-color: #7a3a3a; color: #f0a0a0; }
+
+    .zg-btn:hover:not(:disabled) {
+      border-color: var(--gold2);
+      color: var(--gold2);
+    }
+
+    .zg-btn:disabled {
+      opacity: .42;
+      cursor: not-allowed;
+    }
+
+    .zg-btn.on {
+      border-color: #7aff9a;
+      background: #132014;
+      color: #9df5b3;
+    }
+
+    .zg-btn.danger {
+      border-color: #7a3a3a;
+      color: #f0a0a0;
+    }
+
     /* Çıkış/iniş butonu kare değil — tam genişlik, yanlışlıkla basılmasın diye ayrı durur */
-    .zg-btn.wide { aspect-ratio: auto; padding: 10px 6px; }
-    .zg-btn .zg-btn-sub { font-size: 9px; opacity: .72; font-family: var(--font-body); }
+    .zg-btn.wide {
+      aspect-ratio: auto;
+      padding: 10px 6px;
+    }
+
+    .zg-btn .zg-btn-sub {
+      font-size: 9px;
+      opacity: .72;
+      font-family: var(--font-body);
+    }
 
     /* ── GANİMET ÇANTASI (sağ sütun) ── */
     #zg-loot {
@@ -3213,6 +3589,7 @@
       border-radius: 8px;
       padding: 8px;
     }
+
     .zg-loot-hd {
       font-family: var(--font-head);
       font-size: 11px;
@@ -3221,11 +3598,13 @@
       text-align: center;
       margin-bottom: 7px;
     }
+
     .zg-loot-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 4px;
     }
+
     .zg-loot-cell {
       aspect-ratio: 1;
       border: 1px solid var(--border);
@@ -3237,9 +3616,24 @@
       overflow: hidden;
       font-size: 16px;
     }
-    .zg-loot-cell img { width: 84%; height: 84%; object-fit: contain; }
-    .zg-loot-cell.filled { border-color: var(--border2); background: var(--panel2); }
-    .zg-loot-cell.more { font-family: var(--font-head); font-size: 11px; color: var(--gold2); }
+
+    .zg-loot-cell img {
+      width: 84%;
+      height: 84%;
+      object-fit: contain;
+    }
+
+    .zg-loot-cell.filled {
+      border-color: var(--border2);
+      background: var(--panel2);
+    }
+
+    .zg-loot-cell.more {
+      font-family: var(--font-head);
+      font-size: 11px;
+      color: var(--gold2);
+    }
+
     .zg-loot-foot {
       margin-top: 7px;
       padding-top: 7px;
@@ -3248,7 +3642,11 @@
       color: var(--ink3);
       line-height: 1.8;
     }
-    .zg-loot-foot b { font-family: var(--font-head); color: var(--gold2); }
+
+    .zg-loot-foot b {
+      font-family: var(--font-head);
+      color: var(--gold2);
+    }
 
     @keyframes wmPulse {
 
@@ -3745,7 +4143,7 @@
       border: 1px solid #4a2a10;
     }
 
-/* ═══════════════════════════════
+    /* ═══════════════════════════════
    GÖREV SİSTEMİ v2
 ═══════════════════════════════ */
     #p-quest {
@@ -4377,9 +4775,19 @@
         line-height: 1.25 !important;
       }
 
-      .market-grid .lc-title { font-size: 14px !important; line-height: 1.25 !important; }
-      .market-grid .lc-art { width: 82% !important; }
-      .market-grid .lc-pip { font-size: 11px !important; padding: 1px 7px !important; }
+      .market-grid .lc-title {
+        font-size: 14px !important;
+        line-height: 1.25 !important;
+      }
+
+      .market-grid .lc-art {
+        width: 82% !important;
+      }
+
+      .market-grid .lc-pip {
+        font-size: 11px !important;
+        padding: 1px 7px !important;
+      }
 
       .market-grid .listing-card>div {
         font-size: 11px !important;
@@ -4456,6 +4864,7 @@
       line-height: 1.25;
       word-break: break-word;
     }
+
     .lc-art {
       width: 76%;
       aspect-ratio: 1;
@@ -4464,11 +4873,14 @@
       justify-content: center;
       margin: 2px 0;
     }
+
     .lc-art img {
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       object-fit: contain;
       filter: drop-shadow(0 4px 8px #000a);
     }
+
     /* Nadirlik rozeti — .grade-pip mutlak konumlu (ikon kutusunun köşesine
        yapışır), buradaki AKIŞ İÇİNDE durur. Renkleri gp-* sınıflarından alır. */
     .lc-pip {
@@ -4479,7 +4891,14 @@
       line-height: 1.5;
       letter-spacing: .5px;
     }
-    .lc-meta { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; align-items: center; }
+
+    .lc-meta {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+    }
 
     .grade-pip {
       position: absolute;
@@ -5535,6 +5954,7 @@
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
       gap: 12px;
     }
+
     .pcard {
       margin-bottom: 10px;
       position: relative;
@@ -5556,13 +5976,19 @@
       -webkit-backdrop-filter: blur(5px);
       box-shadow: inset 0 1px 0 #ffffff26, 0 6px 16px #00000073;
     }
-    .pcard.locked { opacity: .5; filter: grayscale(.35); }
+
+    .pcard.locked {
+      opacity: .5;
+      filter: grayscale(.35);
+    }
+
     /* ══ ÇİFTLİK PADOK KARTLARI ══ arkaplan görseli tam kaplar, bilgi altta */
     .pen-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
       gap: 12px;
     }
+
     .pen-card {
       position: relative;
       display: block;
@@ -5577,17 +6003,29 @@
       box-shadow: 0 5px 14px #00000059;
       transition: transform .1s, filter .15s, border-color .15s;
     }
-    .pen-card:hover { filter: brightness(1.08); border-color: var(--gold2); }
+
+    .pen-card:hover {
+      filter: brightness(1.08);
+      border-color: var(--gold2);
+    }
+
     /* Kartta hayvanın görseli: ortada, bilgi şeridinin üstünde */
     .pen-animal-img {
-      position: absolute; left: 50%; top: 44%; z-index: 1;
-      width: 62%; height: 62%;
+      position: absolute;
+      left: 50%;
+      top: 44%;
+      z-index: 1;
+      width: 62%;
+      height: 62%;
       object-fit: contain;
       transform: translate(-50%, -50%);
       filter: drop-shadow(0 6px 10px #000000a6);
       transition: transform .18s;
     }
-    .pen-card:hover .pen-animal-img { transform: translate(-50%, -52%) scale(1.05); }
+
+    .pen-card:hover .pen-animal-img {
+      transform: translate(-50%, -52%) scale(1.05);
+    }
 
     /* ── Padok içi vitrin kartı ── */
     .pen-animal {
@@ -5600,9 +6038,26 @@
       -webkit-backdrop-filter: blur(5px);
       box-shadow: inset 0 1px 0 #ffffff26, 0 6px 16px #00000073;
     }
-    .pen-animal-art { height: clamp(150px, 20vw, 220px); display: flex; align-items: center; justify-content: center; }
-    .pen-animal-art img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 6px 12px #000000a6); }
-    .pen-animal-emo { font-size: 90px; line-height: 1; }
+
+    .pen-animal-art {
+      height: clamp(150px, 20vw, 220px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pen-animal-art img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 6px 12px #000000a6);
+    }
+
+    .pen-animal-emo {
+      font-size: 90px;
+      line-height: 1;
+    }
+
     .pen-animal-name {
       margin-top: 8px;
       font-family: var(--font-head);
@@ -5610,6 +6065,7 @@
       color: var(--perg);
       text-shadow: 0 2px 4px #000;
     }
+
     .pen-animal-count {
       font-family: var(--font-head);
       font-size: clamp(30px, 3.6vw, 42px);
@@ -5618,26 +6074,62 @@
       text-shadow: 0 2px 6px #000;
       margin: 2px 0 8px;
     }
-    .pen-animal-count small { font-size: 12px; color: var(--perg2); margin-left: 5px; letter-spacing: .04em; }
-    .pen-animal .btn { font-size: 11px !important; padding: 5px 10px !important; }
+
+    .pen-animal-count small {
+      font-size: 12px;
+      color: var(--perg2);
+      margin-left: 5px;
+      letter-spacing: .04em;
+    }
+
+    .pen-animal .btn {
+      font-size: 11px !important;
+      padding: 5px 10px !important;
+    }
 
     /* Padok içinde tarif görselleri kısılır — geniş sütunda tek girdi/çıktı
        karosu sütunun yarısını kaplıyor, yandaki hayvan kartını eziyordu. */
-    .pen-view .pitem-art { max-width: 150px; margin: 0 auto; }
-    .pen-card:active { transform: translateY(2px); }
-    /* Görsel yoksa `onerror` ile silinir, altındaki emoji + gradyan kalır */
-    .pen-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
-    .pen-fallback {
-      position: absolute; inset: 0; z-index: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 54px; opacity: .55;
+    .pen-view .pitem-art {
+      max-width: 150px;
+      margin: 0 auto;
     }
+
+    .pen-card:active {
+      transform: translateY(2px);
+    }
+
+    /* Görsel yoksa `onerror` ile silinir, altındaki emoji + gradyan kalır */
+    .pen-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+    }
+
+    .pen-fallback {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 54px;
+      opacity: .55;
+    }
+
     .pen-info {
-      position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2;
       padding: 22px 10px 9px;
       background: linear-gradient(180deg, #0000, #000000d9 55%);
       text-align: left;
     }
+
     .pen-name {
       display: block;
       font-family: var(--font-head);
@@ -5645,24 +6137,50 @@
       color: var(--perg);
       text-shadow: 0 2px 4px #000;
     }
-    .pen-sub { display: block; font-size: 10.5px; color: #cbb794; margin-top: 2px; text-shadow: 0 1px 3px #000; }
+
+    .pen-sub {
+      display: block;
+      font-size: 10.5px;
+      color: #cbb794;
+      margin-top: 2px;
+      text-shadow: 0 1px 3px #000;
+    }
+
     /* Toplanacak ürün / beslenecek yavru varsa köşede uyarı */
     .pen-flag {
-      position: absolute; top: 7px; right: 7px; z-index: 3;
-      background: #1a2e08e6; border: 1px solid var(--g-green);
-      color: #9bd17a; border-radius: 999px;
-      font-family: var(--font-head); font-size: 10px; padding: 2px 8px;
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      z-index: 3;
+      background: #1a2e08e6;
+      border: 1px solid var(--g-green);
+      color: #9bd17a;
+      border-radius: 999px;
+      font-family: var(--font-head);
+      font-size: 10px;
+      padding: 2px 8px;
       text-shadow: none;
     }
+
     .pen-head {
-      display: flex; align-items: center; gap: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
       margin-bottom: 10px;
     }
 
     /* ── "Üretilebilir" filtresi ── */
-    .prod-rhead { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .prod-rhead {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
     .prod-filter {
-      display: inline-flex; align-items: center; gap: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       flex-shrink: 0;
       padding: 5px 11px;
       border-radius: 999px;
@@ -5674,15 +6192,34 @@
       cursor: pointer;
       transition: filter .15s, border-color .15s;
     }
-    .prod-filter:hover { filter: brightness(1.15); }
-    .prod-filter b { font-weight: 400; opacity: .8; }
-    .prod-filter-dot { width: 8px; height: 8px; border-radius: 50%; background: #5a4a3a; }
+
+    .prod-filter:hover {
+      filter: brightness(1.15);
+    }
+
+    .prod-filter b {
+      font-weight: 400;
+      opacity: .8;
+    }
+
+    .prod-filter-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #5a4a3a;
+    }
+
     .prod-filter.on {
       background: linear-gradient(180deg, #1a2e08, #0a1804);
       border-color: var(--g-green);
       color: #9bd17a;
     }
-    .prod-filter.on .prod-filter-dot { background: #7fd35a; box-shadow: 0 0 6px #7fd35a; }
+
+    .prod-filter.on .prod-filter-dot {
+      background: #7fd35a;
+      box-shadow: 0 0 6px #7fd35a;
+    }
+
     .prod-filter-empty {
       text-align: center;
       padding: 22px 14px;
@@ -5708,7 +6245,11 @@
       color: var(--perg);
       text-shadow: 0 2px 4px #0008;
     }
-    .pcard-time small { font-size: 11px; opacity: .8; }
+
+    .pcard-time small {
+      font-size: 11px;
+      opacity: .8;
+    }
 
     /* Girdi ▸ Çıktı akışı */
     .pcard-flow {
@@ -5717,6 +6258,7 @@
       align-items: stretch;
       gap: 6px;
     }
+
     .pcard-side {
       display: flex;
       gap: 4px;
@@ -5726,6 +6268,7 @@
       box-shadow: inset 0 1px 0 #ffffff1a;
       min-width: 0;
     }
+
     .pcard-arrow {
       align-self: center;
       font-family: var(--font-head);
@@ -5735,20 +6278,35 @@
       text-shadow: 0 2px 5px #0009;
       line-height: 1;
     }
+
     /* Malzeme karosu — 1 girdide büyük, 2-3 girdide kendiliğinden daralır */
-    .pitem { flex: 1 1 0; min-width: 0; text-align: center; }
+    .pitem {
+      flex: 1 1 0;
+      min-width: 0;
+      text-align: center;
+    }
+
     .pitem-art {
       position: relative;
       width: 100%;
       aspect-ratio: 1;
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
+
     .pitem-art img {
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       object-fit: contain;
       filter: drop-shadow(0 3px 6px #0007);
     }
-    .pitem-art .pitem-emo { font-size: clamp(26px, 5vw, 44px); line-height: 1; }
+
+    .pitem-art .pitem-emo {
+      font-size: clamp(26px, 5vw, 44px);
+      line-height: 1;
+    }
+
     .pitem-lbl {
       margin-top: 4px;
       font-family: var(--font-head);
@@ -5758,13 +6316,33 @@
       overflow-wrap: anywhere;
       text-shadow: 0 1px 3px #000000b3;
     }
-    .pitem-lbl b { color: #fff; margin-right: 3px; }
+
+    .pitem-lbl b {
+      color: #fff;
+      margin-right: 3px;
+    }
+
     /* Stokta ne var — mockup'ta yoktu ama "yetiyor mu" sorusunu
        kart üstünde cevaplıyor; yetmiyorsa kırmızı. */
-    .pitem-have { font-size: 9.5px; color: #bfa88c; margin-top: 1px; text-shadow: 0 1px 2px #000000b3; }
-    .pitem.short .pitem-lbl { color: #e79a9a; }
-    .pitem.short .pitem-have { color: #e06a6a; }
-    .pitem.short .pitem-art { filter: grayscale(.5) brightness(.8); }
+    .pitem-have {
+      font-size: 9.5px;
+      color: #bfa88c;
+      margin-top: 1px;
+      text-shadow: 0 1px 2px #000000b3;
+    }
+
+    .pitem.short .pitem-lbl {
+      color: #e79a9a;
+    }
+
+    .pitem.short .pitem-have {
+      color: #e06a6a;
+    }
+
+    .pitem.short .pitem-art {
+      filter: grayscale(.5) brightness(.8);
+    }
+
     .pcard-extra {
       grid-column: 1 / -1;
       text-align: center;
@@ -5787,8 +6365,16 @@
       box-shadow: 0 3px 0 #00000055, inset 0 1px 0 #ffffff33;
       transition: filter .15s, transform .07s;
     }
-    .pcard-btn:hover:not(:disabled) { filter: brightness(1.12); }
-    .pcard-btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #00000055, inset 0 1px 0 #ffffff33; }
+
+    .pcard-btn:hover:not(:disabled) {
+      filter: brightness(1.12);
+    }
+
+    .pcard-btn:active:not(:disabled) {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #00000055, inset 0 1px 0 #ffffff33;
+    }
+
     .pcard-btn:disabled {
       cursor: not-allowed;
       border-color: #5a4630;
@@ -5798,7 +6384,9 @@
     }
 
     @media(max-width:520px) {
-      .pgrid { grid-template-columns: 1fr; }
+      .pgrid {
+        grid-template-columns: 1fr;
+      }
     }
 
     .timer-card {
@@ -6745,17 +7333,42 @@
        ve ikisi üst üste biniyordu. Mobilde bilgi kaybı da olmuyor — pencere
        aynı bilgileri (stat, set bonusu, tüccar fiyatı) zaten gösteriyor. */
     @media (hover: hover) and (pointer: fine) {
-      .inv-tooltip.tip-on { display: block; }
+      .inv-tooltip.tip-on {
+        display: block;
+      }
     }
 
     /* Derece rengi. Yazı beyaz olduğu için ton bilinçli olarak KOYU —
        gradyan üstte neredeyse siyah, aşağı indikçe derecenin rengine açılır. */
-    .inv-tooltip { --tt-c: #4a463f; --tt-e: #8a8276; }
-    .inv-tooltip.tt-gray { --tt-c: #4a463f; --tt-e: #8a8276; }
-    .inv-tooltip.tt-green { --tt-c: #2c5220; --tt-e: #7aaa5a; }
-    .inv-tooltip.tt-blue { --tt-c: #234456; --tt-e: #5a8aaa; }
-    .inv-tooltip.tt-purple { --tt-c: #452a5e; --tt-e: #b06ae0; }
-    .inv-tooltip.tt-orange { --tt-c: #6d470f; --tt-e: #f0a030; }
+    .inv-tooltip {
+      --tt-c: #4a463f;
+      --tt-e: #8a8276;
+    }
+
+    .inv-tooltip.tt-gray {
+      --tt-c: #4a463f;
+      --tt-e: #8a8276;
+    }
+
+    .inv-tooltip.tt-green {
+      --tt-c: #2c5220;
+      --tt-e: #7aaa5a;
+    }
+
+    .inv-tooltip.tt-blue {
+      --tt-c: #234456;
+      --tt-e: #5a8aaa;
+    }
+
+    .inv-tooltip.tt-purple {
+      --tt-c: #452a5e;
+      --tt-e: #b06ae0;
+    }
+
+    .inv-tooltip.tt-orange {
+      --tt-c: #6d470f;
+      --tt-e: #f0a030;
+    }
 
     .tt-head {
       position: relative;
@@ -6791,9 +7404,20 @@
       overflow: hidden;
     }
 
-    .tt-art img { width: 88%; height: 88%; object-fit: contain; }
-    .tt-art span { font-size: 26px; }
-    .tt-id { min-width: 0; flex: 1; }
+    .tt-art img {
+      width: 88%;
+      height: 88%;
+      object-fit: contain;
+    }
+
+    .tt-art span {
+      font-size: 26px;
+    }
+
+    .tt-id {
+      min-width: 0;
+      flex: 1;
+    }
 
     .tt-name {
       font-family: var(--font-head);
@@ -6805,12 +7429,26 @@
       margin-bottom: 5px;
     }
 
-    .tt-grade { font-size: 11.5px; color: #ffffffdd; line-height: 1.5; }
-    .tt-type { font-size: 11.5px; color: #ffffffb0; line-height: 1.5; }
+    .tt-grade {
+      font-size: 11.5px;
+      color: #ffffffdd;
+      line-height: 1.5;
+    }
+
+    .tt-type {
+      font-size: 11.5px;
+      color: #ffffffb0;
+      line-height: 1.5;
+    }
 
     /* Stat satırları: değer solda sabit sütunda, ad sağda */
-    .tt-rows { padding: 9px 11px; }
-    .tt-rows + .tt-rows { border-top: 1px solid #ffffff12; }
+    .tt-rows {
+      padding: 9px 11px;
+    }
+
+    .tt-rows+.tt-rows {
+      border-top: 1px solid #ffffff12;
+    }
 
     .tt-row {
       display: flex;
@@ -6829,8 +7467,15 @@
       flex: none;
     }
 
-    .tt-row span { color: #ffffffa8; }
-    .tt-fx { font-size: 12px; color: var(--tt-e); line-height: 1.6; }
+    .tt-row span {
+      color: #ffffffa8;
+    }
+
+    .tt-fx {
+      font-size: 12px;
+      color: var(--tt-e);
+      line-height: 1.6;
+    }
 
     .tt-flavor {
       font-size: 11.5px;
@@ -6844,7 +7489,11 @@
        ortalanmak yerine hücrenin SAĞ kenarına yaslanır. */
     /* overflow:hidden hucrede tooltip'i TAMAMEN kirpiyordu. Gorsel zaten
        %84 oldugu icin tasma riski yok, gorunur birakiliyor. */
-    .zg-loot-cell { position: relative; overflow: visible; }
+    .zg-loot-cell {
+      position: relative;
+      overflow: visible;
+    }
+
     /* Hizalama/kırpma kuralı gerekmiyor: tooltip fixed ve JS ekran içine
        sıkıştırıyor. overflow:visible yine de bırakıldı (zararsız). */
 
@@ -6853,7 +7502,10 @@
        ızgarada kenarlara göre hizalanır: sol sütun sola, sağ sütun sağa
        yaslanır, orta sütun ortalanır. Yoksa kenardaki slotların tooltip'i
        modalın dışında kalıp kesilirdi. */
-    .tr-eq-slot .inv-tooltip { width: 230px; max-width: min(230px, 74vw); }
+    .tr-eq-slot .inv-tooltip {
+      width: 230px;
+      max-width: min(230px, 74vw);
+    }
 
     /* ── Özellik açıklama tooltip'i (nitelik + karakter özellikleri) ── */
     .attr-explain {
@@ -14935,9 +15587,9 @@
       ZD.active = true;
       ZD.tier = zdPlayerTier(); // kademe girişte kilitlenir (içeride seviye atlansa da değişmez)
       ZD.floor = 1;
-      // Her kademe artık labirent; rota kademeye göre değişiyor (MAZES)
-      ZD.mode = 'maze';
-      ZD.room = { x: zdMaze().entry.x, y: zdMaze().entry.y };
+      // 5. kademe = labirent (giriş odası), diğerleri 5 katlı sistem
+      ZD.mode = ZD.tier >= 5 ? 'maze' : 'floors';
+      ZD.room = ZD.mode === 'maze' ? { x: MAZE5.entry.x, y: MAZE5.entry.y } : null;
       ZD.totalGold = 0;
       ZD.totalXP = 0;
       zgNewRun(false);   // 7×7 ızgara koşusu başlar
@@ -14979,9 +15631,9 @@
       WALK_MS: 190,         // oyuncunun 1 kare yürüme süresi
       AUTO_XP: 0.90,        // oto-saldırıda XP çarpanı
       XP_MULT: 0.35,        // ızgara XP kısıcı — tur-tabanlı sistemde bir canavarı
-                            // kesmek birkaç tur sürüyordu, şimdi ~1,3sn. Aynı mob XP'si
-                            // dakikalık kazancı ~10× şişiriyordu. Seviye eğrisine
-                            // dokunmadan (görev/arena/keşif etkilenmesin) burayı kısıyoruz.
+      // kesmek birkaç tur sürüyordu, şimdi ~1,3sn. Aynı mob XP'si
+      // dakikalık kazancı ~10× şişiriyordu. Seviye eğrisine
+      // dokunmadan (görev/arena/keşif etkilenmesin) burayı kısıyoruz.
       /* İksirler arası en az süre. Ayarlanabilir DEĞİL: "ne zaman içilsin"
          sorusunu zaten eşik (ZGCFG.at) cevaplıyor, ikinci bir kadran aynı
          şeyi kontrol ederdi. Burası sadece teknik taban — eşiğin altına
@@ -14999,8 +15651,8 @@
       BAT_ACC: 0.01,        // Avcı'da her İsabet puanı +%1
       BAT_HIT_CAP: 0.95,    // Avcı'da bile garanti isabet olmasın
       TOUGH_HP: 20,         // boss + elit CAN çarpanı. Tek vuruşta ölüyorlardı;
-                            // sadece can artar (hasar/XP/altın aynı kalır) ki
-                            // dövüş uzasın, ödül enflasyonu olmasın.
+      // sadece can artar (hasar/XP/altın aynı kalır) ki
+      // dövüş uzasın, ödül enflasyonu olmasın.
       /* ── BECERİLER (denemelik) ── Şimdilik tek beceri: Büyücü'nün YAKMA
          alanı. Tüm ayarlar burada; dengeyi tek yerden çevirebilmek için. */
       SKILL_CD: 10000,      // bekleme süresi (ms)
@@ -15009,8 +15661,8 @@
       SKILL_TICK: 1000,     // hasar periyodu → 5 tik
       SKILL_DMG: 0.30,      // her tikte saldırı gücünün oranı
       RANGE: { warrior: 1, rogue: 1, mage: 3, ranger: 3.5 },
-                            // Öklid daire yarıçapı. Avcı 4 iken 7×7'nin 45/49'unu
-                            // kapsıyordu (köşeler hariç her yer) — 3.5'te 37/49.
+      // Öklid daire yarıçapı. Avcı 4 iken 7×7'nin 45/49'unu
+      // kapsıyordu (köşeler hariç her yer) — 3.5'te 37/49.
     };
     let zgLoopId = null;
 
@@ -15034,109 +15686,35 @@
        - Boss'un öldürülme zamanı sunucuda (sql/zd_boss_migration.sql). RPC yoksa
          boss hep hazır sayılır — oyun çalışır, sadece 5/10 dk kuralı yerel kalır.
     ══════════════════════════════════════════════════════════════ */
-    /* Her kademenin KENDİ rotası var. Kademe yükseldikçe labirent büyür ve
-       dolambaçlaşır: 1. kademe 3×3 ve neredeyse doğrusal (mekanik öğrenilsin),
-       4-5. kademe 4×4 ve çıkmaz sokaklı.
-       Kurallar: entry her zaman (0,0); çıkış yalnız `exits` odalarında;
-       `yellow` = kademenin normal boss'u, `red` = güçlü boss'u (zgSpawnBoss
-       ZD_TIERS'ten çekiyor, yani kadro otomatik kademeye uyuyor).
-       TÜM odalar entry'den erişilebilir olmalı — kapatılan bir oda oyuncuyu
-       ulaşamayacağı bir boss'la baş başa bırakır. */
-    const MAZES = {
-      1: {
-        W: 3, H: 3,
-        entry: { x: 0, y: 0 },
-        exits: ['0,0', '2,2'],
-        yellow: ['2,0'],
-        red: '2,2',
-        doors: [
-          ['0,0', '1,0'], ['1,0', '2,0'],
-          ['0,0', '0,1'], ['0,1', '0,2'],
-          ['0,1', '1,1'], ['1,1', '2,1'],
-          ['2,0', '2,1'], ['2,1', '2,2'],
-          ['0,2', '1,2'], ['1,2', '2,2'],
-        ],
-        respawn: { yellow: 5 * 60e3, red: 10 * 60e3 },
-      },
-      2: {
-        W: 4, H: 3,
-        entry: { x: 0, y: 0 },
-        exits: ['0,0', '3,2'],
-        yellow: ['3,0', '0,2'],
-        red: '3,2',
-        doors: [
-          ['0,0', '1,0'], ['1,0', '1,1'], ['1,1', '2,1'],
-          ['2,1', '2,0'], ['2,0', '3,0'], ['3,0', '3,1'],
-          ['0,0', '0,1'], ['0,1', '0,2'], ['0,2', '1,2'],
-          ['1,2', '2,2'], ['2,2', '3,2'],
-        ],
-        respawn: { yellow: 5 * 60e3, red: 10 * 60e3 },
-      },
-      3: {
-        /* Yılankavi rota + tek kestirme: uzun ama kaybolmak zor */
-        W: 4, H: 4,
-        entry: { x: 0, y: 0 },
-        exits: ['0,0', '0,3'],
-        yellow: ['3,0', '3,3'],
-        red: '0,3',
-        doors: [
-          ['0,0', '1,0'], ['1,0', '2,0'], ['2,0', '3,0'],
-          ['3,0', '3,1'], ['3,1', '2,1'], ['2,1', '1,1'], ['1,1', '0,1'],
-          ['0,1', '0,2'], ['0,2', '1,2'], ['1,2', '2,2'], ['2,2', '3,2'],
-          ['3,2', '3,3'], ['3,3', '2,3'], ['2,3', '1,3'], ['1,3', '0,3'],
-          ['1,1', '1,2'],
-        ],
-        respawn: { yellow: 5 * 60e3, red: 10 * 60e3 },
-      },
-      4: {
-        /* Çıkmaz sokaklı; kırmızı boss en uzak köşede */
-        W: 4, H: 4,
-        entry: { x: 0, y: 0 },
-        exits: ['0,0', '3,3'],
-        yellow: ['3,0', '0,3', '1,2'],
-        red: '3,3',
-        doors: [
-          ['0,0', '0,1'], ['0,1', '1,1'], ['1,1', '1,0'], ['1,0', '2,0'],
-          ['2,0', '2,1'], ['2,1', '3,1'], ['3,1', '3,0'],
-          ['0,1', '0,2'], ['0,2', '0,3'], ['0,3', '1,3'],
-          ['1,1', '1,2'], ['1,2', '2,2'], ['2,2', '2,3'], ['2,3', '3,3'],
-          ['3,1', '3,2'],
-        ],
-        respawn: { yellow: 5 * 60e3, red: 10 * 60e3 },
-      },
-      5: {
-        W: 4, H: 4,
-        entry: { x: 0, y: 0 },
-        exits: ['0,0', '3,3'],
-        yellow: ['3,0', '0,2', '3,2'],
-        red: '3,3',
-        doors: [
-          ['0,0', '1,0'], ['1,0', '2,0'], ['2,0', '3,0'],
-          ['0,0', '0,1'], ['1,0', '1,1'], ['2,0', '2,1'],
-          ['2,1', '3,1'],
-          ['2,1', '2,2'], ['3,1', '3,2'],
-          ['1,2', '2,2'],
-          ['0,2', '0,3'], ['1,2', '1,3'],
-          ['0,3', '1,3'], ['1,3', '2,3'], ['2,3', '3,3'],
-        ],
-        respawn: { yellow: 5 * 60e3, red: 10 * 60e3 },
-      },
+    const MAZE5 = {
+      W: 4, H: 4,
+      entry: { x: 0, y: 0 },
+      exits: ['0,0', '3,3'],
+      yellow: ['3,0', '0,2', '3,2'],
+      red: '3,3',
+      doors: [
+        ['0,0', '1,0'], ['1,0', '2,0'], ['2,0', '3,0'],
+        ['0,0', '0,1'], ['1,0', '1,1'], ['2,0', '2,1'],
+        ['2,1', '3,1'],
+        ['2,1', '2,2'], ['3,1', '3,2'],
+        ['1,2', '2,2'],
+        ['0,2', '0,3'], ['1,2', '1,3'],
+        ['0,3', '1,3'], ['1,3', '2,3'], ['2,3', '3,3'],
+      ],
+      respawn: { yellow: 5 * 60e3, red: 10 * 60e3 },
     };
-    /* Aktif kademenin labirenti. ZD.tier girişte kilitleniyor; savunma
-       amaçlı 1'e düşülür ki hiçbir çağrı undefined ile patlamasın. */
-    function zdMaze() { return MAZES[ZD.tier] || MAZES[1]; }
     /* Kapı kareleri: kenar ortası. Oyuncu TIKLAYARAK bu kareye varınca odaya geçer. */
     const ZG_DOOR_CELL = { L: { x: 0, y: 3 }, R: { x: 6, y: 3 }, U: { x: 3, y: 0 }, D: { x: 3, y: 6 } };
     const ZG_DIR = { L: { dx: -1, dy: 0, back: 'R' }, R: { dx: 1, dy: 0, back: 'L' }, U: { dx: 0, dy: -1, back: 'D' }, D: { dx: 0, dy: 1, back: 'U' } };
     function zgMaze() { return ZD.mode === 'maze'; }
-    function zgRoomKey(x, y) { const r = ZD.room || zdMaze().entry; return (x == null ? r.x : x) + ',' + (y == null ? r.y : y); }
-    function zgHasDoor(a, b) { return zdMaze().doors.some(d => (d[0] === a && d[1] === b) || (d[0] === b && d[1] === a)); }
+    function zgRoomKey(x, y) { const r = ZD.room || MAZE5.entry; return (x == null ? r.x : x) + ',' + (y == null ? r.y : y); }
+    function zgHasDoor(a, b) { return MAZE5.doors.some(d => (d[0] === a && d[1] === b) || (d[0] === b && d[1] === a)); }
     function zgRoomDoors() {
-      const r = ZD.room || zdMaze().entry, me = zgRoomKey();
+      const r = ZD.room || MAZE5.entry, me = zgRoomKey();
       const out = {};
       for (const d of Object.keys(ZG_DIR)) {
         const nx = r.x + ZG_DIR[d].dx, ny = r.y + ZG_DIR[d].dy;
-        out[d] = nx >= 0 && ny >= 0 && nx < zdMaze().W && ny < zdMaze().H && zgHasDoor(me, nx + ',' + ny);
+        out[d] = nx >= 0 && ny >= 0 && nx < MAZE5.W && ny < MAZE5.H && zgHasDoor(me, nx + ',' + ny);
       }
       return out;
     }
@@ -15148,22 +15726,22 @@
       }
       return null;
     }
-    function zgIsExitRoom() { return zgMaze() && zdMaze().exits.includes(zgRoomKey()); }
+    function zgIsExitRoom() { return zgMaze() && MAZE5.exits.includes(zgRoomKey()); }
     function zgBossKind() {
       if (!zgMaze()) return null;
       const k = zgRoomKey();
-      if (k === zdMaze().red) return 'red';
-      if (zdMaze().yellow.includes(k)) return 'yellow';
+      if (k === MAZE5.red) return 'red';
+      if (MAZE5.yellow.includes(k)) return 'yellow';
       return null;
     }
     /* Zorluk: kat sisteminde kat, labirentte SATIR (kırmızı boss'a doğru sertleşir) */
-    function zgFloorNo() { return zgMaze() ? ((ZD.room || zdMaze().entry).y + 1) : (ZD.floor || 1); }
+    function zgFloorNo() { return zgMaze() ? ((ZD.room || MAZE5.entry).y + 1) : (ZD.floor || 1); }
     function zgFloorMult() { return 1 + (zgFloorNo() - 1) * 0.25; }
     /* Arkaplan: labirentte satır → kat 1-4 görseli, boss odaları → kat 5 görseli */
     function zgRoomBg() {
       const t = ZD.tier || 1;
       if (!zgMaze()) return IMG_BASE + t + 'zindan' + (ZD.floor || 1) + 'kat.webp';
-      const kat = zgBossKind() ? 5 : Math.min(4, (ZD.room || zdMaze().entry).y + 1);
+      const kat = zgBossKind() ? 5 : Math.min(4, (ZD.room || MAZE5.entry).y + 1);
       return IMG_BASE + t + 'zindan' + kat + 'kat.webp';
     }
     function zgBossSpawnSub() {
@@ -15179,7 +15757,7 @@
       if (!g || !kind) return '';
       if (!g.bossFetched) return 'bakılıyor…';
       if (!g.bossKilledAt) return 'boss geliyor';
-      const left = g.bossKilledAt + zdMaze().respawn[kind] - getServerNow().getTime();
+      const left = g.bossKilledAt + MAZE5.respawn[kind] - getServerNow().getTime();
       return left > 0 ? Math.ceil(left / 60000) + ' dk sonra' : 'boss geliyor';
     }
     /* Kapıdan geç: yeni oda, canavarlar sıfır, çanta/can/ayarlar taşınır.
@@ -15188,7 +15766,7 @@
     function zgGoRoom(dir) {
       const g = ZD.g; if (!g || !zgMaze()) return;
       const D = ZG_DIR[dir]; if (!D) return;
-      const r = ZD.room || zdMaze().entry;
+      const r = ZD.room || MAZE5.entry;
       const nx = r.x + D.dx, ny = r.y + D.dy;
       if (!zgHasDoor(zgRoomKey(), nx + ',' + ny)) return;
       ZD.room = { x: nx, y: ny };
@@ -15232,7 +15810,7 @@
       const g = ZD.g; const kind = zgBossKind();
       if (!g || !kind || !g.bossFetched) return;
       if (g.mobs.some(m => m.boss)) return;
-      if (g.bossKilledAt && getServerNow().getTime() < g.bossKilledAt + zdMaze().respawn[kind]) return;
+      if (g.bossKilledAt && getServerNow().getTime() < g.bossKilledAt + MAZE5.respawn[kind]) return;
       zgSpawnBoss();
     }
     /* Labirentte sekme değiştirmek = koşuyu TERK. Çanta gider; yoksa çıkış
@@ -15256,7 +15834,9 @@
         lastSpawn: 0, lastBat: 0, lastAtk: 0, lastSec: Date.now(),
         // Beceri: bekleme oda değişince SIFIRLANMAZ (labirentte oda atlayıp
         // bekleme sıfırlamak istismar olurdu), nişan ve alanlar odaya özel.
-        lastSkill: (keepBag && old) ? (old.lastSkill || 0) : 0,
+        lastSkills: (keepBag && old && old.lastSkills) ? { ...old.lastSkills } : {},
+        shieldUntil: (keepBag && old) ? (old.shieldUntil || 0) : 0,
+        clones: [],
         skillAuto: (keepBag && old) ? old.skillAuto : false,
         aim: null, zones: [],
         lastPotion: 0,
@@ -15374,45 +15954,57 @@
        ⚠ Ortak katta hasarı YALNIZ büyüyü atan uygular (zgDamageMob zaten ev
        sahibine yönlendiriyor); diğer oyuncular alanı sadece ÇİZER. Herkes
        kendi tarafında vursaydı aynı alev kişi sayısı kadar hasar verirdi. */
-    const SKILL_YAKMA = { id: 'yakma', name: 'Yakma', cls: 'mage', img: 'yakma', icon: '🔥' };
+    const ZD_SKILLS = [
+      { id: 'yakma', name: 'Yakma', cls: 'mage', img: 'yakma', icon: '🔥', cd: 10000, target: 'area', area: 5 },
+      { id: 'dondur', name: 'Dondur', cls: 'mage', img: 'dondur', icon: '❄️', cd: 15000, target: 'area', area: 3 },
+      { id: 'zehirle', name: 'Zehirle', cls: 'mage', img: 'zehirle', icon: '☠️', cd: 12000, target: 'area', area: 3 },
+      { id: 'destek', name: 'Destek', cls: 'mage', img: 'destek', icon: '👥', cd: 30000, target: 'self' },
+      { id: 'kusan', name: 'Kuşan', cls: 'mage', img: 'kusan', icon: '🛡️', cd: 20000, target: 'self' }
+    ];
 
-    /* ⚠ GÖRSEL YOKLAMA ÖNBELLEĞİ — buton yanıp sönmesin diye.
-       Yan panel her canavar ölümünde yeniden basılıyor (zgKill → zgRenderBar).
-       Görsel YOKSA her basımda yeni bir <img> kuruluyor, `onerror` ise bir kare
-       SONRA çalışıyor; o kare boyunca yedek yazı `display:none` olduğu için
-       buton tamamen kayboluyordu ("her vuruşta YAKMA yazısı gidip geliyor").
-       Sonucu bir kez öğrenip saklıyoruz: dosya yoksa bir daha <img> basmıyoruz,
-       doğrudan yedek yazıyı açık basıyoruz → gidiş dönüş, dolayısıyla kırpışma
-       da yok. Kullanıcı görseli sonradan yüklerse `onload` işaretler. */
+    /* ⚠ GÖRSEL YOKLAMA ÖNBELLEĞİ — buton yanıp sönmesin diye. */
     const _zgImgSeen = {};             // dosya adı → true (var) / false (yok)
     function zgImgMark(file, ok) { _zgImgSeen[file] = !!ok; }
 
-    /* Beceri butonunun görsel kısmı. Üç hâl: bilinmiyor (ikisini de bas,
-       sonucu öğren) · var (yalnız görsel) · yok (yalnız yazı). */
-    function zgSkillArtHTML() {
-      const f = SKILL_YAKMA.img;
+    /* Beceri butonunun görsel kısmı. */
+    function zgSkillArtHTML(sk) {
+      const f = sk.img;
       const seen = _zgImgSeen[f];
-      const label = SKILL_YAKMA.icon + ' ' + SKILL_YAKMA.name.toLocaleUpperCase('tr');
+      const label = sk.icon + ' ' + sk.name.toLocaleUpperCase('tr');
       if (seen === false) return '<span class="zg-sk-fallback" style="display:flex;">' + label + '</span>';
-      return '<img src="' + IMG_BASE + f + '.webp" alt="' + SKILL_YAKMA.name + '"'
+      return '<img src="' + IMG_BASE + f + '.webp" alt="' + sk.name + '"'
         + ' onload="zgImgMark(\'' + f + '\',true)"'
         + ' onerror="zgImgMark(\'' + f + '\',false);this.style.display=\'none\';'
         + 'this.nextElementSibling.style.display=\'flex\'">'
         + '<span class="zg-sk-fallback">' + label + '</span>';
     }
 
-    function zgSkillOwned() { return G.classId === SKILL_YAKMA.cls; }
-    function zgSkillLeft() {
-      const g = ZD.g; if (!g) return 0;
-      return Math.max(0, ZG.SKILL_CD - (Date.now() - (g.lastSkill || 0)));
+    function zgSkillOwned(skillId) {
+      const sk = ZD_SKILLS.find(s => s.id === skillId);
+      return sk && sk.cls === G.classId;
     }
-    function zgSkillReady() { return zgSkillOwned() && !!ZD.g && !ZD.g.over && zgSkillLeft() <= 0; }
+    function zgSkillLeft(skillId) {
+      const g = ZD.g; if (!g) return 0;
+      const sk = ZD_SKILLS.find(s => s.id === skillId);
+      if (!sk) return 0;
+      return Math.max(0, sk.cd - (Date.now() - (g.lastSkills[skillId] || 0)));
+    }
+    function zgSkillReady(skillId) { return zgSkillOwned(skillId) && !!ZD.g && !ZD.g.over && zgSkillLeft(skillId) <= 0; }
+    function zgAnySkillReady() {
+      const skills = ZD_SKILLS.filter(s => s.cls === G.classId);
+      return skills.some(s => zgSkillReady(s.id));
+    }
 
-    /* Nişan modu: butona bas → aç, kareye bas → ateşle, butona tekrar bas → iptal.
-       Nişandayken kareye tıklamak YÜRÜTMEZ (zgMoveTo başında ayrılıyor). */
-    function zgSkillAim() {
-      const g = ZD.g; if (!g || g.over || !zgSkillReady()) return;
-      g.aim = g.aim ? null : SKILL_YAKMA.id;
+    /* Nişan modu: butona bas → aç, kareye bas → ateşle, butona tekrar bas → iptal. */
+    function zgSkillAim(skillId) {
+      const g = ZD.g; if (!g || g.over || !zgSkillReady(skillId)) return;
+      const sk = ZD_SKILLS.find(s => s.id === skillId);
+      if (!sk) return;
+      if (sk.target === 'self') {
+        zgSkillCast(0, 0, false, skillId);
+        return;
+      }
+      g.aim = g.aim === skillId ? null : skillId;
       zgSyncAim(); zgRenderSide();
     }
     function zgSyncAim() {
@@ -15426,38 +16018,88 @@
       zgSyncAim(); zgRenderSide();
     }
 
-    /* Alanı 5×5'in TAMAMI tahtada kalacak şekilde kaydırır. Kenara basınca
-       alanın yarısı dışarı taşsaydı beceri kenarda yarı yarıya değersizleşirdi. */
+    /* Alanı haritada kalacak şekilde kaydırır. */
     function zgSkillClamp(v, size, max) {
       const r = (size - 1) / 2;
       return Math.max(r, Math.min(max - 1 - r, v));
     }
-    function zgSkillCast(x, y, auto) {
+    function zgSkillCast(x, y, auto, forceSkillId) {
       const g = ZD.g;
-      if (!ZD.active || !g || g.over || !zgSkillReady()) return false;
-      const cx = zgSkillClamp(x, ZG.SKILL_SIZE, ZG.W);
-      const cy = zgSkillClamp(y, ZG.SKILL_SIZE, ZG.H);
+      const skillId = forceSkillId || g.aim;
+      if (!ZD.active || !g || g.over || !skillId || !zgSkillReady(skillId)) return false;
+      const sk = ZD_SKILLS.find(s => s.id === skillId);
+      if (!sk) return false;
+
       const now = Date.now();
-      g.lastSkill = now;
+      g.lastSkills[skillId] = now;
       g.aim = null;
-      g.zones.push({ x: cx, y: cy, until: now + ZG.SKILL_MS, next: now + ZG.SKILL_TICK, mine: true });
-      zcoSendZone(cx, cy);
+      const eff = getEffectiveStats();
+
+      if (skillId === 'yakma') {
+        const cx = zgSkillClamp(x, sk.area, ZG.W);
+        const cy = zgSkillClamp(y, sk.area, ZG.H);
+        g.zones.push({ x: cx, y: cy, type: 'yakma', until: now + ZG.SKILL_MS, next: now + ZG.SKILL_TICK, mine: true });
+        zcoSendZone(cx, cy);
+      } else if (skillId === 'dondur') {
+        const cx = zgSkillClamp(x, sk.area, ZG.W);
+        const cy = zgSkillClamp(y, sk.area, ZG.H);
+        const r = (sk.area - 1) / 2;
+        for (const m of g.mobs) {
+          if (m.hp > 0 && Math.abs(m.x - cx) <= r && Math.abs(m.y - cy) <= r) {
+            if (!m.st) m.st = {};
+            m.st.stunUntil = now + 2000;
+            zgFloat(m.x, m.y, '❄️', '#3498db', 1);
+          }
+        }
+      } else if (skillId === 'zehirle') {
+        const cx = zgSkillClamp(x, sk.area, ZG.W);
+        const cy = zgSkillClamp(y, sk.area, ZG.H);
+        const r = (sk.area - 1) / 2;
+        for (const m of g.mobs) {
+          if (m.hp > 0 && Math.abs(m.x - cx) <= r && Math.abs(m.y - cy) <= r) {
+            if (!m.st) m.st = {};
+            m.st.slowUntil = now + 5000;
+            zgFloat(m.x, m.y, '☠️', '#2ecc71', 1);
+          }
+        }
+      } else if (skillId === 'kusan') {
+        g.shieldUntil = now + 5000;
+        zgFloat(g.px, g.py, '🛡️', '#f1c40f', 1);
+      } else if (skillId === 'destek') {
+        // Find empty spot near player
+        let cx = g.px, cy = g.py;
+        for (let dx = -1; dx <= 1; dx++) {
+          for (let dy = -1; dy <= 1; dy++) {
+            if (dx === 0 && dy === 0) continue;
+            if (zgIn(g.px + dx, g.py + dy) && !zgOccupied(g.px + dx, g.py + dy)) {
+              cx = g.px + dx; cy = g.py + dy;
+              break;
+            }
+          }
+        }
+        g.clones.push({
+          uid: g.uid++, x: cx, y: cy,
+          hp: Math.max(1, Math.floor(eff.maxhp * 0.5)), maxHp: Math.max(1, Math.floor(eff.maxhp * 0.5)),
+          atk: Math.max(1, Math.floor((eff.physDmg || 1) * 0.5)), lastAtk: now
+        });
+        zgFloat(cx, cy, '👥', '#9b59b6', 1);
+      }
+
       zgSyncAim(); zgPaintZones(); zgRenderSide();
-      if (!auto) zgPlayAttack(cx === g.px ? null : cx < g.px);
+      if (!auto && sk.target !== 'self') zgPlayAttack(x === g.px ? null : x < g.px);
       return true;
     }
 
-    /* Yanan alanların saniyelik hasarı + süresi dolanların temizliği.
-       `mine` olmayan alanlar arkadaşlarındır: çizilir ama hasar verilmez. */
+    /* Yanan alanların saniyelik hasarı + süresi dolanların temizliği. */
     function zgZoneTick(now, eff) {
       const g = ZD.g;
       if (!g.zones.length) return;
-      const r = (ZG.SKILL_SIZE - 1) / 2;
       let expired = false;
       for (const z of g.zones) {
-        if (z.mine && now >= z.next && now <= z.until) {
+        if (z.type === 'yakma' && z.mine && now >= z.next && now <= z.until) {
           z.next = now + ZG.SKILL_TICK;
           const dmg = Math.max(1, Math.floor((eff.physDmg || 1) * ZG.SKILL_DMG));
+          const r = (5 - 1) / 2;
           for (const m of [...g.mobs]) {
             if (m.hp <= 0) continue;
             if (Math.abs(m.x - z.x) > r || Math.abs(m.y - z.y) > r) continue;
@@ -15540,6 +16182,13 @@
         if (p.x == null) continue;
         const d = zgDist(m.x, m.y, p.x, p.y);
         if (d < bd) { bd = d; best = { x: p.x, y: p.y }; }
+      }
+      if (g.clones) {
+        for (const c of g.clones) {
+          if (c.hp <= 0) continue;
+          const d = zgDist(m.x, m.y, c.x, c.y);
+          if (d < bd) { bd = d; best = { x: c.x, y: c.y }; }
+        }
       }
       return best;
     }
@@ -15637,7 +16286,8 @@
       const g = ZD.g;
       if (Math.random() < (eff.dodgeChance || 0)) { zgFloat(g.px, g.py, 'kaçtın', '#9fd0ff'); return; }
       const troopRed = Math.min(0.25, troopArmorDef() * 0.005);
-      const red = Math.min(0.80, (eff.damageReduction || 0) + troopRed);
+      let red = Math.min(0.80, (eff.damageReduction || 0) + troopRed);
+      if (g.shieldUntil && Date.now() < g.shieldUntil) red = Math.min(0.95, red + 0.20);
       const dmg = Math.max(1, Math.floor(m.atk * (0.85 + Math.random() * 0.3) * (1 - red)));
       g.hp = Math.max(0, g.hp - dmg);
       zgFloat(g.px, g.py, '-' + dmg, '#ff8a8a');
@@ -15850,15 +16500,57 @@
       }
       zgZoneTick(now, eff);
 
+      if (g.clones) {
+        for (const c of g.clones) {
+          if (c.hp <= 0) continue;
+          if (now - c.lastAtk >= zgAtkInterval()) {
+            let bt = null, bd = 999;
+            for (const m of g.mobs) {
+              if (m.hp <= 0) continue;
+              const d = zgDist(c.x, c.y, m.x, m.y);
+              if (d <= 1 && d < bd) { bd = d; bt = m; }
+            }
+            if (bt) {
+              c.lastAtk = now;
+              zgFloat(bt.x, bt.y, '-' + c.atk, '#ff9d5c');
+              zgDamageMob(bt, c.atk, zcoMe());
+            }
+          }
+        }
+        g.clones = g.clones.filter(c => c.hp > 0);
+      }
+
       for (const m of g.mobs) {
         if (m.hp <= 0) continue;
-        // "Bana vurma" HERKESTE yerel hesaplanır — hasarın ev sahibine gidip
-        // dönmesini beklemek oyunu tepkisiz yapardı. Hareket ise sadece ev sahibinde.
-        if (zgDist(m.x, m.y, g.px, g.py) <= 1) {
+        if (m.st && m.st.stunUntil && now < m.st.stunUntil) continue;
+
+        let hitClone = null;
+        if (g.clones) {
+          for (const c of g.clones) {
+            if (c.hp > 0 && zgDist(m.x, m.y, c.x, c.y) <= 1) {
+              hitClone = c; break;
+            }
+          }
+        }
+
+        const playerDist = zgDist(m.x, m.y, g.px, g.py);
+
+        if (playerDist <= 1) {
           if (now - m.lastHit >= ZG.MOB_HIT_MS) { m.lastHit = now; zgMobHit(m, eff); }
-        } else if (host && now - m.lastStep >= ZG.MOB_STEP_MS) {
-          m.lastStep = now;
-          zgStepToward(m);
+        } else if (hitClone) {
+          if (now - m.lastHit >= ZG.MOB_HIT_MS) {
+            m.lastHit = now;
+            const dmg = Math.max(1, Math.floor(m.atk * (0.85 + Math.random() * 0.3)));
+            hitClone.hp -= dmg;
+            zgFloat(hitClone.x, hitClone.y, '-' + dmg, '#ff8a8a');
+            if (hitClone.hp <= 0) zgFloat(hitClone.x, hitClone.y, '💀', '#fff');
+          }
+        } else if (host) {
+          const stepMs = ZG.MOB_STEP_MS * (m.st && m.st.slowUntil && now < m.st.slowUntil ? 1.4 : 1);
+          if (now - m.lastStep >= stepMs) {
+            m.lastStep = now;
+            zgStepToward(m);
+          }
         }
       }
 
@@ -16197,7 +16889,7 @@
         payload: {
           k: g.kills, q: g.quota, bs: g.bossSpawned ? 1 : 0, bd: g.bossDead ? 1 : 0,
           m: g.mobs.map(m => [m.uid, m.x, m.y, m.hp, m.maxHp,
-            (m.elite ? 1 : 0) | (m.boss ? 2 : 0) | (m.bat ? 4 : 0), m.atk, m.xp, m.gold, m.name, m.img, m.icon, m.id]),
+          (m.elite ? 1 : 0) | (m.boss ? 2 : 0) | (m.bat ? 4 : 0), m.atk, m.xp, m.gold, m.name, m.img, m.icon, m.id]),
         },
       });
     }
@@ -16373,6 +17065,26 @@
         }
         if (e._bar) e._bar.style.width = Math.max(0, Math.round(m.hp / m.maxHp * 100)) + '%';
       }
+
+      if (g.clones) {
+        for (const c of g.clones) {
+          let e = document.getElementById('zg-c-' + c.uid);
+          if (c.hp <= 0) { if (e) e.remove(); continue; }
+          if (!e) {
+            e = document.createElement('div');
+            e.id = 'zg-c-' + c.uid;
+            e.className = 'zg-unit zg-mob';
+            e.innerHTML = '<div class="zg-mob-sprite"><span class="zg-emo" style="font-size:24px; display:inline-block;">👥</span></div>'
+              + '<span class="zg-hpbar"><i style="width:100%"></i></span>';
+            e.style.transition = 'transform ' + ZG.WALK_MS + 'ms linear';
+            e._bar = e.querySelector('.zg-hpbar i');
+            layer.appendChild(e);
+          }
+          zgUnitAt(e, c.x, c.y);
+          e.style.zIndex = c.y;
+          if (e._bar) e._bar.style.width = Math.max(0, Math.round(c.hp / c.maxHp * 100)) + '%';
+        }
+      }
       zcoPaint(layer);   // ortak kattaki diğer oyuncular
       // Sol paneldeki can sayısı — zgRenderSide sadece olaylarda çalıştığı
       // için sayıyı burada, her tick'te tazeliyoruz.
@@ -16384,15 +17096,18 @@
       }
       /* Beceri bekleme sayacı — paneli yeniden basmak görselleri titretir,
          bu yüzden yalnız rozetin metni ve butonun kilidi tazeleniyor. */
-      const skb = document.getElementById('zg-sk-badge');
-      if (skb) {
-        const left = zgSkillLeft();
-        const show = left > 0 ? String(Math.ceil(left / 1000)) : (g.aim ? 'kare seç' : '');
-        if (skb.textContent !== show) skb.textContent = show;
-        skb.style.display = show ? '' : 'none';
-        skb.classList.toggle('big', left > 0);
-        const skbtn = document.getElementById('zg-sk-btn');
-        if (skbtn) { skbtn.disabled = left > 0; skbtn.classList.toggle('on', !!g.aim); }
+      const skills = ZD_SKILLS.filter(s => s.cls === G.classId);
+      for (const sk of skills) {
+        const skb = document.getElementById('zg-sk-badge-' + sk.id);
+        if (skb) {
+          const left = zgSkillLeft(sk.id);
+          const show = left > 0 ? String(Math.ceil(left / 1000)) : (g.aim === sk.id ? 'kare seç' : '');
+          if (skb.textContent !== show) skb.textContent = show;
+          skb.style.display = show ? '' : 'none';
+          skb.classList.toggle('big', left > 0);
+          const skbtn = document.getElementById('zg-sk-btn-' + sk.id);
+          if (skbtn) { skbtn.disabled = left > 0; skbtn.classList.toggle('on', g.aim === sk.id); }
+        }
       }
       const txt = document.getElementById('zg-hp-txt');
       if (txt) txt.textContent = Math.max(0, Math.round(g.hp));
@@ -16472,19 +17187,22 @@
          sayacı her tick'te GÜNCELLENİR: paneli yeniden basmak görselleri
          titretirdi (👥 sayacında da aynı yol izlendi). */
       let skillHtml = '';
-      if (zgSkillOwned()) {
-        const left = zgSkillLeft();
-        skillHtml = '<div class="zg-skillbox">'
-          + '<button id="zg-sk-btn" class="zg-imgbtn' + (g.aim ? ' on' : '') + '"'
-          + (left > 0 ? ' disabled' : '')
-          + ' onclick="zgSkillAim()" title="' + SKILL_YAKMA.name + ' — '
-          + ZG.SKILL_SIZE + '×' + ZG.SKILL_SIZE + ' alanı ' + (ZG.SKILL_MS / 1000)
-          + 'sn yakar (' + (ZG.SKILL_CD / 1000) + 'sn bekleme)">'
-          + zgSkillArtHTML()
-          + '<span id="zg-sk-badge" class="zg-badge"></span>'
-          + '</button>'
+      const skills = ZD_SKILLS.filter(s => s.cls === G.classId);
+      if (skills.length > 0) {
+        let btnsHtml = '';
+        for (const sk of skills) {
+          const left = zgSkillLeft(sk.id);
+          btnsHtml += '<button id="zg-sk-btn-' + sk.id + '" class="zg-imgbtn' + (g.aim === sk.id ? ' on' : '') + '"'
+            + (left > 0 ? ' disabled' : '')
+            + ' onclick="zgSkillAim(\'' + sk.id + '\')" title="' + sk.name + ' (' + (sk.cd / 1000) + 'sn bekleme)">'
+            + zgSkillArtHTML(sk)
+            + '<span id="zg-sk-badge-' + sk.id + '" class="zg-badge"></span>'
+            + '</button>';
+        }
+        skillHtml = '<div class="zg-skillbox" style="display:flex; flex-direction:column; gap:4px; max-width:260px;">'
+          + '<div style="display:flex; gap:4px; flex-wrap:wrap; justify-content:center;">' + btnsHtml + '</div>'
           + '<div class="zg-skillauto' + (g.skillAuto ? ' on' : '') + '" onclick="zgToggleSkillAuto()"'
-          + ' title="Açıkken beceri hazır olur olmaz saldırdığın hedefin üstüne atılır (AFK\'de de çalışır)">'
+          + ' title="Açıkken beceri hazır olur olmaz hedefin üstüne atılır">'
           + '<i>' + (g.skillAuto ? '☑' : '☐') + '</i> otomatik</div>'
           + '</div>';
       }
@@ -16503,7 +17221,7 @@
         const bossAlive = g.mobs.some(m => m.boss);
         const bossTxt = kind
           ? (bossAlive ? '<b style="color:#f87171;">' + (kind === 'red' ? 'Kırmızı' : 'Sarı') + ' boss burada!</b>'
-                       : '<span style="opacity:.75;">Boss odası — ' + zgMazeRespawnTxt() + '</span>')
+            : '<span style="opacity:.75;">Boss odası — ' + zgMazeRespawnTxt() + '</span>')
           : 'Kesim <b>' + g.kills + '</b>';
         info = '<b>' + (ZD.tier || 1) + '. SEVİYE</b> · LABİRENT<br>'
           + 'Can <b id="zg-hp-txt" style="color:#7aff9a;">' + Math.max(0, Math.round(g.hp)) + '</b>/' + eff.maxhp + '<br>'
@@ -17871,9 +18589,9 @@
       qgRefresh();
     }
 
-/* ══════════════════════════════════════
-       MARKET
-    ══════════════════════════════════════ */
+    /* ══════════════════════════════════════
+           MARKET
+        ══════════════════════════════════════ */
     function setSrc(s) { G.marketSrc = s; document.querySelectorAll('.src-btn').forEach(el => { el.classList.toggle('active', el.id === 'src-' + s); }); renderMarket(); }
     /* Aktif hâl artık .cat-tab.active sınıfından geliyor (bkz. setSrc) —
        stili buradan elle yazmak, sınıfın hover/geçiş kurallarını eziyordu. */
@@ -19845,9 +20563,9 @@
       glgo('home');
     }
 
-/* ══════════════════════════════════════
-       ÜRETİM
-    ══════════════════════════════════════ */
+    /* ══════════════════════════════════════
+           ÜRETİM
+        ══════════════════════════════════════ */
     function pgo(t) { G.prodTab = t;['farm', 'mill', 'ranch', 'kitchen', 'insaa', 'depot'].forEach(x => { document.getElementById('pt-' + x).classList.toggle('active', x === t); }); updateInvStrip(); renderProd(t); }
     function updateInvStrip() {
       const keys = ['bugday', 'saman', 'arpa', 'sebze', 'un', 'arpa_unu', 'tuy', 'yumurta', 'yun', 'sut', 'ekmek', 'corba', 'kek', 'bugday_unu', 'patates_puresi', 'kaymak', 'cilek_puresi', 'domates_puresi'];
@@ -20145,8 +20863,8 @@
         </div>
       </div>
       <div class="pcard-extra">${fishTotal
-        ? 'bazı türlerden ayrıca pul, diş veya havyar ✨'
-        : 'depoda balık yok — haritada su karesinde balık tut'}</div>
+          ? 'bazı türlerden ayrıca pul, diş veya havyar ✨'
+          : 'depoda balık yok — haritada su karesinde balık tut'}</div>
     </div>
     <button class="pcard-btn" onclick="openFishButcherModal()"
       ${(!fishTotal || millFull) ? 'disabled' : ''}>${millFull ? 'Kapasite Dolu' : (fishTotal ? '🔪 Balık Seç' : 'Balık Yok')}</button>
@@ -21610,11 +22328,11 @@
         const canStart = hasInput && slotsAvail;
         recipeHtml += `
     ${prodCardHTML(r, {
-      click: `startInsaaProd('${r.id}')`,
-      dur,                                   // İnşaa süresi tarifte değil, insaaDur()'da
-      disabled: !canStart,
-      label: !hasInput ? 'Malzeme Eksik' : !slotsAvail ? 'Slot Dolu' : 'Başlat',
-    })}`;
+          click: `startInsaaProd('${r.id}')`,
+          dur,                                   // İnşaa süresi tarifte değil, insaaDur()'da
+          disabled: !canStart,
+          label: !hasInput ? 'Malzeme Eksik' : !slotsAvail ? 'Slot Dolu' : 'Başlat',
+        })}`;
       });
 
       const upgCost = lv < bld.max ? Math.floor(bld.cost * Math.pow(1.6, lv)) : null;
