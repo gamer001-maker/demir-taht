@@ -16115,18 +16115,19 @@
       }
     }
 
-    /* Alan 25 ayrı karo olarak basılır — görsel HER karede görünsün diye. */
+    /* Alan ayrı karolar halinde basılır — görsel HER karede görünsün diye. */
     function zgPaintZones() {
       const layer = document.getElementById('zg-zones'); if (!layer) return;
       const g = ZD.g;
-      const r = (ZG.SKILL_SIZE - 1) / 2;
       let h = '';
       for (const z of (g ? g.zones : [])) {
+        const sk = ZD_SKILLS.find(s => s.id === z.type) || { img: 'yakma', area: 5 };
+        const r = (sk.area - 1) / 2;
         for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
           const x = z.x + dx, y = z.y + dy;
           if (!zgIn(x, y)) continue;
           h += '<div class="zg-zone" style="left:' + (x * 100 / ZG.W) + '%;top:' + (y * 100 / ZG.H) + '%;">'
-            + '<img src="' + IMG_BASE + SKILL_YAKMA.img + '.gif" alt="" onerror="this.style.display=\'none\'">'
+            + '<img src="' + IMG_BASE + sk.img + '.gif" alt="" onerror="this.style.display=\'none\'">'
             + '</div>';
         }
       }
