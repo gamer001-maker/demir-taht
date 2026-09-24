@@ -3294,6 +3294,9 @@
       line-height: 0;
       border-radius: 10px;
       cursor: pointer;
+    }
+
+    .zg-imgbtn>*:not(.inv-tooltip) {
       transition: filter .15s, transform .08s;
     }
 
@@ -3304,21 +3307,24 @@
       border-radius: 10px;
     }
 
-    .zg-imgbtn:hover:not(:disabled) {
+    .zg-imgbtn:hover:not(:disabled)>*:not(.inv-tooltip) {
       filter: brightness(1.15);
     }
 
-    .zg-imgbtn:active:not(:disabled) {
+    .zg-imgbtn:active:not(:disabled)>*:not(.inv-tooltip) {
       transform: translateY(1px);
     }
 
     .zg-imgbtn:disabled {
-      opacity: .45;
       cursor: not-allowed;
+    }
+
+    .zg-imgbtn:disabled>*:not(.inv-tooltip) {
+      opacity: .45;
       filter: grayscale(.6);
     }
 
-    .zg-imgbtn.on {
+    .zg-imgbtn.on>*:not(.inv-tooltip) {
       filter: drop-shadow(0 0 7px #7aff9aaa) brightness(1.1);
     }
 
