@@ -15960,29 +15960,29 @@
        kendi tarafında vursaydı aynı alev kişi sayısı kadar hasar verirdi. */
     const ZD_SKILLS = [
       // Mage
-      { id: 'yakma', name: 'Yakma', cls: 'mage', img: 'yakma', icon: '🔥', cd: 10000, target: 'area', area: 5 },
-      { id: 'dondur', name: 'Dondur', cls: 'mage', img: 'dondur', icon: '❄️', cd: 15000, target: 'area', area: 3 },
-      { id: 'zehirle', name: 'Zehirle', cls: 'mage', img: 'zehirle', icon: '☠️', cd: 12000, target: 'area', area: 3 },
-      { id: 'destek', name: 'Destek', cls: 'mage', img: 'destek', icon: '👥', cd: 30000, target: 'self' },
-      { id: 'kusan', name: 'Kuşan', cls: 'mage', img: 'kusan', icon: '🛡️', cd: 20000, target: 'self' },
+      { id: 'yakma', name: 'Yakma', cls: 'mage', img: 'myakmaskill', icon: '🔥', cd: 10000, target: 'area', area: 5, fxImg: 'yakma' },
+      { id: 'dondur', name: 'Dondur', cls: 'mage', img: 'mdondurskill', icon: '❄️', cd: 15000, target: 'area', area: 3, fxImg: 'dondur' },
+      { id: 'zehirle', name: 'Zehirle', cls: 'mage', img: 'mzehirleskill', icon: '☠️', cd: 12000, target: 'area', area: 3, fxImg: 'zehirle' },
+      { id: 'destek', name: 'Destek', cls: 'mage', img: 'mdestekskill', icon: '👥', cd: 30000, target: 'self' },
+      { id: 'kusan', name: 'Kuşan', cls: 'mage', img: 'mkusanskill', icon: '🛡️', cd: 20000, target: 'self' },
       // Warrior
-      { id: 'deprem', name: 'Deprem', cls: 'warrior', img: 'deprem', icon: '💥', cd: 12000, target: 'self' },
-      { id: 'kalkan_duvari', name: 'Kalkan Duvarı', cls: 'warrior', img: 'kalkan_duvari', icon: '🛡️', cd: 18000, target: 'self' },
-      { id: 'hiddet', name: 'Hiddet', cls: 'warrior', img: 'hiddet', icon: '💢', cd: 25000, target: 'self' },
-      { id: 'atilan_balta', name: 'Atılan Balta', cls: 'warrior', img: 'atilan_balta', icon: '🪓', cd: 10000, target: 'area', area: 1 },
-      { id: 'kan_hucumu', name: 'Kan Hücumu', cls: 'warrior', img: 'kan_hucumu', icon: '🩸', cd: 20000, target: 'self' },
+      { id: 'deprem', name: 'Deprem', cls: 'warrior', img: 'sdepremskill', icon: '💥', cd: 12000, target: 'self' },
+      { id: 'kalkan_duvari', name: 'Kalkan Duvarı', cls: 'warrior', img: 'skalkanduvariskill', icon: '🛡️', cd: 18000, target: 'self' },
+      { id: 'hiddet', name: 'Hiddet', cls: 'warrior', img: 'shiddetskill', icon: '💢', cd: 25000, target: 'self' },
+      { id: 'atilan_balta', name: 'Atılan Balta', cls: 'warrior', img: 'satilanbaltaskill', icon: '🪓', cd: 10000, target: 'area', area: 1 },
+      { id: 'kan_hucumu', name: 'Kan Hücumu', cls: 'warrior', img: 'skanhucumuskill', icon: '🩸', cd: 20000, target: 'self' },
       // Rogue
-      { id: 'golge', name: 'Gölge', cls: 'rogue', img: 'golge', icon: '👤', cd: 20000, target: 'self' },
-      { id: 'zehirli_bicak', name: 'Zehirli Bıçak', cls: 'rogue', img: 'zehirli_bicak', icon: '🗡️', cd: 10000, target: 'area', area: 1 },
-      { id: 'suikast', name: 'Suikast', cls: 'rogue', img: 'suikast', icon: '🔪', cd: 15000, target: 'area', area: 1 },
-      { id: 'sis_bombasi', name: 'Sis Bombası', cls: 'rogue', img: 'sis_bombasi', icon: '💨', cd: 18000, target: 'area', area: 5 },
-      { id: 'altin_cal', name: 'Arakla', cls: 'rogue', img: 'altin_cal', icon: '💰', cd: 25000, target: 'area', area: 1 },
+      { id: 'golge', name: 'Gölge', cls: 'rogue', img: 'hgolgeskill', icon: '👤', cd: 20000, target: 'self' },
+      { id: 'zehirli_bicak', name: 'Zehirli Bıçak', cls: 'rogue', img: 'hzehirlibicakskill', icon: '🗡️', cd: 10000, target: 'area', area: 1 },
+      { id: 'suikast', name: 'Suikast', cls: 'rogue', img: 'hsuikastskill', icon: '🔪', cd: 15000, target: 'area', area: 1 },
+      { id: 'sis_bombasi', name: 'Sis Bombası', cls: 'rogue', img: 'hsisbombasiskill', icon: '💨', cd: 18000, target: 'area', area: 5, fxImg: 'sis_bombasi' },
+      { id: 'shuriken', name: 'Shuriken', cls: 'rogue', img: 'hshurikenskill', icon: '🎯', cd: 15000, target: 'area', area: 1 },
       // Ranger
-      { id: 'yaylim_atesi', name: 'Yaylım Ateşi', cls: 'ranger', img: 'yaylim_atesi', icon: '🏹', cd: 12000, target: 'area', area: 5 },
-      { id: 'kapan', name: 'Kapan', cls: 'ranger', img: 'kapan', icon: '🪤', cd: 15000, target: 'area', area: 1 },
-      { id: 'ceviklik', name: 'Çeviklik', cls: 'ranger', img: 'ceviklik', icon: '🍃', cd: 20000, target: 'self' },
-      { id: 'kartal_gozu', name: 'Kartal Gözü', cls: 'ranger', img: 'kartal_gozu', icon: '👁️', cd: 18000, target: 'self' },
-      { id: 'sifali_ot', name: 'Şifalı Ot', cls: 'ranger', img: 'sifali_ot', icon: '🌿', cd: 25000, target: 'self' }
+      { id: 'yaylim_atesi', name: 'Yaylım Ateşi', cls: 'ranger', img: 'ayaylimatesiskill', icon: '🏹', cd: 12000, target: 'area', area: 5 },
+      { id: 'kapan', name: 'Kapan', cls: 'ranger', img: 'akapanskill', icon: '🪤', cd: 15000, target: 'area', area: 1, fxImg: 'kapan' },
+      { id: 'ceviklik', name: 'Çeviklik', cls: 'ranger', img: 'aceviklikskill', icon: '🍃', cd: 20000, target: 'self' },
+      { id: 'kartal_gozu', name: 'Kartal Gözü', cls: 'ranger', img: 'akartalgozuskill', icon: '👁️', cd: 18000, target: 'self' },
+      { id: 'sifali_ot', name: 'Şifalı Ot', cls: 'ranger', img: 'asifaliotskill', icon: '🌿', cd: 25000, target: 'self' }
     ];
 
     /* ⚠ GÖRSEL YOKLAMA ÖNBELLEĞİ — buton yanıp sönmesin diye. */
@@ -16197,7 +16197,7 @@
             zgFloat(m.x, m.y, '💨', '#7f8c8d', 1);
           }
         }
-      } else if (skillId === 'altin_cal') {
+      } else if (skillId === 'shuriken') {
         const cx = zgSkillClamp(x, 1, ZG.W);
         const cy = zgSkillClamp(y, 1, ZG.H);
         let bestMob = null, bestD = 999;
@@ -16208,14 +16208,9 @@
           }
         }
         if (bestMob && bestD <= 1) {
-          const dmg = Math.max(1, Math.floor((eff.physDmg || 1) * 1.0));
+          const dmg = Math.max(1, Math.floor((eff.physDmg || 1) * 2.0));
           zgDamageMob(bestMob, dmg, zcoMe());
-          if (!bestMob._robbed) {
-            bestMob._robbed = true;
-            const stole = Math.floor(Math.random() * 41) + 10;
-            _gold_apply(stole);
-            zgFloat(bestMob.x, bestMob.y, '+' + stole + '🪙', '#f1c40f', 1);
-          }
+          zgFloat(bestMob.x, bestMob.y, '-' + dmg + ' (Kritik)', '#ff8a8a', 1);
         }
       } else if (skillId === 'yaylim_atesi') {
         const cx = zgSkillClamp(x, sk.area, ZG.W);
@@ -16302,7 +16297,7 @@
           const x = z.x + dx, y = z.y + dy;
           if (!zgIn(x, y)) continue;
           h += '<div class="zg-zone" style="left:' + (x * 100 / ZG.W) + '%;top:' + (y * 100 / ZG.H) + '%;">'
-            + '<img src="' + IMG_BASE + sk.img + ext + '" alt="" onerror="this.style.display=\'none\'">'
+            + '<img src="' + IMG_BASE + (sk.fxImg || z.type) + ext + '" alt="" onerror="this.style.display=\'none\'">'
             + '</div>';
         }
       }
@@ -17412,12 +17407,11 @@
             + '<span id="zg-sk-badge-' + sk.id + '" class="zg-badge"></span>'
             + '</button>';
         }
-        skillHtml = '<div class="zg-skillbox" style="display:flex; flex-direction:column; gap:4px; max-width:260px;">'
-          + '<div style="display:flex; gap:4px; flex-wrap:wrap; justify-content:center;">' + btnsHtml + '</div>'
+        skillHtml = btnsHtml
           + '<div class="zg-skillauto' + (g.skillAuto ? ' on' : '') + '" onclick="zgToggleSkillAuto()"'
-          + ' title="Açıkken beceri hazır olur olmaz hedefin üstüne atılır">'
-          + '<i>' + (g.skillAuto ? '☑' : '☐') + '</i> otomatik</div>'
-          + '</div>';
+          + ' title="Açıkken beceri hazır olur olmaz hedefin üstüne atılır"'
+          + ' style="border-radius:10px; border:1px solid var(--border2); display:flex; align-items:center; justify-content:center; cursor:pointer; min-height:40px; font-size:12px;">'
+          + '<i>' + (g.skillAuto ? '☑' : '☐') + '</i> OTO</div>';
       }
       const btns =
         skillHtml
