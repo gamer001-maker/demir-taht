@@ -3261,8 +3261,18 @@
 
     #zg-side {
       display: grid;
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: 6px;
+    }
+
+    @media (min-width: 901px) {
+
+      .zg-side-info,
+      .zg-skillauto,
+      .zg-imgbtn:not(.has-tip),
+      .zg-btn.wide {
+        grid-column: 1 / -1;
+      }
     }
 
     .zg-side-info {
