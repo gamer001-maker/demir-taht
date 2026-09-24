@@ -9129,7 +9129,7 @@
        Burada kutu ekran içine sıkıştırılır: önce hedefin üstü denenir,
        sığmazsa altına alınır; yatayda da kenarlara taşmaz.
        Yeni bir tooltip yeri eklenirse seçicisini ZZ_TIP_HOSTS'a ekle. */
-    const ZZ_TIP_HOSTS = '.inv-slot.has-item, .eq-slot, .zg-loot-cell.filled, .tr-eq-slot';
+    const ZZ_TIP_HOSTS = '.inv-slot.has-item, .eq-slot, .zg-loot-cell.filled, .tr-eq-slot, .has-tip';
     let _zzTip = null;
     function zzPlaceTip(host, tip) {
       const r = host.getBoundingClientRect();
@@ -15960,29 +15960,29 @@
        kendi tarafında vursaydı aynı alev kişi sayısı kadar hasar verirdi. */
     const ZD_SKILLS = [
       // Mage
-      { id: 'yakma', name: 'Yakma', cls: 'mage', img: 'myakmaskill', icon: '🔥', cd: 10000, target: 'area', area: 5, fxImg: 'yakma' },
-      { id: 'dondur', name: 'Dondur', cls: 'mage', img: 'mdondurskill', icon: '❄️', cd: 15000, target: 'area', area: 3, fxImg: 'dondur' },
-      { id: 'zehirle', name: 'Zehirle', cls: 'mage', img: 'mzehirleskill', icon: '☠️', cd: 12000, target: 'area', area: 3, fxImg: 'zehirle' },
-      { id: 'destek', name: 'Destek', cls: 'mage', img: 'mdestekskill', icon: '👥', cd: 30000, target: 'self' },
-      { id: 'kusan', name: 'Kuşan', cls: 'mage', img: 'mkusanskill', icon: '🛡️', cd: 20000, target: 'self' },
+      { id: 'yakma', name: 'Yakma', cls: 'mage', img: 'myakmaskill', icon: '🔥', cd: 10000, target: 'area', area: 5, fxImg: 'yakma', desc: 'Seçilen 5x5 alanı 5 saniye boyunca yakar.' },
+      { id: 'dondur', name: 'Dondur', cls: 'mage', img: 'mdondurskill', icon: '❄️', cd: 15000, target: 'area', area: 3, fxImg: 'dondur', desc: '3x3 alandaki düşmanları dondurur ve yavaşlatır.' },
+      { id: 'zehirle', name: 'Zehirle', cls: 'mage', img: 'mzehirleskill', icon: '☠️', cd: 12000, target: 'area', area: 3, fxImg: 'zehirle', desc: '3x3 alandaki düşmanları zehirler.' },
+      { id: 'destek', name: 'Destek', cls: 'mage', img: 'mdestekskill', icon: '👥', cd: 30000, target: 'self', desc: 'Müttefikleri destekler.' },
+      { id: 'kusan', name: 'Kuşan', cls: 'mage', img: 'mkusanskill', icon: '🛡️', cd: 20000, target: 'self', desc: 'Büyülü kalkan kuşanır.' },
       // Warrior
-      { id: 'deprem', name: 'Deprem', cls: 'warrior', img: 'sdepremskill', icon: '💥', cd: 12000, target: 'self' },
-      { id: 'kalkan_duvari', name: 'Kalkan Duvarı', cls: 'warrior', img: 'skalkanduvariskill', icon: '🛡️', cd: 18000, target: 'self' },
-      { id: 'hiddet', name: 'Hiddet', cls: 'warrior', img: 'shiddetskill', icon: '💢', cd: 25000, target: 'self' },
-      { id: 'atilan_balta', name: 'Atılan Balta', cls: 'warrior', img: 'satilanbaltaskill', icon: '🪓', cd: 10000, target: 'area', area: 1 },
-      { id: 'kan_hucumu', name: 'Kan Hücumu', cls: 'warrior', img: 'skanhucumuskill', icon: '🩸', cd: 20000, target: 'self' },
+      { id: 'deprem', name: 'Deprem', cls: 'warrior', img: 'sdepremskill', icon: '💥', cd: 12000, target: 'self', desc: 'Yakın çevredeki düşmanlara hasar verir.' },
+      { id: 'kalkan_duvari', name: 'Kalkan Duvarı', cls: 'warrior', img: 'skalkanduvariskill', icon: '🛡️', cd: 18000, target: 'self', desc: 'Kısa süreliğine alınan hasarı %50 azaltır.' },
+      { id: 'hiddet', name: 'Hiddet', cls: 'warrior', img: 'shiddetskill', icon: '💢', cd: 25000, target: 'self', desc: 'Saldırı hızını artırır ve ekstra hasar verir.' },
+      { id: 'atilan_balta', name: 'Atılan Balta', cls: 'warrior', img: 'satilanbaltaskill', icon: '🪓', cd: 10000, target: 'area', area: 1, desc: 'Hedefe balta fırlatarak fiziksel hasar verir.' },
+      { id: 'kan_hucumu', name: 'Kan Hücumu', cls: 'warrior', img: 'skanhucumuskill', icon: '🩸', cd: 20000, target: 'self', desc: 'Bir süreliğine çifte vuruş şansı sağlar.' },
       // Rogue
-      { id: 'golge', name: 'Gölge', cls: 'rogue', img: 'hgolgeskill', icon: '👤', cd: 20000, target: 'self' },
-      { id: 'zehirli_bicak', name: 'Zehirli Bıçak', cls: 'rogue', img: 'hzehirlibicakskill', icon: '🗡️', cd: 10000, target: 'area', area: 1 },
-      { id: 'suikast', name: 'Suikast', cls: 'rogue', img: 'hsuikastskill', icon: '🔪', cd: 15000, target: 'area', area: 1 },
-      { id: 'sis_bombasi', name: 'Sis Bombası', cls: 'rogue', img: 'hsisbombasiskill', icon: '💨', cd: 18000, target: 'area', area: 5, fxImg: 'sis_bombasi' },
-      { id: 'shuriken', name: 'Shuriken', cls: 'rogue', img: 'hshurikenskill', icon: '🎯', cd: 15000, target: 'area', area: 1 },
+      { id: 'golge', name: 'Gölge', cls: 'rogue', img: 'hgolgeskill', icon: '👤', cd: 20000, target: 'self', desc: 'Görünmez olursun ve düşmanlar seni hedef alamaz.' },
+      { id: 'zehirli_bicak', name: 'Zehirli Bıçak', cls: 'rogue', img: 'hzehirlibicakskill', icon: '🗡️', cd: 10000, target: 'area', area: 1, desc: 'Düşmanı ağır şekilde zehirler.' },
+      { id: 'suikast', name: 'Suikast', cls: 'rogue', img: 'hsuikastskill', icon: '🔪', cd: 15000, target: 'area', area: 1, desc: 'Büyük miktarda anlık fiziksel hasar verir.' },
+      { id: 'sis_bombasi', name: 'Sis Bombası', cls: 'rogue', img: 'hsisbombasiskill', icon: '💨', cd: 18000, target: 'area', area: 5, fxImg: 'sis_bombasi', desc: 'Düşmanları kör eder, %50 ihtimalle ıskalamalarını sağlar.' },
+      { id: 'shuriken', name: 'Shuriken', cls: 'rogue', img: 'hshurikenskill', icon: '🎯', cd: 15000, target: 'area', area: 1, desc: 'Uzak mesafeden düşmana %200 Fiziksel Hasar verir.' },
       // Ranger
-      { id: 'yaylim_atesi', name: 'Yaylım Ateşi', cls: 'ranger', img: 'ayaylimatesiskill', icon: '🏹', cd: 12000, target: 'area', area: 5 },
-      { id: 'kapan', name: 'Kapan', cls: 'ranger', img: 'akapanskill', icon: '🪤', cd: 15000, target: 'area', area: 1, fxImg: 'kapan' },
-      { id: 'ceviklik', name: 'Çeviklik', cls: 'ranger', img: 'aceviklikskill', icon: '🍃', cd: 20000, target: 'self' },
-      { id: 'kartal_gozu', name: 'Kartal Gözü', cls: 'ranger', img: 'akartalgozuskill', icon: '👁️', cd: 18000, target: 'self' },
-      { id: 'sifali_ot', name: 'Şifalı Ot', cls: 'ranger', img: 'asifaliotskill', icon: '🌿', cd: 25000, target: 'self' }
+      { id: 'yaylim_atesi', name: 'Yaylım Ateşi', cls: 'ranger', img: 'ayaylimatesiskill', icon: '🏹', cd: 12000, target: 'area', area: 5, desc: 'Geniş alana ok yağdırarak toplu hasar verir.' },
+      { id: 'kapan', name: 'Kapan', cls: 'ranger', img: 'akapanskill', icon: '🪤', cd: 15000, target: 'area', area: 1, fxImg: 'kapan', desc: 'Hedef kareye kapan kurar, basan düşmanı dondurur.' },
+      { id: 'ceviklik', name: 'Çeviklik', cls: 'ranger', img: 'aceviklikskill', icon: '🍃', cd: 20000, target: 'self', desc: 'Saldırı hızını ve kaçınma şansını artırır.' },
+      { id: 'kartal_gozu', name: 'Kartal Gözü', cls: 'ranger', img: 'akartalgozuskill', icon: '👁️', cd: 18000, target: 'self', desc: 'Bir sonraki vuruş garanti 3x kritik vurur.' },
+      { id: 'sifali_ot', name: 'Şifalı Ot', cls: 'ranger', img: 'asifaliotskill', icon: '🌿', cd: 25000, target: 'self', desc: 'Anında bir miktar sağlık yeniler.' }
     ];
 
     /* ⚠ GÖRSEL YOKLAMA ÖNBELLEĞİ — buton yanıp sönmesin diye. */
@@ -17400,10 +17400,12 @@
         let btnsHtml = '';
         for (const sk of skills) {
           const left = zgSkillLeft(sk.id);
-          btnsHtml += '<button id="zg-sk-btn-' + sk.id + '" class="zg-imgbtn' + (g.aim === sk.id ? ' on' : '') + '"'
+          const tip = '<div class="inv-tooltip tt-gray"><div class="tt-head"><div class="tt-art"><img src="' + IMG_BASE + sk.img + '.webp" onerror="this.style.display=\'none\'" style="width:48px;height:48px;border-radius:4px;object-fit:cover;"></div><div class="tt-id"><div class="tt-name" style="color:var(--gold2)">' + sk.icon + ' ' + sk.name + '</div><div class="tt-type">' + (sk.cd / 1000) + 'sn Bekleme</div></div></div><div class="tt-rows"><div class="tt-fx">' + (sk.desc || '') + '</div></div></div>';
+          btnsHtml += '<button id="zg-sk-btn-' + sk.id + '" class="zg-imgbtn has-tip' + (g.aim === sk.id ? ' on' : '') + '"'
             + (left > 0 ? ' disabled' : '')
-            + ' onclick="zgSkillAim(\'' + sk.id + '\')" title="' + sk.name + ' (' + (sk.cd / 1000) + 'sn bekleme)">'
+            + ' onclick="zgSkillAim(\'' + sk.id + '\')">'
             + zgSkillArtHTML(sk)
+            + tip
             + '<span id="zg-sk-badge-' + sk.id + '" class="zg-badge"></span>'
             + '</button>';
         }
