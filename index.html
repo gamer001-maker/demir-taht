@@ -3268,8 +3268,6 @@
     @media (min-width: 901px) {
 
       .zg-side-info,
-      .zg-skillauto,
-      .zg-imgbtn:not(.has-tip),
       .zg-btn.wide {
         grid-column: 1 / -1;
       }
@@ -3290,20 +3288,22 @@
       color: var(--gold2);
     }
 
-    /* Görsel butonlar: otosaldiri / canavarcek / iksir .webp — yazı görselde,
-       biz sadece durum rozetini (bekleme, adet, eşik) köşeye basıyoruz. */
-    /* Kare kutu YOK — buton görselin kendi en-boy oranını alır (<img> ile,
-       background değil: yükseklik doğal orandan gelsin, tahmin etmeyelim). */
+    /* ── Kompakt İkon Butonları (Oto Saldırı, Bağır, İksir ve Beceriler) ── */
     .zg-imgbtn {
       position: relative;
-      display: block;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       width: 100%;
+      aspect-ratio: 1 / 1;
       padding: 0;
-      border: 0;
-      background: none;
-      line-height: 0;
-      border-radius: 10px;
+      border: 1px solid var(--border2);
+      background: linear-gradient(135deg, #2e2218, #1a120b);
+      line-height: 1;
+      border-radius: 8px;
       cursor: pointer;
+      box-sizing: border-box;
+      overflow: visible;
     }
 
     .zg-imgbtn>*:not(.inv-tooltip) {
@@ -3312,13 +3312,26 @@
 
     .zg-imgbtn img {
       width: 100%;
-      height: auto;
+      height: 100%;
+      object-fit: cover;
       display: block;
-      border-radius: 10px;
+      border-radius: inherit;
+    }
+
+    .zg-sk-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      font-size: 24px;
+      line-height: 1;
+      user-select: none;
+      pointer-events: none;
     }
 
     .zg-imgbtn:hover:not(:disabled)>*:not(.inv-tooltip) {
-      filter: brightness(1.15);
+      filter: brightness(1.2);
     }
 
     .zg-imgbtn:active:not(:disabled)>*:not(.inv-tooltip) {
@@ -3334,39 +3347,53 @@
       filter: grayscale(.6);
     }
 
-    .zg-imgbtn.on>*:not(.inv-tooltip) {
-      filter: drop-shadow(0 0 7px #7aff9aaa) brightness(1.1);
+    .zg-imgbtn.on {
+      border-color: #7aff9a !important;
+      box-shadow: 0 0 8px rgba(122, 255, 154, 0.4), inset 0 0 6px rgba(122, 255, 154, 0.2);
     }
 
     .zg-imgbtn.on::after {
       content: '';
       position: absolute;
-      inset: 0;
+      inset: -1px;
       border: 2px solid #7aff9a;
-      border-radius: 10px;
+      border-radius: inherit;
       pointer-events: none;
     }
 
     .zg-imgbtn .zg-badge {
       position: absolute;
-      right: 5px;
-      bottom: 5px;
+      right: 3px;
+      bottom: 3px;
       font-family: var(--font-head);
-      font-size: clamp(9px, 1vw, 11px);
+      font-size: 9.5px;
       color: var(--gold2);
-      background: #000000b3;
-      border: 1px solid #00000080;
-      border-radius: 6px;
-      padding: 1px 6px;
+      background: #000000d0;
+      border: 1px solid #ffffff20;
+      border-radius: 4px;
+      padding: 0 4px;
       pointer-events: none;
       white-space: nowrap;
+      line-height: 1.4;
+      z-index: 2;
     }
 
     .zg-imgbtn .zg-badge.big {
-      font-size: clamp(12px, 1.4vw, 16px);
-      right: 50%;
-      bottom: 50%;
-      transform: translate(50%, 50%);
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      right: auto;
+      bottom: auto;
+      transform: none;
+      border: none;
+      z-index: 3;
     }
 
     /* ── BECERİ: YAKMA ALANI ──
@@ -3420,55 +3447,61 @@
       }
     }
 
-    /* Beceri butonu + altına YAPIŞIK "otomatik" şeridi — ayrı bir kutu gibi
-       durmasın diye üst kenarı yok, butonla aynı genişlikte. */
-    .zg-skillbox {
+    /* Her beceri için kart (üstte buton, altta yapışık oto kullan seçeneği) */
+    .zg-sk-wrap {
+      display: flex;
+      flex-direction: column;
       position: relative;
-    }
-
-    .zg-sk-fallback {
-      display: none;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
       width: 100%;
-      aspect-ratio: 16 / 7;
-      border-radius: 10px;
-      border: 1px solid var(--border2);
-      background: linear-gradient(160deg, #3a1a0e, #1a0d07);
-      font-family: var(--font-head);
-      font-size: clamp(11px, 1.3vw, 15px);
-      color: #ffb27a;
-      letter-spacing: .06em;
-      line-height: 1;
     }
 
-    .zg-skillauto {
+    .zg-sk-wrap .zg-imgbtn {
+      border-radius: 8px 8px 0 0;
+      border-bottom: 0;
+    }
+
+    .zg-sk-auto {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
+      gap: 3px;
       width: 100%;
       padding: 3px 0 4px;
       border: 1px solid var(--border2);
       border-top: 0;
-      border-radius: 0 0 10px 10px;
+      border-radius: 0 0 8px 8px;
       background: var(--panel3);
       font-family: var(--font-head);
       font-size: 10.5px;
       color: var(--ink3);
       cursor: pointer;
       user-select: none;
+      transition: all .15s;
     }
 
-    .zg-skillauto.on {
+    .zg-sk-auto:hover {
+      background: var(--panel2);
+      color: var(--perg);
+    }
+
+    .zg-sk-auto.on {
       color: #7aff9a;
       border-color: #7aff9a80;
       background: #7aff9a1a;
+      font-weight: 600;
     }
 
-    .zg-skillauto i {
+    .zg-sk-auto i {
       font-style: normal;
+    }
+
+    .zg-sk-fallback {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      font-size: 24px;
     }
 
     /* ── LABİRENT KAPILARI — kenar ortasındaki kareye ışıklı geçit ── */
@@ -15857,6 +15890,7 @@
         shieldUntil: (keepBag && old) ? (old.shieldUntil || 0) : 0,
         clones: [],
         skillAuto: (keepBag && old) ? old.skillAuto : false,
+        autoSkills: (keepBag && old && old.autoSkills) ? { ...old.autoSkills } : (ZD.autoSkills ? { ...ZD.autoSkills } : {}),
         aim: null, zones: [],
         lastPotion: 0,
         kills: 0, quota: zgKillQuota(ZD.floor),
@@ -16005,17 +16039,16 @@
     const _zgImgSeen = {};             // dosya adı → true (var) / false (yok)
     function zgImgMark(file, ok) { _zgImgSeen[file] = !!ok; }
 
-    /* Beceri butonunun görsel kısmı. */
+    /* Beceri butonunun görsel kısmı. Yazı yok, yalnız ikon/görsel. */
     function zgSkillArtHTML(sk) {
       const f = sk.img;
       const seen = _zgImgSeen[f];
-      const label = sk.icon + ' ' + sk.name.toLocaleUpperCase('tr');
-      if (seen === false) return '<span class="zg-sk-fallback" style="display:flex;">' + label + '</span>';
+      if (seen === false) return '<span class="zg-sk-icon">' + sk.icon + '</span>';
       return '<img src="' + IMG_BASE + f + '.webp" alt="' + sk.name + '"'
         + ' onload="zgImgMark(\'' + f + '\',true)"'
         + ' onerror="zgImgMark(\'' + f + '\',false);this.style.display=\'none\';'
         + 'this.nextElementSibling.style.display=\'flex\'">'
-        + '<span class="zg-sk-fallback">' + label + '</span>';
+        + '<span class="zg-sk-icon" style="display:' + (seen ? 'none' : 'flex') + ';">' + sk.icon + '</span>';
     }
 
     function zgSkillOwned(skillId) {
@@ -16050,11 +16083,23 @@
       const st = document.getElementById('zg-stage');
       if (st) st.classList.toggle('aiming', !!(ZD.g && ZD.g.aim));
     }
-    function zgToggleSkillAuto() {
+    function zgToggleSkillAuto(skillId) {
       const g = ZD.g; if (!g) return;
-      g.skillAuto = !g.skillAuto;
-      if (g.skillAuto) g.aim = null;   // otomatikken elle nişan almanın anlamı kalmaz
-      zgSyncAim(); zgRenderSide();
+      if (!skillId) {
+        g.skillAuto = !g.skillAuto;
+        if (g.skillAuto) g.aim = null;
+        zgSyncAim(); zgRenderSide();
+        return;
+      }
+      if (!g.autoSkills) g.autoSkills = {};
+      g.autoSkills[skillId] = !g.autoSkills[skillId];
+      if (!ZD.autoSkills) ZD.autoSkills = {};
+      ZD.autoSkills[skillId] = g.autoSkills[skillId];
+      if (g.autoSkills[skillId] && g.aim === skillId) {
+        g.aim = null;
+        zgSyncAim();
+      }
+      zgRenderSide();
     }
 
     /* Alanı haritada kalacak şekilde kaydırır. */
@@ -16071,7 +16116,7 @@
 
       const now = Date.now();
       g.lastSkills[skillId] = now;
-      g.aim = null;
+      if (g.aim === skillId) g.aim = null;
       const eff = getEffectiveStats();
 
       if (skillId === 'yakma') {
@@ -16688,12 +16733,34 @@
         const t = zgPickTarget();
         if (t) { g.lastAtk = now; zgHit(t, eff); }
       }
-      /* Oto beceri: AFK'de de büyü atılsın diye SALDIRILAN hedefin üstünü
-         yakar. Yürürken de atılır — beceride "yürürken kullanamaz" kuralı
-         yok, o kural yalnız normal vuruşa ait. */
-      if (g.skillAuto && zgSkillReady()) {
-        const sk = zgPickTarget();
-        if (sk) zgSkillCast(sk.x, sk.y, true);
+      /* Oto beceriler: seçili olan her beceri bekleme süresi biter bitmez otomatik kullanılır */
+      if (g.autoSkills || g.skillAuto) {
+        const skills = ZD_SKILLS.filter(s => s.cls === G.classId);
+        for (const sk of skills) {
+          const isAuto = (g.autoSkills && g.autoSkills[sk.id]) || g.skillAuto;
+          if (isAuto && zgSkillReady(sk.id)) {
+            if (sk.target === 'self') {
+              zgSkillCast(g.px, g.py, true, sk.id);
+            } else {
+              // Hedefli beceriler için yaşayan bir düşman bul
+              let bestMob = null, bestD = Infinity;
+              for (const m of g.mobs) {
+                if (m.hp > 0) {
+                  const d = Math.hypot(m.x - g.px, m.y - g.py);
+                  if (d < bestD) { bestD = d; bestMob = m; }
+                }
+              }
+              // Kısa menzilli beceriler (zehirli bıçak, balta, suikast, shuriken) menzilde düşman yoksa boşa harcanmasın
+              let inRange = true;
+              if (sk.id === 'zehirli_bicak') inRange = bestD <= 1.5;
+              else if (sk.id === 'atilan_balta' || sk.id === 'suikast' || sk.id === 'shuriken') inRange = bestD <= 2.5;
+
+              if (bestMob && inRange) {
+                zgSkillCast(bestMob.x, bestMob.y, true, sk.id);
+              }
+            }
+          }
+        }
       }
       zgZoneTick(now, eff);
 
@@ -17325,7 +17392,7 @@
         const skb = document.getElementById('zg-sk-badge-' + sk.id);
         if (skb) {
           const left = zgSkillLeft(sk.id);
-          const show = left > 0 ? String(Math.ceil(left / 1000)) : (g.aim === sk.id ? 'kare seç' : '');
+          const show = left > 0 ? String(Math.ceil(left / 1000)) : (g.aim === sk.id ? '🎯' : '');
           if (skb.textContent !== show) skb.textContent = show;
           skb.style.display = show ? '' : 'none';
           skb.classList.toggle('big', left > 0);
@@ -17392,51 +17459,76 @@
         : 'Canavar <b>' + g.kills + '/' + g.quota + '</b>';
       const sub = s => '<span class="zg-btn-sub">' + s + '</span>';
       const maze = zgMaze();
-      /* Görsel butonlar — yazı görselin üstünde basılı (otosaldiri/canavarcek/
-         iksir.webp), biz yalnızca durum rozeti koyuyoruz: bekleme sayacı,
-         seçili iksirin adı+adedi ve eşik. */
-      /* Görsel butonlar — yazı görselin üstünde basılı, kare kutu yok:
-         <img> doğal oranıyla yatay durur. Rozet sadece durum bilgisi. */
-      const imgBtn = (file, title, click, on, badge) =>
-        '<button class="zg-imgbtn' + (on ? ' on' : '') + '" onclick="' + click + '" title="' + title + '">'
-        + '<img src="' + IMG_BASE + file + '.webp" alt="' + title + '" onerror="this.style.visibility=\'hidden\'">'
-        + (badge || '') + '</button>';
       const pot = zgPotionPick();
-      const potBadge = pot
-        ? '<span class="zg-badge">' + esc(zgPotionShort(pot)) + ' ×' + zgPotionQty(pot) + ' · %' + ZGCFG.at + '</span>'
-        : '<span class="zg-badge">iksir yok</span>';
       const shoutMult = Math.round((zgShoutMult() - 1) * 100);
-      /* Beceri kutusu — şimdilik yalnız Büyücü'de. Görsel buton + altına
-         yapışık "otomatik" şeridi. Buton kendi id'sini taşır çünkü bekleme
-         sayacı her tick'te GÜNCELLENİR: paneli yeniden basmak görselleri
-         titretirdi (👥 sayacında da aynı yol izlendi). */
-      let skillHtml = '';
+
+      // 1. Genel Fonksiyon Butonları (Oto Saldırı, Bağır, İksir) - Kompakt ve İkonlu, Yazısız
+      const utilBtnsHtml =
+        '<button id="zg-btn-auto" class="zg-imgbtn has-tip' + (g.auto ? ' on' : '') + '" onclick="zgToggleAuto()">'
+        + '<span class="zg-sk-icon">⚔️</span>'
+        + '<div class="inv-tooltip tt-gray">'
+        + '<div class="tt-head">'
+        + '<div class="tt-art" style="font-size:26px;display:flex;align-items:center;justify-content:center;">⚔️</div>'
+        + '<div class="tt-id">'
+        + '<div class="tt-name" style="color:var(--gold2)">Oto Saldırı</div>'
+        + '<div class="tt-type" style="color:' + (g.auto ? '#7aff9a' : 'var(--ink3)') + '">' + (g.auto ? '● Açık' : '○ Kapalı') + '</div>'
+        + '</div></div>'
+        + '<div class="tt-rows"><div class="tt-fx">Menzildeki canavarlara otomatik saldırır. (−%10 XP)</div></div>'
+        + '</div>'
+        + '</button>'
+
+        + '<button id="zg-btn-shout" class="zg-imgbtn has-tip' + (g.shout ? ' on' : '') + '" onclick="zgToggleShout()">'
+        + '<span class="zg-sk-icon">📣</span>'
+        + (g.shout ? '<span class="zg-badge">+%' + shoutMult + '</span>' : '')
+        + '<div class="inv-tooltip tt-gray">'
+        + '<div class="tt-head">'
+        + '<div class="tt-art" style="font-size:26px;display:flex;align-items:center;justify-content:center;">📣</div>'
+        + '<div class="tt-id">'
+        + '<div class="tt-name" style="color:var(--gold2)">Canavar Çek (Bağır)</div>'
+        + '<div class="tt-type" style="color:' + (g.shout ? '#7aff9a' : 'var(--ink3)') + '">' + (g.shout ? '● Açık (+%' + shoutMult + ' Canavar)' : '○ Kapalı') + '</div>'
+        + '</div></div>'
+        + '<div class="tt-rows"><div class="tt-fx">Odaya daha sık ve daha çok canavar çeker. Her bağıran için +%10 canavar gelir.</div></div>'
+        + '</div>'
+        + '</button>'
+
+        + '<button id="zg-btn-potion" class="zg-imgbtn has-tip" onclick="zgPotionPicker()">'
+        + '<span class="zg-sk-icon">🧪</span>'
+        + (pot ? '<span class="zg-badge">' + zgPotionQty(pot) + '</span>' : '<span class="zg-badge" style="color:#f87171;">0</span>')
+        + '<div class="inv-tooltip tt-gray">'
+        + '<div class="tt-head">'
+        + '<div class="tt-art" style="font-size:26px;display:flex;align-items:center;justify-content:center;">🧪</div>'
+        + '<div class="tt-id">'
+        + '<div class="tt-name" style="color:var(--gold2)">Can İksiri</div>'
+        + '<div class="tt-type">' + (pot ? esc(zgPotionShort(pot)) + ' ×' + zgPotionQty(pot) : 'İksir Yok') + ' · %' + ZGCFG.at + ' Eşik</div>'
+        + '</div></div>'
+        + '<div class="tt-rows"><div class="tt-fx">Canın %' + ZGCFG.at + ' altına düştüğünde otomatik kullanılır. Seçmek ve ayarlamak için tıkla.</div></div>'
+        + '</div>'
+        + '</button>';
+
+      // 2. Karakter Yetenekleri (Kompakt ikon + altında Oto Kullan)
+      let skillsHtml = '';
       const skills = ZD_SKILLS.filter(s => s.cls === G.classId);
       if (skills.length > 0) {
-        let btnsHtml = '';
+        if (!g.autoSkills) g.autoSkills = (ZD.autoSkills ? { ...ZD.autoSkills } : {});
         for (const sk of skills) {
           const left = zgSkillLeft(sk.id);
-          const tip = '<div class="inv-tooltip tt-gray"><div class="tt-head"><div class="tt-art"><img src="' + IMG_BASE + sk.img + '.webp" onerror="this.style.display=\'none\'" style="width:48px;height:48px;border-radius:4px;object-fit:cover;"></div><div class="tt-id"><div class="tt-name" style="color:var(--gold2)">' + sk.icon + ' ' + sk.name + '</div><div class="tt-type">' + (sk.cd / 1000) + 'sn Bekleme</div></div></div><div class="tt-rows"><div class="tt-fx">' + (sk.desc || '') + '</div></div></div>';
-          btnsHtml += '<button id="zg-sk-btn-' + sk.id + '" class="zg-imgbtn has-tip' + (g.aim === sk.id ? ' on' : '') + '"'
+          const isAuto = !!g.autoSkills[sk.id];
+          const tip = '<div class="inv-tooltip tt-gray"><div class="tt-head"><div class="tt-art"><img src="' + IMG_BASE + sk.img + '.webp" onerror="this.style.display=\'none\'" style="width:48px;height:48px;border-radius:4px;object-fit:cover;"></div><div class="tt-id"><div class="tt-name" style="color:var(--gold2)">' + sk.icon + ' ' + sk.name + '</div><div class="tt-type">' + (sk.cd / 1000) + 'sn Bekleme · ' + (isAuto ? '<span style="color:#7aff9a;">Oto Açık</span>' : 'Oto Kapalı') + '</div></div></div><div class="tt-rows"><div class="tt-fx">' + (sk.desc || '') + '</div></div></div>';
+          skillsHtml += '<div class="zg-sk-wrap">'
+            + '<button id="zg-sk-btn-' + sk.id + '" class="zg-imgbtn has-tip' + (g.aim === sk.id ? ' on' : '') + '"'
             + (left > 0 ? ' disabled' : '')
             + ' onclick="zgSkillAim(\'' + sk.id + '\')">'
             + zgSkillArtHTML(sk)
             + tip
             + '<span id="zg-sk-badge-' + sk.id + '" class="zg-badge"></span>'
-            + '</button>';
+            + '</button>'
+            + '<button type="button" class="zg-sk-auto' + (isAuto ? ' on' : '') + '" onclick="zgToggleSkillAuto(\'' + sk.id + '\')"'
+            + ' title="' + sk.name + ' otomatik kullan">'
+            + '<i>' + (isAuto ? '☑' : '☐') + '</i> Oto</button>'
+            + '</div>';
         }
-        skillHtml = btnsHtml
-          + '<div class="zg-skillauto' + (g.skillAuto ? ' on' : '') + '" onclick="zgToggleSkillAuto()"'
-          + ' title="Açıkken beceri hazır olur olmaz hedefin üstüne atılır"'
-          + ' style="border-radius:10px; border:1px solid var(--border2); display:flex; align-items:center; justify-content:center; cursor:pointer; min-height:40px; font-size:12px;">'
-          + '<i>' + (g.skillAuto ? '☑' : '☐') + '</i> OTO</div>';
       }
-      const btns =
-        skillHtml
-        + imgBtn('otosaldiri', 'Oto Saldırı', 'zgToggleAuto()', g.auto)
-        + imgBtn('canavarcek', 'Bağır', 'zgToggleShout()', g.shout,
-          g.shout ? '<span class="zg-badge">+%' + shoutMult + ' canavar</span>' : '')
-        + imgBtn('iksir', 'İksir', 'zgPotionPicker()', false, potBadge);
+      const btns = utilBtnsHtml + skillsHtml;
 
       let info, lastBtn;
       if (maze) {
