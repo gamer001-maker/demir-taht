@@ -102,6 +102,53 @@
       overflow: hidden;
     }
 
+    /* ── ÖZEL FARE İMLECİ (CUSTOM GALAXY CURSOR) ── */
+    @media (hover: hover) and (pointer: fine) {
+
+      *,
+      html,
+      body {
+        cursor: url('https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/imlec.png') 2 0, auto;
+      }
+
+      a,
+      button,
+      [onclick],
+      .btn,
+      .tab,
+      .inv-slot,
+      .eq-slot,
+      .zg-cell,
+      .zg-imgbtn,
+      .zg-sk-auto,
+      .chat-tab,
+      select,
+      input[type="button"],
+      input[type="submit"],
+      input[type="checkbox"],
+      label {
+        cursor: url('https://raw.githubusercontent.com/gamer001-maker/demir-taht/main/images/imlec.png') 2 0, pointer !important;
+      }
+
+      input[type="text"],
+      input[type="number"],
+      input[type="password"],
+      textarea {
+        cursor: text !important;
+      }
+
+      button:disabled,
+      .zg-imgbtn:disabled,
+      [disabled],
+      .disabled {
+        cursor: not-allowed !important;
+      }
+
+      #zg-stage.aiming .zg-cell {
+        cursor: crosshair !important;
+      }
+    }
+
     @media(max-width:899px) {
 
       html,
@@ -16041,14 +16088,16 @@
 
     /* Beceri butonunun görsel kısmı. Yazı yok, yalnız ikon/görsel. */
     function zgSkillArtHTML(sk) {
-      const f = sk.img;
-      const seen = _zgImgSeen[f];
-      if (seen === false) return '<span class="zg-sk-icon">' + sk.icon + '</span>';
-      return '<img src="' + IMG_BASE + f + '.webp" alt="' + sk.name + '"'
-        + ' onload="zgImgMark(\'' + f + '\',true)"'
-        + ' onerror="zgImgMark(\'' + f + '\',false);this.style.display=\'none\';'
+      return zgIconArtHTML(sk.img, sk.icon, sk.name);
+    }
+    function zgIconArtHTML(file, icon, alt) {
+      const seen = _zgImgSeen[file];
+      if (seen === false) return '<span class="zg-sk-icon">' + icon + '</span>';
+      return '<img src="' + IMG_BASE + file + '.webp" alt="' + (alt || '') + '"'
+        + ' onload="zgImgMark(\'' + file + '\',true)"'
+        + ' onerror="zgImgMark(\'' + file + '\',false);this.style.display=\'none\';'
         + 'this.nextElementSibling.style.display=\'flex\'">'
-        + '<span class="zg-sk-icon" style="display:' + (seen ? 'none' : 'flex') + ';">' + sk.icon + '</span>';
+        + '<span class="zg-sk-icon" style="display:' + (seen ? 'none' : 'flex') + ';">' + icon + '</span>';
     }
 
     function zgSkillOwned(skillId) {
@@ -17465,10 +17514,10 @@
       // 1. Genel Fonksiyon Butonları (Oto Saldırı, Bağır, İksir) - Kompakt ve İkonlu, Yazısız
       const utilBtnsHtml =
         '<button id="zg-btn-auto" class="zg-imgbtn has-tip' + (g.auto ? ' on' : '') + '" onclick="zgToggleAuto()">'
-        + '<span class="zg-sk-icon">⚔️</span>'
+        + zgIconArtHTML('otosaldiri_icon', '⚔️', 'Oto Saldırı')
         + '<div class="inv-tooltip tt-gray">'
         + '<div class="tt-head">'
-        + '<div class="tt-art" style="font-size:26px;display:flex;align-items:center;justify-content:center;">⚔️</div>'
+        + '<div class="tt-art"><img src="' + IMG_BASE + 'otosaldiri_icon.webp" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="width:40px;height:40px;border-radius:4px;object-fit:cover;"><span style="display:none;font-size:26px;">⚔️</span></div>'
         + '<div class="tt-id">'
         + '<div class="tt-name" style="color:var(--gold2)">Oto Saldırı</div>'
         + '<div class="tt-type" style="color:' + (g.auto ? '#7aff9a' : 'var(--ink3)') + '">' + (g.auto ? '● Açık' : '○ Kapalı') + '</div>'
@@ -17478,11 +17527,11 @@
         + '</button>'
 
         + '<button id="zg-btn-shout" class="zg-imgbtn has-tip' + (g.shout ? ' on' : '') + '" onclick="zgToggleShout()">'
-        + '<span class="zg-sk-icon">📣</span>'
+        + zgIconArtHTML('bagir_icon', '📣', 'Canavar Çek (Bağır)')
         + (g.shout ? '<span class="zg-badge">+%' + shoutMult + '</span>' : '')
         + '<div class="inv-tooltip tt-gray">'
         + '<div class="tt-head">'
-        + '<div class="tt-art" style="font-size:26px;display:flex;align-items:center;justify-content:center;">📣</div>'
+        + '<div class="tt-art"><img src="' + IMG_BASE + 'bagir_icon.webp" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="width:40px;height:40px;border-radius:4px;object-fit:cover;"><span style="display:none;font-size:26px;">📣</span></div>'
         + '<div class="tt-id">'
         + '<div class="tt-name" style="color:var(--gold2)">Canavar Çek (Bağır)</div>'
         + '<div class="tt-type" style="color:' + (g.shout ? '#7aff9a' : 'var(--ink3)') + '">' + (g.shout ? '● Açık (+%' + shoutMult + ' Canavar)' : '○ Kapalı') + '</div>'
@@ -17492,11 +17541,11 @@
         + '</button>'
 
         + '<button id="zg-btn-potion" class="zg-imgbtn has-tip" onclick="zgPotionPicker()">'
-        + '<span class="zg-sk-icon">🧪</span>'
+        + zgIconArtHTML('iksir_icon', '🧪', 'Can İksiri')
         + (pot ? '<span class="zg-badge">' + zgPotionQty(pot) + '</span>' : '<span class="zg-badge" style="color:#f87171;">0</span>')
         + '<div class="inv-tooltip tt-gray">'
         + '<div class="tt-head">'
-        + '<div class="tt-art" style="font-size:26px;display:flex;align-items:center;justify-content:center;">🧪</div>'
+        + '<div class="tt-art"><img src="' + IMG_BASE + 'iksir_icon.webp" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="width:40px;height:40px;border-radius:4px;object-fit:cover;"><span style="display:none;font-size:26px;">🧪</span></div>'
         + '<div class="tt-id">'
         + '<div class="tt-name" style="color:var(--gold2)">Can İksiri</div>'
         + '<div class="tt-type">' + (pot ? esc(zgPotionShort(pot)) + ' ×' + zgPotionQty(pot) : 'İksir Yok') + ' · %' + ZGCFG.at + ' Eşik</div>'
