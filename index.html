@@ -13104,6 +13104,12 @@
         ? `<img src="${IMG_BASE}${item.img}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;">${item.icon || '❓'}</span>`
         : `<span>${item.icon || '❓'}</span>`;
 
+      // ⚠ fx FONKSIYON KAPSAMINDA olmali: asagidaki sablon (tt-flavor
+      // satirlari) bunu else blogunun DISINDA okuyor. Sandik dali eklenirken
+      // tanim else'in icine kaymisti ve her tooltip cagrisi ReferenceError
+      // atiyordu -> renderKarakter() eq-slots atamasinda oluyor, envanter/
+      // ozellikler/yetenekler panelleri hic basilmiyordu.
+      const fx = itemEffectText(item);
       let statRows = '';
       if (isChest && chestCfg?.previewItems) {
         statRows = `
@@ -13121,7 +13127,6 @@
           </div>
         `;
       } else {
-        const fx = itemEffectText(item);
         statRows = fx
           ? `<div class="tt-fx">${esc(fx)}</div>`
           : Object.entries(item.stats || {})
