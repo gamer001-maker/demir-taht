@@ -14011,16 +14011,27 @@
        deseninin aynisi: iki kaynaktan hangisi ilerideyse o kazanir.
        ⚠ Bu bir kolaylik agi, guvenlik sinifi DEGIL - localStorage'i silen bir
        oyuncu yine tekrar talep edebilir. Kalici cozum sunucu tarafi
-       claim_level_chest() RPC'si (bkz. TODO: sunucu-otoriter oduller). */
-    const CLAIMED_CHESTS_KEY = 'dt_claimed_chests';
+       claim_level_chest() RPC'si (bkz. TODO: sunucu-otoriter oduller).
+       ⚠⚠ ANAHTAR HESABA GORE AYRILIR. Tarayici geneli tek anahtar kullanilirsa
+       ayni tarayicida acilan YENI hesap, eski hesabin talep isaretini okuyup
+       hak ettigi sandigi hic alamaz. Bu bir kez yasandi: sv.1 hesaba 1. seviye
+       sandigi gelmedi. Yeni bir localStorage anahtari eklerken hesaba mi yoksa
+       cihaza mi ait oldugunu bilerek sec. */
+    function claimedChestsKey() {
+      const uid = (typeof currentUser !== 'undefined' && currentUser && currentUser.id) || 'anon';
+      return 'dt_claimed_chests_' + uid;
+    }
     function readClaimedChestsLS() {
       try {
-        const v = JSON.parse(localStorage.getItem(CLAIMED_CHESTS_KEY) || '[]');
+        // Hesaba gore ayrilmadan once yazilmis eski genel anahtar: artik
+        // okunmaz, birakilirsa yeni hesaplari yanlis etkiler.
+        localStorage.removeItem('dt_claimed_chests');
+        const v = JSON.parse(localStorage.getItem(claimedChestsKey()) || '[]');
         return Array.isArray(v) ? v.filter(n => typeof n === 'number') : [];
       } catch (e) { return []; }
     }
     function writeClaimedChestsLS(list) {
-      try { localStorage.setItem(CLAIMED_CHESTS_KEY, JSON.stringify(list)); } catch (e) { }
+      try { localStorage.setItem(claimedChestsKey(), JSON.stringify(list)); } catch (e) { }
     }
 
     function checkAndAwardLevelChests() {
