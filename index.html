@@ -13207,7 +13207,7 @@
             ${previewHtml}
           </div>
           <button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#8a6a1a,#4a3008);border-color:var(--gold);color:var(--gold2);font-weight:bold;font-size:14px;padding:10px;" ${!canOpen ? 'disabled' : ''} onclick="openLevelChest(${item.id})">
-            ${!canOpen ? `🔒 Seviye ${item.reqLv || 1} Gerekli` : '🎁 Sandığı Aç'}
+            ${!canOpen ? `🔒 Seviye ${item.reqLv || 1} Gerekli` : 'Sandığı Aç'}
           </button>
           <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal()">Kapat</button>
         `;
