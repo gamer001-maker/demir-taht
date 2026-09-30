@@ -13432,10 +13432,18 @@
     }
 
     /* Set bonusu: 4 aynı materyal zırh takılıysa aktif */
+    /* ⚠ HER ZIRH MALZEMESININ BURADA KARSILIGI OLMALI.
+       Zirh sablonlari dort malzeme kullaniyor: tahta / deri / demir / kumas.
+       kumas girdisi EKSIKTI -> tam kumas set giyen oyuncuya ne banner ne stat
+       geliyordu (getSetBonus ve getActiveBonusStats ikisi de null donuyordu),
+       ustelik sessizce: hicbir uyari yoktu. Yeni zirh malzemesi eklenirse
+       buraya da eklenmeli. Toplamlar bilerek esit (16); setler dagilimla
+       ayrisir: demir=savunma, tahta=dengeli, deri=cevik, kumas=buyu. */
     const SET_BONUSES = {
       tahta: { def: 4, agi: 6, wis: 6, label: 'Tahta' },
       deri: { def: 1, agi: 5, wis: 10, label: 'Deri' },
       demir: { def: 10, agi: 3, wis: 3, label: 'Demir' },
+      kumas: { def: 1, agi: 3, wis: 12, label: 'Kumaş' },
     };
     function getSetBonus() {
       const armorSlots = ['chest', 'helmet', 'gloves', 'boots'];
@@ -16207,6 +16215,13 @@
       SKILL_MS: 5000,       // zeminin yanma süresi (görsel de bu kadar durur)
       SKILL_TICK: 1000,     // hasar periyodu → 5 tik
       SKILL_DMG: 0.30,      // her tikte saldırı gücünün oranı
+      /* ☠ ZEHİR — beceriyle bulaşır, saniyede bir işler (zgRingSecond).
+         Eskiden Zehirle YALNIZ yavaşlatıyordu, Zehirli Bıçak ise hiç okunmayan
+         bir anahtara (_psnUntil) yazıyordu; ikisi de HİÇ hasar vermiyordu. */
+      PSN_MAGE_MS: 5000,    // Büyücü Zehirle — süre
+      PSN_MAGE_DMG: 0.20,   // saniyede saldırı gücünün oranı
+      PSN_ROGUE_MS: 6000,   // Haydut Zehirli Bıçak — süre ("ağır zehir")
+      PSN_ROGUE_DMG: 0.35,  // saniyede saldırı gücünün oranı
       RANGE: { warrior: 1, rogue: 1, mage: 3, ranger: 3.5 },
       // Öklid daire yarıçapı. Avcı 4 iken 7×7'nin 45/49'unu
       // kapsıyordu (köşeler hariç her yer) — 3.5'te 37/49.
@@ -16641,8 +16656,8 @@
         const r = (sk.area - 1) / 2;
         for (const m of g.mobs) {
           if (m.hp > 0 && Math.abs(m.x - cx) <= r && Math.abs(m.y - cy) <= r) {
-            if (!m.st) m.st = {};
-            m.st.slowUntil = now + 5000;
+            // Gerçek zehir: yavaşlatma DEĞİL (o Dondur'un işi), saniyelik hasar
+            zgApplyPoison(m, (eff.physDmg || 1) * ZG.PSN_MAGE_DMG, ZG.PSN_MAGE_MS);
             zgFloat(m.x, m.y, '☠️', '#2ecc71', 1);
           }
         }
@@ -16718,8 +16733,9 @@
         if (bestMob && bestD <= 1) {
           if (!bestMob.st) bestMob.st = {};
           bestMob.st.slowUntil = now + 5000;
-          bestMob.st._psnTick = now + 1000;
-          bestMob.st._psnUntil = now + 5000;
+          // ⚠ Eskiden _psnTick/_psnUntil yazılıyordu ama bunları OKUYAN kod yoktu;
+          // "ağır zehir" tamamen sessizdi. Artık ortak zehir sistemine bağlı.
+          zgApplyPoison(bestMob, (eff.physDmg || 1) * ZG.PSN_ROGUE_DMG, ZG.PSN_ROGUE_MS);
           const dmg = Math.max(1, Math.floor((eff.physDmg || 1) * 1.5));
           zgDamageMob(bestMob, dmg, zcoMe());
           zgFloat(bestMob.x, bestMob.y, '🗡️', '#2ecc71', 1);
@@ -17035,14 +17051,40 @@
       zgFloat(g.px, g.py, '-' + dmg, '#ff8a8a');
       zgFlash('player');
     }
+    /* Canavara zehir bulaştır. Yakmadan farkı: yakma zar tutar, zehir sabit
+       süreli ve yenisi gelirse GÜÇLÜ olanı kazanır (üst üste binmez).
+       ⚠ Anahtar adı psnUntil — canavarın üzerindeki zehirle.gif de bunu okur. */
+    function zgApplyPoison(m, dmgPerSec, durMs) {
+      if (!m || m.hp <= 0) return;
+      if (!m.st) m.st = {};
+      const now = Date.now();
+      const dmg = Math.max(1, Math.floor(dmgPerSec));
+      if (!(m.st.psnUntil > now) || dmg >= (m.st.psnDmg || 0)) m.st.psnDmg = dmg;
+      m.st.psnUntil = Math.max(m.st.psnUntil || 0, now + durMs);
+      if (!(m.st.psnNext > now)) m.st.psnNext = now + 1000;
+    }
+    /* Saniyelik zehir hasarı. Hasarı uygulayan zgRingSecond'dır; ortak katta
+       zgDamageMob zaten ev sahibine yönlendirir, st YEREL kalır (yakmada
+       olduğu gibi: zehri kim bulaştırdıysa tiki o takip eder). */
+    function zgPoisonTick(st, now) {
+      if (!st || !(st.psnUntil > now) || !(now >= (st.psnNext || 0))) return 0;
+      st.psnNext = now + 1000;
+      return Math.max(1, Math.floor(st.psnDmg || 0));
+    }
     function zgRingSecond(eff) {
       const g = ZD.g;
+      const nowSec = Date.now();
       for (const m of [...g.mobs]) {
         if (m.hp <= 0) continue;
         const burn = ringBurnTick(m.st, m.maxHp, eff.physDmg);
         if (burn > 0) {
           zgFloat(m.x, m.y, '🔥' + burn, '#ff9d5c');
           zgDamageMob(m, burn, zcoMe());   // yakma da ev sahibine bildirilir
+        }
+        const psn = zgPoisonTick(m.st, nowSec);
+        if (psn > 0) {
+          zgFloat(m.x, m.y, '☠' + psn, '#7ee787');
+          zgDamageMob(m, psn, zcoMe());    // zehir de ev sahibine bildirilir
         }
       }
       // Arınma iyileşmesi saniyede BİR kez — canavar sayısıyla çarpılmamalı
@@ -17853,7 +17895,7 @@
 
         const now = Date.now();
         if (e._fxZehir) e._fxZehir.style.display = (m.st && m.st.psnUntil > now) ? 'block' : 'none';
-        if (e._fxDondur) e._fxDondur.style.display = (m.st && (m.st.stunUntil > now || m.st.slowUntil > now)) ? 'block' : 'none';
+        if (e._fxDondur) e._fxDondur.style.display = (m.st && m.st.stunUntil > now) ? 'block' : 'none';
         if (e._fxSis) e._fxSis.style.display = (m.st && m.st.blindUntil > now) ? 'block' : 'none';
       }
 
