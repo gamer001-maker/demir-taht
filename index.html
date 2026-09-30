@@ -12454,6 +12454,7 @@
       if (G.gold >= 100) trackQuest('goldReached100');
       // Harita başlat
       initPlayerMap().then(() => renderGame('harita'));
+      checkAndAwardLevelChests();
       toast(`Hoş geldin, ${G.heroName}! 🏰`);
       maybeCoach('g:karakter');
     }
@@ -12628,7 +12629,10 @@
         G.xp -= xpForLevel(G.level);
         G.level++; G.skillPoints += 2; leveled++;
       }
-      if (leveled > 0) celebrate('🎊', `SEVİYE ${G.level}!`, `+${leveled * 2} yetenek puanı kazandın`, 'levelup');
+      if (leveled > 0) {
+        celebrate('🎊', `SEVİYE ${G.level}!`, `+${leveled * 2} yetenek puanı kazandın`, 'levelup');
+        checkAndAwardLevelChests();
+      }
     }
 
     /* ── CAN YENİLENMESİ (zamanla) ──
@@ -13091,19 +13095,41 @@
        metni basılır (statsOrEffect ile aynı ayrım). */
     function itemTooltipHTML(item) {
       if (!item) return '';
+      const isChest = item.isChest || item.type === 'Sandık';
+      const chestCfg = isChest ? (LEVEL_CHEST_CONFIG[item.chestLv] || null) : null;
       const g = getRollGrade(item);
-      const gradeId = g ? ROLL_GRADES[g].gradeId : (rarityEligible(item) ? (item.grade || 'gray') : '');
-      const gradeTxt = rollGradeLabel(item);
+      const gradeId = g ? ROLL_GRADES[g].gradeId : (rarityEligible(item) ? (item.grade || 'gray') : (isChest ? (item.grade || 'purple') : ''));
+      const gradeTxt = isChest ? `${item.chestLv || item.reqLv || 1}. Seviye Sandığı` : rollGradeLabel(item);
       const art = item.img
         ? `<img src="${IMG_BASE}${item.img}.webp" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;">${item.icon || '❓'}</span>`
         : `<span>${item.icon || '❓'}</span>`;
-      const fx = itemEffectText(item);
-      const statRows = fx
-        ? `<div class="tt-fx">${esc(fx)}</div>`
-        : Object.entries(item.stats || {})
-          .map(([k, v]) => `<div class="tt-row"><b>${v}</b><span>${STAT_LABELS[k] || k}</span></div>`).join('');
+
+      let statRows = '';
+      if (isChest && chestCfg?.previewItems) {
+        statRows = `
+          <div style="font-family:var(--font-head);font-size:11px;color:var(--gold2);margin-bottom:6px;border-bottom:1px solid rgba(218,165,32,0.25);padding-bottom:3px;">🎁 Sandık İçeriği:</div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            ${chestCfg.previewItems.map(p => `
+              <div style="display:flex;align-items:flex-start;gap:6px;font-size:11px;line-height:1.25;">
+                <span style="font-size:13px;flex-shrink:0;">${p.icon}</span>
+                <div>
+                  <span style="color:var(--gold2);font-weight:600;">${esc(p.name)}</span>
+                  ${p.desc ? `<div style="font-size:10px;color:var(--ink3);line-height:1.2;">${esc(p.desc)}</div>` : ''}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else {
+        const fx = itemEffectText(item);
+        statRows = fx
+          ? `<div class="tt-fx">${esc(fx)}</div>`
+          : Object.entries(item.stats || {})
+            .map(([k, v]) => `<div class="tt-row"><b>${v}</b><span>${STAT_LABELS[k] || k}</span></div>`).join('');
+      }
+
       const sell = (typeof getNPCSellPrice === 'function') ? getNPCSellPrice(item) : 0;
-      const footRows = (sell > 0 ? `<div class="tt-row"><b>${sell.toLocaleString('tr-TR')}</b><span>Tüccar alış fiyatı</span></div>` : '')
+      const footRows = (!isChest && sell > 0 ? `<div class="tt-row"><b>${sell.toLocaleString('tr-TR')}</b><span>Tüccar alış fiyatı</span></div>` : '')
         + (item.reqLv > 1 ? `<div class="tt-row"><b>${item.reqLv}</b><span>Seviye</span></div>` : '');
       const qty = item.qty && item.qty > 1 ? ` ×${item.qty}` : '';
       const plus = item.enhPlus > 0 ? ` +${item.enhPlus}` : '';
@@ -13116,9 +13142,9 @@
           ${item.type ? `<div class="tt-type">${esc(item.type)}</div>` : ''}
         </div>
       </div>
-      ${statRows ? `<div class="tt-rows">${statRows}${item.desc && fx ? `<div class="tt-flavor">${esc(item.desc)}</div>` : ''}</div>` : ''}
+      ${statRows ? `<div class="tt-rows">${statRows}${item.desc && !isChest && fx ? `<div class="tt-flavor">${esc(item.desc)}</div>` : ''}</div>` : ''}
       ${footRows ? `<div class="tt-rows">${footRows}</div>` : ''}
-      ${item.desc && !fx ? `<div class="tt-rows"><div class="tt-flavor" style="margin-top:0;">${esc(item.desc)}</div></div>` : ''}
+      ${item.desc && (isChest || !fx) ? `<div class="tt-rows"><div class="tt-flavor" style="margin-top:0;">${esc(item.desc)}</div></div>` : ''}
     </div>`;
     }
 
@@ -13150,6 +13176,45 @@
       }
 
       if (!item) return;
+
+      // Sandık ise özel sandık modalı
+      if (item.isChest || item.type === 'Sandık') {
+        const cfg = LEVEL_CHEST_CONFIG[item.chestLv] || null;
+        const canOpen = G.level >= (item.reqLv || cfg?.lv || 1);
+        const imgHtml = itemImgTag(item, 80, 'margin-bottom:6px;filter:drop-shadow(0 2px 8px #00000080);');
+        const previewHtml = cfg?.previewItems ? `
+          <div style="background:rgba(0,0,0,0.35);border:1px solid rgba(218,165,32,0.25);border-radius:8px;padding:10px 12px;margin:10px 0;text-align:left;">
+            <div style="font-family:var(--font-head);font-size:12px;color:var(--gold2);margin-bottom:6px;border-bottom:1px solid rgba(218,165,32,0.2);padding-bottom:4px;">🎁 Sandık İçeriği:</div>
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              ${cfg.previewItems.map(p => `
+                <div style="display:flex;align-items:flex-start;gap:7px;font-size:11px;line-height:1.3;">
+                  <span style="font-size:14px;flex-shrink:0;">${p.icon}</span>
+                  <div>
+                    <span style="color:var(--gold2);font-weight:600;">${esc(p.name)}</span>
+                    ${p.desc ? `<div style="font-size:10px;color:var(--ink3);">${esc(p.desc)}</div>` : ''}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : '';
+
+        html = `
+          <div style="text-align:center;margin-bottom:12px;">
+            ${imgHtml}
+            <div style="font-family:var(--font-head);font-size:16px;color:var(--gold2);">${esc(item.name)}</div>
+            <div style="font-size:11px;color:var(--ink3);margin-top:2px;">${item.type} · <span style="color:${canOpen ? 'var(--gold2)' : '#e74c3c'};font-weight:bold;">Sv.${item.reqLv || 1} Gerekli</span></div>
+            ${item.desc ? `<div style="font-size:11px;color:var(--perg2);margin-top:6px;font-style:italic;">${esc(item.desc)}</div>` : ''}
+            ${previewHtml}
+          </div>
+          <button class="btn" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#8a6a1a,#4a3008);border-color:var(--gold);color:var(--gold2);font-weight:bold;font-size:14px;padding:10px;" ${!canOpen ? 'disabled' : ''} onclick="openLevelChest(${item.id})">
+            ${!canOpen ? `🔒 Seviye ${item.reqLv || 1} Gerekli` : '🎁 Sandığı Aç'}
+          </button>
+          <button class="btn btn-ghost" style="width:100%;" onclick="closeGModal()">Kapat</button>
+        `;
+        showGModal(html);
+        return;
+      }
 
       // Eşya tipi → hangi slot?
       const targetSlot = slotForItem(item);
@@ -13424,6 +13489,7 @@
     function sellToNPC(itemId) {
       const item = G.inventory.find(x => x.id === itemId);
       if (!item) { closeGModal(); return; }
+      if (item.isChest || item.type === 'Sandık' || item.noMarket) { toast('Bu sandık satılamaz!'); return; }
       const price = getNPCSellPrice(item);
       const plusText = item.enhPlus > 0 ? ` +${item.enhPlus}` : '';
       const gradeColors = { orange: '#c9a646', purple: '#9a6aaa', blue: '#5a8aaa', green: '#5a8a4a', gray: '#8a7268' };
@@ -13465,6 +13531,7 @@
 
     function openSellModal(itemId) {
       const item = G.inventory.find(x => x.id === itemId); if (!item) return;
+      if (item.isChest || item.type === 'Sandık' || item.noMarket) { toast('Bu sandık pazarda satılamaz!'); return; }
       const suggested = Math.floor(item.price * 0.5);
       const html = `
     <div style="text-align:center;margin-bottom:12px;">
@@ -13683,6 +13750,356 @@
         if (t && t.fx === fxKey) total += ringPct(it);
       });
       return total / 100;
+    }
+
+    /* ══════════════════════════════════════
+         SEVİYE DESTEK SANDIKLARI (1, 5, 10, 15)
+         Oyuncular belirlenen seviyelere ulaştığında otomatik verilir.
+         Her sandık sadece 1 kez talep edilebilir (G.ach.claimed_level_chests).
+      ══════════════════════════════════════ */
+    const LEVEL_CHEST_LEVELS = [1, 5, 10, 15];
+
+    function makeArmorItem(tplId, plus = 0) {
+      const tpl = ARMOR_TEMPLATES[tplId];
+      if (!tpl) return null;
+      const rolledStats = rollStatsFromTpl(tpl);
+      const finalStats = plus > 0 ? getEnhancedStats({ baseStats: rolledStats, stats: rolledStats }, plus) : rolledStats;
+      const armor = {
+        id: newItemId(),
+        cat: 'armor', tplId,
+        name: tpl.name, icon: tpl.icon,
+        type: tpl.type, grade: tpl.grade,
+        reqLv: tpl.reqLv, classes: tpl.classes || ['warrior', 'rogue', 'mage'],
+        img: tpl.img,
+        stats: finalStats, baseStats: rolledStats,
+        material: tpl.material || null,
+        _migrated: true, enhPlus: plus,
+        desc: tplDesc(tplId, tpl),
+        price: 0, seller: 'player',
+        sellerName: G.heroName || G.username,
+      };
+      const aG = getRollGrade(armor);
+      if (aG && ROLL_GRADES[aG]) armor.grade = ROLL_GRADES[aG].gradeId;
+      return armor;
+    }
+
+    function makeWeaponItem(tplId, plus = 0) {
+      const tpl = WEAPON_TEMPLATES[tplId];
+      if (!tpl) return null;
+      const rolledStats = rollStatsFromTpl(tpl);
+      const finalStats = plus > 0 ? getEnhancedStats({ baseStats: rolledStats, stats: rolledStats }, plus) : rolledStats;
+      const weapon = {
+        id: newItemId(),
+        cat: 'weapon', tplId,
+        name: tpl.name, icon: tpl.icon,
+        type: tpl.type, grade: tpl.grade,
+        reqLv: tpl.reqLv, classes: tpl.classes,
+        img: tpl.img,
+        stats: finalStats, baseStats: rolledStats,
+        _migrated: true, enhPlus: plus,
+        desc: tplDesc(tplId, tpl),
+        price: 0, seller: 'player',
+        sellerName: G.heroName || G.username,
+      };
+      const wG = getRollGrade(weapon);
+      if (wG && ROLL_GRADES[wG]) weapon.grade = ROLL_GRADES[wG].gradeId;
+      return weapon;
+    }
+
+    function makeMarketConsumable(itemId, qty = 1) {
+      const base = MARKET_ITEMS.find(x => x.id === itemId);
+      if (!base) return null;
+      return {
+        ...base,
+        id: newItemId(),
+        qty: qty,
+        price: 0,
+        seller: 'player',
+        sellerName: G.heroName || G.username
+      };
+    }
+
+    const LEVEL_CHEST_CONFIG = {
+      1: {
+        lv: 1,
+        name: '1. Seviye Destek Sandığı',
+        icon: '🎁',
+        grade: 'gray',
+        desc: '1. Seviyeye ulaşan yeni kahramanlar için temel başlangıç kiti.',
+        gold: 100,
+        previewItems: [
+          { icon: '🛡', name: 'Tahta Set (4 Parça)', desc: 'Göğüslük, Kask, Eldiven, Bot' },
+          { icon: '🧪', name: '20× Küçük Can İksiri' },
+          { icon: '💍', name: '1× Bakır Yüzük' },
+          { icon: '💠', name: '1× Tahta Küpe' },
+          { icon: '🪙', name: '100 Altın' },
+        ],
+        getItems: (classId) => [
+          makeArmorItem('tahtagogusluk'),
+          makeArmorItem('tahtakask'),
+          makeArmorItem('tahtaeldiven'),
+          makeArmorItem('tahtabot'),
+          makeMarketConsumable(401, 20),
+          makeRing('bakiryuzuk', 0),
+          makeEarring('tahtakupe', 0),
+        ],
+        materials: {},
+      },
+      5: {
+        lv: 5,
+        name: '5. Seviye Destek Sandığı',
+        icon: '🎁',
+        grade: 'green',
+        desc: '5. Seviyeye ulaşan kahramanlar için sınıfa özel zırh seti ve geliştirme malzemeleri.',
+        gold: 500,
+        previewItems: [
+          { icon: '🛡', name: 'Sınıfa Özel Set (4 Parça)', desc: 'Savaşçı: Demir | Haydut/Avcı: Deri | Büyücü: Kumaş' },
+          { icon: '🧪', name: '25× Orta Can İksiri' },
+          { icon: '⛏', name: '5× Ham Demir' },
+          { icon: '🔶', name: '5× Güç Rünesi' },
+          { icon: '🐉', name: '5× Ejderha Pulu' },
+          { icon: '💠', name: '1× Yeşim Taşı Küpe' },
+          { icon: '🪙', name: '500 Altın' },
+        ],
+        getItems: (classId) => {
+          const isMage = classId === 'mage';
+          const isRogueOrRanger = classId === 'rogue' || classId === 'ranger';
+          const prefix = isMage ? 'kumas' : (isRogueOrRanger ? 'deri' : 'demir');
+          return [
+            makeArmorItem(prefix + 'gogusluk'),
+            makeArmorItem(prefix + 'kask'),
+            makeArmorItem(prefix + 'eldiven'),
+            makeArmorItem(prefix + 'bot'),
+            makeMarketConsumable(411, 25),
+            makeEarring('yesimtasikupe', 0),
+          ];
+        },
+        materials: {
+          ham_demir: 5,
+          guc_runesi: 5,
+          ejderha_pulu: 5,
+        },
+      },
+      10: {
+        lv: 10,
+        name: '10. Seviye Destek Sandığı',
+        icon: '🎁',
+        grade: 'blue',
+        desc: '10. Seviyeye ulaşan kahramanlar için sınıf silahı, mavi zırh seti ve değerli malzemeler.',
+        gold: 1500,
+        previewItems: [
+          { icon: '⚔', name: 'Sınıfa Özel Silah', desc: 'Savaşçı: Bakır Kılıç | Büyücü: Alev Asası | Haydut: Kemik Bıçak | Avcı: Kemik Yay' },
+          { icon: '🛡', name: 'Sınıfa Özel Mavi Set (4 Parça)', desc: 'Savaşçı: Çelik | Haydut/Avcı: İşlenmiş Deri | Büyücü: İpek' },
+          { icon: '🧪', name: '40× Orta Can İksiri' },
+          { icon: '⛏', name: '5× Ham Demir, 5× Güç Rünesi' },
+          { icon: '🐉', name: '5× Ejderha Pulu, 5× Anka Külü' },
+          { icon: '💠', name: '1× İnci Küpe' },
+          { icon: '🧪', name: '1× Unutuş İksiri' },
+          { icon: '🪙', name: '1.500 Altın' },
+        ],
+        getItems: (classId) => {
+          const weaponKey = classId === 'mage' ? 'alevasa'
+            : classId === 'rogue' ? 'kemikbicak'
+              : classId === 'ranger' ? 'kemikyay'
+                : 'bakirkilic';
+          const armorPrefix = classId === 'mage' ? 'ipek'
+            : (classId === 'rogue' || classId === 'ranger') ? 'islenmisderi'
+              : 'celik';
+          return [
+            makeWeaponItem(weaponKey),
+            makeArmorItem(armorPrefix + 'gogusluk'),
+            makeArmorItem(armorPrefix + 'kask'),
+            makeArmorItem(armorPrefix + 'eldiven'),
+            makeArmorItem(armorPrefix + 'bot'),
+            makeMarketConsumable(411, 40),
+            makeMarketConsumable(903, 1),
+            makeEarring('incikupe', 0),
+          ];
+        },
+        materials: {
+          ham_demir: 5,
+          guc_runesi: 5,
+          ejderha_pulu: 5,
+          anka_kulu: 5,
+        },
+      },
+      15: {
+        lv: 15,
+        name: '15. Seviye Destek Sandığı',
+        icon: '🎁',
+        grade: 'purple',
+        desc: '15. Seviyeye ulaşan kahramanlar için epik silah, mor zırh seti ve efsanevi destek kiti.',
+        gold: 3500,
+        previewItems: [
+          { icon: '⚔', name: 'Sınıfa Özel Epik Silah', desc: 'Savaşçı: Ağır Sopa | Büyücü: Element Asası | Haydut: Runlu Bıçak | Avcı: Element Yay' },
+          { icon: '🛡', name: 'Sınıfa Özel Mor Set (4 Parça)', desc: 'Savaşçı: Dövme Çelik | Haydut/Avcı: Kalın Deri | Büyücü: Kadife' },
+          { icon: '🧪', name: '25× Büyük Can İksiri' },
+          { icon: '🔶', name: '5× Güç Rünesi, 5× Ejderha Pulu' },
+          { icon: '🔥', name: '5× Anka Külü, 5× Ruh Kristali' },
+          { icon: '💠', name: '1× Kan Taşı Küpe' },
+          { icon: '🍀', name: '1× Şans Muskası' },
+          { icon: '🪙', name: '3.500 Altın' },
+        ],
+        getItems: (classId) => {
+          const weaponKey = classId === 'mage' ? 'elementasa'
+            : classId === 'rogue' ? 'runlubicak'
+              : classId === 'ranger' ? 'elementyay'
+                : 'agirsopa';
+          let armorPieces = [];
+          if (classId === 'mage') {
+            armorPieces = [
+              makeArmorItem('kadifebuyucuyelegi'),
+              makeArmorItem('kadifebuyucusapkasi'),
+              makeArmorItem('kadifebuyucueldiveni'),
+              makeArmorItem('kadifebuyucubotu'),
+            ];
+          } else if (classId === 'rogue' || classId === 'ranger') {
+            armorPieces = [
+              makeArmorItem('kalinderigogusluk'),
+              makeArmorItem('kalinderikask'),
+              makeArmorItem('kalinderieldiven'),
+              makeArmorItem('kalinderibot'),
+            ];
+          } else {
+            armorPieces = [
+              makeArmorItem('dovmecelikgogusluk'),
+              makeArmorItem('dovmecelikkask'),
+              makeArmorItem('dovmecelikeldiven'),
+              makeArmorItem('dovmecelikbot'),
+            ];
+          }
+          return [
+            makeWeaponItem(weaponKey),
+            ...armorPieces,
+            makeMarketConsumable(412, 25),
+            makeMarketConsumable(906, 1),
+            makeEarring('kantasikupe', 0),
+          ];
+        },
+        materials: {
+          guc_runesi: 5,
+          ejderha_pulu: 5,
+          anka_kulu: 5,
+          ruh_kristali: 5,
+        },
+      },
+    };
+
+    function makeLevelChestItem(lv) {
+      const cfg = LEVEL_CHEST_CONFIG[lv];
+      if (!cfg) return null;
+      return {
+        id: newItemId(),
+        cat: 'chest',
+        type: 'Sandık',
+        isChest: true,
+        chestLv: lv,
+        name: cfg.name,
+        icon: cfg.icon || '🎁',
+        img: 'sandik_lv' + lv,
+        grade: cfg.grade || 'gray',
+        reqLv: cfg.lv,
+        price: 0,
+        noMarket: true,
+        desc: cfg.desc,
+      };
+    }
+
+    function checkAndAwardLevelChests() {
+      if (!G || !G.level) return;
+      if (!G.ach) G.ach = {};
+      if (!Array.isArray(G.ach.claimed_level_chests)) {
+        G.ach.claimed_level_chests = [];
+      }
+      const claimed = G.ach.claimed_level_chests;
+      let awardedCount = 0;
+
+      LEVEL_CHEST_LEVELS.forEach(lv => {
+        if (G.level >= lv) {
+          const alreadyClaimed = claimed.includes(lv);
+          const alreadyInInv = G.inventory.some(it => (it.isChest || it.type === 'Sandık') && it.chestLv === lv);
+
+          if (!alreadyClaimed && !alreadyInInv) {
+            if (invCount() >= invCap()) {
+              toast(`⚠ Envanter dolu! ${lv}. Seviye Sandığı için yer aç.`);
+              return;
+            }
+            const chest = makeLevelChestItem(lv);
+            if (chest) {
+              G.inventory.push(chest);
+              claimed.push(lv);
+              awardedCount++;
+              toast(`🎁 Tebrikler! ${chest.name} envanterine eklendi!`);
+            }
+          }
+        }
+      });
+
+      if (awardedCount > 0) {
+        renderKarakter();
+        if (typeof currentUser !== 'undefined' && currentUser) sbSave();
+      }
+    }
+
+    function openLevelChest(chestId) {
+      const chestIdx = G.inventory.findIndex(x => x.id === chestId);
+      if (chestIdx === -1) return;
+      const chest = G.inventory[chestIdx];
+      const lv = chest.chestLv;
+      const cfg = LEVEL_CHEST_CONFIG[lv];
+      if (!cfg) { toast('Geçersiz sandık!'); return; }
+
+      if (G.level < (cfg.lv || 1)) {
+        toast(`🔒 Bu sandığı açabilmek için Seviye ${cfg.lv} olmalısın!`);
+        return;
+      }
+
+      const items = cfg.getItems(G.classId).filter(Boolean);
+      let neededSlots = 0;
+      items.forEach(it => {
+        const k = stackKeyOf(it);
+        if (k && G.inventory.some(x => stackKeyOf(x) === k)) {
+          // Var olan yığına eklenecek
+        } else {
+          neededSlots++;
+        }
+      });
+
+      const availableSlots = invCap() - invCount() + 1; // Sandık silineceği için +1
+      if (neededSlots > availableSlots) {
+        const shortBy = neededSlots - availableSlots;
+        toast(`⚠ Sandığı açmak için envanterinde en az ${shortBy} boş yer daha açmalısın!`);
+        return;
+      }
+
+      // 1. Sandığı kaldır
+      G.inventory.splice(chestIdx, 1);
+      closeGModal();
+
+      // 2. Eşyaları envantere ekle
+      items.forEach(it => {
+        addItemStacked(it);
+      });
+
+      // 3. Materyalleri doğrudan G.matInv'e ekle
+      if (!G.matInv) G.matInv = {};
+      if (cfg.materials) {
+        Object.entries(cfg.materials).forEach(([matKey, qty]) => {
+          G.matInv[matKey] = (G.matInv[matKey] || 0) + qty;
+        });
+      }
+
+      // 4. Altını ekle
+      if (cfg.gold > 0) {
+        G.gold += cfg.gold;
+        updateHUD();
+      }
+
+      // 5. Tebrik & Kayıt
+      celebrate('🎁', `${cfg.name} Açıldı!`, `Ödüller envanterine ve çantana eklendi.`, 'achievement');
+      toast(`🎉 ${cfg.name} açıldı! Tüm ödüller başarıyla alındı.`);
+      renderKarakter();
+      if (typeof currentUser !== 'undefined' && currentUser) sbSave();
     }
 
     /* ── KALE ── */
@@ -15332,12 +15749,12 @@
 
     /* ══════════════════════════════════════
        ZİNDAN EŞYA DÜŞÜŞÜ
-
+ 
        Tasarım kararı: KAT, ödülün KALİTESİNİ değil SIKLIĞINI artırır.
        Nadirlik ve + değeri her katta aynı tablodan çekilir. Böylece
        1. katta uzun süre kalıp set toplamak geçerli bir strateji olarak
        kalır; üst katlar daha çabuk ödül verir ama efsanevi yağdırmaz.
-
+ 
        chance: kat 1 → 5 arasında doğrusal artar.
        grades/plus: kata bağlı DEĞİL.
        types:  yüzük payı düşük tutuldu — bölge yüzük havuzu küçük olduğu
@@ -15702,7 +16119,7 @@
        Tek zindan sistemi budur. Eski tur-tabanlı oda sistemi (Saldır/Savun/
        Büyü/Sıyrıl butonlu zdGenFloor/zdFloorHTML/zdBattleHTML/zdAction/
        zdEnterRoom ve arkadaşları) tamamen kaldırıldı.
-
+ 
        Tasarım kararları:
        - Yürürken SALDIRAMAZSIN ama vurulabilirsin (dokunulmazlık yok).
        - Tüm canavarlar yakın dövüşçü; oyuncuya doğru kare kare yürürler.
@@ -23370,6 +23787,7 @@
       }
       if (!G.ach) G.ach = {};
       checkAchievements(); // canlı değerlerden (seviye, zafer) hak edilenleri işle
+      checkAndAwardLevelChests();
 
       return true;
     }
