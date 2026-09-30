@@ -13113,15 +13113,12 @@
       let statRows = '';
       if (isChest && chestCfg?.previewItems) {
         statRows = `
-          <div style="font-family:var(--font-head);font-size:11px;color:var(--gold2);margin-bottom:6px;border-bottom:1px solid rgba(218,165,32,0.25);padding-bottom:3px;">🎁 Sandık İçeriği:</div>
+          <div style="font-family:var(--font-head);font-size:11px;color:var(--gold2);margin-bottom:6px;border-bottom:1px solid rgba(218,165,32,0.25);padding-bottom:3px;">Sandık İçeriği</div>
           <div style="display:flex;flex-direction:column;gap:4px;">
             ${chestCfg.previewItems.map(p => `
-              <div style="display:flex;align-items:flex-start;gap:6px;font-size:11px;line-height:1.25;">
-                <span style="font-size:13px;flex-shrink:0;">${p.icon}</span>
-                <div>
-                  <span style="color:var(--gold2);font-weight:600;">${esc(p.name)}</span>
-                  ${p.desc ? `<div style="font-size:10px;color:var(--ink3);line-height:1.2;">${esc(p.desc)}</div>` : ''}
-                </div>
+              <div style="font-size:11px;line-height:1.25;">
+                <span style="color:var(--gold2);font-weight:600;">${esc(p.name)}</span>
+                ${p.desc ? `<div style="font-size:10px;color:var(--ink3);line-height:1.2;">${esc(p.desc)}</div>` : ''}
               </div>
             `).join('')}
           </div>
@@ -13189,15 +13186,12 @@
         const imgHtml = itemImgTag(item, 80, 'margin-bottom:6px;filter:drop-shadow(0 2px 8px #00000080);');
         const previewHtml = cfg?.previewItems ? `
           <div style="background:rgba(0,0,0,0.35);border:1px solid rgba(218,165,32,0.25);border-radius:8px;padding:10px 12px;margin:10px 0;text-align:left;">
-            <div style="font-family:var(--font-head);font-size:12px;color:var(--gold2);margin-bottom:6px;border-bottom:1px solid rgba(218,165,32,0.2);padding-bottom:4px;">🎁 Sandık İçeriği:</div>
+            <div style="font-family:var(--font-head);font-size:12px;color:var(--gold2);margin-bottom:6px;border-bottom:1px solid rgba(218,165,32,0.2);padding-bottom:4px;">Sandık İçeriği</div>
             <div style="display:flex;flex-direction:column;gap:5px;">
               ${cfg.previewItems.map(p => `
-                <div style="display:flex;align-items:flex-start;gap:7px;font-size:11px;line-height:1.3;">
-                  <span style="font-size:14px;flex-shrink:0;">${p.icon}</span>
-                  <div>
-                    <span style="color:var(--gold2);font-weight:600;">${esc(p.name)}</span>
-                    ${p.desc ? `<div style="font-size:10px;color:var(--ink3);">${esc(p.desc)}</div>` : ''}
-                  </div>
+                <div style="font-size:11px;line-height:1.3;">
+                  <span style="color:var(--gold2);font-weight:600;">${esc(p.name)}</span>
+                  ${p.desc ? `<div style="font-size:10px;color:var(--ink3);">${esc(p.desc)}</div>` : ''}
                 </div>
               `).join('')}
             </div>
@@ -14010,12 +14004,35 @@
       };
     }
 
+    /* Sandik talep isareti localStorage'da da AYNALANIR.
+       Tek kaynak profiles.ach_counters olsaydi, o kayit herhangi bir sebeple
+       gitmediginde (sert yenileme, ag hatasi, eksik sutun) sandik tekrar
+       veriliyor ve sonsuz esya uretiliyordu. Gorev sistemindeki birlesim
+       deseninin aynisi: iki kaynaktan hangisi ilerideyse o kazanir.
+       ⚠ Bu bir kolaylik agi, guvenlik sinifi DEGIL - localStorage'i silen bir
+       oyuncu yine tekrar talep edebilir. Kalici cozum sunucu tarafi
+       claim_level_chest() RPC'si (bkz. TODO: sunucu-otoriter oduller). */
+    const CLAIMED_CHESTS_KEY = 'dt_claimed_chests';
+    function readClaimedChestsLS() {
+      try {
+        const v = JSON.parse(localStorage.getItem(CLAIMED_CHESTS_KEY) || '[]');
+        return Array.isArray(v) ? v.filter(n => typeof n === 'number') : [];
+      } catch (e) { return []; }
+    }
+    function writeClaimedChestsLS(list) {
+      try { localStorage.setItem(CLAIMED_CHESTS_KEY, JSON.stringify(list)); } catch (e) { }
+    }
+
     function checkAndAwardLevelChests() {
       if (!G || !G.level) return;
       if (!G.ach) G.ach = {};
       if (!Array.isArray(G.ach.claimed_level_chests)) {
         G.ach.claimed_level_chests = [];
       }
+      // Sunucudan gelen liste ile yerel ayna birlestirilir
+      readClaimedChestsLS().forEach(lv => {
+        if (!G.ach.claimed_level_chests.includes(lv)) G.ach.claimed_level_chests.push(lv);
+      });
       const claimed = G.ach.claimed_level_chests;
       let awardedCount = 0;
 
@@ -14041,8 +14058,9 @@
       });
 
       if (awardedCount > 0) {
+        writeClaimedChestsLS(claimed);   // DB kaydi gitmese bile tekrar verilmesin
         renderKarakter();
-        if (typeof currentUser !== 'undefined' && currentUser) sbSave();
+        if (typeof currentUser !== 'undefined' && currentUser) sbSaveNow();
       }
     }
 
@@ -14104,7 +14122,7 @@
       celebrate('🎁', `${cfg.name} Açıldı!`, `Ödüller envanterine ve çantana eklendi.`, 'achievement');
       toast(`🎉 ${cfg.name} açıldı! Tüm ödüller başarıyla alındı.`);
       renderKarakter();
-      if (typeof currentUser !== 'undefined' && currentUser) sbSave();
+      if (typeof currentUser !== 'undefined' && currentUser) sbSaveNow();
     }
 
     /* ── KALE ── */
@@ -23891,6 +23909,18 @@
         _sbResolvers.push(res);
         clearTimeout(_sbTimer);
         _sbTimer = setTimeout(_sbFlush, 800);
+      });
+    }
+    /* Geri alinamaz odullerde (sandik acma gibi) 800ms beklenmez: istek HEMEN
+       yola cikar. Aksi halde odulu alip pencere icinde sert yenileme yapan
+       oyuncuda islem hic kaydedilmiyor, sunucudaki eski profil geri geliyor ve
+       ayni sandik tekrar tekrar acilabiliyordu. pagehide flush yetmez -
+       istek aga cikmadan sayfa yikiliyor. */
+    function sbSaveNow() {
+      return new Promise(res => {
+        _sbResolvers.push(res);
+        clearTimeout(_sbTimer); _sbTimer = null;
+        _sbFlush();
       });
     }
     async function _sbFlush() {
