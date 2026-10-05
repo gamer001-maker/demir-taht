@@ -11468,6 +11468,23 @@
         r = r * r;
         st[k] = mn + Math.floor(r * (mx - mn + 1));
       });
+      /* ⚠ HİÇBİR EŞYA TAMAMEN BOŞ ÇIKMASIN.
+         Alt sınırı 0 olan aralıklarda zar her stat için ayrı ayrı 0 atabiliyor
+         (r=r*r sıfıra yaslandığı için sık). Bakır Yüzük'te oran %29 idi ve
+         onun bir fx'i de olmadığı için gerçekten ÖLÜ bir eşya çıkıyordu.
+         Üstelik geliştirme ÇARPANLI (getEnhancedStats: v*(1+bonus)) olduğu için
+         0 stat + basarak da düzelmiyordu — oyuncu o yüzüğü asla kurtaramıyordu.
+         Ölçüm: silah (34) ve zırh (80) şablonları hiçbir zaman tamamen boş
+         çıkmıyor — bu kural yalnızca yüzük ve küpeleri etkiler. */
+      const keys = Object.keys(st);
+      if (keys.length && keys.every(k => !st[k])) {
+        let best = null, bestMax = 0;
+        for (const k of keys) {
+          const mx = tpl.statRanges[k][1];
+          if (mx >= 1 && mx > bestMax) { bestMax = mx; best = k; }
+        }
+        if (best) st[best] = 1;   // aralık izin vermiyorsa dokunma
+      }
       return st;
     }
     function rollWeaponStats(tplId) {
@@ -13652,13 +13669,13 @@
        Görsel dosya adı = tplId (images/<tplId>.webp)
     ══════════════════════════════════════════════════════════════ */
     const EARRING_TEMPLATES = {
-      tahtakupe: { name: 'Tahta Küpe', fx: 'maxhp', baseVal: 25, per: 0.5, grade: 'gray', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Sağlığı artırır.', fxTxt: p => `Maksimum Can +${p}` },
-      yesimtasikupe: { name: 'Yeşim Taşı Küpe', fx: 'enhance', baseVal: 1.0, per: 0.5, grade: 'green', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Demirci ocağında şansını artırır.', fxTxt: p => `Geliştirme Başarı Şansı +%${p}` },
-      incikupe: { name: 'İnci Küpe', fx: 'regen', baseVal: 1.0, per: 0.5, grade: 'blue', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Denizden gelen tazelikle can yeniler.', fxTxt: p => `Savaşta saniyede azami canının %${p} kadarı yenilenir` },
-      kantasikupe: { name: 'Kan Taşı Küpe', fx: 'lifesteal', baseVal: 1.5, per: 0.5, grade: 'purple', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Verdiğin darbeden can çeker.', fxTxt: p => `Verdiğin hasarın %${p} kadarı can olarak döner` },
-      obsidyenkupe: { name: 'Obsidyen Küpe', fx: 'crit', baseVal: 2.0, per: 0.5, grade: 'purple', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Keskin siyah cam gibi kritik şansı verir.', fxTxt: p => `Kritik Vuruş Şansı +%${p}` },
-      okyanusungozu: { name: 'Okyanusun Gözü', fx: 'scoutLoot', baseVal: 2.5, per: 0.5, grade: 'orange', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Zindan ve harabelerde kısmetini açar.', fxTxt: p => `Zindan & Harabe ganimeti +%${p}` },
-      ruyayildizi: { name: 'Rüya Yıldızı', fx: 'xp', baseVal: 3.0, per: 0.5, grade: 'orange', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Kutsal ışığıyla XP kazanımını artırır.', fxTxt: p => `Savaş ve görev XP kazanımı +%${p}` },
+      tahtakupe: { name: 'Tahta Küpe', fx: 'maxhp', baseVal: 25, per: 0.5, grade: 'gray', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Sağlığı artırır.', fxTxt: p => `Maksimum Can +${p}` },
+      yesimtasikupe: { name: 'Yeşim Taşı Küpe', fx: 'enhance', baseVal: 1.0, per: 0.5, grade: 'green', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Demirci ocağında şansını artırır.', fxTxt: p => `Geliştirme Başarı Şansı +%${p}` },
+      incikupe: { name: 'İnci Küpe', fx: 'regen', baseVal: 1.0, per: 0.5, grade: 'blue', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Denizden gelen tazelikle can yeniler.', fxTxt: p => `Savaşta saniyede azami canının %${p} kadarı yenilenir` },
+      kantasikupe: { name: 'Kan Taşı Küpe', fx: 'lifesteal', baseVal: 1.5, per: 0.5, grade: 'purple', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Verdiğin darbeden can çeker.', fxTxt: p => `Verdiğin hasarın %${p} kadarı can olarak döner` },
+      obsidyenkupe: { name: 'Obsidyen Küpe', fx: 'crit', baseVal: 2.0, per: 0.5, grade: 'purple', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Keskin siyah cam gibi kritik şansı verir.', fxTxt: p => `Kritik Vuruş Şansı +%${p}` },
+      okyanusungozu: { name: 'Okyanusun Gözü', fx: 'scoutLoot', baseVal: 2.5, per: 0.5, grade: 'orange', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Zindan ve harabelerde kısmetini açar.', fxTxt: p => `Zindan & Harabe ganimeti +%${p}` },
+      ruyayildizi: { name: 'Rüya Yıldızı', fx: 'xp', baseVal: 3.0, per: 0.5, grade: 'orange', reqLv: 1, statRanges: { hp: [0, 5], def: [0, 1] }, desc: 'Kutsal ışığıyla XP kazanımını artırır.', fxTxt: p => `Savaş ve görev XP kazanımı +%${p}` },
     };
     const EARRING_SLOTS = ['earring', 'earring2'];
 
@@ -14382,48 +14399,48 @@
     const RING_TEMPLATES = {
       /* ── SAVAŞ ── */
       arinmayuzugu: {
-        name: 'Arınma Yüzüğü', fx: 'regen', per: 0.5, grade: 'blue', reqLv: 5, tier: 'savas', statRanges: { hp: [0, 25], def: [0, 3] }, statRanges: { hp: [0, 25], def: [0, 3] },
+        name: 'Arınma Yüzüğü', fx: 'regen', per: 0.5, grade: 'blue', reqLv: 5, tier: 'savas', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Her tur azami canının bir kısmını yeniler.', fxTxt: p => `Her tur azami canının %${p} kadarı yenilenir`
       },
       atesyuzugu: {
-        name: 'Ateş Yüzüğü', fx: 'burn', per: 0.5, grade: 'blue', reqLv: 5, tier: 'savas', statRanges: { hp: [0, 25], def: [0, 3] }, statRanges: { hp: [0, 25], def: [0, 3] },
+        name: 'Ateş Yüzüğü', fx: 'burn', per: 0.5, grade: 'blue', reqLv: 5, tier: 'savas', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Vuruşların düşmanı tutuşturabilir.', fxTxt: p => `%${p} ihtimalle yakma (5 tur boyunca tur başı %1 can, üst üste binebilir)`
       },
       kanyuzugu: {
-        name: 'Kan Yüzüğü', fx: 'lifesteal', per: 0.5, grade: 'purple', reqLv: 5, tier: 'savas', statRanges: { hp: [0, 25], def: [0, 3] }, statRanges: { hp: [0, 25], def: [0, 3] },
+        name: 'Kan Yüzüğü', fx: 'lifesteal', per: 0.5, grade: 'purple', reqLv: 5, tier: 'savas', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Verdiğin hasarın bir kısmını cana çevirir.', fxTxt: p => `Verdiğin hasarın %${p} kadarı can olarak döner`
       },
       necruyuzugu: {
-        name: 'Necro Yüzüğü', fx: 'curse', per: 0.5, grade: 'purple', reqLv: 5, tier: 'savas', statRanges: { hp: [0, 25], def: [0, 3] }, statRanges: { hp: [0, 25], def: [0, 3] },
+        name: 'Necro Yüzüğü', fx: 'curse', per: 0.5, grade: 'purple', reqLv: 5, tier: 'savas', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Düşmanı lanetler, aldığı iyileşmeyi kırar.', fxTxt: p => `Düşmanın iyileşmesi %${p} azalır`
       },
       ofkekristaliyuzugu: {
-        name: 'Öfke Kristali', fx: 'rage', per: 0.5, grade: 'orange', reqLv: 5, tier: 'savas', statRanges: { hp: [0, 25], def: [0, 3] }, statRanges: { hp: [0, 25], def: [0, 3] },
+        name: 'Öfke Kristali', fx: 'rage', per: 0.5, grade: 'orange', reqLv: 5, tier: 'savas', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Yaralandıkça öfken hasara dönüşür.', fxTxt: p => `Eksik her %10 can için +%${p} hasar`
       },
       elementalekipyuzugu: {
-        name: 'Elementel Ekip Yüzüğü', fx: 'guildboss', per: 1.0, grade: 'orange', reqLv: 5, tier: 'savas', statRanges: { hp: [0, 25], def: [0, 3] }, statRanges: { hp: [0, 25], def: [0, 3] },
+        name: 'Elementel Ekip Yüzüğü', fx: 'guildboss', per: 1.0, grade: 'orange', reqLv: 5, tier: 'savas', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Lonca kardeşlerinle avlanırken güç verir.', fxTxt: p => `Lonca boss savaşında +%${p} güç`
       },
       /* ── GELİŞİM ── */
       nehirruhuyuzugu: {
-        name: 'Nehir Ruhu Yüzüğü', fx: 'commission', per: 0.5, grade: 'blue', reqLv: 5, tier: 'gelisim', statRanges: { hp: [0, 25], def: [0, 3] }, statRanges: { hp: [0, 25], def: [0, 3] },
+        name: 'Nehir Ruhu Yüzüğü', fx: 'commission', per: 0.5, grade: 'blue', reqLv: 5, tier: 'gelisim', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Tüccarlar sana daha az komisyon keser.', fxTxt: p => `Pazar komisyonu %${p} puan azalır`
       },
       ormanruhuyuzugu: {
-        name: 'Orman Ruhu Yüzüğü', fx: 'yield', per: 0.5, grade: 'purple', reqLv: 5, tier: 'gelisim', statRanges: { hp: [0, 25], def: [0, 3] }, statRanges: { hp: [0, 25], def: [0, 3] },
+        name: 'Orman Ruhu Yüzüğü', fx: 'yield', per: 0.5, grade: 'purple', reqLv: 5, tier: 'gelisim', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Toprak ve hayvan sana daha cömert davranır.', fxTxt: p => `Tarla ve çiftlik üretim miktarı +%${p}`
       },
       ustayuzugu: {
-        name: 'Usta Yüzüğü', fx: 'prodspeed', per: 0.5, grade: 'purple', reqLv: 5, tier: 'gelisim', statRanges: { hp: [0, 25], def: [0, 3] }, statRanges: { hp: [0, 25], def: [0, 3] },
+        name: 'Usta Yüzüğü', fx: 'prodspeed', per: 0.5, grade: 'purple', reqLv: 5, tier: 'gelisim', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Bütün atölyelerin daha hızlı çalışır.', fxTxt: p => `Tarla, Çiftlik, Değirmen ve Aşevi süresi -%${p}`
       },
       sansyuzugu: {
-        name: 'Şans Yüzüğü', fx: 'enhance', per: 0.5, grade: 'blue', reqLv: 5, tier: 'gelisim', statRanges: { hp: [0, 25], def: [0, 3] }, statRanges: { hp: [0, 25], def: [0, 3] },
+        name: 'Şans Yüzüğü', fx: 'enhance', per: 0.5, grade: 'blue', reqLv: 5, tier: 'gelisim', statRanges: { hp: [0, 25], def: [0, 3] },
         desc: 'Örsün başında talih senden yana.', fxTxt: p => `Eşya geliştirme başarı şansı +%${p}`
       },
       bakiryuzuk: {
-        name: 'Bakır Yüzük', fx: null, per: 0, grade: 'gray', reqLv: 1, tier: 'gelisim', statRanges: { hp: [0, 5], def: [0, 1] }, statRanges: { hp: [0, 5], def: [0, 1] },
+        name: 'Bakır Yüzük', fx: null, per: 0, grade: 'gray', reqLv: 1, tier: 'gelisim', statRanges: { hp: [0, 5], def: [0, 1] },
         desc: 'Sıradan bakır yüzük.', fxTxt: () => 'Özel bir etkisi yok'
       },
     };
@@ -16142,9 +16159,10 @@
       ZD.active = true;
       ZD.tier = zdPlayerTier(); // kademe girişte kilitlenir (içeride seviye atlansa da değişmez)
       ZD.floor = 1;
-      // 5. kademe = labirent (giriş odası), diğerleri 5 katlı sistem
-      ZD.mode = ZD.tier >= 5 ? 'maze' : 'floors';
-      ZD.room = ZD.mode === 'maze' ? { x: MAZE5.entry.x, y: MAZE5.entry.y } : null;
+      // Artık her kademenin kendi labirenti var (MAZES). Kat sistemi
+      // yalnızca tanımlı şema yoksa devreye girer — pratikte kullanılmıyor.
+      ZD.mode = MAZES[ZD.tier] ? 'maze' : 'floors';
+      ZD.room = ZD.mode === 'maze' ? { x: mazeDef().entry.x, y: mazeDef().entry.y } : null;
       ZD.totalGold = 0;
       ZD.totalXP = 0;
       zgNewRun(false);   // 7×7 ızgara koşusu başlar
@@ -16205,19 +16223,21 @@
       BAT_HIT: 0.50,        // taban vuruş şansı (Avcı dışında sabit)
       BAT_ACC: 0.01,        // Avcı'da her İsabet puanı +%1
       BAT_HIT_CAP: 0.95,    // Avcı'da bile garanti isabet olmasın
+      CLONE_MAX: 3,         // Destek — aynı anda en fazla klon. Tavan yoktu:
+      // klonlar yalnız canavar hasarıyla öldüğü için hızlı kesim yapılan katta
+      // birikip saniyedeki hasarı sınırsız büyütüyorlardı.
       TOUGH_HP: 20,         // boss + elit CAN çarpanı. Tek vuruşta ölüyorlardı;
       // sadece can artar (hasar/XP/altın aynı kalır) ki
       // dövüş uzasın, ödül enflasyonu olmasın.
       /* ── BECERİLER (denemelik) ── Şimdilik tek beceri: Büyücü'nün YAKMA
          alanı. Tüm ayarlar burada; dengeyi tek yerden çevirebilmek için. */
-      SKILL_CD: 10000,      // bekleme süresi (ms)
-      SKILL_SIZE: 5,        // etki alanı kenarı → 5×5 = 25 kare
       SKILL_MS: 5000,       // zeminin yanma süresi (görsel de bu kadar durur)
       SKILL_TICK: 1000,     // hasar periyodu → 5 tik
       SKILL_DMG: 0.30,      // her tikte saldırı gücünün oranı
       /* ☠ ZEHİR — beceriyle bulaşır, saniyede bir işler (zgRingSecond).
          Eskiden Zehirle YALNIZ yavaşlatıyordu, Zehirli Bıçak ise hiç okunmayan
          bir anahtara (_psnUntil) yazıyordu; ikisi de HİÇ hasar vermiyordu. */
+      EAGLE_MULT: 3,        // Kartal Gözü — garanti kritik çarpanı (açıklamada 3x)
       PSN_MAGE_MS: 5000,    // Büyücü Zehirle — süre
       PSN_MAGE_DMG: 0.20,   // saniyede saldırı gücünün oranı
       PSN_ROGUE_MS: 6000,   // Haydut Zehirli Bıçak — süre ("ağır zehir")
@@ -16240,46 +16260,105 @@
     function zgIn(x, y) { return x >= 0 && y >= 0 && x < ZG.W && y < ZG.H; }
     function zgDist(ax, ay, bx, by) { return Math.max(Math.abs(ax - bx), Math.abs(ay - by)); }
 
-    /* ══════════════════════════════════════════════════════════════
-       LABİRENT — şimdilik YALNIZ 5. kademe (ZD.mode === 'maze')
-       4×4 oda; her oda bildiğimiz 7×7 ızgara. Çift çizgili şema → doors.
-       - Giriş (0,0). Çıkış yalnız (0,0) ve (3,3)'te; başka odada çıkılamaz.
-       - Sarı boss: (3,0) (0,2) (3,2) → Altın Şövalye, öldükten 5 dk sonra geri gelir.
-       - Kırmızı boss: (3,3) → Nekromancer, 10 dk sonra geri gelir. Üst üste binmez.
-       - Mini harita BİLEREK yok — kaybolmak oyunun parçası.
-       - Kat sistemi (kademe 1-4) olduğu gibi duruyor; iki mod yan yana yaşıyor.
-       - Boss'un öldürülme zamanı sunucuda (sql/zd_boss_migration.sql). RPC yoksa
-         boss hep hazır sayılır — oyun çalışır, sadece 5/10 dk kuralı yerel kalır.
-    ══════════════════════════════════════════════════════════════ */
-    const MAZE5 = {
-      W: 4, H: 4,
-      entry: { x: 0, y: 0 },
-      exits: ['0,0', '3,3'],
-      yellow: ['3,0', '0,2', '3,2'],
-      red: '3,3',
-      doors: [
-        ['0,0', '1,0'], ['1,0', '2,0'], ['2,0', '3,0'],
-        ['0,0', '0,1'], ['1,0', '1,1'], ['2,0', '2,1'],
-        ['2,1', '3,1'],
-        ['2,1', '2,2'], ['3,1', '3,2'],
-        ['1,2', '2,2'],
-        ['0,2', '0,3'], ['1,2', '1,3'],
-        ['0,3', '1,3'], ['1,3', '2,3'], ['2,3', '3,3'],
-      ],
-      respawn: { yellow: 5 * 60e3, red: 10 * 60e3 },
+    /* ═════════════════════════════════════════════════════════════
+       LABİRENT — ARTIK BÜTÜN KADEMELERDE (ZD.mode === 'maze')
+       Her oda bildiğimiz 7×7 ızgara. Kademe başına bir düzen: MAZES[kademe].
+
+       TASARIM KURALI — ŞEMALAR AĞAÇTIR (döngü YOK):
+       kapı sayısı = oda sayısı − 1. Böylece çıkışa giden TEK bir rota olur ve
+       sapılan her yol çıkmaz sokaktır — kaybolmak oyunun parçası (mini harita
+       bilerek yok). Sarı boss'lar ÇIKMAZLARIN UCUNDA durur: yanlış dönüşün
+       ödülü odur. Kırmızı boss çıkış odasındadır.
+       ⚠ Yeni şema eklerken scratchpad/mazes.js ile doğrula: her oda erişilebilir
+       mi, ağaç mı, sarı boss gerçekten çıkmazda mı.
+
+       ÇIKIŞ: her şemada 1 giriş + 2 çıkış noktası — giriş odası ve bitiş odası.
+       Başka odada "Çıkış yok" yazar.
+
+       KADEME 1 bilerek DÜMDÜZ: 5 oda, hep sağa. İlk 10 seviye için labirent
+       mantığını öğretir ama kaybettirmez; çıkmazı ve sarı boss'u yoktur.
+       (İleride biyoma göre ayrı zindanlar gelecek — çöl/dağ vb.)
+
+       Boss'un öldürülme zamanı sunucuda (sql/zd_boss_migration.sql).
+       ⚠ O tablonun birincil anahtarı ZATEN (tier, room) — kademeye yayılmak
+       için SQL değişikliği GEREKMEDİ. RPC yoksa boss hep hazır sayılır.
+    ═════════════════════════════════════════════════════════════ */
+    const MAZE_RESPAWN = { yellow: 5 * 60e3, red: 10 * 60e3 };
+    const MAZES = {
+      // Kademe 1 — düz koridor: sağ → sağ → sağ → sağ (5 oda, çıkmaz yok)
+      1: {
+        W: 5, H: 1, entry: { x: 0, y: 0 }, exits: ['0,0', '4,0'],
+        yellow: [], red: '4,0',
+        doors: [['0,0', '1,0'], ['1,0', '2,0'], ['2,0', '3,0'], ['3,0', '4,0']],
+        respawn: MAZE_RESPAWN,
+      },
+      // Kademe 2 — sağ → sağ → aşağı → aşağı (9 oda, 4'ü çıkmaz)
+      2: {
+        W: 3, H: 3, entry: { x: 0, y: 0 }, exits: ['0,0', '2,2'],
+        yellow: ['1,2'], red: '2,2',
+        doors: [
+          ['0,0', '1,0'], ['1,0', '2,0'], ['2,0', '2,1'], ['2,1', '2,2'],
+          ['0,0', '0,1'], ['0,1', '0,2'], ['0,2', '1,2'],
+          ['1,0', '1,1'],
+        ],
+        respawn: MAZE_RESPAWN,
+      },
+      // Kademe 3 — sağ sağ aşağı sol aşağı sağ sağ (12 oda, 4'ü çıkmaz)
+      3: {
+        W: 4, H: 3, entry: { x: 0, y: 0 }, exits: ['0,0', '3,2'],
+        yellow: ['0,2', '3,1'], red: '3,2',
+        doors: [
+          ['0,0', '1,0'], ['1,0', '2,0'], ['2,0', '2,1'], ['2,1', '1,1'],
+          ['1,1', '1,2'], ['1,2', '2,2'], ['2,2', '3,2'],
+          ['0,0', '0,1'], ['0,1', '0,2'],
+          ['2,0', '3,0'], ['3,0', '3,1'],
+        ],
+        respawn: MAZE_RESPAWN,
+      },
+      // Kademe 4 — aşağı sağ sağ YUKARI sağ aşağı aşağı aşağı (16 oda, 7'si çıkmaz)
+      // Bilerek 5'ten farklı yönde başlar ve geri yukarı döner — ezberlenmesin.
+      4: {
+        W: 4, H: 4, entry: { x: 0, y: 0 }, exits: ['0,0', '3,3'],
+        yellow: ['2,2', '2,3'], red: '3,3',
+        doors: [
+          ['0,0', '0,1'], ['0,1', '1,1'], ['1,1', '2,1'], ['2,1', '2,0'],
+          ['2,0', '3,0'], ['3,0', '3,1'], ['3,1', '3,2'], ['3,2', '3,3'],
+          ['0,0', '1,0'],
+          ['0,1', '0,2'], ['0,2', '0,3'], ['0,3', '1,3'], ['1,3', '2,3'],
+          ['1,1', '1,2'], ['1,2', '2,2'],
+        ],
+        respawn: MAZE_RESPAWN,
+      },
+      // Kademe 5 — sağ sağ aşağı aşağı sol aşağı sağ sağ (16 oda, 7'si çıkmaz)
+      5: {
+        W: 4, H: 4, entry: { x: 0, y: 0 }, exits: ['0,0', '3,3'],
+        yellow: ['3,0', '0,2', '3,2'], red: '3,3',
+        doors: [
+          ['0,0', '1,0'], ['1,0', '2,0'], ['2,0', '3,0'],
+          ['0,0', '0,1'], ['1,0', '1,1'], ['2,0', '2,1'],
+          ['2,1', '3,1'],
+          ['2,1', '2,2'], ['3,1', '3,2'],
+          ['1,2', '2,2'],
+          ['0,2', '0,3'], ['1,2', '1,3'],
+          ['0,3', '1,3'], ['1,3', '2,3'], ['2,3', '3,3'],
+        ],
+        respawn: MAZE_RESPAWN,
+      },
     };
+    /* Aktif kademenin labirent düzeni. Kademe tanımsızsa 5'e düşer. */
+    function mazeDef() { return MAZES[ZD.tier] || MAZES[5]; }
     /* Kapı kareleri: kenar ortası. Oyuncu TIKLAYARAK bu kareye varınca odaya geçer. */
     const ZG_DOOR_CELL = { L: { x: 0, y: 3 }, R: { x: 6, y: 3 }, U: { x: 3, y: 0 }, D: { x: 3, y: 6 } };
     const ZG_DIR = { L: { dx: -1, dy: 0, back: 'R' }, R: { dx: 1, dy: 0, back: 'L' }, U: { dx: 0, dy: -1, back: 'D' }, D: { dx: 0, dy: 1, back: 'U' } };
     function zgMaze() { return ZD.mode === 'maze'; }
-    function zgRoomKey(x, y) { const r = ZD.room || MAZE5.entry; return (x == null ? r.x : x) + ',' + (y == null ? r.y : y); }
-    function zgHasDoor(a, b) { return MAZE5.doors.some(d => (d[0] === a && d[1] === b) || (d[0] === b && d[1] === a)); }
+    function zgRoomKey(x, y) { const r = ZD.room || mazeDef().entry; return (x == null ? r.x : x) + ',' + (y == null ? r.y : y); }
+    function zgHasDoor(a, b) { return mazeDef().doors.some(d => (d[0] === a && d[1] === b) || (d[0] === b && d[1] === a)); }
     function zgRoomDoors() {
-      const r = ZD.room || MAZE5.entry, me = zgRoomKey();
+      const r = ZD.room || mazeDef().entry, me = zgRoomKey();
       const out = {};
       for (const d of Object.keys(ZG_DIR)) {
         const nx = r.x + ZG_DIR[d].dx, ny = r.y + ZG_DIR[d].dy;
-        out[d] = nx >= 0 && ny >= 0 && nx < MAZE5.W && ny < MAZE5.H && zgHasDoor(me, nx + ',' + ny);
+        out[d] = nx >= 0 && ny >= 0 && nx < mazeDef().W && ny < mazeDef().H && zgHasDoor(me, nx + ',' + ny);
       }
       return out;
     }
@@ -16291,22 +16370,29 @@
       }
       return null;
     }
-    function zgIsExitRoom() { return zgMaze() && MAZE5.exits.includes(zgRoomKey()); }
+    function zgIsExitRoom() { return zgMaze() && mazeDef().exits.includes(zgRoomKey()); }
     function zgBossKind() {
       if (!zgMaze()) return null;
       const k = zgRoomKey();
-      if (k === MAZE5.red) return 'red';
-      if (MAZE5.yellow.includes(k)) return 'yellow';
+      if (k === mazeDef().red) return 'red';
+      if (mazeDef().yellow.includes(k)) return 'yellow';
       return null;
     }
     /* Zorluk: kat sisteminde kat, labirentte SATIR (kırmızı boss'a doğru sertleşir) */
-    function zgFloorNo() { return zgMaze() ? ((ZD.room || MAZE5.entry).y + 1) : (ZD.floor || 1); }
+    /* Labirentte "kat" = ilerleme derinliği. Çok satırlı şemada satır (y),
+       TEK SATIRLI şemada (kademe 1 koridoru) sütün (x) kullanılır — yoksa
+       o kademede zorluk hiç artmazdı ve 5 oda da aynı arkaplanı gösterirdi. */
+    function zgMazeDepth() {
+      const d = mazeDef(), r = ZD.room || d.entry;
+      return (d.H > 1 ? r.y : r.x) + 1;
+    }
+    function zgFloorNo() { return zgMaze() ? zgMazeDepth() : (ZD.floor || 1); }
     function zgFloorMult() { return 1 + (zgFloorNo() - 1) * 0.25; }
     /* Arkaplan: labirentte satır → kat 1-4 görseli, boss odaları → kat 5 görseli */
     function zgRoomBg() {
       const t = ZD.tier || 1;
       if (!zgMaze()) return IMG_BASE + t + 'zindan' + (ZD.floor || 1) + 'kat.webp';
-      const kat = zgBossKind() ? 5 : Math.min(4, (ZD.room || MAZE5.entry).y + 1);
+      const kat = zgBossKind() ? 5 : Math.min(4, zgMazeDepth());
       return IMG_BASE + t + 'zindan' + kat + 'kat.webp';
     }
     function zgBossSpawnSub() {
@@ -16322,7 +16408,7 @@
       if (!g || !kind) return '';
       if (!g.bossFetched) return 'bakılıyor…';
       if (!g.bossKilledAt) return 'boss geliyor';
-      const left = g.bossKilledAt + MAZE5.respawn[kind] - getServerNow().getTime();
+      const left = g.bossKilledAt + mazeDef().respawn[kind] - getServerNow().getTime();
       return left > 0 ? Math.ceil(left / 60000) + ' dk sonra' : 'boss geliyor';
     }
     /* Kapıdan geç: yeni oda, canavarlar sıfır, çanta/can/ayarlar taşınır.
@@ -16331,7 +16417,7 @@
     function zgGoRoom(dir) {
       const g = ZD.g; if (!g || !zgMaze()) return;
       const D = ZG_DIR[dir]; if (!D) return;
-      const r = ZD.room || MAZE5.entry;
+      const r = ZD.room || mazeDef().entry;
       const nx = r.x + D.dx, ny = r.y + D.dy;
       if (!zgHasDoor(zgRoomKey(), nx + ',' + ny)) return;
       ZD.room = { x: nx, y: ny };
@@ -16375,7 +16461,7 @@
       const g = ZD.g; const kind = zgBossKind();
       if (!g || !kind || !g.bossFetched) return;
       if (g.mobs.some(m => m.boss)) return;
-      if (g.bossKilledAt && getServerNow().getTime() < g.bossKilledAt + MAZE5.respawn[kind]) return;
+      if (g.bossKilledAt && getServerNow().getTime() < g.bossKilledAt + mazeDef().respawn[kind]) return;
       zgSpawnBoss();
     }
     /* Labirentte sekme değiştirmek = koşuyu TERK. Çanta gider; yoksa çıkış
@@ -16400,7 +16486,15 @@
         // Beceri: bekleme oda değişince SIFIRLANMAZ (labirentte oda atlayıp
         // bekleme sıfırlamak istismar olurdu), nişan ve alanlar odaya özel.
         lastSkills: (keepBag && old && old.lastSkills) ? { ...old.lastSkills } : {},
+        // ⚠ BÜTÜN süreli buff'lar taşınır. Eskiden yalnız shieldUntil
+        // taşınıyordu; diğer beşi oda değişince sessizce düşüyordu — oyuncu
+        // becerisini kullanıp kapıdan geçince boşuna harcamış oluyordu.
         shieldUntil: (keepBag && old) ? (old.shieldUntil || 0) : 0,
+        shieldWallUntil: (keepBag && old) ? (old.shieldWallUntil || 0) : 0,
+        enrageUntil: (keepBag && old) ? (old.enrageUntil || 0) : 0,
+        dodgeUntil: (keepBag && old) ? (old.dodgeUntil || 0) : 0,
+        stealthUntil: (keepBag && old) ? (old.stealthUntil || 0) : 0,
+        eagleEyeUntil: (keepBag && old) ? (old.eagleEyeUntil || 0) : 0,
         clones: [],
         skillAuto: (keepBag && old) ? old.skillAuto : false,
         autoSkills: (keepBag && old && old.autoSkills) ? { ...old.autoSkills } : (ZD.autoSkills ? { ...ZD.autoSkills } : {}),
@@ -16630,6 +16724,12 @@
       if (!sk) return false;
 
       const now = Date.now();
+      /* ⚠ Bekleme ŞART OLARAK harcanmaz. Hedefli beceriler (Balta / Suikast /
+         Shuriken / Zehirli Bıçak) menzilde kimse yoksa hiçbir şey yapmıyor;
+         bekleme yine de yanıyordu, yani boş bir kareye yanlışlıkla tıklamak
+         beceriyi sessizce harcıyordu. Artık işe yaramadıysa geri veriliyor. */
+      const prevCd = g.lastSkills[skillId];
+      let landed = true;
       g.lastSkills[skillId] = now;
       if (g.aim === skillId) g.aim = null;
       const eff = getEffectiveStats();
@@ -16638,7 +16738,7 @@
         const cx = zgSkillClamp(x, sk.area, ZG.W);
         const cy = zgSkillClamp(y, sk.area, ZG.H);
         g.zones.push({ x: cx, y: cy, type: 'yakma', until: now + ZG.SKILL_MS, next: now + ZG.SKILL_TICK, mine: true });
-        zcoSendZone(cx, cy);
+        zcoSendZone(cx, cy, 'yakma', ZG.SKILL_MS);
       } else if (skillId === 'dondur') {
         const cx = zgSkillClamp(x, sk.area, ZG.W);
         const cy = zgSkillClamp(y, sk.area, ZG.H);
@@ -16647,6 +16747,9 @@
           if (m.hp > 0 && Math.abs(m.x - cx) <= r && Math.abs(m.y - cy) <= r) {
             if (!m.st) m.st = {};
             m.st.stunUntil = now + 2000;
+            // Açıklama "dondurur VE yavaşlatır" diyor; yavaşlatma eksikti.
+            // Donma bitince kısa süre yavaş kalır.
+            m.st.slowUntil = now + 5000;
             zgFloat(m.x, m.y, '❄️', '#3498db', 1);
           }
         }
@@ -16676,6 +16779,7 @@
             }
           }
         }
+        if (g.clones.length >= ZG.CLONE_MAX) g.clones.shift();   // en eskisi gider
         g.clones.push({
           uid: g.uid++, x: cx, y: cy,
           hp: Math.max(1, Math.floor(eff.maxhp * 0.5)), maxHp: Math.max(1, Math.floor(eff.maxhp * 0.5)),
@@ -16712,7 +16816,7 @@
           const dmg = Math.max(1, Math.floor((eff.physDmg || 1) * 2.5));
           zgDamageMob(bestMob, dmg, zcoMe());
           zgFloat(bestMob.x, bestMob.y, '🪓', '#e74c3c', 1);
-        }
+        } else landed = false;
       } else if (skillId === 'kan_hucumu') {
         const heal = Math.floor(eff.maxhp * 0.2);
         g.hp = Math.min(eff.maxhp, g.hp + heal);
@@ -16739,7 +16843,7 @@
           const dmg = Math.max(1, Math.floor((eff.physDmg || 1) * 1.5));
           zgDamageMob(bestMob, dmg, zcoMe());
           zgFloat(bestMob.x, bestMob.y, '🗡️', '#2ecc71', 1);
-        }
+        } else landed = false;
       } else if (skillId === 'suikast') {
         const cx = zgSkillClamp(x, 1, ZG.W);
         const cy = zgSkillClamp(y, 1, ZG.H);
@@ -16761,11 +16865,12 @@
           const dmg = Math.max(1, Math.floor((eff.physDmg || 1) * 3.5));
           zgDamageMob(bestMob, dmg, zcoMe());
           zgFloat(bestMob.x, bestMob.y, '🔪', '#e74c3c', 1);
-        }
+        } else landed = false;
       } else if (skillId === 'sis_bombasi') {
         const cx = zgSkillClamp(x, sk.area, ZG.W);
         const cy = zgSkillClamp(y, sk.area, ZG.H);
         g.zones.push({ x: cx, y: cy, type: 'sis_bombasi', until: now + 6000, next: now + 6000, mine: true });
+        zcoSendZone(cx, cy, 'sis_bombasi', 6000);
         const r = (sk.area - 1) / 2;
         for (const m of g.mobs) {
           if (m.hp > 0 && Math.abs(m.x - cx) <= r && Math.abs(m.y - cy) <= r) {
@@ -16787,8 +16892,8 @@
         if (bestMob && bestD <= 1) {
           const dmg = Math.max(1, Math.floor((eff.physDmg || 1) * 2.0));
           zgDamageMob(bestMob, dmg, zcoMe());
-          zgFloat(bestMob.x, bestMob.y, '-' + dmg + ' (Kritik)', '#ff8a8a', 1);
-        }
+          zgFloat(bestMob.x, bestMob.y, '🎯' + dmg, '#ff8a8a', 1);   // kritik DEĞİL, sabit ×2 hasar
+        } else landed = false;
       } else if (skillId === 'yaylim_atesi') {
         const cx = zgSkillClamp(x, sk.area, ZG.W);
         const cy = zgSkillClamp(y, sk.area, ZG.H);
@@ -16804,6 +16909,7 @@
         const cx = zgSkillClamp(x, 1, ZG.W);
         const cy = zgSkillClamp(y, 1, ZG.H);
         g.zones.push({ x: cx, y: cy, type: 'kapan', until: now + 60000, next: now + 60000, mine: true });
+        zcoSendZone(cx, cy, 'kapan', 60000);
         zgFloat(cx, cy, '🪤', '#c0392b', 1);
       } else if (skillId === 'ceviklik') {
         g.dodgeUntil = now + 6000;
@@ -16817,6 +16923,13 @@
         zgFloat(g.px, g.py, '+' + heal, '#2ecc71');
       }
 
+      if (!landed) {
+        // Menzilde hedef yoktu — bekleme geri verilir, beceri harcanmaz.
+        if (prevCd === undefined) delete g.lastSkills[skillId]; else g.lastSkills[skillId] = prevCd;
+        if (!auto) zgFloat(g.px, g.py, 'menzilde hedef yok', '#9fd0ff');
+        zgSyncAim(); zgRenderSide();
+        return false;
+      }
       zgSyncAim(); zgPaintZones(); zgRenderSide();
       if (!auto && sk.target !== 'self') zgPlayAttack(x === g.px ? null : x < g.px);
       return true;
@@ -17023,7 +17136,17 @@
       let dmg = Math.max(1, Math.floor(eff.physDmg * (0.85 + Math.random() * 0.3) * rage) - Math.floor((m.def || 0) * 0.5));
       let tag = '';
       const critMult = 1 + Math.max(0.5, (eff.crit || 0) / 100);
-      if (Math.random() < eff.critChance) { dmg = Math.floor(dmg * critMult); tag = '💥'; }
+      /* 👁 KARTAL GÖZÜ — "bir sonraki vuruş garanti 3x kritik".
+         ⚠ Bu dal EKSİKTİ: g.eagleEyeUntil yalnızca kuruluyor ve karakterin
+         üstündeki rozet için okunuyordu, hasar hesabında HİÇ geçmiyordu —
+         yani beceri 18 sn beklemeli bir süsütü. Tek kullanımlık: ilk gerçek
+         vuruşta harcanır (8 sn içinde kullanılmazsa süresi dolar).
+         Yarasa ıskası vuruş sayılmaz, yukarıda erken dönüldüğü için harcanmaz. */
+      if (g.eagleEyeUntil && Date.now() < g.eagleEyeUntil) {
+        dmg = Math.floor(dmg * ZG.EAGLE_MULT);
+        tag = '👁';
+        g.eagleEyeUntil = 0;              // tek vuruşluk — hemen tükenir
+      } else if (Math.random() < eff.critChance) { dmg = Math.floor(dmg * critMult); tag = '💥'; }
       else if (G.classId === 'ranger' && Math.random() < (eff.trueDmgChance || 0)) { dmg = Math.floor(dmg * 1.30); tag = '🎯'; }
       const troopDmg = armedTroops().reduce((a, c) => a + troopAttackDmg(c), 0);
       if (troopDmg > 0) dmg += Math.max(1, Math.floor(troopDmg * ZG.TROOP_SHARE));
@@ -17729,16 +17852,26 @@
     /* Yakma alanı yayını — SALT GÖRSEL. Hasarı yalnız atan uygular; alan
        yayını olmasaydı arkadaşın ekranında canavarlar sebepsiz yanardı.
        10sn beklemeli olduğu için mesaj yükü konum yayınının %3'ü kadar. */
-    function zcoSendZone(x, y) {
+    /* ⚠ TÜRÜ DE YAYINLA. Eskiden yalnız x/y gidiyordu; karşı tarafta alan
+       type'siz ekleniyor, zgPaintZones şablonu bulamayıp yedek nesneye
+       düşüyor ve `undefined.gif` istiyordu → 404 → onerror gizliyor.
+       Yani arkadaşın ekranında 25 BOŞ KARO beliriyordu. Sis Bombası ve
+       Kapan ise hiç yayınlanmıyordu. */
+    function zcoSendZone(x, y, type, ms) {
       if (!ZCO.channel || zcoAlone()) return;
-      ZCO.channel.send({ type: 'broadcast', event: 'zone', payload: { u: zcoMe(), x, y } });
+      ZCO.channel.send({ type: 'broadcast', event: 'zone', payload: { u: zcoMe(), x, y, t: type, ms } });
     }
     function zcoOnZone(p) {
       const g = ZD.g;
       if (!g || g.over || !p || p.u === zcoMe()) return;
       if (!ZCO.peers[p.u]) return;            // presence'ta yoksa çizme
       const now = Date.now();
-      g.zones.push({ x: p.x, y: p.y, until: now + ZG.SKILL_MS, next: Infinity, mine: false });
+      // Bilinmeyen tür gelirse eski davranışa düş (yakma). Süre dışarıdan
+      // geldiği için tavanlanır — bozuk/kötü niyetli yayın ekranda kalıcı
+      // alan bırakmasın.
+      const type = ZD_SKILLS.some(sk => sk.id === p.t) ? p.t : 'yakma';
+      const ms = Math.min(Math.max(Number(p.ms) || ZG.SKILL_MS, 500), 60000);
+      g.zones.push({ x: p.x, y: p.y, type, until: now + ms, next: Infinity, mine: false });
       zgPaintZones();
     }
     function zcoSendHit(mobUid, dmg) {
@@ -17833,7 +17966,10 @@
           + '<div class="pl-fx-shield" style="display:none;position:absolute;inset:0;border:3px solid #bdc3c7;border-radius:50%;box-shadow:0 0 10px #bdc3c7, inset 0 0 10px #bdc3c7;pointer-events:none;z-index:10;animation: zg-pulse 1s infinite alternate;"></div>'
           + '<div class="pl-fx-enrage" style="display:none;position:absolute;inset:0;background:radial-gradient(circle, transparent 50%, rgba(192,57,43,0.5) 100%);pointer-events:none;z-index:2;mix-blend-mode:color-burn;"></div>'
           + '<div class="pl-fx-dodge" style="display:none;position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);width:120%;height:10px;border-radius:50%;box-shadow:0 0 15px #2ecc71;background:rgba(46,204,113,0.3);pointer-events:none;"></div>'
-          + '<img class="pl-fx-eagle" src="' + IMG_BASE + 'kartal_gozu.webp" style="display:none;position:absolute;top:-15px;left:50%;transform:translateX(-50%);width:24px;height:24px;z-index:15;pointer-events:none;animation:zg-pulse 1s infinite alternate;">'
+          // ⚠ onerror ŞART: dosya yoksa tarayıcı KIRIK GÖRSEL ikonu basar ve
+          // karakterin tepesinde beyaz bir kutu belirir (yasandı). Projedeki
+          // diğer <img>'ler gibi sessizce kaybolsun.
+          + '<img class="pl-fx-eagle" src="' + IMG_BASE + 'kartal_gozu.webp" onerror="this.remove()" style="display:none;position:absolute;top:-15px;left:50%;transform:translateX(-50%);width:24px;height:24px;z-index:15;pointer-events:none;animation:zg-pulse 1s infinite alternate;">'
           + '</div>'
           + '<span class="zg-hpbar"><i style="width:100%"></i></span>';
         pe.style.transition = 'transform ' + ZG.WALK_MS + 'ms linear';
@@ -17871,7 +18007,9 @@
             + '<span class="zg-emo" style="display:none;">' + m.icon + '</span>'
             + '<img class="mob-fx-zehir" src="' + IMG_BASE + 'zehirle.gif" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;opacity:0.8;pointer-events:none;z-index:2;">'
             + '<img class="mob-fx-dondur" src="' + IMG_BASE + 'dondur.gif" style="display:none;position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:140%;height:140%;object-fit:cover;z-index:10;pointer-events:none;">'
-            + '<img class="mob-fx-sis" src="' + IMG_BASE + 'sis_bombasi.webp" style="display:none;position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:160%;height:160%;object-fit:cover;z-index:11;pointer-events:none;opacity:0.85;">'
+            // Zemin karolarıyla AYNI dosya (.gif). Eskiden burada .webp isteniyordu;
+            // aynı efekt için iki ayrı uzantıda dosya üretmek gerekiyordu.
+            + '<img class="mob-fx-sis" src="' + IMG_BASE + 'sis_bombasi.gif" style="display:none;position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:160%;height:160%;object-fit:cover;z-index:11;pointer-events:none;opacity:0.85;">'
             + '</div>'
             + '<span class="zg-hpbar"><i style="width:100%"></i></span>';
           e.style.transition = 'transform ' + ZG.MOB_STEP_MS + 'ms linear';
@@ -18105,7 +18243,17 @@
          çöpü üretiyordu. Butonların HTML'i imza olarak tutulur: değişmediyse
          yalnızca bilgi kutusunun içi tazelenir. Sahne yeniden kurulunca
          #zg-side-info kaybolacağı için tam basım kendiliğinden geri gelir. */
-      const sig = btns + lastBtn;
+      /* ⚠ İMZA YALNIZ YAPISAL DEĞİŞİKLİĞİ YAKALAMALI.
+         btns içinde bekleme (`disabled`) ve nişan (`on`) de var; ikisi de
+         saniyede bir değişiyor ama zaten #zg-sk-badge döngüsünde elle
+         tazeleniyor. İmzaya girerlerse her bekleme sınırında panel baştan
+         basılır ve bütün beceri <img>'leri yeniden kurulup titrer — 5 beceri
+         farklı bekleme süreleriyle döndüğü için sürekli olur.
+         Bunun yerine imza: yardımcı butonlar + hangi beceriler var + oto
+         durumları + alt buton. */
+      const sig = utilBtnsHtml
+        + skills.map(sk => sk.id + (g.autoSkills && g.autoSkills[sk.id] ? '1' : '0')).join(',')
+        + lastBtn;
       const box = document.getElementById('zg-side-info');
       if (box && _zgSideSig === sig) { box.innerHTML = info; return; }
       _zgSideSig = sig;
@@ -23773,8 +23921,29 @@
         if (d) { it.desc = d; return true; }
         return false;
       };
-      G.inventory.forEach(it => { if (fixDesc(it)) needsSave = true; });
-      Object.values(G.equipped).forEach(it => { if (fixDesc(it)) needsSave = true; });
+      /* Tum statlari 0 olan ESKI takilari onar. rollStatsFromTpl artik boyle
+         bir esya URETMIYOR ama daha once uretilmis olanlar kayitta duruyor ve
+         gelistirme carpanli oldugu icin oyuncu onlari asla kurtaramaz.
+         Sadece TAMAMEN bos olanlara dokunulur; tek stati 0 olan normaldir. */
+      const repairBlank = it => {
+        if (!it || !it.stats) return false;
+        const tpl = getItemTemplate(it);
+        if (!tpl || !tpl.statRanges) return false;
+        const keys = Object.keys(it.stats);
+        if (!keys.length || !keys.every(k => !it.stats[k])) return false;
+        let best = null, bestMax = 0;
+        for (const k of keys) {
+          const rng = tpl.statRanges[k];
+          if (rng && rng[1] >= 1 && rng[1] > bestMax) { bestMax = rng[1]; best = k; }
+        }
+        if (!best) return false;
+        it.stats[best] = 1;
+        if (it.baseStats) it.baseStats[best] = 1;
+        return true;
+      };
+      G.inventory.forEach(it => { if (fixDesc(it)) needsSave = true; if (repairBlank(it)) needsSave = true; });
+      Object.values(G.equipped).forEach(it => { if (fixDesc(it)) needsSave = true; if (repairBlank(it)) needsSave = true; });
+      (G.companions || []).forEach(tr => Object.values(tr.equip || {}).forEach(it => { if (repairBlank(it)) needsSave = true; }));
       if (needsSave) setTimeout(() => sbSave(), 1500);
       // Bilet durumu — gerçek kaynak sunucu (zd_consume_ticket / arena_consume_ticket RPC'leri).
       // Burada sadece profil yüklenir yüklenmez ekranın doğru görünmesi için tahmini gösterim yapılır;
