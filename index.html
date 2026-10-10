@@ -16290,6 +16290,12 @@
          Eskiden Zehirle YALNIZ yavaşlatıyordu, Zehirli Bıçak ise hiç okunmayan
          bir anahtara (_psnUntil) yazıyordu; ikisi de HİÇ hasar vermiyordu. */
       EAGLE_MULT: 3,        // Kartal Gözü — garanti kritik çarpanı (açıklamada 3x)
+      /* 🩸 Kan Hücumu — süreli CAN ÇALMA. Düz iyileştirme DEĞİL:
+         Savaşçı düz %20 basarsa Avcı'nın adanmış iyileştirmesinden (Şifalı Ot,
+         %15) daha iyi iyileştirmiş olur ve onun kimliğini çalar. Can çalma hem
+         adına/ikonuna uyuyor hem saldırganlığı ödüllüyor. */
+      BLOOD_MS: 8000,       // süre
+      BLOOD_PCT: 0.35,      // vuruş hasarının bu oranı can olarak geri gelir
       PSN_MAGE_MS: 5000,    // Büyücü Zehirle — süre
       PSN_MAGE_DMG: 0.20,   // saniyede saldırı gücünün oranı
       PSN_ROGUE_MS: 6000,   // Haydut Zehirli Bıçak — süre ("ağır zehir")
@@ -16440,12 +16446,22 @@
     }
     function zgFloorNo() { return zgMaze() ? zgMazeDepth() : (ZD.floor || 1); }
     function zgFloorMult() { return 1 + (zgFloorNo() - 1) * 0.25; }
-    /* Arkaplan: labirentte satır → kat 1-4 görseli, boss odaları → kat 5 görseli */
+    /* ── ZINDAN ARKAPLANI — BİYOMA bağlı, KADEMEYE DEĞİL ──
+       Dosya adı: <bölge>z<1-5>.webp  (ör. frosthillz1.webp … frosthillz5.webp)
+       Derinlik 1-4 (zgMazeDepth), boss odaları 5.
+
+       Neden kademeye bağlı değil: 8 bölge × 5 = 40 görsel her durumu kapsar ve
+       bir daha hiç boşluk kalmaz. Kademeye de bağlansaydı 8×5×5 = 200 görsel
+       gerekirdi. Zorluğu zaten canavar statları anlatıyor; arkaplanın işi biyom
+       kimliği vermek — çöl her seviyede çöl gibi görünmeli.
+       ⚠ Eski `<kademe>zindan<kat>kat.webp` düzeni ARTIK KULLANILMIYOR.
+       Dosya yoksa #zg-stage'in koyu zemini kalır (CSS yedeği), çökmez. */
     function zgRoomBg() {
-      const t = ZD.tier || 1;
-      if (!zgMaze()) return IMG_BASE + t + 'zindan' + (ZD.floor || 1) + 'kat.webp';
-      const kat = zgBossKind() ? 5 : Math.min(4, zgMazeDepth());
-      return IMG_BASE + t + 'zindan' + kat + 'kat.webp';
+      const reg = G.region || 'vaelys';
+      const n = zgMaze()
+        ? (zgBossKind() ? 5 : Math.min(4, zgMazeDepth()))
+        : Math.min(5, ZD.floor || 1);
+      return IMG_BASE + reg + 'z' + n + '.webp';
     }
     function zgBossSpawnSub() {
       if (zgMaze()) return zgBossKind() === 'red' ? 'Kırmızı boss — çıkış odası' : 'Sarı boss';
@@ -16547,6 +16563,7 @@
         dodgeUntil: (keepBag && old) ? (old.dodgeUntil || 0) : 0,
         stealthUntil: (keepBag && old) ? (old.stealthUntil || 0) : 0,
         eagleEyeUntil: (keepBag && old) ? (old.eagleEyeUntil || 0) : 0,
+        bloodUntil: (keepBag && old) ? (old.bloodUntil || 0) : 0,
         clones: [],
         skillAuto: (keepBag && old) ? old.skillAuto : false,
         autoSkills: (keepBag && old && old.autoSkills) ? { ...old.autoSkills } : (ZD.autoSkills ? { ...ZD.autoSkills } : {}),
@@ -16738,7 +16755,7 @@
       { id: 'kalkan_duvari', name: 'Kalkan Duvarı', cls: 'warrior', img: 'skalkanduvariskill', icon: '🛡️', cd: 18000, target: 'self', desc: 'Kısa süreliğine alınan hasarı %50 azaltır.' },
       { id: 'hiddet', name: 'Hiddet', cls: 'warrior', img: 'shiddetskill', icon: '💢', cd: 25000, target: 'self', desc: 'Saldırı hızını artırır ve ekstra hasar verir.' },
       { id: 'atilan_balta', name: 'Atılan Balta', cls: 'warrior', img: 'satilanbaltaskill', icon: '🪓', cd: 10000, target: 'area', area: 1, desc: 'Hedefe balta fırlatarak fiziksel hasar verir.' },
-      { id: 'kan_hucumu', name: 'Kan Hücumu', cls: 'warrior', img: 'skanhucumuskill', icon: '🩸', cd: 20000, target: 'self', desc: 'Bir süreliğine çifte vuruş şansı sağlar.' },
+      { id: 'kan_hucumu', name: 'Kan Hücumu', cls: 'warrior', img: 'skanhucumuskill', icon: '🩸', cd: 20000, target: 'self', desc: '8 saniye boyunca vuruşların verdiğin hasarın %35\'ini can olarak geri verir.' },
       // Rogue
       { id: 'golge', name: 'Gölge', cls: 'rogue', img: 'hgolgeskill', icon: '👤', cd: 20000, target: 'self', desc: 'Görünmez olursun ve düşmanlar seni hedef alamaz.' },
       { id: 'zehirli_bicak', name: 'Zehirli Bıçak', cls: 'rogue', img: 'hzehirlibicakskill', icon: '🗡️', cd: 10000, target: 'area', area: 1, desc: 'Düşmanı ağır şekilde zehirler.' },
@@ -16929,9 +16946,8 @@
           zgFloat(bestMob.x, bestMob.y, '🪓', '#e74c3c', 1);
         } else landed = false;
       } else if (skillId === 'kan_hucumu') {
-        const heal = Math.floor(eff.maxhp * 0.2);
-        g.hp = Math.min(eff.maxhp, g.hp + heal);
-        zgFloat(g.px, g.py, '+' + heal, '#2ecc71');
+        g.bloodUntil = now + ZG.BLOOD_MS;
+        zgFloat(g.px, g.py, '🩸', '#c0392b', 1);
       } else if (skillId === 'golge') {
         g.stealthUntil = now + 5000;
         zgFloat(g.px, g.py, '👤', '#34495e', 1);
@@ -16956,6 +16972,10 @@
           zgFloat(bestMob.x, bestMob.y, '🗡️', '#2ecc71', 1);
         } else landed = false;
       } else if (skillId === 'suikast') {
+        /* ⚠ MENZİL SINIRI YOK — BİLEREK (kullanıcı kararı 2026-10-10).
+           Hedef araması oyuncuya değil TIKLANAN KAREYE göre yapılır; tahtanın
+           öbür ucundaki canavara tıklayınca oraya ışınlanırsın. Bu bir hata
+           DEĞİL, Suikast'ın mesafe kapatıcı kimliği. Sınırlama EKLEME. */
         const cx = zgSkillClamp(x, 1, ZG.W);
         const cy = zgSkillClamp(y, 1, ZG.H);
         let bestMob = null, bestD = 999;
@@ -17268,6 +17288,11 @@
       const r = ringOnHit(m.st, dmg, g.hp, eff.maxhp);
       g.hp = r.hp;
       if (r.heal > 0) zgFloat(g.px, g.py, '+' + r.heal, '#7aff9a');
+      // 🩸 Kan Hücumu — süresi boyunca her vuruş can çalar (Kan Yüzüğü'ne EK)
+      if (g.bloodUntil && Date.now() < g.bloodUntil) {
+        const bh = Math.min(Math.floor(dmg * ZG.BLOOD_PCT), eff.maxhp - g.hp);
+        if (bh > 0) { g.hp += bh; zgFloat(g.px, g.py, '🩸+' + bh, '#ff6b6b'); }
+      }
       zgDamageMob(m, dmg, zcoMe());
     }
     function zgMobHit(m, eff) {
