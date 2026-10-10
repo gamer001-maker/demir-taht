@@ -3083,6 +3083,37 @@
       --zg-flip: -1;
     }
 
+    /* ── CANAVAR 3 KARE: 1 yürüme · 2 saldırı · 3 ölüm ──
+       Oyuncu sprite'ındaki (.zg-sprite .zg-fr) desenin aynısı: üç kare üst
+       üste yüklenir, yalnız biri görünür. Böylece kare değişiminde ağ isteği
+       ve titreme olmaz. Yarasanın 4 kareli kanat çırpması AYRI bir sistem
+       (.zg-bat-art, saf CSS döngüsü) — bu onu etkilemez. */
+    .zg-mob-sprite .zg-fr {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: bottom center;
+      display: none;
+      filter: drop-shadow(0 3px 5px #000a);
+    }
+
+    .zg-mob-sprite .zg-fr.on {
+      display: block;
+    }
+
+    /* Ölen canavar: 3. kare yerde 1 sn durur, sonra yavaşça silinir.
+       pointer-events kapalı — ceset altındaki kareye tıklamayı engellemesin. */
+    .zg-unit.zg-corpse {
+      pointer-events: none;
+      transition: opacity var(--zg-fade, 600ms) ease-out;
+    }
+
+    .zg-unit.zg-corpse.fading {
+      opacity: 0;
+    }
+
     /* ── YARASA: 4 kareli kanat çırpma ──
        Kareler üst üste durur, her biri döngünün %25'inde görünür. Saf CSS:
        JS sayacı yok, tick yükü getirmez. `steps(1)` ara geçişi keser, kare
@@ -15954,6 +15985,8 @@
           { id: 'engerek', name: 'Engerek', icon: '🐍', img: 'engerek', hp: 30, atk: 10, def: 1, xp: 18, gold: 15, regions: ['dustguard', 'blacktide', 'aethelgard'] },
           { id: 'iguana', name: 'İguana', icon: '🦎', img: 'iguana', hp: 42, atk: 7, def: 3, xp: 17, gold: 14, regions: ['stormreach', 'blacktide', 'brimstone'] },
           { id: 'akrep', name: 'Akrep', icon: '🦂', img: 'akrep', hp: 26, atk: 11, def: 2, xp: 18, gold: 16, regions: ['dustguard', 'brimstone'] },
+          { id: 'bokbocegi', name: 'Bok Böceği', icon: '🪲', img: 'zindanbokbocegi', fr: true, hp: 40, atk: 6, def: 5, xp: 15, gold: 13, regions: ['dustguard', 'brimstone'] },
+          { id: 'dislicekirge', name: 'Dişli Çekirge', icon: '🦗', img: 'zindandislicekirge', fr: true, hp: 24, atk: 10, def: 1, xp: 17, gold: 14, regions: ['dustguard', 'brimstone'] },
         ],
         boss: { id: 'bozayi', name: 'Boz Ayı', icon: '🐻', img: 'bozayi', hp: 280, atk: 20, def: 7, xp: 100, gold: 90, isBoss: true },
         strongBoss: { id: 'bozkurt', name: 'Bozkurt', icon: '🐺', img: 'bozkurt', hp: 420, atk: 26, def: 9, xp: 170, gold: 150, isBoss: true, strong: true },
@@ -15964,6 +15997,10 @@
           { id: 'devakrep', name: 'Dev Akrep', icon: '🦂', img: 'devakrep', hp: 85, atk: 22, def: 6, xp: 42, gold: 36, regions: ['dustguard', 'brimstone'] },
           { id: 'kobrayilani', name: 'Kobra Yılanı', icon: '🐍', img: 'kobrayilani', hp: 72, atk: 28, def: 4, xp: 46, gold: 40, regions: ['blacktide', 'dustguard'] },
           { id: 'kuduzkirpi', name: 'Kuduz Kirpi', icon: '🦔', img: 'kuduzkirpi', hp: 95, atk: 19, def: 10, xp: 44, gold: 38, regions: ['vaelys', 'aethelgard'] },
+          { id: 'ciftkuyrukluakrep', name: 'Çift Kuyruklu Akrep', icon: '🦂', img: 'zindanciftkuyrukluakrep', fr: true, hp: 78, atk: 26, def: 5, xp: 45, gold: 39, regions: ['dustguard', 'brimstone'] },
+          { id: 'orumcek', name: 'Örümcek', icon: '🕷', img: 'zindanorumcek', fr: true, hp: 70, atk: 24, def: 4, xp: 43, gold: 37, regions: ['dustguard', 'brimstone'] },
+          { id: 'akkurt', name: 'Ak Kurt', icon: '🐺', img: 'zindanakkurt', fr: true, hp: 76, atk: 25, def: 5, xp: 44, gold: 38, regions: ['frosthill'] },
+          { id: 'buzdomuzu', name: 'Buz Domuzu', icon: '🐗', img: 'zindanbuzdomuzu', fr: true, hp: 92, atk: 20, def: 9, xp: 43, gold: 37, regions: ['frosthill'] },
         ],
         boss: { id: 'vahsibozayi', name: 'Vahşi Boz Ayı', icon: '🐻', img: 'vahsibozayi', hp: 700, atk: 45, def: 16, xp: 260, gold: 220, isBoss: true },
         strongBoss: { id: 'ciftbasliayi', name: 'Çift Başlı Ayı', icon: '🐻', img: 'ciftbasliayi', hp: 1000, atk: 58, def: 20, xp: 430, gold: 380, isBoss: true, strong: true },
@@ -15974,6 +16011,10 @@
           { id: 'orksavasci', name: 'Ork Savaşçı', icon: '👹', img: 'orksavasci', hp: 210, atk: 50, def: 14, xp: 95, gold: 80 },
           { id: 'tasgolem', name: 'Taş Golem', icon: '🗿', img: 'tasgolem', hp: 280, atk: 40, def: 26, xp: 110, gold: 90 },
           { id: 'vampir', name: 'Vampir', icon: '🧛', img: 'vampir', hp: 190, atk: 58, def: 12, xp: 105, gold: 95 },
+          { id: 'sirtlan', name: 'Sırtlan', icon: '🐺', img: 'zindansirtlan', fr: true, hp: 200, atk: 54, def: 13, xp: 100, gold: 86, regions: ['dustguard', 'brimstone'] },
+          { id: 'akbaba', name: 'Akbaba', icon: '🦅', img: 'zindanakbaba', fr: true, hp: 185, atk: 48, def: 11, xp: 98, gold: 84, regions: ['dustguard', 'brimstone'] },
+          { id: 'kutupayisi', name: 'Kutup Ayısı', icon: '🐻‍❄️', img: 'zindankutupayisi', fr: true, hp: 260, atk: 46, def: 22, xp: 108, gold: 92, regions: ['frosthill'] },
+          { id: 'buzbaykusu', name: 'Buz Baykuşu', icon: '🦉', img: 'zindanbuzbaykusu', fr: true, hp: 180, atk: 52, def: 10, xp: 96, gold: 82, regions: ['frosthill', 'maelstrom'] },
         ],
         boss: { id: 'seytan', name: 'Şeytan', icon: '😈', img: 'seytan', hp: 1600, atk: 95, def: 30, xp: 600, gold: 520, isBoss: true },
         strongBoss: { id: 'kadimseytan', name: 'Kadim Şeytan', icon: '👿', img: 'seytan', hp: 2300, atk: 120, def: 38, xp: 980, gold: 850, isBoss: true, strong: true },
@@ -15984,6 +16025,10 @@
           { id: 'mezarzombisi', name: 'Mezar Zombisi', icon: '🧟', img: 'zombi', hp: 460, atk: 95, def: 28, xp: 185, gold: 155 },
           { id: 'goblinsefi', name: 'Goblin Şefi', icon: '👺', img: 'goblin', hp: 420, atk: 110, def: 24, xp: 200, gold: 170 },
           { id: 'orkkomutani', name: 'Ork Komutanı', icon: '👹', img: 'orksavasci', hp: 560, atk: 100, def: 36, xp: 215, gold: 185 },
+          { id: 'zirhlikertenkele', name: 'Zırhlı Kertenkele', icon: '🦎', img: 'zindanzirhlikertenkele', fr: true, hp: 540, atk: 92, def: 38, xp: 195, gold: 165, regions: ['dustguard', 'brimstone'] },
+          { id: 'donmusiskelet', name: 'Donmuş İskelet', icon: '💀', img: 'zindandonmusiskelet', fr: true, hp: 440, atk: 100, def: 26, xp: 190, gold: 160, regions: ['frosthill', 'maelstrom'] },
+          { id: 'mamut', name: 'Mamut', icon: '🐘', img: 'zindanmamut', fr: true, hp: 580, atk: 96, def: 40, xp: 210, gold: 180, regions: ['frosthill'] },
+          { id: 'yeti', name: 'Yeti', icon: '🦧', img: 'zindanyeti', fr: true, hp: 500, atk: 112, def: 30, xp: 205, gold: 175, regions: ['frosthill'] },
         ],
         boss: { id: 'miniejderha', name: 'Mini Ejderha', icon: '🐲', hp: 3400, atk: 175, def: 60, xp: 1250, gold: 1050, isBoss: true },
         strongBoss: { id: 'kadimejderha', name: 'Kadim Ejderha', icon: '🐉', hp: 4800, atk: 215, def: 75, xp: 2000, gold: 1700, isBoss: true, strong: true },
@@ -15994,6 +16039,9 @@
           { id: 'iblismuhafiz', name: 'İblis Muhafız', icon: '😈', img: 'seytan', hp: 950, atk: 180, def: 55, xp: 360, gold: 310 },
           { id: 'kadimvampir', name: 'Kadim Vampir', icon: '🧛', img: 'vampir', hp: 880, atk: 200, def: 48, xp: 390, gold: 340 },
           { id: 'kemikgolem', name: 'Kemik Golem', icon: '🗿', img: 'tasgolem', hp: 1200, atk: 165, def: 80, xp: 410, gold: 360 },
+          { id: 'buztrolu', name: 'Buz Trolü', icon: '🧌', img: 'zindanbuztrolu', fr: true, hp: 1100, atk: 175, def: 60, xp: 380, gold: 330, regions: ['frosthill'] },
+          { id: 'buzgolemi', name: 'Buz Golemi', icon: '🗿', img: 'zindanbuzgolemi', fr: true, hp: 1250, atk: 170, def: 85, xp: 415, gold: 365, regions: ['frosthill'] },
+          { id: 'buzejderi', name: 'Buz Ejderi', icon: '🐲', img: 'zindanbuzejderi', fr: true, hp: 1150, atk: 205, def: 62, xp: 420, gold: 370, regions: ['frosthill', 'maelstrom'] },
         ],
         boss: { id: 'altinsovalye', name: 'Altın Şövalye', icon: '⚔', img: 'altinsovalye', hp: 9000, atk: 260, def: 85, xp: 2600, gold: 2200, isBoss: true },
         strongBoss: { id: 'nekromancer', name: 'Nekromancer', icon: '💀', img: 'necromancer', hp: 12000, atk: 310, def: 70, xp: 4200, gold: 3600, isBoss: true, strong: true },
@@ -16223,6 +16271,10 @@
       BAT_HIT: 0.50,        // taban vuruş şansı (Avcı dışında sabit)
       BAT_ACC: 0.01,        // Avcı'da her İsabet puanı +%1
       BAT_HIT_CAP: 0.95,    // Avcı'da bile garanti isabet olmasın
+      /* Canavar 3 kare animasyonu (sprite'ı olan canavarlarda, mob.fr) */
+      MOB_ATK_MS: 500,      // saldırı karesi ekranda kalır, sonra yürümeye döner
+      MOB_DIE_HOLD: 1000,   // ölüm karesi yerde bekler
+      MOB_DIE_FADE: 600,    // sonra bu sürede silinir
       CLONE_MAX: 3,         // Destek — aynı anda en fazla klon. Tavan yoktu:
       // klonlar yalnız canavar hasarıyla öldüğü için hızlı kesim yapılan katta
       // birikip saniyedeki hasarı sınırsız büyütüyorlardı.
@@ -16601,6 +16653,59 @@
       }
       return h + '</div>';
     }
+    /* ── CANAVAR SPRITE'I ──
+       mob.fr true ise 3 kare basar (<img>'ın adı: <img>1/2/3.webp), değilse
+       eski tek görsel yolu aynen kalır — mevcut canavarların hiçbiri
+       etkilenmez. Kare dosyası yoksa data-bad işaretlenir ve o kareye
+       geçilmek istendiğinde yürüme karesinde kalınır. */
+    function zgMobArtHTML(m) {
+      if (m.bat) return zgBatArtHTML(m.img);
+      if (!m.fr) {
+        return '<img src="' + IMG_BASE + m.img + '.webp" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-block\'">';
+      }
+      let h = '';
+      for (let i = 1; i <= 3; i++) {
+        h += '<img class="zg-fr' + (i === 1 ? ' on' : '') + '" src="' + IMG_BASE + m.img + i + '.webp"'
+          + ' onerror="this.dataset.bad=1' + (i === 1 ? ';this.classList.remove(\'on\');this.parentNode.querySelector(\'.zg-emo\').style.display=\'inline-block\'' : '') + '">';
+      }
+      return h;
+    }
+    /* Kareyi değiştir (0=yürüme, 1=saldırı, 2=ölüm). Eksik kare yürümeye düşer. */
+    function zgMobFrame(e, n) {
+      if (!e || !e._fr || e._fr.length < 3) return;
+      let idx = n;
+      if (e._fr[idx] && e._fr[idx].dataset.bad) idx = 0;
+      e._fr.forEach((f, k) => f.classList.toggle('on', k === idx && !f.dataset.bad));
+    }
+    /* Saldırı karesi: 2 → (MOB_ATK_MS) → 1. Canavar vurduğunda çağrılır. */
+    function zgMobAttackAnim(m) {
+      if (!m || !m.fr) return;
+      const e = document.getElementById('zg-u-' + m.uid);
+      if (!e || !e._fr) return;
+      clearTimeout(e._atkT);
+      zgMobFrame(e, 1);
+      e._atkT = setTimeout(() => zgMobFrame(e, 0), ZG.MOB_ATK_MS);
+    }
+    /* Ölüm: 3. kare yerde MOB_DIE_HOLD kadar durur, sonra MOB_DIE_FADE
+       boyunca silinir. Can barı ve durum efektleri hemen kaybolur.
+       Sprite'ı olmayan eski canavarlarda ceset yok — aninda kalkar. */
+    function zgMobCorpse(m) {
+      const e = document.getElementById('zg-u-' + m.uid);
+      if (!e) return;
+      if (!m.fr || !e._fr) { e.remove(); return; }
+      clearTimeout(e._atkT);
+      e.id = 'zg-dead-' + m.uid;          // zgPaint/zgFlash bir daha bulmasın
+      e.classList.add('zg-corpse');
+      e.style.setProperty('--zg-fade', ZG.MOB_DIE_FADE + 'ms');
+      if (e._bar) e._bar.parentNode.style.display = 'none';
+      [e._fxZehir, e._fxDondur, e._fxSis].forEach(x => { if (x) x.style.display = 'none'; });
+      zgMobFrame(e, 2);
+      setTimeout(() => {
+        e.classList.add('fading');
+        setTimeout(() => e.remove(), ZG.MOB_DIE_FADE + 80);
+      }, ZG.MOB_DIE_HOLD);
+    }
+
     /* Yarasaya vuruş şansı. Taban %50; YALNIZCA Avcı'da İsabet puanı artırır. */
     function zgBatHitChance(eff) {
       if (G.classId !== 'ranger') return ZG.BAT_HIT;
@@ -17171,6 +17276,7 @@
       if (g.shieldWallUntil && now < g.shieldWallUntil) red = Math.min(0.95, red + 0.50);
       const dmg = Math.max(1, Math.floor(m.atk * (0.85 + Math.random() * 0.3) * (1 - red)));
       g.hp = Math.max(0, g.hp - dmg);
+      zgMobAttackAnim(m);                  // 2. kare 0,5 sn
       zgFloat(g.px, g.py, '-' + dmg, '#ff8a8a');
       zgFlash('player');
     }
@@ -17325,7 +17431,12 @@
       }
       zcoSendKill(m, killer);              // ortak katta herkese bildir
       if (killer === zcoMe()) zgAwardKill(m);
-      zgRemoveMob(m);
+      /* ⚠ zgRemoveMob DEĞİL: o düğümü anında siler ve ölüm karesi hiç
+         görünmez. Burada listeden çıkarılır ama düğüm ceset olarak kalır.
+         (Oda değişimi / ortak kat senkronu hâlâ zgRemoveMob kullanır — orada
+         canavar ölmüyor, sahneden kalkıyor; ceset bırakmak yanlış olurdu.) */
+      g.mobs = g.mobs.filter(x => x.uid !== m.uid);
+      zgMobCorpse(m);
       zgRenderBar();
     }
     /* Canavara hasar uygula. Ortak katta canı EV SAHİBİ tutar; ev sahibi
@@ -17470,6 +17581,7 @@
           if (now - m.lastHit >= ZG.MOB_HIT_MS) {
             m.lastHit = now;
             const dmg = Math.max(1, Math.floor(m.atk * (0.85 + Math.random() * 0.3)));
+            zgMobAttackAnim(m);            // klona vururken de saldırı karesi
             hitClone.hp -= dmg;
             zgFloat(hitClone.x, hitClone.y, '-' + dmg, '#ff8a8a');
             if (hitClone.hp <= 0) zgFloat(hitClone.x, hitClone.y, '💀', '#fff');
@@ -17998,10 +18110,9 @@
           e = document.createElement('div');
           e.id = 'zg-u-' + m.uid;
           e.className = 'zg-unit zg-mob' + (m.elite ? ' elite' : '') + (m.boss ? ' boss' : '') + (m.bat ? ' bat' : '');
-          // Yarasa: 4 kare üst üste, CSS sırayla gösterir (kanat çırpma)
-          const art = m.bat
-            ? zgBatArtHTML(m.img)
-            : '<img src="' + IMG_BASE + m.img + '.webp" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-block\'">';
+          // Yarasa: 4 kare (kanat çırpma, saf CSS) · mob.fr: 3 kare (yürüme/
+          // saldırı/ölüm) · diğerleri: tek görsel. Hepsi zgMobArtHTML'de.
+          const art = zgMobArtHTML(m);
           e.innerHTML = '<div class="zg-mob-sprite">'
             + art
             + '<span class="zg-emo" style="display:none;">' + m.icon + '</span>'
@@ -18019,6 +18130,7 @@
           e._fxZehir = e.querySelector('.mob-fx-zehir');
           e._fxDondur = e.querySelector('.mob-fx-dondur');
           e._fxSis = e.querySelector('.mob-fx-sis');
+          e._fr = m.fr ? Array.from(e.querySelectorAll('.zg-fr')) : null;
           layer.appendChild(e);
         }
         zgUnitAt(e, m.x, m.y);
