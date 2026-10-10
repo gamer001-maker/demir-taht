@@ -16059,7 +16059,7 @@
       totalGold: 0,
       totalXP: 0,
       g: null,              // ızgara koşusu (zgNewRun) — 7×7 gerçek zamanlı mod
-      mode: 'floors',       // 'floors' (kademe 1-4, 5 kat) | 'maze' (kademe 5 labirenti)
+      mode: 'maze',         // her kademe labirent (MAZES[1..5]); eski kat sistemi kaldirildi
       room: null,           // labirentte bulunulan oda {x,y}
     };
 
@@ -16207,12 +16207,16 @@
       ZD.active = true;
       ZD.tier = zdPlayerTier(); // kademe girişte kilitlenir (içeride seviye atlansa da değişmez)
       ZD.floor = 1;
-      // Artık her kademenin kendi labirenti var (MAZES). Kat sistemi
-      // yalnızca tanımlı şema yoksa devreye girer — pratikte kullanılmıyor.
-      ZD.mode = MAZES[ZD.tier] ? 'maze' : 'floors';
+      /* Her kademenin kendi labirenti var (MAZES[1..5]) ve zdPlayerTier()
+         1-5'e kısptığı için mod HER ZAMAN 'maze'. Tanımsız kademe gelse bile
+         mazeDef() 5'e düşüyor. Eski kat sistemi 2026-10-10'da KALDIRILDI —
+         "güvenlik ağı" diye durması aldatıcıydı: tetiklenseydi arkaplansız ve
+         hiç test edilmemiş bir yola düşülecekti. */
+      ZD.mode = 'maze';
       ZD.room = ZD.mode === 'maze' ? { x: mazeDef().entry.x, y: mazeDef().entry.y } : null;
       ZD.totalGold = 0;
       ZD.totalXP = 0;
+      zdStartRun(ZD.tier);   // süre sunucuda işlenir (beklemeye gerek yok)
       zgNewRun(false);   // 7×7 ızgara koşusu başlar
       if (zgMaze()) zgMazeFetchBoss();
       updateHUD();
@@ -16444,7 +16448,7 @@
       const d = mazeDef(), r = ZD.room || d.entry;
       return (d.H > 1 ? r.y : r.x) + 1;
     }
-    function zgFloorNo() { return zgMaze() ? zgMazeDepth() : (ZD.floor || 1); }
+    function zgFloorNo() { return zgMazeDepth(); }
     function zgFloorMult() { return 1 + (zgFloorNo() - 1) * 0.25; }
     /* ── ZINDAN ARKAPLANI — BİYOMA bağlı, KADEMEYE DEĞİL ──
        Dosya adı: <bölge>z<1-5>.webp  (ör. frosthillz1.webp … frosthillz5.webp)
@@ -16458,17 +16462,14 @@
        Dosya yoksa #zg-stage'in koyu zemini kalır (CSS yedeği), çökmez. */
     function zgRoomBg() {
       const reg = G.region || 'vaelys';
-      const n = zgMaze()
-        ? (zgBossKind() ? 5 : Math.min(4, zgMazeDepth()))
-        : Math.min(5, ZD.floor || 1);
+      const n = zgBossKind() ? 5 : Math.min(4, zgMazeDepth());
       return IMG_BASE + reg + 'z' + n + '.webp';
     }
     function zgBossSpawnSub() {
-      if (zgMaze()) return zgBossKind() === 'red' ? 'Kırmızı boss — çıkış odası' : 'Sarı boss';
-      return ZD.floor >= ZD_FLOORS ? 'Kat sonu boss savaşı' : 'Kat muhafızı';
+      return zgBossKind() === 'red' ? 'Kırmızı boss — çıkış odası' : 'Sarı boss';
     }
     function zgBossKillSub() {
-      if (zgMaze()) return zgBossKind() === 'red' ? 'Kırmızı boss düştü — çıkış açık' : 'Sarı boss düştü';
+      return zgBossKind() === 'red' ? 'Kırmızı boss düştü — çıkış açık' : 'Sarı boss düştü';
       return ZD.floor >= ZD_FLOORS ? 'Zindan tamamlandı' : 'Alt kata inebilirsin';
     }
     function zgMazeRespawnTxt() {
@@ -17129,7 +17130,7 @@
       const g = ZD.g;
       const T = ZD_TIERS[ZD.tier || 1] || ZD_TIERS[1];
       const kind = zgBossKind();   // labirent: 'yellow' | 'red' | null
-      const isFinal = zgMaze() ? kind === 'red' : ZD.floor >= ZD_FLOORS;
+      const isFinal = kind === 'red';
       let base;
       if (zgMaze()) {
         if (!kind) return;
@@ -17396,7 +17397,7 @@
     function zgBagDrop(m) {
       const tier = ZD.tier || 1;
       // Labirentte "son kat" = kırmızı boss odası (oda bazlı karar: istemcide de doğru)
-      const isFinal = m.boss && (zgMaze() ? zgBossKind() === 'red' : ZD.floor >= ZD_FLOORS);
+      const isFinal = m.boss && zgBossKind() === 'red';
       const necroGate = isFinal && tier === 5;
       const kind = m.boss ? 'boss' : (m.elite ? 'elite' : 'normal');
       /* Okyanusun Gözü küpesi ganimet şansını artırır. ⚠ TAVAN KOYMA:
@@ -17520,10 +17521,10 @@
         // Doğuş yalnızca kat muhafızı SAHADAYKEN durur (boss dövüşü temiz olsun).
         // Boss öldükten sonra tekrar başlar — oyuncu isterse katta grind'e devam eder,
         // inmeye ya da çıkmaya kendi karar verir.
-        const bossAlive = !zgMaze() && g.bossSpawned && !g.bossDead;   // labirentte doğuş boss varken de sürer
+        // Labirentte doğuş boss varken de sürer (eski kat sisteminde dururdu).
         // Yarasalar tavana sayılmaz: normal canavarların yerini almasınlar
         const normalCount = g.mobs.reduce((a, m) => a + (m.bat ? 0 : 1), 0);
-        if (!bossAlive && now - g.lastSpawn >= spawnMs && normalCount < cap) {
+        if (now - g.lastSpawn >= spawnMs && normalCount < cap) {
           g.lastSpawn = now;
           zgSpawnMob(false);
         }
@@ -17532,8 +17533,7 @@
           g.lastBat = now;
           zgSpawnBat();
         }
-        if (zgMaze()) zgMazeBossTick();                       // zamanla gelen boss
-        else if (!g.bossSpawned && g.kills >= g.quota) zgSpawnBoss();   // kota ile gelen boss
+        zgMazeBossTick();   // boss oda bazlı ve zamanla geri gelir
       }
 
       // Yürürken saldıramaz — hareketin bedeli bu
@@ -17811,7 +17811,7 @@
 
     /* Aynı kat = aynı bölge + aynı kademe + aynı kat */
     function zcoKey() {
-      const where = zgMaze() ? 'r' + zgRoomKey().replace(',', '') : (ZD.floor || 1);
+      const where = 'r' + zgRoomKey().replace(',', '');
       return 'zdco_' + (G.region || 'x') + '_' + (ZD.tier || 1) + '_' + where;
     }
 
@@ -18279,13 +18279,7 @@
       const el = document.getElementById('zg-side'); if (!el) return;
       const g = ZD.g; if (!g) return;
       const eff = getEffectiveStats();
-      const canDescend = g.bossDead && ZD.floor < ZD_FLOORS;
-      const finished = g.bossDead && ZD.floor >= ZD_FLOORS;
-      const prog = g.bossSpawned
-        ? (g.bossDead ? '<b style="color:#7aff9a;">Kat temizlendi</b>' : '<b style="color:#f87171;">Kat muhafızı!</b>')
-        : 'Canavar <b>' + g.kills + '/' + g.quota + '</b>';
       const sub = s => '<span class="zg-btn-sub">' + s + '</span>';
-      const maze = zgMaze();
       const pot = zgPotionPick();
       const shoutMult = Math.round((zgShoutMult() - 1) * 100);
 
@@ -18358,7 +18352,7 @@
       const btns = utilBtnsHtml + skillsHtml;
 
       let info, lastBtn;
-      if (maze) {
+      {
         /* Labirentte konum GÖSTERİLMEZ — kaybolmak oyunun parçası.
            Çıkış yalnız çıkış odalarında mümkün. */
         const kind = zgBossKind();
@@ -18373,16 +18367,6 @@
         lastBtn = zgIsExitRoom()
           ? '<button class="zg-btn wide on" onclick="zgExit()">Zindandan Çık' + sub('ganimeti al') + '</button>'
           : '<button class="zg-btn wide" disabled>Çıkış yok' + sub('çıkış odası bul') + '</button>';
-      } else {
-        info = '<b>' + (ZD.tier || 1) + '. SEVİYE</b> · KAT ' + (ZD.floor || 1) + '/' + ZD_FLOORS + '<br>'
-          + 'Can <b id="zg-hp-txt" style="color:#7aff9a;">' + Math.max(0, Math.round(g.hp)) + '</b>/' + eff.maxhp + '<br>'
-          + prog;
-        lastBtn = (finished
-          ? '<button class="zg-btn wide on" onclick="zgExit()">Zindanı Bitir' + sub('ganimeti al') + '</button>'
-          : canDescend
-            ? '<button class="zg-btn wide on" onclick="zgDescend()">Alt Kata İn' + sub('kat ' + (ZD.floor + 1)) + '</button>'
-            : '<button class="zg-btn wide danger" onclick="zgExit()">Zindandan Çık' + sub('ganimeti al') + '</button>')
-          + ((canDescend || finished) ? '<button class="zg-btn wide danger" onclick="zgExit()">Zindandan Çık' + sub('ganimeti garantiye al') + '</button>' : '');
       }
       /* ⚠ Yalnız sayaç değiştiyse paneli BAŞTAN BASMA.
          Bu fonksiyon her canavar ölümünde çağrılıyor; `innerHTML` ile baştan
@@ -18530,16 +18514,6 @@
       updateInvStrip();
       zgRenderBar();   // butondaki iksir sayacı azalsın
     }
-    function zgDescend() {
-      const g = ZD.g;
-      if (zgMaze()) return;   // labirentte kat yok, kapı var
-      if (!g || !g.bossDead || ZD.floor >= ZD_FLOORS) return;
-      ZD.floor++;
-      zgNewRun(true); // çanta ve can alt kata iner — derinleştikçe risk büyür
-      toast('⬇ ' + ZD.floor + '. kata indin.');
-      renderZindan();
-    }
-
     /* ── Çıkış / ölüm ── */
     function zgBankBag(ratio) {
       const g = ZD.g; if (!g) return { gold: 0, xp: 0, items: 0, mats: 0 };
@@ -18547,8 +18521,14 @@
       const gold = Math.floor(g.bag.gold * r);
       const xp = Math.floor(g.bag.xp * r);
       let items = 0, mats = 0;
-      if (gold > 0) { G.gold += gold; ZD.totalGold += gold; }
-      if (xp > 0) { gainXP(xp); ZD.totalXP += xp; }
+      /* ⚠ Sunucuda açık bir koşu varsa XP/altın BURADA UYGULANMAZ —
+         zd_claim_run tavanı uygulayıp mutlak değeri döndürür, yerel de o
+         değeri benimser. Burada da eklersek ÇİFT SAYILIR (altın zaten
+         trigger korumalı, syncGold farkı ikinci kez gönderirdi).
+         RPC yoksa (_zdRunId null) eski davranış aynen sürer. */
+      const claiming = !!_zdRunId;
+      if (gold > 0) { if (!claiming) G.gold += gold; ZD.totalGold += gold; }
+      if (xp > 0) { if (!claiming) gainXP(xp); ZD.totalXP += xp; }
       for (const it of g.bag.items) {
         if (r < 1 && Math.random() >= r) continue;   // kısmi kurtarmada eşya başına zar
         if (invCount() >= invCap()) break;
@@ -18568,6 +18548,26 @@
       g.bag = { gold: 0, xp: 0, items: [], mats: {} };
       return { gold, xp, items, mats };
     }
+    /* Koşunun XP/altınını sunucuya onaylatır ve sonucu `got` üzerine yazar
+       (pencerede GÖSTERİLEN rakam gerçekten verilen olsun diye).
+       RPC yoksa zgBankBag zaten yerel olarak uygulamıştır — bir şey yapmaz. */
+    async function zgSettleRun(got) {
+      if (!got || !_zdRunId) return;
+      const res = await zdClaimRun(got.xp || 0, got.gold || 0);
+      if (!res) {
+        // Talep başarısız (ağ/RPC): oyuncu ganimetsiz kalmasın, yerel uygula
+        if (got.gold > 0) G.gold += got.gold;
+        if (got.xp > 0) gainXP(got.xp);
+        updateHUD();
+        return;
+      }
+      applyServerGoldDelta(Number(res.gold_granted) || 0);
+      applyServerXP(res.xp, res.level);
+      got.gold = Number(res.gold_granted) || 0;
+      got.xp = Number(res.xp_granted) || 0;
+      if (res.clipped) toast('⚠ Ödül sunucu tavanına göre kırpıldı.');
+    }
+
     function zgFinish() {
       zcoLeave();   // ortak kat kanalindan cik
       const g = ZD.g;
@@ -18575,12 +18575,12 @@
       zgStopLoop();
       ZD.active = false;
       ZD.g = null;
-      ZD.mode = 'floors'; ZD.room = null;
+      ZD.mode = 'maze'; ZD.room = null;
       updateHUD();
       if (currentUser) sbSave();
     }
     /* silent=true → sekme değiştirince otomatik güvenli çıkış */
-    function zgExit(silent) {
+    async function zgExit(silent) {
       const g = ZD.g;
       if (!ZD.active || !g) return;
       if (zgMaze()) {
@@ -18588,6 +18588,7 @@
         if (!zgIsExitRoom()) { toast('🚪 Buradan çıkış yok — bir çıkış odası bul.'); return; }
       }
       const got = zgBankBag(1);
+      await zgSettleRun(got);
       zgFinish();
       if (silent) {
         if (got.gold || got.xp || got.items || got.mats) {
@@ -18616,9 +18617,10 @@
       const ratio = tier === 1 ? 0.5 : 0;
       const lostGold = g.bag.gold, lostXp = g.bag.xp, lostItems = g.bag.items.length;
       const got = zgBankBag(ratio);
+      zgSettleRun(got);   // ölümde de koşu kapatılır (kurtarılan kısım için)
       zcoLeave();   // ölünce ortak kat kanalından da çık — yoksa arkadaşlar hayalet görür
       ZD.active = false; ZD.g = null;
-      ZD.mode = 'floors'; ZD.room = null;
+      ZD.mode = 'maze'; ZD.room = null;
       G.stats.hp = Math.max(1, Math.floor(getEffectiveStats().maxhp * 0.3));
       updateHUD();
       if (currentUser) sbSave();
@@ -23902,6 +23904,7 @@
         return;
       }
       _goldSynced = 500; _goldTx = null; // yeni profilin altın taban çizgisi
+      _xpSynced = 0;                     // yeni profilin XP taban çizgisi
 
       // Kale
       const castleRes = await supa.from('castles').insert({
@@ -23934,6 +23937,7 @@
       G.skillPoints = p.skill_points;
       G.gold = Math.floor(Number(p.gold) || 0);
       _goldSynced = G.gold; _goldTx = null; // altın senkron taban çizgisi
+      _xpSynced = xpTotalTo(G.level || 1) + (G.xp || 0);   // XP senkron taban çizgisi
       _probeGoldRpc();
       G.food = p.food || 80;
       G.morale = p.morale || 72;
@@ -24205,6 +24209,89 @@
 
     /* Sunucunun ZATEN uyguladığı bir altın değişikliğini yerele yansıt.
        _goldSynced de aynı miktar kaydığı için delta senkronuna ikinci kez girmez. */
+    /* ══ XP SUNUCU-OTORİTER (sql/xp_migration.sql, TODO #22) ══
+       Altın mimarisinin birebir eşi. Tüm XP tek huniden geçiyor (gainXP);
+       yerel değer serbestçe artar, fark game_xp_tx RPC'siyle sunucuya işlenir.
+       ⚠ SQL'in 2. bölümü (trigger) çalıştırılana kadar istemci yazımı da
+       geçerli — o yüzden geçiş döneminde çift yazma olur ama sonuç aynıdır
+       (ikisi de aynı değere yakınsar). Trigger açılınca tavan bağlar. */
+    const XP_TX_CAP = 200000;          // sql'deki c_per_call ile EŞ TUTULMALI
+    let _xpSynced = null;              // sunucunun onayladığı son toplam (null = profil yüklenmedi)
+    let _xpRpcMissing = false;
+    let _xpSyncP = null;
+
+    /* Sunucu XP'yi kendi değiştirdiyse yerele yansıt (mutlak değer).
+       ⚠ Seviye atladıysa yetenek puanını BURASI verir — sunucu skill_points'e
+       dokunmuyor (istemci zaten veriyor olabilir, çift sayma riski). */
+    function applyServerXP(xp, level) {
+      const xpNew = Number(xp), lvNew = Number(level);
+      if (!isFinite(xpNew) || !isFinite(lvNew) || lvNew < 1) return;
+      const gained = lvNew - (G.level || 1);
+      G.xp = xpNew;
+      G.level = lvNew;
+      if (gained > 0) {
+        G.skillPoints += gained * 2;
+        celebrate('🎊', `SEVİYE ${G.level}!`, `+${gained * 2} yetenek puanı kazandın`, 'levelup');
+        checkAndAwardLevelChests();
+      }
+      if (_xpSynced != null) _xpSynced = xpTotalTo(lvNew) + xpNew;
+      updateHUD();
+    }
+
+    /* Yerel toplam XP (seviye + ilerleme) — sunucuyla karşılaştırmak için. */
+    function _xpTotalNow() { return xpTotalTo(G.level || 1) + (G.xp || 0); }
+
+    async function syncXP() {
+      if (_xpSyncP) await _xpSyncP;
+      if (!currentUser || _xpSynced == null || _xpRpcMissing) return;
+      const delta = _xpTotalNow() - _xpSynced;
+      if (!delta) return;
+      _xpSyncP = (async () => {
+        const d = Math.max(-XP_TX_CAP, Math.min(XP_TX_CAP, delta));
+        const txId = _genGoldTxId();        // aynı uuid üreteci — ayrı defter
+        try {
+          const { data, error } = await supa.rpc('game_xp_tx', { p_delta: d, p_tx_id: txId });
+          if (error) {
+            if (error.code === 'PGRST202' || /game_xp_tx/i.test(error.message || '')) _xpRpcMissing = true;
+            return;
+          }
+          if (data && data.ok) _xpSynced = xpTotalTo(Number(data.level)) + Number(data.xp);
+        } catch (e) { /* ağ hatası: bir sonraki kayıtta tekrar denenir */ }
+      })().finally(() => { _xpSyncP = null; });
+      await _xpSyncP;
+    }
+
+    /* ══ ZİNDAN KOŞU TAVANI ══
+       ⚠ SÜRE SUNUCUDA tutulur. İstemciden süre almak tavanı işe yaramaz hale
+       getirirdi ("3 saat sürdü" denirdi). Girişte zd_start_run çağrılır,
+       çıkışta zd_claim_run geçen süreyi kendi hesaplar. */
+    let _zdRunId = null, _zdClaimMissing = false;
+
+    async function zdStartRun(tier) {
+      _zdRunId = null;
+      if (!currentUser || _zdClaimMissing) return;
+      try {
+        const { data, error } = await supa.rpc('zd_start_run', { p_tier: tier });
+        if (error) {
+          if (error.code === 'PGRST202' || /zd_start_run/i.test(error.message || '')) _zdClaimMissing = true;
+          return;
+        }
+        if (data && data.ok) _zdRunId = data.run;
+      } catch (e) { /* RPC yoksa eski davranış sürer */ }
+    }
+
+    /* Çantadaki XP/altını sunucuya onaylatır. Dönen değerler MUTLAK ve
+       kesindir; yerel iyimser ekleme yapılmamıştır (bkz. zgBankBag). */
+    async function zdClaimRun(xp, gold) {
+      if (!_zdRunId) return null;
+      const run = _zdRunId; _zdRunId = null;
+      try {
+        const { data, error } = await supa.rpc('zd_claim_run', { p_run: run, p_xp: xp, p_gold: gold });
+        if (error || !data || !data.ok) return null;
+        return data;
+      } catch (e) { return null; }
+    }
+
     function applyServerGoldDelta(d) {
       G.gold += d;
       if (_goldSynced != null) _goldSynced += d;
@@ -24312,6 +24399,10 @@
       try {
         // Altın farkı RPC ile sunucuya işlenir — payload'da gold YOK
         await syncGold();
+        // XP farkı da aynı şekilde (sql/xp_migration.sql). ⚠ xp/level payload'da
+        // HÂLÂ var: trigger açılana kadar eski davranış kırılmasın diye. Trigger
+        // açılınca DB o alanları yok sayar, gerçek kaynak RPC olur.
+        await syncXP();
         const profilePayload = {
           hero_name: G.heroName,
           class_id: G.classId,
