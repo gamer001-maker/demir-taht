@@ -3067,6 +3067,11 @@
        img'ye de konamaz — zd-enemy-idle animasyonu transform'u ezer.
        Bu yüzden arada ayrı bir katman var. Can barı bu katmanın DIŞINDA
        kalır, yoksa o da aynalanıp ters yönde dolardı. */
+    /* --zg-mob-scale: canavarın kareden taşma oranı (oyuncudaki --zg-scale'in
+       eşi). Ölçek AYAKLARDAN büyür (transform-origin: alt-orta), böylece
+       canavarın hangi karede durduğu değişmez — .zg-unit hâlâ tam 1/7 kare.
+       Varsayılan 1: eski tek görselli canavarların davranışı HIÇ DEĞİŞMEZ
+       (scale(1*flip, 1) == eski scaleX(flip)). */
     .zg-mob-sprite {
       width: 100%;
       height: 100%;
@@ -3075,8 +3080,26 @@
       display: flex;
       align-items: flex-end;
       justify-content: center;
+      --zg-mob-scale: 1;
       --zg-flip: 1;
-      transform: scaleX(var(--zg-flip));
+      transform: scale(calc(var(--zg-mob-scale) * var(--zg-flip)), var(--zg-mob-scale));
+      transform-origin: 50% 100%;
+    }
+
+    /* ⚠ 3 KARELİ CANAVARLAR BÜYÜTÜLÜR — eskiler DEĞİL.
+       Eski canavar görselleri sıkıca kırpılmış (.zg-unit img %92 ile dolu
+       görünüyor), yeni 3 kareli sprite'larda ise karakter sprite'larındaki gibi
+       çevrede boş pay var → object-fit:contain aynı kutuda onları küçük
+       gösteriyordu (kullanıcı: "kirpi'ye göre küçük kalıyor").
+       ⭐ BOYU AYARLAMAK İÇİN TEK SAYI BURASI. Oyuncu 1.7 / mobil 2. */
+    .zg-mob.fr3 .zg-mob-sprite {
+      --zg-mob-scale: 1.6;
+    }
+
+    @media(max-width:640px) {
+      .zg-mob.fr3 .zg-mob-sprite {
+        --zg-mob-scale: 1.85;
+      }
     }
 
     .zg-mob-sprite.flip {
@@ -16030,8 +16053,8 @@
           { id: 'mamut', name: 'Mamut', icon: '🐘', img: 'zindanmamut', fr: true, hp: 580, atk: 96, def: 40, xp: 210, gold: 180, regions: ['frosthill'] },
           { id: 'yeti', name: 'Yeti', icon: '🦧', img: 'zindanyeti', fr: true, hp: 500, atk: 112, def: 30, xp: 205, gold: 175, regions: ['frosthill'] },
         ],
-        boss: { id: 'miniejderha', name: 'Mini Ejderha', icon: '🐲', hp: 3400, atk: 175, def: 60, xp: 1250, gold: 1050, isBoss: true },
-        strongBoss: { id: 'kadimejderha', name: 'Kadim Ejderha', icon: '🐉', hp: 4800, atk: 215, def: 75, xp: 2000, gold: 1700, isBoss: true, strong: true },
+        boss: { id: 'miniejderha', name: 'Mini Ejderha', icon: '🐲', img: 'miniejderha', hp: 3400, atk: 175, def: 60, xp: 1250, gold: 1050, isBoss: true },
+        strongBoss: { id: 'kadimejderha', name: 'Kadim Ejderha', icon: '🐉', img: 'kadimejderha', hp: 4800, atk: 215, def: 75, xp: 2000, gold: 1700, isBoss: true, strong: true },
       },
       5: {
         lv: [41, 50], img: '5seviyezindan', /* YER TUTUCU — görseller bekleniyor */
@@ -16567,7 +16590,13 @@
         bloodUntil: (keepBag && old) ? (old.bloodUntil || 0) : 0,
         clones: [],
         skillAuto: (keepBag && old) ? old.skillAuto : false,
-        autoSkills: (keepBag && old && old.autoSkills) ? { ...old.autoSkills } : (ZD.autoSkills ? { ...ZD.autoSkills } : {}),
+        /* ⚠ Oto beceriler KOŞU DİŞINA TAŞINMAZ (2026-10-10, kullanıcı isteği).
+           Eskiden ZD.autoSkills ile cihazda kalıcıydı; zindandan çıkıp geri
+           girince tüm beceriler daha ortada canavar yokken boşluğa atılıyordu
+           (kendine hedefli olanlar — Kuşan/Hiddet/Çeviklik/Kartal Gözü... —
+           menzil kontrolüne de takılmaz, doğrudan harcanır).
+           Oda değişiminde (keepBag) korunur, yeni koşuda sıfırlanır. */
+        autoSkills: (keepBag && old && old.autoSkills) ? { ...old.autoSkills } : {},
         aim: null, zones: [],
         lastPotion: 0,
         kills: 0, quota: zgKillQuota(ZD.floor),
@@ -16831,8 +16860,6 @@
       }
       if (!g.autoSkills) g.autoSkills = {};
       g.autoSkills[skillId] = !g.autoSkills[skillId];
-      if (!ZD.autoSkills) ZD.autoSkills = {};
-      ZD.autoSkills[skillId] = g.autoSkills[skillId];
       if (g.autoSkills[skillId] && g.aim === skillId) {
         g.aim = null;
         zgSyncAim();
@@ -18144,7 +18171,8 @@
         if (!e) {
           e = document.createElement('div');
           e.id = 'zg-u-' + m.uid;
-          e.className = 'zg-unit zg-mob' + (m.elite ? ' elite' : '') + (m.boss ? ' boss' : '') + (m.bat ? ' bat' : '');
+          e.className = 'zg-unit zg-mob' + (m.elite ? ' elite' : '') + (m.boss ? ' boss' : '')
+            + (m.bat ? ' bat' : '') + (m.fr ? ' fr3' : '');   // fr3 → büyük ölçek
           // Yarasa: 4 kare (kanat çırpma, saf CSS) · mob.fr: 3 kare (yürüme/
           // saldırı/ölüm) · diğerleri: tek görsel. Hepsi zgMobArtHTML'de.
           const art = zgMobArtHTML(m);
@@ -18330,7 +18358,7 @@
       let skillsHtml = '';
       const skills = ZD_SKILLS.filter(s => s.cls === G.classId);
       if (skills.length > 0) {
-        if (!g.autoSkills) g.autoSkills = (ZD.autoSkills ? { ...ZD.autoSkills } : {});
+        if (!g.autoSkills) g.autoSkills = {};
         for (const sk of skills) {
           const left = zgSkillLeft(sk.id);
           const isAuto = !!g.autoSkills[sk.id];
