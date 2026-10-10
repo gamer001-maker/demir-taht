@@ -16588,6 +16588,12 @@
       }
       return null;
     }
+    /* ⚠ CANAVAR NESNESİ ŞABLONDAN ALAN ALAN KURULUR — yayılma (spread) YOK.
+       Yani şablona yeni bir alan eklemek YETMEZ, buraya da yazılmalı. Aynısı
+       zgSpawnBoss için ve ortak kat anlık görüntüsü için (zcoSendMobs bayrak
+       biti + zcoOnMobs) geçerli — DORT yer. Bu bir kez yaşandı: `fr` (3 kareli
+       sprite) şablona eklendi ama buralara taşınmadığı için canavarlar
+       görselleri GitHub'da olduğu halde emoji olarak çıkıyordu. */
     function zgSpawnMob(elite) {
       const g = ZD.g; if (!g) return null;
       const T = ZD_TIERS[ZD.tier || 1] || ZD_TIERS[1];
@@ -16601,7 +16607,7 @@
       const now = Date.now();
       const m = {
         uid: g.uid++, id: base.id, name: (elite ? 'Azılı ' : '') + base.name,
-        icon: base.icon, img: base.img, x: spot.x, y: spot.y,
+        icon: base.icon, img: base.img, fr: !!base.fr, x: spot.x, y: spot.y,
         hp, maxHp: hp,
         atk: Math.max(1, Math.floor(base.atk * mult * e.atk)),
         def: Math.floor(base.def * mult),
@@ -17128,6 +17134,7 @@
       const now = Date.now();
       g.mobs.push({
         uid: g.uid++, id: base.id, name: base.name, icon: base.icon, img: base.img,
+        fr: !!base.fr,
         x: spot.x, y: spot.y, hp: base.hp, maxHp: base.hp,
         atk: base.atk, def: base.def, xp: base.xp, gold: base.gold,
         elite: false, boss: true, st: {}, lastStep: now, lastHit: now,
@@ -17916,7 +17923,10 @@
     function zcoIsHost() { return !ZCO.channel || zcoHostId() === zcoMe(); }
 
     /* Canavar anlık görüntüsü — dizi biçimi, alan adı taşımaz (yük küçük kalsın):
-       [uid, x, y, hp, maxHp, bayrak(1=elit,2=boss), atk, xp, gold, ad, görsel, emoji] */
+       [uid, x, y, hp, maxHp, bayrak, atk, xp, gold, ad, görsel, emoji, id]
+       bayrak bitleri: 1=elit · 2=boss · 4=yarasa · 8=3 kareli sprite (fr)
+       ⚠ Yeni bir görsel özelliği eklenirse buraya BİT olarak eklenmeli,
+       yoksa arkadaşın ekranında canavar farklı görünür. */
     function zcoSendMobs(force) {
       const g = ZD.g;
       if (!ZCO.channel || !g || !zcoIsHost()) return;
@@ -17930,7 +17940,7 @@
         payload: {
           k: g.kills, q: g.quota, bs: g.bossSpawned ? 1 : 0, bd: g.bossDead ? 1 : 0,
           m: g.mobs.map(m => [m.uid, m.x, m.y, m.hp, m.maxHp,
-          (m.elite ? 1 : 0) | (m.boss ? 2 : 0) | (m.bat ? 4 : 0), m.atk, m.xp, m.gold, m.name, m.img, m.icon, m.id]),
+          (m.elite ? 1 : 0) | (m.boss ? 2 : 0) | (m.bat ? 4 : 0) | (m.fr ? 8 : 0), m.atk, m.xp, m.gold, m.name, m.img, m.icon, m.id]),
         },
       });
     }
@@ -17948,7 +17958,7 @@
         if (!m) {
           // st (yakma yığını) ve lastHit YEREL kalır: yakmayı kim uyguladıysa
           // onun istemcisi takip eder, "bana en son ne zaman vurdu" da kişiseldir.
-          m = { uid, id, name, img, icon, elite: !!(fl & 1), boss: !!(fl & 2), bat: !!(fl & 4), st: {}, lastHit: 0, lastStep: 0 };
+          m = { uid, id, name, img, icon, elite: !!(fl & 1), boss: !!(fl & 2), bat: !!(fl & 4), fr: !!(fl & 8), st: {}, lastHit: 0, lastStep: 0 };
           g.mobs.push(m);
         }
         m.x = x; m.y = y; m.hp = hp; m.maxHp = maxHp; m.atk = atk; m.xp = xp; m.gold = gold;
