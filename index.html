@@ -1440,6 +1440,86 @@
     }
 
     /* Giriş hakları */
+    /* Kademe seçici — giriş ekranı */
+    .zd-tierpick {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 0 auto 10px;
+      max-width: 760px;
+    }
+
+    .zd-tbtn {
+      flex: 1 1 0;
+      min-width: 64px;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 4px;
+      cursor: pointer;
+      color: var(--ink3);
+      font-family: var(--font-head);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      transition: border-color .15s, color .15s;
+    }
+
+    .zd-tbtn b {
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    .zd-tbtn span {
+      font-size: 9px;
+      opacity: .75;
+    }
+
+    .zd-tbtn:hover {
+      border-color: var(--gold);
+      color: var(--perg2);
+    }
+
+    .zd-tbtn.on {
+      border-color: var(--gold);
+      color: var(--gold2);
+      background: #2a1e08;
+      box-shadow: 0 0 8px rgba(201, 166, 70, .35);
+    }
+
+    /* Seviyenin üstü: engellenmez, yalnızca kırmızıya boyanır */
+    .zd-tbtn.over {
+      border-color: #6b2b2b;
+      color: #c88;
+    }
+
+    .zd-tbtn.over.on {
+      border-color: #f87171;
+      color: #f87171;
+      background: #2a0e0e;
+      box-shadow: 0 0 8px rgba(248, 113, 113, .35);
+    }
+
+    .zd-warn {
+      max-width: 760px;
+      margin: 0 auto 10px;
+      padding: 7px 11px;
+      border-radius: 6px;
+      font-size: 11px;
+      line-height: 1.5;
+      background: #2a0e0e;
+      border: 1px solid #6b2b2b;
+      color: #f0a0a0;
+    }
+
+    .zd-warn.low {
+      background: var(--panel2);
+      border-color: var(--border);
+      color: var(--ink3);
+    }
+
     .zd-tickets {
       display: flex;
       gap: 6px;
@@ -15997,7 +16077,31 @@
        NOT: 3-4-5. kademe canavarları YER TUTUCU (görseller üretilince
        isim+img alanları değiştirilecek; sistemin geri kalanı hazır).
     ══════════════════════════════════════ */
+    /* Oyuncunun seviyesine KARŞILIK GELEN kademe. Artık zorunlu değil,
+       yalnızca varsayılan öneri — girişte istediğini seçebilir. */
     function zdPlayerTier() { return Math.max(1, Math.min(5, Math.ceil((G.level || 1) / 10))); }
+
+    /* ══ KADEME SEÇİMİ (2026-10-11) ══
+       Eskiden kademe seviyeden TÜRETİLİYORDU ve kilitliydi. Artık oyuncu
+       girişte seçiyor; seviyesinin üstüne de girebilir (girer ve ölür —
+       kasıtlı). İki sebep:
+         1. "Önce ekipmanını geliştir" baskısı yaratır.
+         2. Grup sistemiyle birlikte **taşıma** mümkün olur — Sv.50 biri
+            Sv.10 arkadaşını derin zindana götürebilir. Ortak kat kanalı
+            kademeyi içerdiği için (zdco_<bölge>_<kademe>_<oda>) kademe
+            seviyeden türerken iki oyuncu asla aynı odada buluşamazdı.
+       ⚠ Ödül dengesi (Sv.40'ın 1. kademede az kazanması) BİLEREK yapılmadı —
+       kullanıcı sonraya bıraktı. Sunucu tavanı zaten kademeye göre çalışıyor. */
+    function zdPickedTier() {
+      const t = Number(ZD.pickTier);
+      return (t >= 1 && t <= 5) ? t : zdPlayerTier();
+    }
+    function zdPickTier(n) {
+      n = Number(n);
+      if (!(n >= 1 && n <= 5)) return;
+      ZD.pickTier = n;
+      renderZindan();
+    }
 
     const ZD_TIERS = {
       1: {
@@ -16163,7 +16267,8 @@
     function zdEntranceHTML() {
       zdCheckTicketReset();
       const canEnter = ZD.tickets > 0;
-      const tier = zdPlayerTier();
+      const tier = zdPickedTier();
+      const myTier = zdPlayerTier();
       const T = ZD_TIERS[tier];
       const ticketsHTML = Array.from({ length: ZD_MAX_TICKETS }, (_, i) =>
         `<div class="zd-ticket${i >= ZD.tickets ? ' used' : ''}">🗝</div>`
@@ -16183,6 +16288,19 @@
       </div>
       <div class="zd-title-overlay">${tier}. SEVİYE ZİNDAN</div>
     </div>
+
+    <!-- Kademe seçici: seviyenin üstüne girmek SERBEST, uyarı verilir -->
+    <div class="zd-tierpick">
+      ${[1, 2, 3, 4, 5].map(n => {
+        const d = ZD_TIERS[n];
+        const over = n > myTier;
+        const cls = 'zd-tbtn' + (n === tier ? ' on' : '') + (over ? ' over' : '');
+        return `<button class="${cls}" onclick="zdPickTier(${n})" title="Sv.${d.lv[0]}–${d.lv[1]}">
+          <b>${n}</b><span>Sv.${d.lv[0]}–${d.lv[1]}</span></button>`;
+      }).join('')}
+    </div>
+    ${tier > myTier ? `<div class="zd-warn">⚠ Bu zindan senin seviyenin üstünde (Sv.${T.lv[0]}–${T.lv[1]}). Canavarlar çok sert vurur — sağlam ekipman ya da yanında bir arkadaş olmadan dayanamazsın.</div>` : ''}
+    ${tier < myTier ? `<div class="zd-warn low">ℹ Bu zindan senin seviyenin altında. Rahat temizlersin ama ödülü düşük kalır.</div>` : ''}
 
     <!-- Giriş hakları -->
     <div class="zd-tickets">
@@ -16228,7 +16346,7 @@
       G.zdTickets = data.tickets_left; G.zdTicketDate = data.ticket_date;
       ZD.tickets = data.tickets_left;
       ZD.active = true;
-      ZD.tier = zdPlayerTier(); // kademe girişte kilitlenir (içeride seviye atlansa da değişmez)
+      ZD.tier = zdPickedTier(); // seçilen kademe girişte kilitlenir (içeride seviye atlansa da değişmez)
       ZD.floor = 1;
       /* Her kademenin kendi labirenti var (MAZES[1..5]) ve zdPlayerTier()
          1-5'e kısptığı için mod HER ZAMAN 'maze'. Tanımsız kademe gelse bile
