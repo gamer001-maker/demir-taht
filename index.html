@@ -16503,6 +16503,7 @@
       ZD.totalXP = 0;
       zdStartRun(ZD.tier);   // süre sunucuda işlenir (beklemeye gerek yok)
       partyRefresh();        // grup durumunu al (davet bekliyor olabilir)
+      partyWatchInvites();   // ⚠ davet bildirimi için ŞART — ayrı tablo, ayrı kanal
       zgNewRun(false);   // 7×7 ızgara koşusu başlar
       if (zgMaze()) zgMazeFetchBoss();
       updateHUD();
@@ -18225,7 +18226,7 @@
        durduğu için kapıdan geçmek onu bozmaz.
        ⚠ RPC'ler yoksa (SQL çalıştırılmadıysa) özellik SESSİZCE kapalı kalır —
        buton görünür ama "grup sistemi kurulu değil" der; oyun etkilenmez. */
-    const PARTY = { id: null, leader: null, loot: 'sirayla', members: [], invites: [], ch: null, missing: false };
+    const PARTY = { id: null, leader: null, loot: 'sirayla', members: [], invites: [], ch: null, invCh: null, missing: false };
 
     function partyActive() { return !!PARTY.id && PARTY.members.length > 1; }
 
@@ -18339,6 +18340,26 @@
       PARTY.ch = null;
     }
 
+    /* ⚠ DAVET AYRI BİR ABONELİK İSTER.
+       partyWatch yalnız grubun VARSA çalışıyor ve `parties` + `party_members`
+       tablolarını dinliyor. Davet alan kişinin henüz grubu YOK, üstelik davet
+       `party_invites` tablosuna düşüyor — yani bu abonelik olmadan davet
+       veritabanına yazılıyor ama karşı tarafa hiç haber gitmiyordu (yaşandı).
+       Bu kanal grup üyeliğinden BAĞIMSIZ, zindanda olduğun sürece açık kalır. */
+    function partyWatchInvites() {
+      if (!currentUser || PARTY.invCh) return;
+      PARTY.invCh = supa.channel('party_inv_' + currentUser.id)
+        .on('postgres_changes', {
+          event: 'INSERT', schema: 'public', table: 'party_invites',
+          filter: 'to_id=eq.' + currentUser.id,
+        }, () => partyRefresh())
+        .subscribe();
+    }
+    function partyUnwatchInvites() {
+      if (PARTY.invCh) { try { supa.removeChannel(PARTY.invCh); } catch (e) { } }
+      PARTY.invCh = null;
+    }
+
     let _partyInvShown = '';
     function partyInviteToast() {
       const inv = PARTY.invites[0];
@@ -18350,12 +18371,20 @@
         + '<div style="font-size:12px;color:var(--ink3);margin-bottom:14px;"><b style="color:var(--perg2);">' + esc(inv.from) + '</b> seni grubuna çağırıyor.<br>Grupta şu an ' + (inv.n || 1) + ' kişi var.</div>'
         + '<div style="display:flex;gap:8px;">'
         + '<button class="btn" style="flex:1;" onclick="partyAccept(\'' + inv.party + '\')">Katıl</button>'
-        + '<button class="btn" style="flex:1;border-color:#6b2b2b;color:#f08080;" onclick="closeGModal()">Reddet</button>'
+        + '<button class="btn" style="flex:1;border-color:#6b2b2b;color:#f08080;" onclick="partyDecline()">Reddet</button>'
         + '</div></div>');
     }
 
     async function partyInvite(uid) {
       if (await partyRpc('party_invite', { p_to: uid })) { toast('📨 Davet gönderildi'); partyRefresh(); }
+    }
+    /* Reddet — sunucuda ayrı bir RPC yok, davet 2 dakikada kendiliğinden
+       düşüyor. Burada yalnız pencereyi kapatıp yerel listeyi temizliyoruz ki
+       her tazelemede tekrar açılmasın. */
+    function partyDecline() {
+      closeGModal();
+      PARTY.invites = [];
+      toast('Davet reddedildi');
     }
     async function partyAccept(id) {
       closeGModal();
@@ -19128,6 +19157,7 @@
          2 kişinin altına inerse sunucu tarafı (_party_settle) onu dağıtır;
          lider çıkarsa liderlik en eski üyeye geçer, grup ayakta kalır. */
       if (PARTY.id) partyLeave();
+      partyUnwatchInvites();
       zcoLeave();   // ortak kat kanalindan cik
       const g = ZD.g;
       if (g) { g.over = true; G.stats.hp = Math.max(1, Math.round(g.hp)); }
