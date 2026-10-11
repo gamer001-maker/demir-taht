@@ -16262,6 +16262,11 @@
         boss: { id: 'bozayi', name: 'Boz Ayı', icon: '🐻', img: 'bozayi', hp: 280, atk: 20, def: 7, xp: 100, gold: 90, isBoss: true },
         strongBoss: { id: 'bozkurt', name: 'Bozkurt', icon: '🐺', img: 'bozkurt', hp: 420, atk: 26, def: 9, xp: 170, gold: 150, isBoss: true, strong: true },
       },
+      /* ⚠ Bu üç boss'un sprite dosyaları 'z' ekiyle yüklendi
+         (vahsibozayiz1..3, miniejderhaz1..3, kadimejderhaz1..3) — zindan
+         arkaplanı kalıbından (frosthillz1) alışkanlık. img alanı serbest
+         metin olduğu için dosyaları yeniden adlandırmak yerine kod onlara
+         uyduruldu. Yeni canavar eklerken adın sonuna 'z' KOYMA. */
       2: {
         lv: [11, 20], img: '2seviyezindan',
         mobs: [
@@ -16273,7 +16278,7 @@
           { id: 'akkurt', name: 'Ak Kurt', icon: '🐺', img: 'zindanakkurt', fr: true, hp: 76, atk: 25, def: 5, xp: 44, gold: 38, regions: ['frosthill'] },
           { id: 'buzdomuzu', name: 'Buz Domuzu', icon: '🐗', img: 'zindanbuzdomuzu', fr: true, hp: 92, atk: 20, def: 9, xp: 43, gold: 37, regions: ['frosthill'] },
         ],
-        boss: { id: 'vahsibozayi', name: 'Vahşi Boz Ayı', icon: '🐻', img: 'vahsibozayi', hp: 700, atk: 45, def: 16, xp: 260, gold: 220, isBoss: true },
+        boss: { id: 'vahsibozayi', name: 'Vahşi Boz Ayı', icon: '🐻', img: 'vahsibozayiz', fr: true, hp: 700, atk: 45, def: 16, xp: 260, gold: 220, isBoss: true },
         strongBoss: { id: 'ciftbasliayi', name: 'Çift Başlı Ayı', icon: '🐻', img: 'ciftbasliayi', hp: 1000, atk: 58, def: 20, xp: 430, gold: 380, isBoss: true, strong: true },
       },
       3: {
@@ -16301,8 +16306,8 @@
           { id: 'mamut', name: 'Mamut', icon: '🐘', img: 'zindanmamut', fr: true, hp: 580, atk: 96, def: 40, xp: 210, gold: 180, regions: ['frosthill'] },
           { id: 'yeti', name: 'Yeti', icon: '🦧', img: 'zindanyeti', fr: true, hp: 500, atk: 112, def: 30, xp: 205, gold: 175, regions: ['frosthill'] },
         ],
-        boss: { id: 'miniejderha', name: 'Mini Ejderha', icon: '🐲', img: 'miniejderha', hp: 3400, atk: 175, def: 60, xp: 1250, gold: 1050, isBoss: true },
-        strongBoss: { id: 'kadimejderha', name: 'Kadim Ejderha', icon: '🐉', img: 'kadimejderha', hp: 4800, atk: 215, def: 75, xp: 2000, gold: 1700, isBoss: true, strong: true },
+        boss: { id: 'miniejderha', name: 'Mini Ejderha', icon: '🐲', img: 'miniejderhaz', fr: true, hp: 3400, atk: 175, def: 60, xp: 1250, gold: 1050, isBoss: true },
+        strongBoss: { id: 'kadimejderha', name: 'Kadim Ejderha', icon: '🐉', img: 'kadimejderhaz', fr: true, hp: 4800, atk: 215, def: 75, xp: 2000, gold: 1700, isBoss: true, strong: true },
       },
       5: {
         lv: [41, 50], img: '5seviyezindan', /* YER TUTUCU — görseller bekleniyor */
