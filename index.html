@@ -18320,7 +18320,10 @@
       PARTY.invites = d.invites || [];
       if (PARTY.id && PARTY.id !== hadId) partyWatch(PARTY.id);
       if (!PARTY.id && hadId) partyUnwatch();
-      if (PARTY.invites.length) partyInviteToast();
+      /* ⚠ Davet kalmadıysa kilidi aç — yoksa AYNI gruptan gelen ikinci davet
+         (reddettikten ya da grup dağıldıktan sonra) bir daha gösterilmezdi. */
+      if (!PARTY.invites.length) _partyInvShown = '';
+      else partyInviteToast();
       zgRenderSide();
       if (document.getElementById('party-panel')) partyRenderPanel();
     }
