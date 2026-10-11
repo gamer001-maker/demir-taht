@@ -1440,6 +1440,150 @@
     }
 
     /* Giriş hakları */
+    /* ── GRUP PANELİ ── */
+    .party-head {
+      font-family: var(--font-head);
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: var(--gold2);
+      border-bottom: 1px solid rgba(218, 165, 32, .25);
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .party-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 6px;
+    }
+
+    .party-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .party-name {
+      font-family: var(--font-head);
+      font-size: 13px;
+      color: var(--gold2);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .party-crown {
+      color: var(--gold);
+      font-size: 12px;
+    }
+
+    .party-sub {
+      font-size: 10px;
+      color: var(--ink3);
+    }
+
+    .party-acts {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .party-btn {
+      font-family: var(--font-head);
+      font-size: 9px;
+      letter-spacing: .5px;
+      padding: 5px 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      border: 1px solid var(--border2);
+      background: var(--panel3);
+      color: var(--perg2);
+    }
+
+    .party-btn.inv {
+      border-color: #2f6b2f;
+      background: #15330f;
+      color: #9ae66e;
+    }
+
+    .party-btn.kick {
+      border-color: #6b2b2b;
+      background: #2a0e0e;
+      color: #f08080;
+    }
+
+    .party-btn.lead {
+      border-color: var(--gold);
+      color: var(--gold2);
+    }
+
+    .party-btn:hover {
+      filter: brightness(1.25);
+    }
+
+    .party-full {
+      font-size: 9px;
+      color: var(--ink3);
+    }
+
+    .party-empty {
+      font-size: 11px;
+      color: var(--ink3);
+      text-align: center;
+      padding: 14px 8px;
+      background: var(--panel2);
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+    }
+
+    .party-loot {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .party-lootnote {
+      flex: 1 1 100%;
+      font-size: 10px;
+      color: var(--ink3);
+      margin-bottom: 4px;
+      line-height: 1.5;
+    }
+
+    .party-lootbtn {
+      flex: 1;
+      font-family: var(--font-head);
+      font-size: 10px;
+      padding: 7px 4px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--ink3);
+    }
+
+    .party-lootbtn.on {
+      border-color: var(--gold);
+      background: #2a1e08;
+      color: var(--gold2);
+    }
+
+    .party-lootbtn:disabled {
+      cursor: default;
+      opacity: .75;
+    }
+
+    .zg-btn.party.on {
+      border-color: #2f6b2f;
+      color: #9ae66e;
+    }
+
     /* Kademe seçici — giriş ekranı */
     .zd-tierpick {
       display: flex;
@@ -16358,6 +16502,7 @@
       ZD.totalGold = 0;
       ZD.totalXP = 0;
       zdStartRun(ZD.tier);   // süre sunucuda işlenir (beklemeye gerek yok)
+      partyRefresh();        // grup durumunu al (davet bekliyor olabilir)
       zgNewRun(false);   // 7×7 ızgara koşusu başlar
       if (zgMaze()) zgMazeFetchBoss();
       updateHUD();
@@ -17574,17 +17719,21 @@
     }
     /* Ganimet SADECE öldüren oyuncuya — ortak katta ev sahibi kimin
        vurduğunu bilir ve yalnız ona 'kill' gönderir. */
-    function zgAwardKill(m) {
+    /* o = { share, loot }  — share: kaç kişiye bölünüyor (grup), loot: eşya
+       zarını BEN mı atacağım. Verilmezse eski tekil davranış. */
+    function zgAwardKill(m, o) {
       const g = ZD.g; if (!g) return;
+      const share = Math.max(1, (o && o.share) || 1);
       const xpMult = ZG.XP_MULT * (g.auto ? ZG.AUTO_XP : 1);
-      const xpGain = Math.max(1, Math.round(m.xp * xpMult));
-      g.bag.gold += m.gold;
+      const xpGain = Math.max(1, Math.round(m.xp * xpMult / share));
+      const goldGain = Math.max(1, Math.round((m.gold || 0) / share));
+      g.bag.gold += goldGain;
       g.bag.xp += xpGain;
-      awardTroopCombatXP(Math.max(3, Math.floor(m.xp * 0.4)));
+      awardTroopCombatXP(Math.max(3, Math.floor(m.xp * 0.4 / share)));
       // Altın + XP tek satırda, hasar yazısının üstündeki şeritte (lane 1)
-      zgFloat(m.x, m.y, '+' + m.gold + '🪙 +' + xpGain + 'XP', '#e8c07a', 1);
+      zgFloat(m.x, m.y, '+' + goldGain + '🪙 +' + xpGain + 'XP' + (share > 1 ? ' (1/' + share + ')' : ''), '#e8c07a', 1);
       // Yarasa doldurucu: eşya ve materyal DÜŞÜRMEZ
-      if (!m.bat) {
+      if (!m.bat && (!o || o.loot !== false)) {
         zgBagMaterial(m, m.boss || m.elite);
         zgBagDrop(m);   // artık normal canavarlar da düşük şansla eşya düşürür
       }
@@ -17608,7 +17757,7 @@
         }
       }
       zcoSendKill(m, killer);              // ortak katta herkese bildir
-      if (killer === zcoMe()) zgAwardKill(m);
+      zgApplyKillReward(m, killer);        // grup varsa payımı, yoksa tamamı
       /* ⚠ zgRemoveMob DEĞİL: o düğümü anında siler ve ölüm karesi hiç
          görünmez. Burada listeden çıkarılır ama düğüm ceset olarak kalır.
          (Oda değişimi / ortak kat senkronu hâlâ zgRemoveMob kullanır — orada
@@ -17973,7 +18122,8 @@
         .on('broadcast', { event: 'mobs' }, ({ payload }) => zcoOnMobs(payload))
         .on('broadcast', { event: 'hit' }, ({ payload }) => zcoOnHit(payload))
         .on('broadcast', { event: 'kill' }, ({ payload }) => zcoOnKill(payload))
-        .on('broadcast', { event: 'zone' }, ({ payload }) => zcoOnZone(payload));
+        .on('broadcast', { event: 'zone' }, ({ payload }) => zcoOnZone(payload))
+        .on('broadcast', { event: 'loot' }, ({ payload }) => zcoOnLoot(payload));
       // Kanal, subscribe geri çağrısından ÖNCE atanır: geri çağrı erken
       // çalışırsa track() atlanır, presence boş kalır ve HERKES kendini
       // ev sahibi sanar (iki ayrı canavar akışı doğar).
@@ -18068,6 +18218,233 @@
       }
     }
     function zcoCount() { return Object.keys(ZCO.peers).length; }
+
+    /* ════ GRUP (PARTY) ════  sql/party_migration.sql
+       En fazla 4 kişi, SINIF ŞARTI YOK. Grup ODADAN BAĞIMSIZ yaşar — ortak kat
+       kanalı oda başına değişiyor (zdco_<bölge>_<kademe>_<oda>) ama grup DB'de
+       durduğu için kapıdan geçmek onu bozmaz.
+       ⚠ RPC'ler yoksa (SQL çalıştırılmadıysa) özellik SESSİZCE kapalı kalır —
+       buton görünür ama "grup sistemi kurulu değil" der; oyun etkilenmez. */
+    const PARTY = { id: null, leader: null, loot: 'sirayla', members: [], invites: [], ch: null, missing: false };
+
+    function partyActive() { return !!PARTY.id && PARTY.members.length > 1; }
+
+    /* Grupta OLUP ŞU AN BU ODADA olan üyeler. Sıra önemli ve her istemcide
+       AYNI olmalı — party_state üyeleri joined_at'e göre sıralı döndürüyor. */
+    function partyPresentIds() {
+      if (!PARTY.id) return [zcoMe()];
+      const me = zcoMe();
+      const here = PARTY.members.map(m => m.id).filter(id => id === me || ZCO.peers[id]);
+      return here.length ? here : [me];
+    }
+
+    /* ══ GANIMETİ KİM ALACAK ══
+       ⚠ Sunucuya SORMUYORUZ. Kimlik canavarın uid'sinden türetiliyor:
+       uid'ler artarak gittiği için sıra kendiliğinden döner ve HER İSTEMCİ
+       AYNI SONUCU bulur — round-robin sayısaçını senkron tutma derdi yok,
+       kesim başına RPC de gerekmez (canavar ~1,3 sn'de bir ölüyor).
+       'rastgele' modunda uid bir karıştırıcıdan geçer — sıra tahmin edilemez
+       ama yine deterministiktir. */
+    function partyLooterFor(mobUid, ids) {
+      const list = ids || partyPresentIds();
+      if (list.length < 2) return zcoMe();
+      const u = Math.abs(mobUid | 0);
+      if (PARTY.loot === 'rastgele') {
+        return list[Math.abs(Math.imul(u || 1, 2654435761)) % list.length];
+      }
+      return list[u % list.length];
+    }
+
+    /* Bir kesimden BANA düşen payı uygular. Hem ev sahibi (zgKill) hem
+       istemci (zcoOnKill) bunu çağırır — mantık tek yerde kalsın. */
+    function zgApplyKillReward(m, killer) {
+      const me = zcoMe();
+      const ids = partyPresentIds();
+      const grouped = ids.length > 1 && ids.indexOf(killer) >= 0 && ids.indexOf(me) >= 0;
+      if (!grouped) {
+        // Grup yok (ya da öldüren başka grupta): eski davranış — hepsi öldürene
+        if (killer === me) zgAwardKill(m, { share: 1, loot: true });
+        return;
+      }
+      /* ⚠ CANAVAR BAŞINA TEK DÜŞÜŞ: eşyayı yalnız seçilen üye zarlar.
+         Üye başına zar atılsaydı 4 kişilik grup 4× ganimet demekti ve yedek
+         hesapla çoğaltma kârlı olurdu.
+
+         ⚠⚠ GANIMET SAHİBİNİ HERKES KENDİ HESAPLAMAZ. Hesap presence'a
+         dayanıyor ve presence istemciler arasında bir anı ayrışabiliyor;
+         ikisi de "benim" derse EŞYA KOPYALANIR. Bu yüzden kararı TEK
+         OTORİTE verir: öldüren. O seçer, yayar; diğerleri yalnızca uyar. */
+      if (killer === me) {
+        const looter = partyLooterFor(m.uid, ids);
+        if (looter !== me) zcoSendLoot(m, looter);
+        zgAwardKill(m, { share: ids.length, loot: looter === me });
+      } else {
+        // Payımı alırım ama eşya zarını ATMAM — öldüren bana 'loot'
+        // yayını gönderirse zgBagRollFor çalışır.
+        zgAwardKill(m, { share: ids.length, loot: false });
+      }
+    }
+    function partyIsLeader() { return !!PARTY.id && PARTY.leader === zcoMe(); }
+    function partyIds() { return PARTY.members.map(m => m.id); }
+
+    async function partyRpc(fn, args) {
+      if (PARTY.missing) return null;
+      try {
+        const { data, error } = await supa.rpc(fn, args || {});
+        if (error) {
+          if (error.code === 'PGRST202' || /function .*party/i.test(error.message || '')) {
+            PARTY.missing = true;
+            toast('⚠ Grup sistemi henüz kurulu değil (sql/party_migration.sql)');
+          } else {
+            toast('⚠ ' + (error.message || 'grup hatası').slice(0, 60));
+          }
+          return null;
+        }
+        if (data && data.ok === false) { toast('⚠ ' + (data.error || 'olmadı')); return null; }
+        return data;
+      } catch (e) { return null; }
+    }
+
+    /* Sunucudaki grubu yerele al. Realtime her değişimde bunu çağırır. */
+    async function partyRefresh() {
+      if (!currentUser) return;
+      const d = await partyRpc('party_state');
+      if (!d) return;
+      const p = d.party;
+      const hadId = PARTY.id;
+      PARTY.id = p ? p.id : null;
+      PARTY.leader = p ? p.leader : null;
+      PARTY.loot = p ? p.loot : 'sirayla';
+      PARTY.members = p ? (p.members || []) : [];
+      PARTY.invites = d.invites || [];
+      if (PARTY.id && PARTY.id !== hadId) partyWatch(PARTY.id);
+      if (!PARTY.id && hadId) partyUnwatch();
+      if (PARTY.invites.length) partyInviteToast();
+      zgRenderSide();
+      if (document.getElementById('party-panel')) partyRenderPanel();
+    }
+
+    /* Realtime: grup değişince (katıldı/atıldı/lider değişti) ekran tazelensin.
+       ⚠ Tablolar supabase_realtime publication'ına eklenmemişse bu sessizce
+       çalışmaz — SQL dosyasının 13. bölümü onu yapıyor. */
+    function partyWatch(id) {
+      partyUnwatch();
+      PARTY.ch = supa.channel('party_' + id)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'party_members', filter: 'party_id=eq.' + id }, () => partyRefresh())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'parties', filter: 'id=eq.' + id }, () => partyRefresh())
+        .subscribe();
+    }
+    function partyUnwatch() {
+      if (PARTY.ch) { try { supa.removeChannel(PARTY.ch); } catch (e) { } }
+      PARTY.ch = null;
+    }
+
+    let _partyInvShown = '';
+    function partyInviteToast() {
+      const inv = PARTY.invites[0];
+      if (!inv || _partyInvShown === inv.party) return;
+      _partyInvShown = inv.party;
+      showGModal('<div style="text-align:center;">'
+        + '<div style="font-size:38px;margin-bottom:6px;">🤝</div>'
+        + '<div style="font-family:var(--font-head);font-size:15px;color:var(--gold2);margin-bottom:6px;">GRUP DAVETİ</div>'
+        + '<div style="font-size:12px;color:var(--ink3);margin-bottom:14px;"><b style="color:var(--perg2);">' + esc(inv.from) + '</b> seni grubuna çağırıyor.<br>Grupta şu an ' + (inv.n || 1) + ' kişi var.</div>'
+        + '<div style="display:flex;gap:8px;">'
+        + '<button class="btn" style="flex:1;" onclick="partyAccept(\'' + inv.party + '\')">Katıl</button>'
+        + '<button class="btn" style="flex:1;border-color:#6b2b2b;color:#f08080;" onclick="closeGModal()">Reddet</button>'
+        + '</div></div>');
+    }
+
+    async function partyInvite(uid) {
+      if (await partyRpc('party_invite', { p_to: uid })) { toast('📨 Davet gönderildi'); partyRefresh(); }
+    }
+    async function partyAccept(id) {
+      closeGModal();
+      if (await partyRpc('party_accept', { p_party: id })) { toast('🤝 Gruba katıldın'); partyRefresh(); }
+    }
+    async function partyLeave() {
+      if (await partyRpc('party_leave')) { toast('Gruptan ayrıldın'); partyRefresh(); }
+    }
+    async function partyKick(uid) {
+      if (await partyRpc('party_kick', { p_profile: uid })) partyRefresh();
+    }
+    async function partySetLeader(uid) {
+      if (await partyRpc('party_set_leader', { p_profile: uid })) partyRefresh();
+    }
+    async function partySetLoot(mode) {
+      if (await partyRpc('party_set_loot', { p_mode: mode })) partyRefresh();
+    }
+
+    /* ══ YAKINDAKİLER / GRUP PENCERESİ ══ */
+    function partyOpen() {
+      showGModal('<div id="party-panel"></div>', { width: 420 });
+      partyRenderPanel();
+    }
+
+    function partyAvatar(cls, idx, px) {
+      const list = AVATAR_IMAGES[cls] || AVATAR_IMAGES.warrior;
+      const src = list[Math.max(0, Math.min(3, idx | 0))] || list[0];
+      return '<img src="' + src + '" style="width:' + px + 'px;height:' + px + 'px;border-radius:50%;'
+        + 'object-fit:cover;border:2px solid var(--gold);flex-shrink:0;" '
+        + 'onerror="this.style.display=\'none\'">';
+    }
+
+    function partyRenderPanel() {
+      const el = document.getElementById('party-panel'); if (!el) return;
+      const CN = { warrior: 'Savaşçı', mage: 'Büyücü', rogue: 'Haydut', ranger: 'Avcı' };
+      const me = zcoMe();
+      let h = '';
+
+      if (PARTY.id) {
+        const lead = partyIsLeader();
+        h += '<div class="party-head">GRUBUN <span>' + PARTY.members.length + '/4</span></div>';
+        h += PARTY.members.map(m => {
+          const isLead = m.id === PARTY.leader;
+          return '<div class="party-row">'
+            + partyAvatar(m.sinif, m.avatar, 46)
+            + '<div class="party-info"><div class="party-name">' + esc(m.ad || '?')
+            + (isLead ? ' <span class="party-crown" title="Grup lideri">♛</span>' : '') + '</div>'
+            + '<div class="party-sub">' + (m.sv || 1) + ' Seviye ' + (CN[m.sinif] || '') + '</div></div>'
+            + (lead && m.id !== me
+              ? '<div class="party-acts">'
+              + '<button class="party-btn kick" onclick="partyKick(\'' + m.id + '\')">AT</button>'
+              + '<button class="party-btn lead" onclick="partySetLeader(\'' + m.id + '\')">LİDER YAP</button>'
+              + '</div>' : '')
+            + '</div>';
+        }).join('');
+
+        // Eşya modu — yalnız lider değiştirebilir. XP her zaman EŞİT, ayarı yok.
+        h += '<div class="party-head" style="margin-top:12px;">GANIMET</div>'
+          + '<div class="party-loot">'
+          + '<div class="party-lootnote">XP her zaman <b>eşit</b> bölünür. Eşya tek parça olduğu için bölünemez:</div>'
+          + ['sirayla', 'rastgele'].map(mo =>
+            '<button class="party-lootbtn' + (PARTY.loot === mo ? ' on' : '') + '"'
+            + (lead ? ' onclick="partySetLoot(\'' + mo + '\')"' : ' disabled')
+            + '>' + (mo === 'sirayla' ? 'SIRAYLA' : 'RASTGELE') + '</button>').join('')
+          + '</div>'
+          + (lead ? '' : '<div class="party-lootnote" style="opacity:.7;">Yalnız grup lideri değiştirebilir.</div>');
+
+        h += '<button class="btn" style="width:100%;margin-top:12px;border-color:#6b2b2b;color:#f08080;" onclick="partyLeave()">Gruptan Ayrıl</button>';
+      }
+
+      // Yakındakiler — aynı odadaki, grupta OLMAYAN oyuncular
+      const inParty = new Set(partyIds());
+      const near = Object.values(ZCO.peers).filter(p => p.userId && !inParty.has(p.userId));
+      h += '<div class="party-head" style="margin-top:' + (PARTY.id ? '14px' : '0') + ';">YAKINDAKİLER</div>';
+      if (!near.length) {
+        h += '<div class="party-empty">Bu odada başka oyuncu yok.</div>';
+      } else {
+        h += near.map(p =>
+          '<div class="party-row">'
+          + partyAvatar(p.classId, p.avatarIdx, 46)
+          + '<div class="party-info"><div class="party-name">' + esc(p.heroName || '?') + '</div>'
+          + '<div class="party-sub">' + (p.level || 1) + ' Seviye ' + (CN[p.classId] || '') + '</div></div>'
+          + (PARTY.id && PARTY.members.length >= 4
+            ? '<div class="party-acts"><span class="party-full">GRUP DOLU</span></div>'
+            : '<div class="party-acts"><button class="party-btn inv" onclick="partyInvite(\'' + p.userId + '\')">GRUBA DAVET ET</button></div>')
+          + '</div>').join('');
+      }
+      el.innerHTML = h;
+    }
     function zcoMe() { return currentUser ? currentUser.id : 'solo'; }
 
     /* ── EV SAHİBİ ──
@@ -18166,6 +18543,27 @@
       g.zones.push({ x: p.x, y: p.y, type, until: now + ms, next: Infinity, mine: false });
       zgPaintZones();
     }
+    /* ══ GANIMET DEVRİ ══
+       Öldüren, grup sırasında kimin alacağını seçip ilan eder. Yalnız o kişi
+       zar atar — böylece ne kopyalanma ne kayıp olur. Canavar verisi de
+       yollanır çünkü alıcının yerel kopyası silinmiş olabilir. */
+    function zcoSendLoot(m, to) {
+      if (!ZCO.channel || zcoAlone()) return;
+      ZCO.channel.send({
+        type: 'broadcast', event: 'loot',
+        payload: { to, u: zcoMe(), uid: m.uid, x: m.x, y: m.y, id: m.id, name: m.name,
+                   b: m.boss ? 1 : 0, e: m.elite ? 1 : 0, bat: m.bat ? 1 : 0 },
+      });
+    }
+    function zcoOnLoot(p) {
+      const g = ZD.g;
+      if (!g || g.over || !p || p.to !== zcoMe()) return;
+      if (!ZCO.peers[p.u]) return;          // presence'ta olmayandan ganimet kabul etme
+      if (p.bat) return;                    // yarasa eşya düşürmez
+      const mm = { uid: p.uid, x: p.x, y: p.y, id: p.id, name: p.name, boss: !!p.b, elite: !!p.e };
+      zgBagMaterial(mm, mm.boss || mm.elite);
+      zgBagDrop(mm);
+    }
     function zcoSendHit(mobUid, dmg) {
       if (!ZCO.channel) return;
       ZCO.channel.send({ type: 'broadcast', event: 'hit', payload: { u: zcoMe(), m: mobUid, d: dmg } });
@@ -18192,10 +18590,12 @@
       if (!g || g.over || !p || zcoIsHost()) return;
       const m = g.mobs.find(o => o.uid === p.m);
       if (p.b && zgMaze()) g.bossKilledAt = getServerNow().getTime();
-      if (p.by === zcoMe()) {
-        // Ödül için ev sahibinin gönderdiği değerleri kullan (yerel kopya silinmiş olabilir)
-        zgAwardKill(m || { uid: p.m, x: p.x, y: p.y, xp: p.xp, gold: p.gold, id: p.id, name: p.name, boss: !!p.b, elite: !!p.e });
-      }
+      /* ⚠ Artık yalnız öldüren değil, AYNI GRUPTAKİ herkes payını alır.
+         Ödül için ev sahibinin gönderdiği değerler kullanılır (yerel kopya
+         silinmiş olabilir). */
+      zgApplyKillReward(
+        m || { uid: p.m, x: p.x, y: p.y, xp: p.xp, gold: p.gold, id: p.id, name: p.name, boss: !!p.b, elite: !!p.e },
+        p.by);
       if (m) zgRemoveMob(m);
       zgRenderBar();
     }
@@ -18513,6 +18913,15 @@
         lastBtn = zgIsExitRoom()
           ? '<button class="zg-btn wide on" onclick="zgExit()">Zindandan Çık' + sub('ganimeti al') + '</button>'
           : '<button class="zg-btn wide" disabled>Çıkış yok' + sub('çıkış odası bul') + '</button>';
+        /* Grup butonu — Çıkış'ın ALTINDA. Odada kimse yoksa SOLUK
+           (zcoCount()==0). Grup varsa üye sayısını gösterir. */
+        const nearN = zcoCount();
+        const pOn = partyActive();
+        lastBtn += '<button class="zg-btn wide party' + (pOn ? ' on' : '') + '"'
+          + (nearN || pOn ? ' onclick="partyOpen()"' : ' disabled')
+          + '>' + (pOn ? '🤝 Grup ' + PARTY.members.length + '/4' : '🤝 Grup Kur')
+          + sub(pOn ? 'ganimet: ' + (PARTY.loot === 'sirayla' ? 'sırayla' : 'rastgele')
+            : (nearN ? nearN + ' oyuncu yakında' : 'yakında kimse yok')) + '</button>';
       }
       /* ⚠ Yalnız sayaç değiştiyse paneli BAŞTAN BASMA.
          Bu fonksiyon her canavar ölümünde çağrılıyor; `innerHTML` ile baştan
@@ -18530,7 +18939,7 @@
          durumları + alt buton. */
       const sig = utilBtnsHtml
         + skills.map(sk => sk.id + (g.autoSkills && g.autoSkills[sk.id] ? '1' : '0')).join(',')
-        + lastBtn;
+        + lastBtn;   // lastBtn grup durumunu da taşıyor — üye sayısı değişinde yenilenir
       const box = document.getElementById('zg-side-info');
       if (box && _zgSideSig === sig) { box.innerHTML = info; return; }
       _zgSideSig = sig;
@@ -18715,6 +19124,10 @@
     }
 
     function zgFinish() {
+      /* Zindandan çıkan kişi gruptan DÜŞER (kullanıcı kararı). Grup dolayısıyla
+         2 kişinin altına inerse sunucu tarafı (_party_settle) onu dağıtır;
+         lider çıkarsa liderlik en eski üyeye geçer, grup ayakta kalır. */
+      if (PARTY.id) partyLeave();
       zcoLeave();   // ortak kat kanalindan cik
       const g = ZD.g;
       if (g) { g.over = true; G.stats.hp = Math.max(1, Math.round(g.hp)); }
