@@ -12361,7 +12361,32 @@
 
     const FOOD_VALUE = { bugday: 1, arpa: 1, sebze: 2, saman: 0, un: 0, arpa_unu: 0, tuy: 0, yumurta: 2, yun: 0, sut: 2, ekmek: 0, corba: 0, kek: 0, patates: 1, domates: 2, cicek: 0, yonca: 0, cilek: 3, bugday_unu: 0, patates_puresi: 3, kaymak: 4, cilek_puresi: 4, domates_puresi: 3, bal: 2, domates_corbasi: 0, patates_corbasi: 0, salcali_ekmek: 0, borek: 0, cilekli_turta: 0, balli_kaymak: 0, balik: 4, baliketi: 3, solucan: 0, hamur: 0, sazanpulu: 0, levrekdisi: 0, havyar: 0, balik_ekmek: 0 };
     const KITCHEN_FOOD_VALUES = { domates_corbasi: 10, patates_corbasi: 12, ekmek: 12, salcali_ekmek: 15, borek: 18, cilekli_turta: 20, balli_kaymak: 25, balik_ekmek: 22 };
-    const ITEM_LABELS = { bugday: 'Buğday', saman: 'Saman', arpa: 'Arpa', sebze: 'Sebze', un: 'Un', arpa_unu: 'Arpa Unu', tuy: 'Tüy', yumurta: 'Yumurta', yun: 'Yün', sut: 'Süt', ekmek: 'Ekmek', corba: 'Çorba', kek: 'Kek', patates: 'Patates', domates: 'Domates', cicek: 'Çiçek', yonca: 'Yonca', cilek: 'Çilek', patates_tohum: 'Patates Tohumu', domates_tohum: 'Domates Tohumu', cicek_tohum: 'Çiçek Tohumu', yonca_tohum: 'Yonca Tohumu', cilek_tohum: 'Çilek Tohumu', bugday_unu: 'Buğday Unu', patates_puresi: 'Patates Püresi', kaymak: 'Kaymak', cilek_puresi: 'Çilek Püresi', domates_puresi: 'Domates Püresi', bal: 'Bal', domates_corbasi: 'Domates Çorbası', patates_corbasi: 'Patates Çorbası', salcali_ekmek: 'Salçalı Ekmek', borek: 'Börek', cilekli_turta: 'Çilekli Turta', balli_kaymak: 'Ballı Kaymak', meseLodunu: 'Meşe Odunu', demir: 'Demir', kil: 'Kil', kereste: 'Kereste', civi: 'Çivi', tugla: 'Tuğla', balik: 'Balık', kefal: 'Tatlı Su Kefali', sazan: 'Sazan', alabalik: 'Alabalık', aynalisazan: 'Aynalı Sazan', somon: 'Somon', yayin: 'Yayın Balığı', tuzlukefal: 'Tuzlu Su Kefali', levrek: 'Levrek', cupra: 'Çupra', dislilevrek: 'Dişli Levrek', devcupra: 'Dev Çupra', kopekbalik: 'Köpek Balığı', baliketi: 'Balık Eti', sazanpulu: 'Sazan Pulu', levrekdisi: 'Levrek Dişi', havyar: 'Havyar', solucan: 'Solucan', hamur: 'Hamur', balik_ekmek: 'Balık Ekmek', iksir_kucuk: 'Küçük Can İksiri', iksir_orta: 'Orta Can İksiri', iksir_buyuk: 'Büyük Can İksiri', akrepinzehirkesesi: 'Akrep Zehir Kesesi', ayipencesi: 'Ayı Pençesi', cataldil: 'Çatal Dil', iguanaderisi: 'İguana Derisi', keskindis: 'Keskin Diş', kirpioklari: 'Kirpi Okları', kurtpostu: 'Kurt Postu', leoparderisi: 'Leopar Derisi', sivridis: 'Sivri Diş', yilanderisi: 'Yılan Derisi' };
+
+    /* ── CANAVAR PARÇALARI (2026-10-14) ──
+       Görev teslimatlarının yakıtı. Anahtar = görsel adı (<anahtar>.webp).
+       Buraya eklenen parça ITEM_LABELS/ICONS/IMGS ve G.prodInv'e kendiliğinden
+       girer; canavara bağlamak için MOB_DROPS'a da yaz. */
+    const MOB_PARTS = {
+      bocekkabugu: ['Böcek Kabuğu', '🪲'], cekirgebacagi: ['Çekirge Bacağı', '🦗'],
+      akrepkuyrugu: ['Akrep Kuyruğu', '🦂'], orumcekipegi: ['Örümcek İpeği', '🕸'],
+      sirtlandisi: ['Sırtlan Dişi', '🦷'], akbabatuyu: ['Akbaba Tüyü', '🪶'],
+      kertenkelepulu: ['Kertenkele Pulu', '🦎'], akkurtpostu: ['Ak Kurt Postu', '🐺'],
+      domuzazidisi: ['Domuz Azı Dişi', '🐗'], kutupayisipostu: ['Kutup Ayısı Postu', '🐻‍❄️'],
+      baykustuyu: ['Baykuş Tüyü', '🪶'], donmuskemik: ['Donmuş Kemik', '🦴'],
+      fildisi: ['Fildişi', '🦣'], yetipostu: ['Yeti Postu', '❄'],
+      trolyuregi: ['Trol Yüreği', '🫀'], buzkristali: ['Buz Kristali', '💠'],
+      buzejderipulu: ['Buz Ejderi Pulu', '🐉'],
+      orkdisi: ['Ork Dişi', '🦷'], orknisani: ['Ork Komutan Nişanı', '🎖'],
+      goblintilsimi: ['Goblin Tılsımı', '🧿'], golemcekirdegi: ['Golem Çekirdeği', '🪨'],
+      kemiktozu: ['Kemik Tozu', '🦴'], vampirdisi: ['Vampir Dişi', '🦷'],
+      vampirpelerini: ['Vampir Pelerini', '🦇'], mezarkefeni: ['Mezar Kefeni', '🧻'],
+      iblisboynuzu: ['İblis Boynuzu', '😈'],
+      seytankuyrugu: ['Şeytan Kuyruğu', '😈'], cehennemkozu: ['Cehennem Közü', '🔥'],
+      ejderpencesi: ['Ejder Pençesi', '🐲'], ejderyuregi: ['Ejder Yüreği', '❤‍🔥'],
+      altinmuhur: ['Altın Mühür', '🏅'], ruhfeneri: ['Ruh Feneri', '🏮'],
+    };
+    const _mp = f => Object.fromEntries(Object.entries(MOB_PARTS).map(([k, v]) => [k, f(k, v)]));
+    const ITEM_LABELS = { bugday: 'Buğday', saman: 'Saman', arpa: 'Arpa', sebze: 'Sebze', un: 'Un', arpa_unu: 'Arpa Unu', tuy: 'Tüy', yumurta: 'Yumurta', yun: 'Yün', sut: 'Süt', ekmek: 'Ekmek', corba: 'Çorba', kek: 'Kek', patates: 'Patates', domates: 'Domates', cicek: 'Çiçek', yonca: 'Yonca', cilek: 'Çilek', patates_tohum: 'Patates Tohumu', domates_tohum: 'Domates Tohumu', cicek_tohum: 'Çiçek Tohumu', yonca_tohum: 'Yonca Tohumu', cilek_tohum: 'Çilek Tohumu', bugday_unu: 'Buğday Unu', patates_puresi: 'Patates Püresi', kaymak: 'Kaymak', cilek_puresi: 'Çilek Püresi', domates_puresi: 'Domates Püresi', bal: 'Bal', domates_corbasi: 'Domates Çorbası', patates_corbasi: 'Patates Çorbası', salcali_ekmek: 'Salçalı Ekmek', borek: 'Börek', cilekli_turta: 'Çilekli Turta', balli_kaymak: 'Ballı Kaymak', meseLodunu: 'Meşe Odunu', demir: 'Demir', kil: 'Kil', kereste: 'Kereste', civi: 'Çivi', tugla: 'Tuğla', balik: 'Balık', kefal: 'Tatlı Su Kefali', sazan: 'Sazan', alabalik: 'Alabalık', aynalisazan: 'Aynalı Sazan', somon: 'Somon', yayin: 'Yayın Balığı', tuzlukefal: 'Tuzlu Su Kefali', levrek: 'Levrek', cupra: 'Çupra', dislilevrek: 'Dişli Levrek', devcupra: 'Dev Çupra', kopekbalik: 'Köpek Balığı', baliketi: 'Balık Eti', sazanpulu: 'Sazan Pulu', levrekdisi: 'Levrek Dişi', havyar: 'Havyar', solucan: 'Solucan', hamur: 'Hamur', balik_ekmek: 'Balık Ekmek', iksir_kucuk: 'Küçük Can İksiri', iksir_orta: 'Orta Can İksiri', iksir_buyuk: 'Büyük Can İksiri', akrepinzehirkesesi: 'Akrep Zehir Kesesi', ayipencesi: 'Ayı Pençesi', cataldil: 'Çatal Dil', iguanaderisi: 'İguana Derisi', keskindis: 'Keskin Diş', kirpioklari: 'Kirpi Okları', kurtpostu: 'Kurt Postu', leoparderisi: 'Leopar Derisi', sivridis: 'Sivri Diş', yilanderisi: 'Yılan Derisi', ..._mp((k, v) => v[0]) };
 
     /* ══════════════════════════════════════
        BİNA YÜKSELTME MALZEMELERİ (kereste/çivi/tuğla)
@@ -12426,7 +12451,7 @@
         return `<span style="font-size: 10px;padding:1px 6px;border-radius:4px;margin:1px;display:inline-block;background:${ok ? '#13190f' : '#2a1010'};border:1px solid ${ok ? '#2a3a18' : '#6a2020'};color:${ok ? '#9bd17a' : '#f08080'};">${ic} ${v}${ok ? '' : ` (${have})`}</span>`;
       }).join(' ');
     }
-    const ITEM_ICONS = { bugday: '🌾', saman: '🌿', arpa: '🌱', sebze: '🥦', un: '🥛', arpa_unu: '🥛', tuy: '🪶', yumurta: '🥚', yun: '🧶', sut: '🥛', ekmek: '🍞', corba: '🥣', kek: '🎂', patates: '🥔', domates: '🍅', cicek: '🌸', yonca: '🍀', cilek: '🍓', patates_tohum: '🌱', domates_tohum: '🌱', cicek_tohum: '🌱', yonca_tohum: '🌱', cilek_tohum: '🌱', bugday_unu: '🫙', patates_puresi: '🫙', kaymak: '🫙', cilek_puresi: '🫙', domates_puresi: '🫙', bal: '🍯', domates_corbasi: '🥣', patates_corbasi: '🥣', salcali_ekmek: '🍞', borek: '🥐', cilekli_turta: '🍓', balli_kaymak: '🍯', meseLodunu: '🪵', demir: '⛏', kil: '🪣', kereste: '🪵', civi: '🔩', tugla: '🧱', balik: '🐟', kefal: '🐟', sazan: '🐟', alabalik: '🐟', aynalisazan: '🐟', somon: '🐟', yayin: '🐟', tuzlukefal: '🐠', levrek: '🐠', cupra: '🐠', dislilevrek: '🐠', devcupra: '🐠', kopekbalik: '🦈', baliketi: '🍥', sazanpulu: '✨', levrekdisi: '🦷', havyar: '🥚', solucan: '🪱', hamur: '🫓', balik_ekmek: '🥪', iksir_kucuk: '🧪', iksir_orta: '🧪', iksir_buyuk: '🧪', akrepinzehirkesesi: '🧪', ayipencesi: '🐾', cataldil: '🐍', iguanaderisi: '🦎', keskindis: '🦷', kirpioklari: '🪶', kurtpostu: '🐺', leoparderisi: '🐆', sivridis: '🦷', yilanderisi: '🐍' };
+    const ITEM_ICONS = { bugday: '🌾', saman: '🌿', arpa: '🌱', sebze: '🥦', un: '🥛', arpa_unu: '🥛', tuy: '🪶', yumurta: '🥚', yun: '🧶', sut: '🥛', ekmek: '🍞', corba: '🥣', kek: '🎂', patates: '🥔', domates: '🍅', cicek: '🌸', yonca: '🍀', cilek: '🍓', patates_tohum: '🌱', domates_tohum: '🌱', cicek_tohum: '🌱', yonca_tohum: '🌱', cilek_tohum: '🌱', bugday_unu: '🫙', patates_puresi: '🫙', kaymak: '🫙', cilek_puresi: '🫙', domates_puresi: '🫙', bal: '🍯', domates_corbasi: '🥣', patates_corbasi: '🥣', salcali_ekmek: '🍞', borek: '🥐', cilekli_turta: '🍓', balli_kaymak: '🍯', meseLodunu: '🪵', demir: '⛏', kil: '🪣', kereste: '🪵', civi: '🔩', tugla: '🧱', balik: '🐟', kefal: '🐟', sazan: '🐟', alabalik: '🐟', aynalisazan: '🐟', somon: '🐟', yayin: '🐟', tuzlukefal: '🐠', levrek: '🐠', cupra: '🐠', dislilevrek: '🐠', devcupra: '🐠', kopekbalik: '🦈', baliketi: '🍥', sazanpulu: '✨', levrekdisi: '🦷', havyar: '🥚', solucan: '🪱', hamur: '🫓', balik_ekmek: '🥪', iksir_kucuk: '🧪', iksir_orta: '🧪', iksir_buyuk: '🧪', akrepinzehirkesesi: '🧪', ayipencesi: '🐾', cataldil: '🐍', iguanaderisi: '🦎', keskindis: '🦷', kirpioklari: '🪶', kurtpostu: '🐺', leoparderisi: '🐆', sivridis: '🦷', yilanderisi: '🐍', ..._mp((k, v) => v[1]) };
     // Görseli olan eşyaların dosya adı — key ile farklıysa buraya ekle
     const ITEM_IMGS = {
       meseLodunu: 'odun', demir: 'demir', kil: 'kil', kereste: 'kereste', civi: 'civi', tugla: 'tugla', balik: 'balik',
@@ -12437,7 +12462,8 @@
       iksir_kucuk: 'kucukcaniksiri', iksir_orta: 'ortacaniksiri', iksir_buyuk: 'buyukcaniksiri',
       akrepinzehirkesesi: 'akrepinzehirkesesi', ayipencesi: 'ayipencesi', cataldil: 'cataldil',
       iguanaderisi: 'iguanaderisi', keskindis: 'keskindis', kirpioklari: 'kirpioklari',
-      kurtpostu: 'kurtpostu', leoparderisi: 'leoparderisi', sivridis: 'sivridis', yilanderisi: 'yilanderisi'
+      kurtpostu: 'kurtpostu', leoparderisi: 'leoparderisi', sivridis: 'sivridis', yilanderisi: 'yilanderisi',
+      ..._mp(k => k)
     };
 
     /* ── AŞEVİ İKSİRLERİ ──
@@ -12617,7 +12643,7 @@
       region: null,      // bulunulan bölge anahtarı (REGIONS)
       homeRegion: null,  // sınıfına göre doğduğun bölge — kalen burada
       prodTimers: [], prodTimerId: 1,
-      prodInv: { bugday: 5, saman: 3, arpa: 0, sebze: 0, un: 2, arpa_unu: 0, tuy: 1, yumurta: 3, yun: 1, sut: 4, ekmek: 0, corba: 0, kek: 0, patates: 0, domates: 0, cicek: 0, yonca: 0, cilek: 0, patates_tohum: 0, domates_tohum: 0, cicek_tohum: 0, yonca_tohum: 0, cilek_tohum: 0, bugday_unu: 0, patates_puresi: 0, kaymak: 0, cilek_puresi: 0, domates_puresi: 0, bal: 0, domates_corbasi: 0, patates_corbasi: 0, salcali_ekmek: 0, borek: 0, cilekli_turta: 0, balli_kaymak: 0, meseLodunu: 0, demir: 0, kil: 0, kereste: 0, civi: 0, tugla: 0, balik: 0, kefal: 0, sazan: 0, alabalik: 0, aynalisazan: 0, somon: 0, yayin: 0, tuzlukefal: 0, levrek: 0, cupra: 0, dislilevrek: 0, devcupra: 0, kopekbalik: 0, baliketi: 0, sazanpulu: 0, levrekdisi: 0, havyar: 0, solucan: 0, hamur: 0, balik_ekmek: 0, akrepinzehirkesesi: 0, ayipencesi: 0, cataldil: 0, iguanaderisi: 0, keskindis: 0, kirpioklari: 0, kurtpostu: 0, leoparderisi: 0, sivridis: 0, yilanderisi: 0 },
+      prodInv: { bugday: 5, saman: 3, arpa: 0, sebze: 0, un: 2, arpa_unu: 0, tuy: 1, yumurta: 3, yun: 1, sut: 4, ekmek: 0, corba: 0, kek: 0, patates: 0, domates: 0, cicek: 0, yonca: 0, cilek: 0, patates_tohum: 0, domates_tohum: 0, cicek_tohum: 0, yonca_tohum: 0, cilek_tohum: 0, bugday_unu: 0, patates_puresi: 0, kaymak: 0, cilek_puresi: 0, domates_puresi: 0, bal: 0, domates_corbasi: 0, patates_corbasi: 0, salcali_ekmek: 0, borek: 0, cilekli_turta: 0, balli_kaymak: 0, meseLodunu: 0, demir: 0, kil: 0, kereste: 0, civi: 0, tugla: 0, balik: 0, kefal: 0, sazan: 0, alabalik: 0, aynalisazan: 0, somon: 0, yayin: 0, tuzlukefal: 0, levrek: 0, cupra: 0, dislilevrek: 0, devcupra: 0, kopekbalik: 0, baliketi: 0, sazanpulu: 0, levrekdisi: 0, havyar: 0, solucan: 0, hamur: 0, balik_ekmek: 0, akrepinzehirkesesi: 0, ayipencesi: 0, cataldil: 0, iguanaderisi: 0, keskindis: 0, kirpioklari: 0, kurtpostu: 0, leoparderisi: 0, sivridis: 0, yilanderisi: 0, ..._mp(() => 0) },
       matInv: { ham_demir: 0, guc_runesi: 0, ejderha_pulu: 0, thros_kanadi: 0, dev_disi: 0, anka_kulu: 0, ruh_kristali: 0, iblis_kani: 0, semavi_oz: 0 },
       guildName: '',
       guildId: null,
@@ -16381,6 +16407,47 @@
       vahsibozayi: ['ayipencesi', 'keskindis', 'iblis_kani'],
       ciftbasliayi: ['ayipencesi', 'kurtpostu', 'iblis_kani'],
       '3yilan': ['cataldil', 'yilanderisi', 'semavi_oz'],
+      /* 2026-10-14 — parçası olmayan 32 canavar. Parça listede iki kez yazılır
+         (≈%67 parça, ≈%33 geliştirme malzemesi). Normal canavarlar kademesinin
+         bir altındaki malzemeyi verir; üst malzemeler (İblis Kanı, Semavi Öz)
+         boss'lara saklıdır, yoksa kademe 5'te +9 malzemesi su gibi akardı. */
+      // Kademe 1
+      bokbocegi: ['bocekkabugu', 'bocekkabugu', 'ham_demir'],
+      dislicekirge: ['cekirgebacagi', 'cekirgebacagi', 'ham_demir'],
+      // Kademe 2
+      ciftkuyrukluakrep: ['akrepkuyrugu', 'akrepkuyrugu', 'guc_runesi'],
+      orumcek: ['orumcekipegi', 'orumcekipegi', 'guc_runesi'],
+      akkurt: ['akkurtpostu', 'akkurtpostu', 'guc_runesi'],
+      buzdomuzu: ['domuzazidisi', 'domuzazidisi', 'guc_runesi'],
+      // Kademe 3
+      orksavasci: ['orkdisi', 'orkdisi', 'ejderha_pulu'],
+      tasgolem: ['golemcekirdegi', 'golemcekirdegi', 'ejderha_pulu'],
+      vampir: ['vampirdisi', 'vampirdisi', 'ejderha_pulu'],
+      sirtlan: ['sirtlandisi', 'sirtlandisi', 'ejderha_pulu'],
+      akbaba: ['akbabatuyu', 'akbabatuyu', 'ejderha_pulu'],
+      kutupayisi: ['kutupayisipostu', 'kutupayisipostu', 'ejderha_pulu'],
+      buzbaykusu: ['baykustuyu', 'baykustuyu', 'ejderha_pulu'],
+      seytan: ['seytankuyrugu', 'ruh_kristali'],
+      kadimseytan: ['cehennemkozu', 'ruh_kristali', 'iblis_kani'],
+      // Kademe 4
+      mezarzombisi: ['mezarkefeni', 'mezarkefeni', 'anka_kulu'],
+      goblinsefi: ['goblintilsimi', 'goblintilsimi', 'anka_kulu'],
+      orkkomutani: ['orknisani', 'orknisani', 'anka_kulu'],
+      zirhlikertenkele: ['kertenkelepulu', 'kertenkelepulu', 'anka_kulu'],
+      donmusiskelet: ['donmuskemik', 'donmuskemik', 'anka_kulu'],
+      mamut: ['fildisi', 'fildisi', 'anka_kulu'],
+      yeti: ['yetipostu', 'yetipostu', 'anka_kulu'],
+      miniejderha: ['ejderpencesi', 'iblis_kani'],
+      kadimejderha: ['ejderyuregi', 'iblis_kani', 'semavi_oz'],
+      // Kademe 5
+      iblismuhafiz: ['iblisboynuzu', 'iblisboynuzu', 'ruh_kristali'],
+      kadimvampir: ['vampirpelerini', 'vampirpelerini', 'ruh_kristali'],
+      kemikgolem: ['kemiktozu', 'kemiktozu', 'ruh_kristali'],
+      buztrolu: ['trolyuregi', 'trolyuregi', 'ruh_kristali'],
+      buzgolemi: ['buzkristali', 'buzkristali', 'ruh_kristali'],
+      buzejderi: ['buzejderipulu', 'buzejderipulu', 'ruh_kristali'],
+      altinsovalye: ['altinmuhur', 'iblis_kani', 'semavi_oz'],
+      nekromancer: ['ruhfeneri', 'iblis_kani', 'semavi_oz'],
     };
     function mobMaterialDrop(enemy, isBoss) {
       const pool = MOB_DROPS[enemy?.id];
