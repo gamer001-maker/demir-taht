@@ -1,0 +1,17 @@
+1. Ekonomi tamamen istemciye emanet. sbSave altın, XP, seviye, stat ve envanteri doğrudan profiles'a yazıyor. Konsolu açan herkes G.gold=999999; sbSave() yapabilir — ve altın liderlik tablosu olduğu için bu herkese görünür. CLAUDE.md'de zaten öncelik olarak duruyor; taşımaya en kritik yerden (altın) başlamanı öneririm: altını sbSave payload'ından çıkarıp tüm kazanç/harcamaları RPC'ye almak tek başına en büyük açığı kapatır.
+
+2. buy_market_item RPC'sine istemciden buyer_id ve item_price geçiliyor (index.html:8151). RPC sunucu tarafında auth.uid() doğrulamıyorsa başkası adına işlem, fiyatı DB satırından kendisi okumuyorsa 0🪙'ya satın alma mümkün olur. RPC tanımını Supabase'de kontrol etmek gerek — CLAUDE.md'deki "teyit edilmeli" listesine eklemeye değer.
+
+3. Global sohbet temizliği herkese silme yetkisi gerektiriyor. sendGlobalChat her mesajdan sonra 100'ü aşan en eski satırı istemciden siliyor. Bunun çalışması için global_chat'te herkese açık DELETE RLS olmalı — yani herhangi bir oyuncu tüm sohbeti silebilir. Bu temizlik bir DB trigger'ına ya da güvenlik tanımlı RPC'ye taşınmalı.
+
+4. Arena biletleri hem localStorage'da hem cihaz saatinde. arenaTicketKey getServerNow() değil new Date() kullanıyor (sunucu-saat ilkesine aykırı) ve localStorage temizlenince haklar sıfırlanıyor. Günlük 100 bilet test değeriyse şimdilik önemsiz, ama kalıcı sistemde zindan biletleri gibi profile taşınmalı.
+
+5. Küçük gizlilik sızıntısı: sendGlobalChat'te kullanıcı adı yoksa currentUser.email?.split('@')[0] herkese açık sohbete yazılıyor — e-posta öneki istemeden ifşa olabilir.
+
+6. Satıcı çevrimdışıyken satış geliri Realtime'a bağlı görünüyor (initSaleWatcher sadece oturum açıkken dinliyor). RPC satıcının altınını sunucuda artırıyorsa sorun yok; artırmıyorsa çevrimdışı satışın parası kayboluyor. Bu da RPC teyidiyle birlikte netleşir.
+
+7. Kapanışta kayıt garantisi zayıf: pagehide'daki _sbFlush async — sekme kapanırken istek tamamlanmayabilir (≤800ms debounce + uçuştaki istek kadar veri kaybı penceresi). Bilinen sınırlama, kritik değil.
+
+Bir not: görseller raw.githubusercontent.com'dan geliyor ama site zaten Vercel'de — images/ klasörünün deploy'a dahil olmama sorunu bir gün çözülürse IMG_BASE'i kendi domain'ine çevirmek hem hızı artırır hem GitHub rate-limit riskini kaldırır. Mevcut kural (IMG_BASE + onerror fallback) koda tutarlı uygulanmış durumda.
+
+İstersen bir sonraki adım olarak 1–3 numaralı maddeler için somut bir Supabase taşıma planı (RPC şemaları + RLS) çıkarabilirim.
