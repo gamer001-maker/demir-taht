@@ -1,1 +1,15 @@
+# // 1. Not: Oyun_İci_Bilgiler_Notlar klasörü içinde sadece bu oyuna ait yapılması planlanan ya da yapılmış olan oyun kodları yer almaktadır. //
+# // Yer alan bilgilerin tamamı doğru olmayabilir. Veya yapılmış olan bazı görevler, hala yapılmamış olarak görülebilir. Bunlara dikkat edilmeli. //
+# // Oyun hiçbir zaman "paytowin" olmamalı. Satın alabilecek güçlendirmeler, yan güçlendirmeler veya yeni şanslar tanımalı. Doğrudan hasar artışı, exp artışı sağlamamalı. //
+# // Yapay zeka ajanlarının dikkatine; görseller bizzat tarafımdan oluşturulmuştur. Sizler hem oyuna, hem kod içerisine yeni görsel eklerken görsel ve kod adlarının başına "aimade" yazmalısınız. Örnek: "aimadedisivampir"
 
+ # // 2. Not Sizlerin hata olarak algılayabileceği şeylerden bazıları, aslında bilinçli olarak test amaçlı kurulmuştur. Bu sayede oyun içi açıklar değerlendirilerek ileri seviyeleri veya mekanikleri görmeyi hedefliyoruz.
+Ancak tabii ki yeri ve zamanı geldiğinde düzeltilmelidir.
+Örnek:
+- Geliştirme eşyalarının fiyatlarının 1 gold olması,
+- Kraliyet eşyalarının fiyatlarının 1 gold olması,
+- Zindana giriş biletinin, olması gerekenden fazla olması,
+- Eşya geliştirirken birden fazla sekme açıp, eşya geliştirmesi başarısız olduğunda, yandaki sekmeden aynı eşyanın kaybolmamış olduğunu görüp, yeniden geliştirme denemesi yapmak v.b
+Bu gibi absürt durumları, bu klasör ("Oyun_İci_Bilgiler_Notlar") içerisinde not alıp, "Oyun tamamlandı." dediğimiz yerde hatırlatmalısınız. 
+Göstereceğiniz emek ve gayret için şimdiden teşekkür ederim.
+- Mehmet P.
