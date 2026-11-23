@@ -110,56 +110,142 @@
     if (typeof renderGuild === 'function') renderGuild('home');
   };
 
-  /* ── Lonca ana sekmesinde "Lonca Kalesi" bölümü ── */
+  /* ── LONCA KALESİ SAHNESİ (Osman: "haritada bizim kalemiz gibi bir lonca kalesi olacak") ──
+     Dünya haritasında "Lonca Kalesi" işareti → kale haritası gibi tam ekran sahne; binaya dokun → seviye/bonus/geliştir.
+     Bina görselleri gelene kadar kalenin bina resimleri kullanılır. */
+  var SAHNE_YER = { madenci: { x: 24, y: 62, w: 22, img: 'bina_insaa1' }, hasar: { x: 50, y: 30, w: 28, img: 'bina_kisla1' }, xp: { x: 76, y: 62, w: 20, img: 'bina_asevi1' } };
+  var HARITA_XY = { x: 52, y: 22 };   // dünya haritasında (kuzey, Frost Hill ile Vaelys arası)
+  function imgYol(ad) { return ((typeof IMG_BASE !== 'undefined') ? IMG_BASE : 'images/') + ad + '.webp'; }
+  function yetkiliMi() { return G.guildRole === 'leader' || G.guildRole === 'officer'; }
+  function rolAdi() { return ({ member: 'Üye', officer: 'Subay', leader: 'Lider' }[G.guildRole] || G.guildRole || '?'); }
+
   var css = document.createElement('style');
   css.textContent = [
-    '.lk-izgara{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}',
-    '.lk-bina{position:relative;text-align:center;padding:10px 6px;border-radius:10px;background:linear-gradient(180deg,#2c2014,#1a130c);border:1px solid var(--border2,#4a3220)}',
-    '.lk-bina .ik{font-size:30px;line-height:1.1}',
-    '.lk-bina .ad{font:600 12px var(--font-head,serif);color:var(--gold2);margin-top:4px;min-height:2.4em;display:flex;align-items:center;justify-content:center}',
-    '.lk-bina .sv{font-size:11px;color:var(--ink3,#a89070)}',
-    '.lk-bina .bn{font:700 15px var(--font-head,serif);color:#9fe07a;margin:4px 0}',
-    '.lk-bina .bar{height:5px;border-radius:3px;background:#0007;overflow:hidden;margin:4px 0 6px}',
-    '.lk-bina .bar i{display:block;height:100%;background:linear-gradient(90deg,#8a6a2a,var(--gold2))}',
-    '.lk-bina .btn{width:100%;padding:6px 2px;font-size:11px}',
-    '.lk-not{font-size:11px;color:var(--ink3,#a89070);text-align:center;margin:2px 0 4px}'
+    '#lks{position:fixed;inset:0;z-index:9420;display:flex;flex-direction:column;background:#0d0a07;color:#e8dcc0;font-family:var(--font-body,system-ui)}',
+    '#lks[hidden]{display:none!important}',
+    '.lks-ust{display:flex;align-items:center;gap:10px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top));background:#140f0a;border-bottom:1px solid #4a3220}',
+    '.lks-ust h2{flex:1;margin:0;font:600 16px var(--font-head,serif);color:var(--gold2,#e8c56a);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+    '.lks-hazine{font:600 12px var(--font-head,serif);background:#2a1f14;border:1px solid #6a4a28;border-radius:14px;padding:4px 10px;white-space:nowrap}',
+    '.lks-kapat{background:none;border:1px solid #6a4a28;color:#e8dcc0;border-radius:8px;padding:5px 10px;font-size:15px;cursor:pointer}',
+    '.lks-govde{flex:1;overflow-y:auto;padding:12px;padding-bottom:max(12px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;max-width:900px;width:100%;margin:0 auto;box-sizing:border-box}',
+    '.lks-sahne{position:relative;width:100%;aspect-ratio:2400/1792;border-radius:12px;overflow:hidden;border:1px solid var(--border2,#5a4028);box-shadow:inset 0 0 60px #000a}',
+    '.lks-zemin{position:absolute;inset:0;background-size:cover;background-position:center;filter:sepia(.35) hue-rotate(-12deg) saturate(1.1) brightness(.82)}',
+    '.lks-spot{position:absolute;transform:translate(-50%,-50%);cursor:pointer;text-align:center;z-index:2;transition:filter .15s}',
+    '.lks-spot:hover{filter:brightness(1.25) drop-shadow(0 0 14px #d4af37cc)}',
+    '.lks-spot img{display:block;width:100%;height:auto;filter:drop-shadow(0 6px 8px #000b)}',
+    '.lks-spot .yedek{display:none;font-size:clamp(30px,7vw,52px);line-height:1}',
+    '.lks-etk{display:inline-block;margin-top:2px;padding:2px 8px;border-radius:10px;background:#000c;border:1px solid var(--gold2,#e8c56a);color:var(--gold2,#e8c56a);font:600 clamp(9px,1.6vw,12px) var(--font-head,serif);white-space:nowrap}',
+    '.lks-etk b{color:#9fe07a}',
+    '.lks-sancak{position:absolute;left:50%;top:70%;transform:translate(-50%,-50%);width:clamp(40px,8vw,64px);z-index:1;pointer-events:none;filter:drop-shadow(1px 4px 3px #000b)}',
+    '.lks-cipler{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}',
+    '.lks-cip{text-align:center;padding:8px 4px;border-radius:10px;background:linear-gradient(180deg,#2c2014,#1a130c);border:1px solid var(--border2,#4a3220);font-size:11px;color:var(--ink3,#a89070)}',
+    '.lks-cip b{display:block;font:700 15px var(--font-head,serif);color:#9fe07a}',
+    '.lk-not{font-size:11px;color:var(--ink3,#a89070);text-align:center;margin:2px 0 4px}',
+    '.lk-git{width:100%;margin:4px 0 6px}'
   ].join('');
   document.head.appendChild(css);
 
-  function bolumHTML() {
-    var yetkili = G.guildRole === 'leader' || G.guildRole === 'officer';
-    var h = '<div class="sec" id="lk-sec">🏰 LONCA KALESİ</div><div id="lk-bolum">';
-    if (LK.hazir === false) {
-      h += '<div class="lk-not">🔧 Lonca kalesi sunucu hazırlığı bekliyor (yakında açılacak).'
-        + (LK.hata ? '<br><span style="opacity:.75;font-size:10px">Sunucu: ' + esc(LK.hata) + '</span>' : '') + '</div>';
-    }
-    h += '<div class="lk-izgara">';
-    BINALAR.forEach(function (b) {
-      var s = sv(b.k), son = s >= MAX, bd = bedel(s);
-      var dugme = '';
-      if (LK.hazir && yetkili) {
-        dugme = son ? '<button class="btn" disabled>En üst seviye</button>'
-          : '<button class="btn" onclick="loncaBinaGelistir(\'' + b.k + '\')"' + ((G.guildTreasury || 0) < bd ? ' disabled' : '') + '>Geliştir<br>' + bd.toLocaleString('tr') + '🪙</button>';
-      } else if (LK.hazir && !son) {
-        dugme = '<div class="lk-not" style="margin:0">Sonraki: ' + bd.toLocaleString('tr') + '🪙</div>';
-      }
-      h += '<div class="lk-bina"><div class="ik">' + b.ik + '</div><div class="ad">' + b.ad + '</div>'
-        + '<div class="sv">Sv.' + s + ' / ' + MAX + '</div>'
-        + '<div class="bn">+%' + s + '</div><div class="sv">' + b.etki + '</div>'
-        + '<div class="bar"><i style="width:' + (s / MAX * 100) + '%"></i></div>' + dugme + '</div>';
-    });
-    h += '</div><div class="lk-not">Bonuslar loncadaki herkese geçer · Hazineye bağış yaparak binaları büyütün'
-      + (LK.hazir && !yetkili ? ' · Geliştirmeyi Lider ve Subay yapar (senin rolün: ' + ({ member: 'Üye', officer: 'Subay', leader: 'Lider' }[G.guildRole] || G.guildRole || '?') + ')' : '') + '</div></div>';
-    return h;
+  function sancakSVG() {
+    var amblem = esc(G.guildEmblem || '🛡');
+    return '<svg viewBox="0 0 60 100"><rect x="4.6" y="6" width="2.8" height="92" rx="1.2" fill="#5a3b1c"/><circle cx="6" cy="5" r="3.2" fill="#e3bf6a"/>'
+      + '<path d="M7.5 12 H56 L46 30 L56 48 H7.5 Z" fill="#7a1f1a" stroke="#3e0f0c" stroke-width="1.6"/>'
+      + '<text x="29" y="36" font-size="20" text-anchor="middle">' + amblem + '</text></svg>';
   }
+  function notHTML() {
+    if (LK.hazir === false) return '<div class="lk-not">🔧 Lonca kalesi sunucu hazırlığı bekliyor (yakında açılacak).'
+      + (LK.hata ? '<br><span style="opacity:.75;font-size:10px">Sunucu: ' + esc(LK.hata) + '</span>' : '') + '</div>';
+    return '<div class="lk-not">Bonuslar loncadaki herkese geçer · Hazineye bağış yaparak binaları büyütün'
+      + (LK.hazir && !yetkiliMi() ? ' · Geliştirmeyi Lider ve Subay yapar (senin rolün: ' + rolAdi() + ')' : '') + '</div>';
+  }
+  function ciplerHTML() {
+    return '<div class="lks-cipler">' + BINALAR.map(function (b) {
+      return '<div class="lks-cip">' + b.ik + ' ' + b.etki + '<b>+%' + yuzde(b.k) + '</b>Sv.' + sv(b.k) + '/' + MAX + '</div>';
+    }).join('') + '</div>';
+  }
+
+  function kur() {
+    if (document.getElementById('lks')) return;
+    var d = document.createElement('div'); d.id = 'lks'; d.hidden = true;
+    d.innerHTML = '<div class="lks-ust"><h2 id="lks-baslik">🏰 Lonca Kalesi</h2><span class="lks-hazine" id="lks-hazine"></span><button class="lks-kapat" id="lks-kapat">✕</button></div>'
+      + '<div class="lks-govde"><div class="lks-sahne" id="lks-sahne"></div><div id="lks-alt"></div></div>';
+    document.body.appendChild(d);
+    document.getElementById('lks-kapat').onclick = function () { d.hidden = true; };
+  }
+  function sahneCiz() {
+    var sahne = document.getElementById('lks-sahne'); if (!sahne) return;
+    document.getElementById('lks-baslik').textContent = '🏰 ' + (G.guildName || 'Lonca') + ' Kalesi';
+    document.getElementById('lks-hazine').textContent = '🏦 ' + (G.guildTreasury || 0).toLocaleString('tr') + '🪙';
+    var h = '<div class="lks-zemin" style="background-image:url(' + "'" + imgYol('kalearkaplan') + "'" + ')"></div><div class="lks-sancak">' + sancakSVG() + '</div>';
+    BINALAR.forEach(function (b) {
+      var y = SAHNE_YER[b.k];
+      h += '<div class="lks-spot" style="left:' + y.x + '%;top:' + y.y + '%;width:' + y.w + '%" onclick="loncaBinaAc(' + "'" + b.k + "'" + ')">'
+        + '<img src="' + imgYol(y.img) + '" alt="" onerror="this.style.display=' + "'none'" + ';this.nextElementSibling.style.display=' + "'block'" + '"><div class="yedek">' + b.ik + '</div>'
+        + '<div class="lks-etk">' + b.ik + ' ' + b.ad + ' Sv.' + sv(b.k) + ' <b>+%' + yuzde(b.k) + '</b></div></div>';
+    });
+    sahne.innerHTML = h;
+    document.getElementById('lks-alt').innerHTML = ciplerHTML() + notHTML()
+      + '<button class="btn" style="width:100%" onclick="loncaHazineyeGit()">🏦 Hazineye bağış yap</button>';
+  }
+  window.loncaHazineyeGit = function () {
+    var d = document.getElementById('lks'); if (d) d.hidden = true;
+    if (typeof showPage === 'function') showPage('guild');
+    if (typeof glgo === 'function') glgo('home');
+  };
+  window.loncaKalesiAc = function () {
+    if (!G.guildId) { toast('🏰 Lonca kalesine girmek için önce bir loncaya katıl.'); return; }
+    kur(); document.getElementById('lks').hidden = false; sahneCiz();
+    yukle(true).then(sahneCiz);
+  };
+  window.loncaBinaAc = function (k) {
+    var b = BINALAR.filter(function (x) { return x.k === k; })[0]; if (!b) return;
+    var s = sv(k), son = s >= MAX, bd = bedel(s), hz = G.guildTreasury || 0;
+    var dugme;
+    if (!LK.hazir) dugme = '<div class="lk-not">Sunucu hazır olunca geliştirilebilir.</div>';
+    else if (son) dugme = '<button class="btn" style="width:100%" disabled>En üst seviye</button>';
+    else if (yetkiliMi()) dugme = '<button class="btn" style="width:100%" onclick="loncaBinaGelistir(' + "'" + k + "'" + ')"' + (hz < bd ? ' disabled' : '') + '>Geliştir → Sv.' + (s + 1) + ' (' + bd.toLocaleString('tr') + '🪙 hazineden)</button>';
+    else dugme = '<div class="lk-not">Geliştirmeyi Lider ve Subay yapar (senin rolün: ' + rolAdi() + '). Sonraki seviye: ' + bd.toLocaleString('tr') + '🪙</div>';
+    showGModal('<div style="text-align:center">'
+      + '<div style="font-size:42px;line-height:1">' + b.ik + '</div>'
+      + '<div style="font:600 18px var(--font-head);color:var(--gold2);margin-top:4px">' + b.ad + ' · Sv.' + s + '/' + MAX + '</div>'
+      + '<div style="font-size:12px;color:var(--ink3);margin:4px 0 10px">Loncadaki herkese ' + b.etki + ' bonusu</div>'
+      + '<div style="font:700 26px var(--font-head);color:#9fe07a">+%' + s + (son ? '' : ' <span style="font-size:15px;color:var(--ink3)">→ +%' + (s + 1) + '</span>') + '</div>'
+      + '<div style="height:6px;border-radius:3px;background:#0007;overflow:hidden;margin:10px 0"><div style="height:100%;width:' + (s / MAX * 100) + '%;background:linear-gradient(90deg,#8a6a2a,var(--gold2))"></div></div>'
+      + '<div style="font-size:12px;color:var(--ink3);margin-bottom:10px">Lonca hazinesi: <b style="color:var(--gold2)">' + hz.toLocaleString('tr') + '🪙</b></div>'
+      + dugme + '</div>');
+  };
+
+  /* Geliştirme sonrası sahne ve pencere tazelensin */
+  var asilGel = window.loncaBinaGelistir;
+  window.loncaBinaGelistir = async function (k) {
+    await asilGel(k);
+    sahneCiz();
+    var m = document.getElementById('g-modal');
+    if (m && m.style.display !== 'none') window.loncaBinaAc(k);
+  };
+
+  /* Dünya haritasında "Lonca Kalesi" işareti */
+  if (typeof window.renderWorldMap === 'function') {
+    var asilDunya = window.renderWorldMap;
+    window.renderWorldMap = function () {
+      asilDunya.apply(this, arguments);
+      var sahne = document.getElementById('world-map-scene'); if (!sahne) return;
+      sahne.insertAdjacentHTML('beforeend',
+        '<div class="hd-pin lonca" style="left:' + HARITA_XY.x + '%;top:' + HARITA_XY.y + '%;" onclick="event.stopPropagation();loncaKalesiAc()">'
+        + '<img src="images/aimade_harita_kale.webp" alt="Lonca Kalesi" style="filter:hue-rotate(150deg) saturate(1.3)" onerror="this.style.display=' + "'none'" + ';this.nextElementSibling.style.display=' + "'block'" + '">'
+        + '<span class="hd-yedek">🏰</span><span class="hd-ad">Lonca Kalesi</span></div>');
+    };
+  }
+
+  /* Lonca sekmesinde kısa özet + kaleye git düğmesi */
   function cizBolum() {
     var kap = document.getElementById('guild-content');
     if (!kap || !G.guildId) return;
     var eskiS = document.getElementById('lk-sec'), eskiB = document.getElementById('lk-bolum');
     if (eskiS) eskiS.remove(); if (eskiB) eskiB.remove();
-    var banner = kap.querySelector('.gd-banner');
-    if (!banner) return;
-    banner.insertAdjacentHTML('afterend', bolumHTML());
+    var banner = kap.querySelector('.gd-banner'); if (!banner) return;
+    banner.insertAdjacentHTML('afterend', '<div class="sec" id="lk-sec">🏰 LONCA KALESİ</div><div id="lk-bolum">'
+      + '<button class="btn lk-git" onclick="loncaKalesiAc()">🏰 Lonca Kalesine Git</button>' + ciplerHTML() + notHTML() + '</div>');
+    sahneCiz();
   }
   if (typeof window.renderGuildHome === 'function') {
     var asilHome = window.renderGuildHome;
