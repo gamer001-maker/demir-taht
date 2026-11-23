@@ -35,6 +35,8 @@
     '.pd-kim em{font-style:normal;font-size:12px;color:var(--gold,#c9a24a);border:1px solid #6b4c2a;border-radius:6px;padding:1px 7px}',
     '.pd-ust-guc{font-size:11px;letter-spacing:.08em;color:var(--ink3,#a89070);white-space:nowrap}',
     '.pd-ust-guc b{margin-left:6px;font:700 18px var(--font-head,serif);letter-spacing:0;color:var(--gold2,#e8c56a);font-variant-numeric:tabular-nums}',
+    '#pd-xp{width:min(70%,460px);margin:10px auto 2px}',
+    '#pd-xp .mbar-wrap{margin:0}',
     '.pd-guc{aspect-ratio:1;width:100%;border-radius:8px;border:2px solid #6b4c2a;background:linear-gradient(160deg,#2a1c0e,#120c06);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}',
     '.pd-guc b{font:700 clamp(12px,3.4vw,16px) var(--font-head,serif);color:var(--gold2,#e8c56a);font-variant-numeric:tabular-nums}',
     '.pd-guc span{font-size:8px;letter-spacing:.08em;color:var(--ink3,#a89070)}',
@@ -83,6 +85,19 @@
       + '<span class="pd-ust-guc" title="Güç: hasar, can, savunma ve seviyeden">GÜÇ<b>' + guc() + '</b></span>';
   }
 
+  /* Osman 23 Kas: deneyim barı set yazısının altında, ortada (oyunun kendi .mbar-wrap düğümü taşınır, güncellemesi sürer) */
+  function xpTasi(bolum) {
+    var bar = document.getElementById('g-xpbar'); if (!bar) return;
+    var sar = bar.closest('.mbar-wrap') || bar.parentElement;
+    var kutu = document.getElementById('pd-xp');
+    if (!kutu) {
+      kutu = document.createElement('div'); kutu.id = 'pd-xp';
+      var set = document.getElementById('set-bonus-display');
+      if (set && set.parentNode) set.parentNode.insertBefore(kutu, set.nextSibling); else bolum.appendChild(kutu);
+    }
+    if (sar.parentNode !== kutu) { kutu.innerHTML = ''; kutu.appendChild(sar); }
+  }
+
   function guc() { try { return Math.round(calcPow()).toLocaleString('tr-TR'); } catch (e) { return '—'; } }
 
   var asil = window.renderKarakter;
@@ -111,6 +126,7 @@
     SOL.forEach(function (i) { if (yuvalar[i]) sol.appendChild(yuvalar[i]); });
     SAG.forEach(function (i) { if (yuvalar[i]) sag.appendChild(yuvalar[i]); });
     baslikKur(bolum);
+    xpTasi(bolum);
     // Figür (sınıf + görünüm değişince yenilenir)
     var cl = G.classId || 'warrior', av = (G.avatarIdx != null ? G.avatarIdx : 0);
     var base = (typeof IMG_BASE !== 'undefined') ? IMG_BASE : 'images/';
