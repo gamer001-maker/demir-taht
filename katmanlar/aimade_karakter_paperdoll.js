@@ -98,6 +98,14 @@
     if (sar.parentNode !== kutu) { kutu.innerHTML = ''; kutu.appendChild(sar); }
   }
 
+  /* Osman 23 Kas: Nekro zırhlar oyunda material:'demir' (bonus Demir'inki) → yazı "Demir Seti" çıkıyordu.
+     Dört zırh parçasının adı "Nekro" ile başlıyorsa yalnız YAZI "Nekro Seti Aktif" olur; bonus değişmez. */
+  function setAdiDuzelt() {
+    var b = document.querySelector('#set-bonus-display b'); if (!b || !G.equipped) return;
+    var hepsi = ['chest', 'helmet', 'gloves', 'boots'].every(function (s) { return /^Nekro/.test((G.equipped[s] || {}).name || ''); });
+    if (hepsi) b.textContent = b.textContent.replace(/^\S+ Seti/, 'Nekro Seti');
+  }
+
   function guc() { try { return Math.round(calcPow()).toLocaleString('tr-TR'); } catch (e) { return '—'; } }
 
   var asil = window.renderKarakter;
@@ -127,6 +135,7 @@
     SAG.forEach(function (i) { if (yuvalar[i]) sag.appendChild(yuvalar[i]); });
     baslikKur(bolum);
     xpTasi(bolum);
+    setAdiDuzelt();
     // Figür (sınıf + görünüm değişince yenilenir)
     var cl = G.classId || 'warrior', av = (G.avatarIdx != null ? G.avatarIdx : 0);
     var base = (typeof IMG_BASE !== 'undefined') ? IMG_BASE : 'images/';
