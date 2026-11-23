@@ -26,6 +26,7 @@
   function geri() {
     // 1) Açık pencereler
     if (gorunur('ga')) { var k = document.getElementById('ga-kapat'); if (k) k.click(); return; }
+    if (gorunur('by')) { var bk = document.getElementById('by-kapat'); if (bk) bk.click(); return; }   // Balıkçılık Yeri
     if (gorunur('g-modal')) { try { closeGModal(); } catch (e) { document.getElementById('g-modal').style.display = 'none'; } return; }
     if (gorunur('lb-overlay')) { try { closeLb(); } catch (e) { document.getElementById('lb-overlay').style.display = 'none'; } return; }
     var sohbet = document.getElementById('gchat-win');
