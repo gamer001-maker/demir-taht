@@ -1,9 +1,9 @@
-/* ── KARAKTER: SOL SÜTUN KALKTI (Osman, 23 Kas) ──
-   - Kahraman Nitelikleri → açılır pencere; Kuşanılan başlığında "⚜ Nitelikler" düğmesi (serbest puan varsa kırmızı rozet).
-   - Meslekler → Yetenek ekranında (#ga) ikinci sekme: "🌳 Yetenek Ağacı | 🛠 Meslekler".
-   - Bilgisayarda: solda Kuşanılan, sağda Envanter yan yana. Telefonda üst üste; sekme çubuğu kalktı.
-   Oyunun kendi bölümleri (#cs-nitelikler, #cs-yetenekler) TAŞINIR, kopyalanmaz → + düğmeleri ve güncelleme aynen çalışır.
-   index.html'e dokunmaz; aimade_karakter_paperdoll.js'ten sonra yüklenir. */
+﻿/* â”€â”€ KARAKTER: SOL SÃœTUN KALKTI (Osman, 23 Kas) â”€â”€
+   - Kahraman Nitelikleri â†’ aÃ§Ä±lÄ±r pencere; KuÅŸanÄ±lan baÅŸlÄ±ÄŸÄ±nda "âšœ Nitelikler" dÃ¼ÄŸmesi (serbest puan varsa kÄ±rmÄ±zÄ± rozet).
+   - Meslekler â†’ Yetenek ekranÄ±nda (#ga) ikinci sekme: "ğŸŒ³ Yetenek AÄŸacÄ± | ğŸ›  Meslekler".
+   - KuÅŸanÄ±lan Ã¼stte, Envanter altÄ±nda (bilgisayarda tek sÃ¼tun, en fazla 640px, ortada); sekme Ã§ubuÄŸu kalktÄ±.
+   Oyunun kendi bÃ¶lÃ¼mleri (#cs-nitelikler, #cs-yetenekler) TAÅINIR, kopyalanmaz â†’ + dÃ¼ÄŸmeleri ve gÃ¼ncelleme aynen Ã§alÄ±ÅŸÄ±r.
+   index.html'e dokunmaz; aimade_karakter_paperdoll.js'ten sonra yÃ¼klenir. */
 (function () {
   if (typeof window.renderKarakter !== 'function') return;
 
@@ -13,7 +13,8 @@
     '@media(min-width:901px){',
     '  .char-sheet{grid-template-columns:1fr!important}',
     '  .char-left-col{display:none!important}',
-    '  .char-right-col{display:grid!important;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}',
+    // Osman: envanter karakterin ALTINDA (yan yana deÄŸil); tek sÃ¼tun, ortada
+    '  .char-right-col{width:100%;max-width:640px;margin:0 auto}',
     '}',
     // Nitelikler penceresi
     '#pd-nit{position:fixed;inset:0;z-index:9400;background:#000b;display:flex;align-items:center;justify-content:center;padding:16px}',
@@ -25,7 +26,7 @@
     '.pd-nit-ac{position:relative;margin-left:auto;margin-right:12px;background:linear-gradient(180deg,#3a2a18,#261c12);border:1px solid var(--gold,#c9a24a);color:var(--gold2,#e8c56a);',
     'border-radius:8px;padding:4px 10px;font:600 12px var(--font-head,serif);cursor:pointer;white-space:nowrap}',
     '.pd-nit-ac i{position:absolute;top:-7px;right:-7px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#d9573f;color:#fff;font:700 10px/16px system-ui;font-style:normal;text-align:center}',
-    // Yetenek ekranında sekmeler
+    // Yetenek ekranÄ±nda sekmeler
     '.ga-sekme{display:flex;gap:6px;padding:8px 12px 0;background:#140f0a;border-bottom:1px solid #4a3220}',
     '.ga-sekme button{flex:1;background:#2a2016;border:1px solid #6a4a28;border-bottom:0;border-radius:8px 8px 0 0;color:#b09870;padding:8px;font:600 13px var(--font-head,serif);cursor:pointer}',
     '.ga-sekme button.on{background:#3a2a18;color:var(--gold2,#e8c56a);border-color:var(--gold,#c9a24a)}',
@@ -39,21 +40,21 @@
   /* Nitelikler penceresi */
   var nit = document.createElement('div');
   nit.id = 'pd-nit'; nit.hidden = true;
-  nit.innerHTML = '<div class="pd-nit-kutu" id="pd-nit-kutu"><button class="pd-nit-x" id="pd-nit-x" aria-label="Kapat">✕</button></div>';
+  nit.innerHTML = '<div class="pd-nit-kutu" id="pd-nit-kutu"><button class="pd-nit-x" id="pd-nit-x" aria-label="Kapat">âœ•</button></div>';
   document.body.appendChild(nit);
   nit.addEventListener('click', function (e) { if (e.target === nit) nitKapat(); });
   document.getElementById('pd-nit-x').onclick = nitKapat;
   function nitKapat() { nit.hidden = true; }
   window.pdNitelikAc = function () { tasi(); nit.hidden = false; };
-  window.pdNitelikAcikMi = function () { return !nit.hidden; };   // geri tuşu için
+  window.pdNitelikAcikMi = function () { return !nit.hidden; };   // geri tuÅŸu iÃ§in
 
-  /* Yetenek ekranına Meslekler sekmesi */
+  /* Yetenek ekranÄ±na Meslekler sekmesi */
   var ga = document.getElementById('ga'), meslekKutu = null;
   if (ga) {
     var ust = ga.querySelector('.ga-ust');
     var sekme = document.createElement('div');
     sekme.className = 'ga-sekme';
-    sekme.innerHTML = '<button type="button" data-s="agac" class="on">🌳 Yetenek Ağacı</button><button type="button" data-s="meslek">🛠 Meslekler</button>';
+    sekme.innerHTML = '<button type="button" data-s="agac" class="on">ğŸŒ³ Yetenek AÄŸacÄ±</button><button type="button" data-s="meslek">ğŸ›  Meslekler</button>';
     if (ust) ust.parentNode.insertBefore(sekme, ust.nextSibling);
     meslekKutu = document.createElement('div'); meslekKutu.id = 'ga-meslek';
     var sahne = document.getElementById('ga-sahne');
@@ -67,7 +68,7 @@
     if (!ga) return;
     ga.classList.toggle('ga-meslekte', s === 'meslek');
     Array.prototype.forEach.call(ga.querySelectorAll('.ga-sekme button'), function (b) { b.classList.toggle('on', b.getAttribute('data-s') === s); });
-    if (s === 'meslek') { try { asil.call(window); } catch (e) { } tasi(); }   // meslek değerlerini tazele
+    if (s === 'meslek') { try { asil.call(window); } catch (e) { } tasi(); }   // meslek deÄŸerlerini tazele
   }
   if (typeof window.agacAc === 'function') {
     var asilAc = window.agacAc;
@@ -91,7 +92,7 @@
       h.insertBefore(b, guc || null);
     }
     var p = Number(G.skillPoints) || 0;
-    b.innerHTML = '⚜ Nitelikler' + (p > 0 ? '<i>' + (p > 99 ? '99+' : p) + '</i>' : '');
+    b.innerHTML = 'âšœ Nitelikler' + (p > 0 ? '<i>' + (p > 99 ? '99+' : p) + '</i>' : '');
   }
 
   var asil = window.renderKarakter;
