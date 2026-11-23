@@ -22,7 +22,7 @@
     altinSaat: function (lv) { return 5 + lv * 0.5; },
     malzemeSaat: { kereste: 2, civi: 1, tugla: 1 },
     zirhSansSaat: 0.04,                                  // saat başına zırh şansı (× verim); 24 saatte ≥1 garanti
-    konum: { x: 13, y: 76, w: 14 },                      // kale haritasında yer
+    konum: { x: 28, y: 54, w: 17 },                      // kale haritasında yer
     img: 'aimade_kale_kervan.webp',
     kaleKayma: { x: 5, y: -7 },                          // harita katmanındaki "Kalem" işaretiyle aynı
   };

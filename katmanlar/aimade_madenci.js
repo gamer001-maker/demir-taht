@@ -13,7 +13,7 @@
       return { demir: sv * 1, kil: sv * 1, altin: sv * 4 };
     },
     gelistirmeBedeli: function (sv) { return 300 * sv * sv; },   // Sv → Sv+1 altın
-    konum: { x: 78, y: 70, w: 14 },                // kale haritasında yer
+    konum: { x: 47, y: 24, w: 16 },                // kale haritasında yer
     img: 'aimade_kale_madenci.webp',
   };
   var SAAT = 3600 * 1000;

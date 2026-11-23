@@ -69,8 +69,9 @@
     u.innerHTML = '<span class="kd-ad">' + kac(ad) + (sur ? '<em>' + kac(sur) + '</em>' : '') + '</span><span class="kd-deg">' + deg + '</span>';
   }
 
-  /* Osman 23 Kas: Aşevi, İnşaa Yeri ve Pazar kalede gösterilmez (Pazar dünya haritasında var). Bina verisi/seviyesi silinmez. */
-  var KALDIR = { asevi: 1, insaa: 1, pazar: 1 };
+  /* Osman 23 Kas: Aşevi, İnşaa Yeri, Pazar ve Kışla kalede gösterilmez (Pazar dünya haritasında var). Bina verisi/seviyesi silinmez.
+     Boşalan yerlere Madenci (üst orta) ve Kervan (sol) taşındı — konumları kendi dosyalarında. */
+  var KALDIR = { asevi: 1, insaa: 1, pazar: 1, kisla: 1 };
   try {
     if (typeof CASTLE_MAP_SPOTS !== 'undefined' && CASTLE_MAP_SPOTS.splice) {
       for (var i = CASTLE_MAP_SPOTS.length - 1; i >= 0; i--) if (KALDIR[CASTLE_MAP_SPOTS[i].key]) CASTLE_MAP_SPOTS.splice(i, 1);
