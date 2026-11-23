@@ -31,23 +31,63 @@
   ].join('');
   document.head.appendChild(css);
 
-  // 2) Yerleşim: [şablon, bant, bant içindeki seviye]
+  // 2) YENİ EŞYALAR (Bant planı, Osman onayı 23 Kas: https://claude.ai/artifact/W8uw7n3q37URcvB1BhYy8B)
+  //    Değerleri aynı türdeki bir kaynak şablondan kopyalanır, sonra bandına ölçeklenir.
+  //    Görseller gelene kadar kaynak silahın resmini kullanır (resim gelince img: 'aimade_...' yapılır).
+  var YENI_SILAH = [ // [anahtar, ad, kaynak şablon]
+    ['ejderhakilic', 'Ejderha Kılıcı', 'sefinkilici'],
+    ['kurbanbicak', 'Kurban Bıçağı', 'ejderhabilicak'],
+    ['nekrobicak', 'Nekro Bıçak', 'gunesbicak'],
+    ['kemikhancer', 'Kemik Hançer', 'islenmishancer'],
+    ['guneshancer', 'Güneş Hançeri', 'ejderhahancer'],
+    ['nekrohancer', 'Nekro Hançer', 'yadigarhancer'],
+    ['kamasa', 'Kam Asası', 'ejderaasa'],
+    ['nekroasa', 'Nekro Asa', 'gunesasa'],
+    ['gunestopuz', 'Güneş Topuzu', 'elementsopasi'],
+    ['nekrotopuz', 'Nekro Topuz', 'ruhlusopa'],
+    ['nekroyay', 'Nekro Yay', 'gunesyay'],
+  ];
+  var YENI_TAKIM = [ // [yeni önek, ad öneki, kaynak önek]
+    ['nekroderi', 'Nekro Deri', 'golgederi'],
+    ['nekrodokuma', 'Nekro Dokuma', 'karanlikdokuma'],
+  ];
+  function kopya(t) { return JSON.parse(JSON.stringify(t)); }
+  YENI_SILAH.forEach(function (y) {
+    var k = WEAPON_TEMPLATES[y[2]];
+    if (!k || WEAPON_TEMPLATES[y[0]]) return;
+    var t = kopya(k); t.name = y[1]; t._yeni = true;
+    WEAPON_TEMPLATES[y[0]] = t;
+  });
+  Object.keys(ARMOR_TEMPLATES).forEach(function (key) {
+    YENI_TAKIM.forEach(function (y) {
+      if (key.indexOf(y[2]) !== 0) return;
+      var parca = key.slice(y[2].length), yeniKey = y[0] + parca;
+      if (ARMOR_TEMPLATES[yeniKey]) return;
+      var t = kopya(ARMOR_TEMPLATES[key]);
+      t.name = t.name.replace(/^(Gölge Deri|Karanlık Dokuma)/, y[1]);
+      if (parca === 'cubbe') t.name = 'Nekro Cübbe';
+      t._yeni = true;
+      ARMOR_TEMPLATES[yeniKey] = t;
+    });
+  });
+
+  // 3) Yerleşim: [şablon, bant, seviye] — her tür her bantta bir silah; 1. bantta bazı türlerde Sv.6'da ikinci silah
   var SILAH = [
-    ['demirkilic', 1, 1], ['bakirkilic', 2, 11], ['elementkilic', 3, 21], ['sefinkilici', 4, 31], ['guneskilic', 5, 41], ['necrokilic', 6, 51],
-    ['paslibicak', 1, 1], ['ilkelbicak', 1, 5], ['kemikbicak', 2, 11], ['runlubicak', 3, 21], ['ejderhabilicak', 4, 31], ['gunesbicak', 5, 41],
-    ['duzsopa', 1, 1], ['basitasa', 1, 5], ['alevasa', 2, 11], ['elementasa', 3, 21], ['ejderaasa', 4, 31], ['gunesasa', 5, 41],
-    ['basityay', 1, 1], ['kemikyay', 2, 11], ['elementyay', 3, 21], ['karanlikyay', 4, 31], ['throsyay', 5, 41], ['gunesyay', 6, 51],
-    ['ilkelsopa', 1, 1], ['kemiksopa', 2, 11], ['agirsopa', 3, 21], ['elementsopasi', 4, 31], ['ruhlusopa', 5, 41],
-    ['paslihancer', 1, 1], ['islenmishancer', 1, 5], ['elementhancer', 2, 11], ['ejderhahancer', 3, 21], ['yadigarhancer', 4, 31],
+    ['demirkilic', 1, 1], ['bakirkilic', 2, 11], ['elementkilic', 3, 21], ['ejderhakilic', 4, 31], ['guneskilic', 5, 41], ['sefinkilici', 6, 51], ['necrokilic', 7, 61],
+    ['paslibicak', 1, 1], ['ilkelbicak', 1, 6], ['kemikbicak', 2, 11], ['runlubicak', 3, 21], ['ejderhabilicak', 4, 31], ['gunesbicak', 5, 41], ['kurbanbicak', 6, 51], ['nekrobicak', 7, 61],
+    ['paslihancer', 1, 1], ['islenmishancer', 1, 6], ['kemikhancer', 2, 11], ['elementhancer', 3, 21], ['ejderhahancer', 4, 31], ['guneshancer', 5, 41], ['yadigarhancer', 6, 51], ['nekrohancer', 7, 61],
+    ['duzsopa', 1, 1], ['basitasa', 1, 6], ['alevasa', 2, 11], ['elementasa', 3, 21], ['ejderaasa', 4, 31], ['gunesasa', 5, 41], ['kamasa', 6, 51], ['nekroasa', 7, 61],
+    ['ilkelsopa', 1, 1], ['kemiksopa', 2, 11], ['elementsopasi', 3, 21], ['agirsopa', 4, 31], ['gunestopuz', 5, 41], ['ruhlusopa', 6, 51], ['nekrotopuz', 7, 61],
+    ['basityay', 1, 1], ['kemikyay', 2, 11], ['elementyay', 3, 21], ['karanlikyay', 4, 31], ['gunesyay', 5, 41], ['throsyay', 6, 51], ['nekroyay', 7, 61],
   ];
   var TAKIM = [ // önek, bant, seviye
     ['tahta', 1, 1], ['demir', 1, 5], ['celik', 2, 11], ['dovmecelik', 3, 21], ['plaka', 4, 31], ['titanyum', 5, 41], ['karacelik', 6, 51], ['necro', 7, 61],
-    ['deri', 1, 5], ['islenmisderi', 2, 11], ['kalinderi', 3, 21], ['pulluderi', 4, 31], ['agirderi', 5, 41], ['golgederi', 6, 51],
-    ['kumas', 1, 5], ['ipek', 2, 11], ['kadifebuyucu', 3, 21], ['islemelikumas', 4, 31], ['mistikkumas', 5, 41], ['karanlikdokuma', 6, 51],
+    ['deri', 1, 5], ['islenmisderi', 2, 11], ['kalinderi', 3, 21], ['pulluderi', 4, 31], ['agirderi', 5, 41], ['golgederi', 6, 51], ['nekroderi', 7, 61],
+    ['kumas', 1, 5], ['ipek', 2, 11], ['kadifebuyucu', 3, 21], ['islemelikumas', 4, 31], ['mistikkumas', 5, 41], ['karanlikdokuma', 6, 51], ['nekrodokuma', 7, 61],
   ];
   var PARCA = /^(gogusluk|kask|eldiven|bot|cubbe|yelegi|sapkasi|eldiveni|botu|zirh)$/;
 
-  // 3) Güç eğrileri (bir seviyedeki tipik ana değer). Sv.50 sonrası canavarlarla birlikte büyür (~×1,7 / bant)
+  // 4) Güç eğrileri (bir seviyedeki tipik ana değer). Sv.50 sonrası canavarlarla birlikte büyür (~×1,7 / bant)
   var SILAH_EGRI = [[1, 8], [10, 16], [20, 42], [25, 80], [30, 95], [40, 120], [50, 150], [60, 255], [70, 430]];
   var ZIRH_EGRI = [[1, 4], [5, 8], [10, 15], [15, 25], [22, 35], [30, 48], [40, 65], [50, 85], [60, 145], [70, 245]];
   function egri(t, L) {
@@ -73,7 +113,26 @@
     olcekle(tpl, egri(eg, seviye) / egri(eg, eskiSv));
     tpl._eskiSv = eskiSv; tpl._bant = bant; tpl.reqLv = seviye; tpl.grade = BANT_GRADE[bant];
   }
-  SILAH.forEach(function (s) { yerlestir(WEAPON_TEMPLATES[s[0]], s[1], s[2], SILAH_EGRI); });
+  // Silahlar türün ortak eğrisine oturtulur: aynı türde üst bant her zaman daha güçlü olsun
+  // (eski oransal ölçekleme, eskiden güçlü olan Ejderha Bıçağı'nı Güneş Bıçağı'nın üstünde bırakıyordu)
+  function anaMerkez(t) { var r = t.statRanges && (t.statRanges.atk || t.statRanges.mgc); return r ? (r[0] + r[1]) / 2 : 0; }
+  var BICIM = {};   // tür → tipik "ana değer / eğri" oranı (ortanca)
+  Object.keys(WEAPON_TEMPLATES).forEach(function (k) {
+    var t = WEAPON_TEMPLATES[k], m = anaMerkez(t);
+    if (t._yeni || t._bant || !m) return;
+    (BICIM[t.type] = BICIM[t.type] || []).push(m / egri(SILAH_EGRI, t.reqLv || 1));
+  });
+  Object.keys(BICIM).forEach(function (tur) {
+    var a = BICIM[tur].sort(function (x, y) { return x - y; }); BICIM[tur] = a[Math.floor(a.length / 2)];
+  });
+  SILAH.forEach(function (s) {
+    var t = WEAPON_TEMPLATES[s[0]];
+    if (!t || t._bant) return;
+    var m = anaMerkez(t), b = BICIM[t.type];
+    if (!m || !b) { yerlestir(t, s[1], s[2], SILAH_EGRI); return; }
+    olcekle(t, b * egri(SILAH_EGRI, s[2]) / m);
+    t._eskiSv = t.reqLv || 1; t._bant = s[1]; t.reqLv = s[2]; t.grade = BANT_GRADE[s[1]];
+  });
   Object.keys(ARMOR_TEMPLATES).forEach(function (k) {
     for (var i = 0; i < TAKIM.length; i++) {
       var on = TAKIM[i][0];
