@@ -26,6 +26,15 @@
     'background:radial-gradient(circle,#e8a84a33 0%,#e8a84a14 40%,transparent 70%);border:1px solid #e3bf6a22;box-shadow:0 0 30px #e8a84a18}',
     '.pd-zemin{position:absolute;left:50%;bottom:4px;width:70%;height:14px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,#000c 0%,transparent 70%)}',
     '.pd-figur{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);height:calc(100% - 14px);width:auto;max-width:100%;object-fit:contain;filter:drop-shadow(0 6px 10px #000c)}',
+    // Osman 23 Kas: soldaki kimlik kartı (portre, isim, can/deneyim) kalktı; isim · sınıf · Sv başlıkta, güç başlığın sağında
+    '.char-top{display:none!important}',
+    '#cs-kusanilmis .parch-header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}',
+    '.pd-kim{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;min-width:0}',
+    '.pd-kim b{font:700 18px var(--font-head,serif);color:var(--gold2,#e8c56a)}',
+    '.pd-kim i{color:var(--ink3,#a89070);font-size:13px}',
+    '.pd-kim em{font-style:normal;font-size:12px;color:var(--gold,#c9a24a);border:1px solid #6b4c2a;border-radius:6px;padding:1px 7px}',
+    '.pd-ust-guc{font-size:11px;letter-spacing:.08em;color:var(--ink3,#a89070);white-space:nowrap}',
+    '.pd-ust-guc b{margin-left:6px;font:700 18px var(--font-head,serif);letter-spacing:0;color:var(--gold2,#e8c56a);font-variant-numeric:tabular-nums}',
     '.pd-guc{aspect-ratio:1;width:100%;border-radius:8px;border:2px solid #6b4c2a;background:linear-gradient(160deg,#2a1c0e,#120c06);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}',
     '.pd-guc b{font:700 clamp(12px,3.4vw,16px) var(--font-head,serif);color:var(--gold2,#e8c56a);font-variant-numeric:tabular-nums}',
     '.pd-guc span{font-size:8px;letter-spacing:.08em;color:var(--ink3,#a89070)}',
@@ -65,6 +74,15 @@
     img.src = src;
   }
 
+  function yazi(id) { var e = document.getElementById(id); return e ? e.textContent.trim() : ''; }
+  function kac(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function baslikKur(bolum) {
+    var h = bolum.querySelector('.parch-header'); if (!h) return;
+    var ad = yazi('g-name') || G.username || '', sinif = yazi('g-class'), sv = yazi('g-lvl') || ('Sv.' + (G.level || 1));
+    h.innerHTML = '<span class="pd-kim"><b>' + kac(ad) + '</b><i>' + kac(sinif) + '</i><em>' + kac(sv) + '</em></span>'
+      + '<span class="pd-ust-guc" title="Güç: hasar, can, savunma ve seviyeden">GÜÇ<b>' + guc() + '</b></span>';
+  }
+
   function guc() { try { return Math.round(calcPow()).toLocaleString('tr-TR'); } catch (e) { return '—'; } }
 
   var asil = window.renderKarakter;
@@ -86,14 +104,13 @@
         + '<div class="pd-orta"><div class="pd-hale"></div><div class="pd-zemin"></div><img class="pd-figur" id="pd-figur" alt=""></div>'
         + '<div class="pd-sutun" id="pd-sag"></div>';
       satir.parentNode.insertBefore(pd, satir);
-      var baslik = bolum.querySelector('.parch-title'); if (baslik) baslik.textContent = '⚔ KUŞANILAN';
     }
     satir.classList.add('pd-gizli');
     var sol = document.getElementById('pd-sol'), sag = document.getElementById('pd-sag');
     sol.innerHTML = ''; sag.innerHTML = '';
     SOL.forEach(function (i) { if (yuvalar[i]) sol.appendChild(yuvalar[i]); });
     SAG.forEach(function (i) { if (yuvalar[i]) sag.appendChild(yuvalar[i]); });
-    sag.insertAdjacentHTML('beforeend', '<div class="pd-guc" title="Güç: hasar, can, savunma ve seviyeden"><span>GÜÇ</span><b>' + guc() + '</b></div>');
+    baslikKur(bolum);
     // Figür (sınıf + görünüm değişince yenilenir)
     var cl = G.classId || 'warrior', av = (G.avatarIdx != null ? G.avatarIdx : 0);
     var base = (typeof IMG_BASE !== 'undefined') ? IMG_BASE : 'images/';
