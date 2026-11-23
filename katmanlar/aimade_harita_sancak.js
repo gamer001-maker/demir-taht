@@ -34,23 +34,39 @@
   };
   var VARSAYILAN = { r: '#6b4b2a', k: '#3a2814', s: '#e8c56a', c: '<circle cx="28" cy="30" r="7"/>' };
 
+  /* Asılı uzun sancak (Osman'ın örneği Masaüstü/sancak.jpeg tarzında — kendi armalarımızla):
+     üstte çubuk, dikey kumaş, sivri alt uç, iki kenarda süslü bordür, üstte daire içinde arma, altta küçük süs. */
   function sancakSVG(key) {
     var d = SANCAK[key] || VARSAYILAN;
-    return '<svg viewBox="0 0 60 100" aria-hidden="true">'
-      + '<rect x="4.6" y="6" width="2.8" height="92" rx="1.2" fill="#5a3b1c"/>'
-      + '<circle cx="6" cy="5" r="3.2" fill="#e3bf6a" stroke="#7a5420" stroke-width="1"/>'
-      + '<g class="snc-bayrak"><path d="M7.5 12 H56 L46 30 L56 48 H7.5 Z" fill="' + d.r + '" stroke="' + d.k + '" stroke-width="1.6" stroke-linejoin="round"/>'
-      + '<path d="M7.5 15 H51" stroke="' + d.s + '" stroke-width="1" opacity=".55"/><path d="M7.5 45 H51" stroke="' + d.s + '" stroke-width="1" opacity=".55"/>'
-      + '<g fill="' + d.s + '">' + d.c + '</g></g></svg>';
+    var nokta = '';
+    for (var y = 22; y <= 100; y += 6) {
+      nokta += '<circle cx="12.5" cy="' + y + '" r="1.3"/><circle cx="47.5" cy="' + y + '" r="1.3"/>';
+    }
+    return '<svg viewBox="0 0 60 140" aria-hidden="true">'
+      + '<g class="snc-bayrak">'
+      + '<path d="M8 9 H52 V110 L30 134 L8 110 Z" fill="' + d.r + '" stroke="' + d.k + '" stroke-width="1.6" stroke-linejoin="round"/>'
+      + '<path d="M11.5 13 H48.5 V108.5 L30 128 L11.5 108.5 Z" fill="none" stroke="' + d.s + '" stroke-width=".9" opacity=".8"/>'
+      + '<path d="M15 16 H45 V106 L30 122 L15 106 Z" fill="none" stroke="' + d.s + '" stroke-width=".5" opacity=".55"/>'
+      + '<g fill="' + d.s + '" opacity=".75">' + nokta + '</g>'
+      + '<circle cx="30" cy="38" r="13.5" fill="none" stroke="' + d.s + '" stroke-width="1.2"/>'
+      + '<circle cx="30" cy="38" r="11.5" fill="' + d.k + '" opacity=".35"/>'
+      + '<g fill="' + d.s + '" transform="translate(30 38) scale(.72) translate(-28 -30)">' + d.c + '</g>'
+      + '<path d="M19 64 H41 M22 68 H38" stroke="' + d.s + '" stroke-width="1" opacity=".7"/>'
+      + '<g fill="' + d.s + '" opacity=".9" transform="translate(30 88) scale(.42) translate(-28 -30)">' + d.c + '</g>'
+      + '</g>'
+      + '<rect x="3" y="5" width="54" height="4" rx="2" fill="#5a3b1c" stroke="#2e1d0c" stroke-width=".6"/>'
+      + '<circle cx="3" cy="7" r="2.8" fill="#e3bf6a" stroke="#7a5420" stroke-width=".6"/><circle cx="57" cy="7" r="2.8" fill="#e3bf6a" stroke="#7a5420" stroke-width=".6"/>'
+      + '<path d="M18 5 L30 -2 L42 5" fill="none" stroke="#3a2814" stroke-width="1"/>'
+      + '</svg>';
   }
 
   var css = document.createElement('style');
   css.textContent = [
     '#world-map-scene .wm-pin{display:none!important}',
-    '.snc{position:absolute;z-index:2;pointer-events:none;width:clamp(22px,2.6vw,36px);transform:translate(-10%,-96%);filter:drop-shadow(1px 3px 2px #000a)}',
+    '.snc{position:absolute;z-index:2;pointer-events:none;width:clamp(18px,2.2vw,30px);transform:translate(-50%,-100%);filter:drop-shadow(1px 3px 2px #000b)}',
     '.snc svg{display:block;width:100%;height:auto;overflow:visible}',
-    '.snc-bayrak{transform-origin:7.5px 30px;animation:sncDalga 3.2s ease-in-out infinite;animation-delay:var(--d,0s)}',
-    '@keyframes sncDalga{0%,100%{transform:skewY(0deg) scaleX(1)}50%{transform:skewY(-4deg) scaleX(.94)}}',
+    '.snc-bayrak{transform-origin:30px 7px;animation:sncDalga 4s ease-in-out infinite;animation-delay:var(--d,0s)}',
+    '@keyframes sncDalga{0%,100%{transform:rotate(-1.6deg) skewX(0deg)}50%{transform:rotate(1.6deg) skewX(-2deg)}}',
     '@media (prefers-reduced-motion: reduce){.snc-bayrak{animation:none}}'
   ].join('');
   document.head.appendChild(css);
