@@ -25,6 +25,7 @@
   var sonBasis = 0;
   function geri() {
     // 1) Açık pencereler
+    if (gorunur('pd-nit')) { var nx = document.getElementById('pd-nit-x'); if (nx) nx.click(); return; }   // Nitelikler penceresi
     if (gorunur('ga')) { var k = document.getElementById('ga-kapat'); if (k) k.click(); return; }
     if (gorunur('by')) { var bk = document.getElementById('by-kapat'); if (bk) bk.click(); return; }   // Balıkçılık Yeri
     if (gorunur('sr')) { var sk = document.getElementById('sr-kapat'); if (sk) sk.click(); return; }   // Sıralama
