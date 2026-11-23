@@ -28,6 +28,9 @@
     { ad: 'Kraken Çukuru', su: 'Deniz', min: 61, ik: '🦑' },
   ];
 
+  // Gelişim ağacı Balıkçı Yolu etkileri (katman-agac → window.agacEtki)
+  function agac() { try { return (typeof window.agacEtki === 'function' && window.agacEtki()) || {}; } catch (e) { return {}; } }
+  function gunlukHak() { return AYAR.gunlukHak + (agac().bhak || 0); }
   function bugun() { try { return questDateKey(); } catch (e) { return new Date().toISOString().slice(0, 10); } }
   function hak() {
     if (!G.ach) G.ach = {};
@@ -35,11 +38,11 @@
     if (!b || b.gun !== bugun()) b = G.ach._balik = { gun: bugun(), atis: 0 };
     return b;
   }
-  function kalanHak() { return Math.max(0, AYAR.gunlukHak - hak().atis); }
+  function kalanHak() { return Math.max(0, gunlukHak() - hak().atis); }
   function oyuncuKatman() { return Math.max(1, Math.min(7, Math.ceil((G.level || 1) / 10))); }
   function katXP(i) {
     var lv = KATMANLAR[i].min + 5;
-    return Math.max(1, Math.round(((typeof xpForLevel === 'function') ? xpForLevel(lv) : 100) * AYAR.xpOran));
+    return Math.max(1, Math.round(((typeof xpForLevel === 'function') ? xpForLevel(lv) : 100) * AYAR.xpOran * (1 + (agac().bxp || 0) / 100)));
   }
   function kaydet() { try { if (typeof currentUser !== 'undefined' && currentUser) sbSave(); } catch (e) { } }
   function oltaVar() { try { return hasOlta(); } catch (e) { return true; } }
@@ -96,7 +99,7 @@
 
   function ciz() {
     var ok = oyuncuKatman();
-    document.getElementById('by-hak').textContent = 'Hak ' + kalanHak() + '/' + AYAR.gunlukHak;
+    document.getElementById('by-hak').textContent = 'Hak ' + kalanHak() + '/' + gunlukHak();
     document.getElementById('by-katlar').innerHTML = KATMANLAR.map(function (k, i) {
       var kilit = i + 1 > ok;
       return '<div class="by-kat' + (i === secili ? ' sec' : '') + (kilit ? ' kilit' : '') + '" onclick="balikKatSec(' + i + ')">'
@@ -150,7 +153,7 @@
       zamanlayici = setTimeout(function () {
         durum = 'isirdi'; isirmaAni = Date.now(); mantar(true, 'isirdi'); mesaj('Vurdu!');
         d.className = 'by-dugme cek'; d.textContent = '❗ ÇEK!';
-        var pencere = Math.min(1500, AYAR.pencere + ((typeof qSkillVal === 'function') ? qSkillVal('balikcilik') : 0) * 5);
+        var pencere = Math.min(1500, AYAR.pencere + ((typeof qSkillVal === 'function') ? qSkillVal('balikcilik') : 0) * 5) + (agac().bpen || 0);
         zamanlayici = setTimeout(function () { if (durum === 'isirdi') bitir('🐟 Geç kaldın, balık yemi alıp kaçtı.'); }, pencere);
       }, t);
       ciz(); d.disabled = false;
@@ -172,16 +175,23 @@
     if (!tutulan) { bitir(sonToast || '🐟 Balık kaçtı!'); kaydet(); return; }
     var xp = katXP(secili), ekler = [];
     gainXP(xp);
-    if (Math.random() < AYAR.zirhSans && typeof dropRandomArmor === 'function') {
+    var esyaEk = (agac().besya || 0) / 100;
+    if (Math.random() < AYAR.zirhSans + esyaEk && typeof dropRandomArmor === 'function') {
       try { if (dropRandomArmor(secili + 1, 'Balıkçılık ganimeti', { plus: 0 })) ekler.push('🛡 zırh'); } catch (e) { }
     }
-    if (Math.random() < AYAR.yemSans) {
+    if (Math.random() < AYAR.yemSans + esyaEk) {
       var y = Math.random() < 0.5 ? 'solucan' : 'hamur';
       G.prodInv[y] = (G.prodInv[y] || 0) + 1; ekler.push('🪱 ' + (ITEM_LABELS[y] || y));
     }
     if (typeof updateHUD === 'function') updateHUD();
     bitir('🐟 ' + FISH_TYPES[tutulan].name + '! +' + xp.toLocaleString('tr') + ' XP' + (ekler.length ? ' · ' + ekler.join(', ') : ''));
     kaydet();
+  }
+
+  // Ağaçtaki kaçırma azaltma: oyunun isabet bonusuna eklenir (yalnız Balıkçılık Yeri'nde balık tutuluyor)
+  if (typeof window.fishSuccessBonus === 'function') {
+    var asilIsabet = window.fishSuccessBonus;
+    window.fishSuccessBonus = function () { return asilIsabet.apply(this, arguments) + (agac().bkac || 0); };
   }
 
   /* ── Dünya haritasında işaret ── */

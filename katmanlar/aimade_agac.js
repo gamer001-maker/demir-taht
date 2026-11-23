@@ -1,5 +1,5 @@
 // GELİŞİM AĞACI — PROTOTİP (Osman, 21 Kas 2026). Yalnız mobil kopyada (www/) eklenir; index.html'e DOKUNMAZ.
-// Ortadan üç yöne açılan ağaç: 🐺 Bozkurt (saldırı) · 🌳 Hayat Ağacı (dayanıklılık) · 🔷 Tamga (beceri/büyü)
+// Ortadan dört yöne açılan ağaç: 🐺 Bozkurt (saldırı) · 🔷 Tamga (beceri/büyü) · 🎣 Balıkçı (balıkçılık, 23 Kas) · 🌳 Hayat Ağacı (dayanıklılık)
 // Kurallar: halka seviyeleri (0/3, 0/5), seçim baklavası (iki halkadan yalnız biri), kilit taşları, yollar arası köprüler.
 // PUAN KAYNAĞI (Osman kararı, 21 Kas 2026): karakter seviyesi — her seviye 1 puan.
 // KAYIT: şimdilik yalnız bu cihazda (localStorage). Kalıcı sürümde veritabanına (profiles) sütun gerekir.
@@ -11,10 +11,12 @@
   // ───────── AĞAÇ VERİSİ ─────────
   // Etki anahtarları: dmg (fiziksel+büyü %), mdmg (büyü %), crit (kritik puanı), hp (maks can %),
   // dr (hasar azaltma puanı), dodge (kaçınma puanı), luck (şans), cdr (beceri bekleme süresi %)
+  // Balıkçılık (katman-balik okur): bhak (günlük hak +), bpen (ÇEK süresi +ms), bkac (kaçırma −puan), bxp (balık XP %), besya (balık ganimeti şansı +puan)
   var YOLLAR = {
     kurt:  { ad: 'Bozkurt Yolu',     sembol: '🐺', renk: '#d9573f', aci: -90, ozet: 'Saldırı, kritik, hasar' },
-    agac:  { ad: 'Hayat Ağacı Yolu', sembol: '🌳', renk: '#5fae4e', aci: 150, ozet: 'Can, savunma, dayanıklılık' },
-    tamga: { ad: 'Tamga Yolu',       sembol: '🔷', renk: '#4f8fd9', aci: 30,  ozet: 'Büyü, beceri, şans' },
+    agac:  { ad: 'Hayat Ağacı Yolu', sembol: '🌳', renk: '#5fae4e', aci: 180, ozet: 'Can, savunma, dayanıklılık' },
+    tamga: { ad: 'Tamga Yolu',       sembol: '🔷', renk: '#4f8fd9', aci: 0,   ozet: 'Büyü, beceri, şans' },
+    olta:  { ad: 'Balıkçı Yolu',     sembol: '🎣', renk: '#3fb8b0', aci: 90,  ozet: 'Balıkçılık: hak, isabet, XP, ganimet' },
   };
   // Her yolun iskeleti: d = merkezden uzaklık, o = yana kayma; tur: kucuk / secim / kilit
   var ISKELET = [
@@ -67,10 +69,23 @@
       k2: ['Ebedi Tamga', '🔷', 'KİLİT TAŞI — Beceri bekleme süresi −%15, büyü hasarı +%10', { cdr: 15, mdmg: 10 }],
     },
   };
+  ICERIK.olta = {
+    a1: ['Sabırlı El', '🖐', 'ÇEK süresi +60 ms (seviye başına)', { bpen: 60 }],
+    a2: ['Yem Ustası', '🪱', 'Balık kaçırma −%1 (seviye başına)', { bkac: 1 }],
+    s1: ['Şafak Balıkçısı', '🌅', 'Günlük balık hakkı +5', { bhak: 5 }],
+    s2: ['Derin Ağ', '🕸', 'Balık ganimeti şansı +%2', { besya: 2 }],
+    k1: ['Deniz Kurdu', '⚓', 'KİLİT TAŞI — Balıktan XP +%10, günlük hak +5', { bxp: 10, bhak: 5 }],
+    b1: ['Usta Olta', '🎣', 'Balıktan XP +%3 (seviye başına)', { bxp: 3 }],
+    b2: ['Dalga Okuyan', '🌊', 'Balık kaçırma −%1 (seviye başına)', { bkac: 1 }],
+    s3: ['Kraken Avcısı', '🦑', 'Balık ganimeti şansı +%4, hasar +%3', { besya: 4, dmg: 3 }],
+    s4: ['Gölün Bereketi', '💧', 'Günlük balık hakkı +10', { bhak: 10 }],
+    k2: ["Su Ana'nın Lütfu", '🧜', 'KİLİT TAŞI — Balıktan XP +%20, ÇEK süresi +200 ms, şans +5', { bxp: 20, bpen: 200, luck: 5 }],
+  };
   // Yollar arası köprüler (iki komşu yolun ilk kilit taşından biri alınmış olmalı)
   var KOPRULER = [
     { id: 'kp_kurt_agac',  yollar: ['kurt', 'agac'],  ad: 'Savaşçı Ruhu', ikon: '⚔🌳', acik: 'KÖPRÜ — Hasar +%4, maks can +%4', etki: { dmg: 4, hp: 4 } },
-    { id: 'kp_agac_tamga', yollar: ['agac', 'tamga'], ad: 'Şifacı',       ikon: '🌳🔷', acik: 'KÖPRÜ — Maks can +%5, hasar azaltma +%2', etki: { hp: 5, dr: 2 } },
+    { id: 'kp_olta_agac',  yollar: ['olta', 'agac'],  ad: 'Kıyı Şifacısı', ikon: '🎣🌳', acik: 'KÖPRÜ — Maks can +%5, hasar azaltma +%2', etki: { hp: 5, dr: 2 } },
+    { id: 'kp_tamga_olta', yollar: ['tamga', 'olta'], ad: 'Ay Işığı Avı',  ikon: '🔷🎣', acik: 'KÖPRÜ — Balık kaçırma −%3, şans +4', etki: { bkac: 3, luck: 4 } },
     { id: 'kp_tamga_kurt', yollar: ['tamga', 'kurt'], ad: 'Avcı Büyüsü',  ikon: '🔷🐺', acik: 'KÖPRÜ — Kritik şansı +%3, büyü hasarı +%4', etki: { crit: 3, mdmg: 4 } },
   ];
   // Ağacın sınır aşımı: oyunun kendi tavanlarının üstüne en fazla bu kadar çıkabilir (denge sonra ayarlanır)
@@ -79,7 +94,7 @@
   // ───────── HALKALARI ÜRET ─────────
   var M = 500; // SVG merkezi (1000×1000)
   var HALKALAR = {};
-  HALKALAR.merkez = { id: 'merkez', x: M, y: M, tur: 'merkez', max: 0, ad: 'Başlangıç', ikon: '◈', acik: 'Gelişim ağacının başlangıcı. Üç yoldan birini seç.', ata: [] };
+  HALKALAR.merkez = { id: 'merkez', x: M, y: M, tur: 'merkez', max: 0, ad: 'Başlangıç', ikon: '◈', acik: 'Gelişim ağacının başlangıcı. Dört yoldan birini seç.', ata: [] };
   Object.keys(YOLLAR).forEach(function (y) {
     var a = YOLLAR[y].aci * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a), px = -uy, py = ux;
     ISKELET.forEach(function (s) {
@@ -126,7 +141,7 @@
 
   // ───────── ETKİLER ─────────
   function toplamEtki() {
-    var t = { dmg: 0, mdmg: 0, crit: 0, hp: 0, dr: 0, dodge: 0, luck: 0, cdr: 0 };
+    var t = { dmg: 0, mdmg: 0, crit: 0, hp: 0, dr: 0, dodge: 0, luck: 0, cdr: 0, bhak: 0, bpen: 0, bkac: 0, bxp: 0, besya: 0 };
     Object.keys(HALKALAR).forEach(function (k) {
       var h = HALKALAR[k], n = sev(k);
       if (!n || !h.etki) return;
@@ -135,6 +150,7 @@
     });
     return t;
   }
+  window.agacEtki = toplamEtki;   // diğer katmanlar (balıkçılık) okur
   var asilStat = window.getEffectiveStats;
   window.getEffectiveStats = function () {
     var s = asilStat.apply(this, arguments);
