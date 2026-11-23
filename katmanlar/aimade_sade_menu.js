@@ -14,6 +14,8 @@
   var css = document.createElement('style');
   css.textContent = [
     '#game-tabs{display:none!important}',
+    // Osman 23 Kas: haritanın altındaki bölge kartı (Civarı Keşfet) ve bölge listesi kaldırıldı
+    '#world-region-card,#world-region-list{display:none!important}',
     '#gt-arena{display:none!important}',
     '#bn-profile{display:none!important}',
     '.res-bar{align-items:center}',
