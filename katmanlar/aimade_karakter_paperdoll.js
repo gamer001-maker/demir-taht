@@ -35,6 +35,15 @@
     '.pd-kim em{font-style:normal;font-size:12px;color:var(--gold,#c9a24a);border:1px solid #6b4c2a;border-radius:6px;padding:1px 7px}',
     '.pd-ust-guc{font-size:11px;letter-spacing:.08em;color:var(--ink3,#a89070);white-space:nowrap}',
     '.pd-ust-guc b{margin-left:6px;font:700 18px var(--font-head,serif);letter-spacing:0;color:var(--gold2,#e8c56a);font-variant-numeric:tabular-nums}',
+    // Osman 23 Kas: Karakter Özellikleri kutusu kalktı → figürün başının üstünde sade yazı
+    '#cs-ozellikler{display:none!important}',
+    '.char-tab-btn[data-cs="ozellikler"]{display:none!important}',
+    '@media(max-width:900px){#char-tabs-bar{grid-template-columns:repeat(2,1fr)!important}}',
+    '.pd-ozl{position:absolute;top:6px;left:4px;right:4px;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;pointer-events:none;',
+    'font-size:clamp(9px,2.6vw,12px);line-height:1.25;color:var(--ink3,#a89070);text-shadow:0 1px 3px #000,0 0 6px #000}',
+    '.pd-ozl span{display:flex;justify-content:space-between;gap:6px;white-space:nowrap;overflow:hidden}',
+    '.pd-ozl b{color:var(--gold2,#e8c56a);font-variant-numeric:tabular-nums}',
+    '.pd-ozl ~ .pd-figur{height:calc(100% - 78px)}',
     '#pd-xp{width:min(70%,460px);margin:10px auto 2px}',
     '#pd-xp .mbar-wrap{margin:0}',
     '.pd-guc{aspect-ratio:1;width:100%;border-radius:8px;border:2px solid #6b4c2a;background:linear-gradient(160deg,#2a1c0e,#120c06);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}',
@@ -124,6 +133,18 @@
     };
   }
 
+  /* Karakter özellikleri (oyunun #g-eff-stats içeriğinden okunur) → figürün üstünde iki sütun yazı */
+  function ozellikYaz() {
+    var orta = document.querySelector('#pd .pd-orta'), kaynak = document.getElementById('g-eff-stats');
+    if (!orta || !kaynak) return;
+    var lbl = kaynak.querySelectorAll('.eff-stat-lbl'), val = kaynak.querySelectorAll('.eff-stat-val');
+    var html = '';
+    for (var i = 0; i < lbl.length; i++) html += '<span>' + kac(lbl[i].textContent.trim()) + '<b>' + kac(val[i] ? val[i].textContent.trim() : '') + '</b></span>';
+    var kutu = orta.querySelector('.pd-ozl');
+    if (!kutu) { kutu = document.createElement('div'); kutu.className = 'pd-ozl'; orta.insertBefore(kutu, orta.firstChild); }
+    kutu.innerHTML = html;
+  }
+
   function guc() { try { return Math.round(calcPow()).toLocaleString('tr-TR'); } catch (e) { return '—'; } }
 
   var asil = window.renderKarakter;
@@ -154,6 +175,7 @@
     baslikKur(bolum);
     xpTasi(bolum);
     setAdiDuzelt();
+    ozellikYaz();
     // Figür (sınıf + görünüm değişince yenilenir)
     var cl = G.classId || 'warrior', av = (G.avatarIdx != null ? G.avatarIdx : 0);
     var base = (typeof IMG_BASE !== 'undefined') ? IMG_BASE : 'images/';
