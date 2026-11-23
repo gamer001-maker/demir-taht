@@ -113,7 +113,7 @@
   /* ── LONCA KALESİ SAHNESİ (Osman: "haritada bizim kalemiz gibi bir lonca kalesi olacak") ──
      Dünya haritasında "Lonca Kalesi" işareti → kale haritası gibi tam ekran sahne; binaya dokun → seviye/bonus/geliştir.
      Bina görselleri gelene kadar kalenin bina resimleri kullanılır. */
-  var SAHNE_YER = { madenci: { x: 24, y: 62, w: 22, img: 'bina_insaa1' }, hasar: { x: 50, y: 30, w: 28, img: 'bina_kisla1' }, xp: { x: 76, y: 62, w: 20, img: 'bina_asevi1' } };
+  var SAHNE_YER = { madenci: { x: 24, y: 62, w: 22, img: 'aimade_lonca_madenci' }, hasar: { x: 50, y: 30, w: 28, img: 'aimade_lonca_hasar' }, xp: { x: 76, y: 62, w: 20, img: 'aimade_lonca_bilge' } };
   var HARITA_XY = { x: 52, y: 22 };   // dünya haritasında (kuzey, Frost Hill ile Vaelys arası)
   function imgYol(ad) { return ((typeof IMG_BASE !== 'undefined') ? IMG_BASE : 'images/') + ad + '.webp'; }
   function yetkiliMi() { return G.guildRole === 'leader' || G.guildRole === 'officer'; }
@@ -231,7 +231,7 @@
       var sahne = document.getElementById('world-map-scene'); if (!sahne) return;
       sahne.insertAdjacentHTML('beforeend',
         '<div class="hd-pin lonca" style="left:' + HARITA_XY.x + '%;top:' + HARITA_XY.y + '%;" onclick="event.stopPropagation();loncaKalesiAc()">'
-        + '<img src="images/aimade_harita_kale.webp" alt="Lonca Kalesi" style="filter:hue-rotate(150deg) saturate(1.3)" onerror="this.style.display=' + "'none'" + ';this.nextElementSibling.style.display=' + "'block'" + '">'
+        + '<img src="images/aimade_harita_lonca.webp" alt="Lonca Kalesi" onerror="this.style.display=' + "'none'" + ';this.nextElementSibling.style.display=' + "'block'" + '">'
         + '<span class="hd-yedek">🏰</span><span class="hd-ad">Lonca Kalesi</span></div>');
     };
   }

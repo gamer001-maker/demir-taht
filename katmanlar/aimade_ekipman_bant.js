@@ -33,7 +33,7 @@
 
   // 2) YENİ EŞYALAR (Bant planı, Osman onayı 23 Kas: https://claude.ai/artifact/W8uw7n3q37URcvB1BhYy8B)
   //    Değerleri aynı türdeki bir kaynak şablondan kopyalanır, sonra bandına ölçeklenir.
-  //    Görseller gelene kadar kaynak silahın resmini kullanır (resim gelince img: 'aimade_...' yapılır).
+  //    Görseller: katman-ekipman/aimade_<anahtar>.webp (Gemini, 23 Kas).
   var YENI_SILAH = [ // [anahtar, ad, kaynak şablon]
     ['ejderhakilic', 'Ejderha Kılıcı', 'sefinkilici'],
     ['kurbanbicak', 'Kurban Bıçağı', 'ejderhabilicak'],
@@ -55,7 +55,7 @@
   YENI_SILAH.forEach(function (y) {
     var k = WEAPON_TEMPLATES[y[2]];
     if (!k || WEAPON_TEMPLATES[y[0]]) return;
-    var t = kopya(k); t.name = y[1]; t._yeni = true;
+    var t = kopya(k); t.name = y[1]; t._yeni = true; t.img = 'aimade_' + y[0];
     WEAPON_TEMPLATES[y[0]] = t;
   });
   Object.keys(ARMOR_TEMPLATES).forEach(function (key) {
@@ -66,7 +66,7 @@
       var t = kopya(ARMOR_TEMPLATES[key]);
       t.name = t.name.replace(/^(Gölge Deri|Karanlık Dokuma)/, y[1]);
       if (parca === 'cubbe') t.name = 'Nekro Cübbe';
-      t._yeni = true;
+      t._yeni = true; t.img = 'aimade_' + yeniKey;
       ARMOR_TEMPLATES[yeniKey] = t;
     });
   });
