@@ -20,6 +20,15 @@
     if (el) {
       // Profil kısmı üstte; İstatistik'in ilk başlığındaki "margin-top:0" artık ortada kalacağı için boşluk verilir
       el.innerHTML = ust + el.innerHTML.replace('class="sec" style="margin-top:0;"', 'class="sec"');
+      // Osman: Bildirimler bölümü kalksın, Hesap bölümü en alta (Genel/Savaş/Ekonomi'nin altına)
+      var bolum = function (ad) {
+        var s = Array.prototype.filter.call(el.querySelectorAll(':scope > .sec'), function (x) { return x.textContent.trim().indexOf(ad) === 0; })[0];
+        return s ? [s, s.nextElementSibling] : null;
+      };
+      var bil = bolum('BİLDİRİMLER');
+      if (bil) bil.forEach(function (n) { if (n) n.remove(); });
+      var hes = bolum('HESAP');
+      if (hes) hes.forEach(function (n) { if (n) el.appendChild(n); });
     }
     G.profileTab = 'stats';
     ['profile', 'stats', 'ach', 'settings'].forEach(function (x) {
