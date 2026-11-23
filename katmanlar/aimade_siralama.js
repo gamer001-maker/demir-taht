@@ -1,12 +1,11 @@
 /* ── SIRALAMA (Osman, 23 Kas) ──
-   Krallık sıralaması profilden YETENEK menüsüne taşındı: ekranın üstünde "🌳 Yetenek Ağacı | 🏆 Sıralama" sekmeleri.
+   Krallık sıralaması profilden ALT MENÜYE taşındı: Yetenek'in sağında ayrı "🏆 Sıralama" düğmesi, kendi tam ekranı.
    Görünüm profildeki sıralama penceresiyle aynı (lb-* sınıfları). Sekmeler: ⚔ Güç (Seviye'nin yerine) · 🏟 Arena · 🛡 Loncalar.
    Altın ve Zafer sekmeleri kaldırıldı. Satır: isim + seviye; altında @lonca adı.
    GÜÇ = oyunun arena gücü (calcPow). Sunucuda sütunu yok → her kayıtta G.ach._guc olarak ach_counters'a yazılır,
    sıralama oradan okunur (yeni sütun gerekmez). Henüz oyuna girip kaydetmemiş oyuncuların gücü "—" görünür.
-   Katman sırası: katman-agac'tan SONRA yüklenmeli (#ga ekranını kullanır). index.html'e dokunmaz. */
+   Katman sırası: katman-agac'tan SONRA (düğme Yetenek'in sağına konur). index.html'e dokunmaz. */
 (function () {
-  if (typeof window.agacAc !== 'function') return;
 
   /* 1) Gücü kayıtla birlikte sunucuya yaz */
   function gucYaz() {
@@ -18,45 +17,32 @@
     window[ad] = function () { gucYaz(); return asil.apply(this, arguments); };
   });
 
-  /* 2) Yetenek ekranına sekmeler + sıralama paneli */
+  /* 2) Alt menüde ayrı "Sıralama" düğmesi (Yetenek'in sağında) → kendi tam ekranı */
   var css = document.createElement('style');
   css.textContent = [
-    '.sr-sekmeler{display:flex;gap:6px;padding:8px 12px 0;background:#140f0a;border-bottom:1px solid #4a3220}',
-    '.sr-sekme{flex:1;padding:9px 6px;border:1px solid #4a3220;border-bottom:none;border-radius:8px 8px 0 0;background:#1d150d;color:#b09870;font:600 13px var(--font-head,serif);cursor:pointer}',
-    '.sr-sekme.aktif{background:#2a1f14;color:var(--gold2,#e8c56a);border-color:var(--gold,#c9a24a)}',
-    '#sr-panel{flex:1;display:flex;flex-direction:column;min-height:0;padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom))}',
-    '#sr-panel[hidden]{display:none!important}',
+    '#sr{position:fixed;inset:0;z-index:9450;display:flex;flex-direction:column;background:radial-gradient(circle at 50% 30%,#1d1812,#0b0907 75%);color:#e8dcc0;font-family:var(--font-body,system-ui)}',
+    '#sr[hidden]{display:none!important}',
+    '.sr-ust{display:flex;align-items:center;gap:10px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top));border-bottom:1px solid #4a3220;background:#140f0a}',
+    '.sr-ust h2{margin:0;flex:1;font:600 17px var(--font-head,serif);color:var(--gold2,#e8c56a)}',
+    '.sr-kapat{background:none;border:1px solid #6a4a28;color:#e8dcc0;border-radius:8px;padding:5px 10px;font-size:15px;cursor:pointer}',
+    '#sr-panel{flex:1;display:flex;flex-direction:column;min-height:0;width:100%;max-width:720px;margin:0 auto;padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom));box-sizing:border-box}',
     '#sr-panel .lb-body{flex:1;overflow-y:auto;max-height:none}',
     '.sr-sv{font-size:11px;color:var(--ink3,#a89070);font-weight:400;margin-left:6px;font-family:var(--font-body,system-ui)}',
     '.sr-not{font-size:11px;color:var(--ink3,#a89070);text-align:center;margin-top:8px}'
   ].join('');
   document.head.appendChild(css);
 
-  var kok = document.getElementById('ga');
-  if (!kok) return;
-  var ust = kok.querySelector('.ga-ust');
-  ust.insertAdjacentHTML('afterend',
-    '<div class="sr-sekmeler"><button class="sr-sekme aktif" id="sr-s-agac">🌳 Yetenek Ağacı</button><button class="sr-sekme" id="sr-s-sira">🏆 Sıralama</button></div>'
-    + '<div id="sr-panel" hidden>'
+  var kok = document.createElement('div');
+  kok.id = 'sr'; kok.hidden = true;
+  kok.innerHTML = '<div class="sr-ust"><h2>🏆 Krallık Sıralaması</h2><button class="sr-kapat" id="sr-kapat">✕</button></div>'
+    + '<div id="sr-panel">'
     + '<div class="lb-tabs"><div class="lb-tab active" id="sr-t-guc">⚔ Güç</div><div class="lb-tab" id="sr-t-arena">🏟 Arena</div><div class="lb-tab" id="sr-t-lonca">🛡 Loncalar</div></div>'
     + '<div class="lb-body" id="sr-govde"><div class="lb-loading">Yükleniyor...</div></div>'
-    + '<div class="sr-not" id="sr-not"></div></div>');
+    + '<div class="sr-not" id="sr-not"></div></div>';
+  document.body.appendChild(kok);
+  document.getElementById('sr-kapat').onclick = function () { kok.hidden = true; };
 
-  var AGAC_PARCALARI = ['#ga-yollar', '#ga-sahne', '#ga-alt', '#ga-sifirla', '#ga-puan'];
-  var baslik = ust.querySelector('h2'), asilBaslik = baslik ? baslik.textContent : '';
-  var sekme = 'agac', liste = 'guc';
-
-  function goster(s) {
-    sekme = s;
-    document.getElementById('sr-s-agac').classList.toggle('aktif', s === 'agac');
-    document.getElementById('sr-s-sira').classList.toggle('aktif', s === 'sira');
-    AGAC_PARCALARI.forEach(function (q) { var e = kok.querySelector(q); if (e) e.style.display = s === 'agac' ? '' : 'none'; });
-    document.getElementById('sr-panel').hidden = s !== 'sira';
-    if (baslik) baslik.textContent = s === 'agac' ? asilBaslik : '🏆 Krallık Sıralaması';
-    if (s === 'sira') yukle();
-  }
-  document.getElementById('sr-s-agac').onclick = function () { goster('agac'); };
-  document.getElementById('sr-s-sira').onclick = function () { goster('sira'); };
+  var liste = 'guc';
   ['guc', 'arena', 'lonca'].forEach(function (k) {
     document.getElementById('sr-t-' + k).onclick = function () {
       liste = k;
@@ -64,10 +50,21 @@
       yukle();
     };
   });
+  window.siralamaAc = function () { kok.hidden = false; yukle(); };
 
-  var asilAc = window.agacAc;
-  window.agacAc = function () { var r = asilAc.apply(this, arguments); goster('agac'); return r; };
-  window.siralamaAc = function () { asilAc(); goster('sira'); };
+  function menuDugmesi() {
+    var nav = document.getElementById('bottom-nav');
+    if (!nav || document.getElementById('bn-siralama')) return;
+    var btn = document.createElement('div');
+    btn.className = 'bnav-btn'; btn.id = 'bn-siralama';
+    btn.innerHTML = '<div class="bnav-notif"><span class="bnav-icon"><img src="images/aimade_nav_siralama.png" class="nav-img" alt="Sıralama"'
+      + ' onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'"><span style="display:none;font-size:24px">🏆</span></span></div>'
+      + '<span class="bnav-lbl">Sıralama</span>';
+    btn.onclick = function () { window.siralamaAc(); };
+    var yetenek = document.getElementById('bn-yetenek');
+    nav.insertBefore(btn, yetenek ? yetenek.nextSibling : null);
+  }
+  menuDugmesi();
 
   /* 3) Listeler */
   function ikon(cid) { try { var c = CLASSES.find(function (x) { return x.id === cid; }); return (c && c.icon) || '⚔'; } catch (e) { return '⚔'; } }
