@@ -132,7 +132,7 @@
     if (typeof updateHUD === 'function') updateHUD();
     kaydetHemen();
     showGModal('<div style="text-align:center">'
-      + '<div style="font-size:46px;line-height:1">🐫</div>'
+      + kvResim(130)
       + '<div style="font-family:var(--font-head);font-size:19px;color:var(--gold2);margin:6px 0 4px">Kervan döndü!</div>'
       + '<div style="font-size:12px;color:var(--ink3,#a89070);margin-bottom:12px">' + k.h + ' saatlik yolculuk: ' + (k.rota || []).map(function (r) { return REGIONS[r] ? REGIONS[r].name : r; }).join(' → ') + '</div>'
       + '<div style="font-size:15px;color:var(--gold);line-height:1.8">+' + o.xp.toLocaleString('tr-TR') + ' XP<br>+' + o.altin.toLocaleString('tr-TR') + '🪙<br>' + mYazi
@@ -140,13 +140,19 @@
       + '<button class="btn" style="width:100%;margin-top:14px" onclick="closeGModal();renderCastleMap&&renderCastleMap()">Tamam</button></div>');
   };
 
+  /* Kervan resmi (Gemini, 24 Kas; sola bakar). Yüklenmezse 🐫 emojisi. w=0 → boyut CSS'ten */
+  function kvResim(w) {
+    return '<img src="images/aimade_harita_kervan.webp" alt="Kervan"' + (w ? ' style="width:' + w + 'px;max-width:100%;height:auto;display:block;margin:0 auto"' : '')
+      + ' onerror="this.outerHTML=\'<span style=&quot;font-size:' + (w ? Math.round(w / 3) : 34) + 'px;line-height:1&quot;>🐫</span>\'">';
+  }
+
   /* ── Kervan penceresi ── */
   function satir(sol, sag) {
     return '<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 10px;font-size:12px"><span>' + sol + '</span><b style="color:var(--gold2);text-align:right">' + sag + '</b></div>';
   }
   window.kervanAc = function () {
     var k = aktif(), h = '';
-    h += '<div style="text-align:center;margin-bottom:10px"><div style="font-size:40px;line-height:1">🐫</div>'
+    h += '<div style="text-align:center;margin-bottom:10px">' + kvResim(120)
       + '<div style="font-family:var(--font-head);font-size:18px;color:var(--gold2);margin-top:4px">Kervan</div>'
       + '<div style="font-size:11px;color:var(--ink3,#a89070)">Kervanı diyar diyar gönder; dönüşte tecrübe, altın ve ganimet getirir.</div></div>';
     if (k) {
@@ -208,6 +214,7 @@
     '.kv-durak{fill:#f3d48a;stroke:#3a2410;stroke-width:1.5}',
     '.kv-fig{position:absolute;z-index:6;transform:translate(-50%,-80%);font-size:clamp(26px,3.2vw,40px);line-height:1;pointer-events:none;filter:drop-shadow(0 3px 3px #000c);transition:left 1s linear,top 1s linear}',
     '.kv-fig span{display:inline-block;animation:kvSalla .9s ease-in-out infinite}',
+    '.kv-fig img{display:block;width:clamp(60px,7vw,100px);height:auto}',
     '.kv-fig.sag span{transform:scaleX(-1)}',
     '@keyframes kvSalla{50%{translate:0 -3px}}',
     '.kv-cubuk{position:absolute;left:8px;top:8px;z-index:8;width:58px;padding:8px 4px;border-radius:10px;background:#000b;border:1px solid var(--gold2);display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-family:var(--font-head,serif)}',
@@ -232,9 +239,9 @@
     var duraklar = n.slice(1, -1).map(function (p) { return '<circle class="kv-durak" cx="' + p.x + '" cy="' + p.y + '" r="0.7" vector-effect="non-scaling-stroke"/>'; }).join('');
     sahne.insertAdjacentHTML('beforeend',
       '<svg class="kv-svg" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline class="kv-yol" points="' + pts + '" vector-effect="non-scaling-stroke"/>' + duraklar + '</svg>'
-      + '<div class="kv-fig"><span>🐫</span></div>');
+      + '<div class="kv-fig"><span>' + kvResim(0) + '</span></div>');
     gorunum.insertAdjacentHTML('beforeend',
-      '<div class="kv-cubuk" onclick="ggo(\'kale\');setTimeout(function(){kervanAc()},50)" title="Kervan"><div class="ik">🐫</div><div class="bar"><div class="dol"></div></div><div class="zm"></div></div>');
+      '<div class="kv-cubuk" onclick="ggo(\'kale\');setTimeout(function(){kervanAc()},50)" title="Kervan"><div class="ik">' + kvResim(48) + '</div><div class="bar"><div class="dol"></div></div><div class="zm"></div></div>');
     guncelle();
   }
 
