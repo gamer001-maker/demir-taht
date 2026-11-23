@@ -214,7 +214,7 @@
     '.kv-durak{fill:#f3d48a;stroke:#3a2410;stroke-width:1.5}',
     '.kv-fig{position:absolute;z-index:6;transform:translate(-50%,-80%);font-size:clamp(26px,3.2vw,40px);line-height:1;pointer-events:none;filter:drop-shadow(0 3px 3px #000c);transition:left 1s linear,top 1s linear}',
     '.kv-fig span{display:inline-block;animation:kvSalla .9s ease-in-out infinite}',
-    '.kv-fig img{display:block;width:clamp(60px,7vw,100px);height:auto}',
+    '.kv-fig img{display:block;width:clamp(84px,9.5vw,140px);height:auto;filter:drop-shadow(0 0 2px #fff6) drop-shadow(0 0 1px #f3d48a)}',
     '.kv-fig.sag span{transform:scaleX(-1)}',
     '@keyframes kvSalla{50%{translate:0 -3px}}',
     '.kv-cubuk{position:absolute;left:8px;top:8px;z-index:8;width:58px;padding:8px 4px;border-radius:10px;background:#000b;border:1px solid var(--gold2);display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-family:var(--font-head,serif)}',
