@@ -27,9 +27,11 @@
     try {
       var r = await supa.from('guilds').select('buildings').eq('id', G.guildId).single();
       if (r.error) {
-        if (/buildings/i.test(r.error.message || '')) LK.hazir = false;
+        // Her hatada bölüm "hazır değil" der ve sunucunun hata metnini küçük yazıyla gösterir (tanı için)
+        LK.hazir = false; LK.hata = (r.error.code ? r.error.code + ': ' : '') + (r.error.message || '');
         return;
       }
+      LK.hata = '';
       LK.hazir = true;
       LK.bina = (r.data && r.data.buildings && typeof r.data.buildings === 'object') ? r.data.buildings : {};
       LK.guild = G.guildId; LK.ts = Date.now();
@@ -128,7 +130,8 @@
     var yetkili = G.guildRole === 'leader' || G.guildRole === 'officer';
     var h = '<div class="sec" id="lk-sec">🏰 LONCA KALESİ</div><div id="lk-bolum">';
     if (LK.hazir === false) {
-      h += '<div class="lk-not">🔧 Lonca kalesi sunucu hazırlığı bekliyor (yakında açılacak).</div>';
+      h += '<div class="lk-not">🔧 Lonca kalesi sunucu hazırlığı bekliyor (yakında açılacak).'
+        + (LK.hata ? '<br><span style="opacity:.75;font-size:10px">Sunucu: ' + esc(LK.hata) + '</span>' : '') + '</div>';
     }
     h += '<div class="lk-izgara">';
     BINALAR.forEach(function (b) {
@@ -146,7 +149,7 @@
         + '<div class="bar"><i style="width:' + (s / MAX * 100) + '%"></i></div>' + dugme + '</div>';
     });
     h += '</div><div class="lk-not">Bonuslar loncadaki herkese geçer · Hazineye bağış yaparak binaları büyütün'
-      + (LK.hazir && !yetkili ? ' · Geliştirmeyi Lider ve Subay yapar' : '') + '</div></div>';
+      + (LK.hazir && !yetkili ? ' · Geliştirmeyi Lider ve Subay yapar (senin rolün: ' + ({ member: 'Üye', officer: 'Subay', leader: 'Lider' }[G.guildRole] || G.guildRole || '?') + ')' : '') + '</div></div>';
     return h;
   }
   function cizBolum() {
