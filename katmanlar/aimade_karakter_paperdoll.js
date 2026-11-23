@@ -106,6 +106,24 @@
     if (hepsi) b.textContent = b.textContent.replace(/^\S+ Seti/, 'Nekro Seti');
   }
 
+  /* Eşya penceresi: Nekro zırhta "4×Demir seti" → "4×Nekro seti" (yalnız yazı) */
+  if (typeof window.openInvModal === 'function') {
+    var asilModal = window.openInvModal;
+    window.openInvModal = function (itemId, eqSlotKey) {
+      var r = asilModal.apply(this, arguments);
+      try {
+        var it = itemId ? (G.inventory || []).find(function (x) { return x.id === itemId; }) : (G.equipped || {})[eqSlotKey];
+        if (it && /^Nekro/.test(it.name || '')) {
+          var kap = document.getElementById('g-modal-content');
+          Array.prototype.forEach.call(kap ? kap.querySelectorAll('div') : [], function (d) {
+            if (d.children.length === 0 && /^4×\S+ seti:/.test(d.textContent)) d.textContent = d.textContent.replace(/^4×\S+ seti:/, '4×Nekro seti:');
+          });
+        }
+      } catch (e) { }
+      return r;
+    };
+  }
+
   function guc() { try { return Math.round(calcPow()).toLocaleString('tr-TR'); } catch (e) { return '—'; } }
 
   var asil = window.renderKarakter;
